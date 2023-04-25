@@ -723,3 +723,39 @@ impl ClientInstruction for StubOracleCloseInstruction {
         vec![self.admin]
     }
 }
+
+pub struct CloseMarketInstruction {
+    pub admin: TestKeypair,
+    pub market: Pubkey,
+    pub sol_destination: Pubkey,
+}
+#[async_trait::async_trait(?Send)]
+impl ClientInstruction for CloseMarketInstruction {
+    type Accounts = openbook_v2::accounts::CloseMarket;
+    type Instruction = openbook_v2::instruction::CloseMarket;
+    async fn to_instruction(
+        &self,
+        account_loader: impl ClientAccountLoader + 'async_trait,
+    ) -> (Self::Accounts, instruction::Instruction) {
+        let program_id = openbook_v2::id();
+        let instruction = Self::Instruction {};
+        let market: Market = account_loader.load(&self.market).await.unwrap();
+
+        let accounts = Self::Accounts {
+            admin: self.admin.pubkey(),
+            market: self.market,
+            bids: market.bids,
+            asks: market.asks,
+            event_queue: market.event_queue,
+            token_program: Token::id(),
+            sol_destination: self.sol_destination,
+        };
+
+        let instruction = make_instruction(program_id, &accounts, instruction);
+        (accounts, instruction)
+    }
+
+    fn signers(&self) -> Vec<TestKeypair> {
+        vec![self.admin]
+    }
+}

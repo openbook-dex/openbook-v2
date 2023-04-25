@@ -180,6 +180,12 @@ pub mod openbook_v2 {
         Ok(())
     }
 
+    pub fn close_market(ctx: Context<CloseMarket>) -> Result<()> {
+        #[cfg(feature = "enable-gpl")]
+        instructions::close_market(ctx)?;
+        Ok(())
+    }
+
     // todo:
     // ckamm: generally, using an I80F48 arg will make it harder to call
     // because generic anchor clients won't know how to deal with it
