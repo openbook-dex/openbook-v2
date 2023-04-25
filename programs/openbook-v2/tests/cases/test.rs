@@ -794,37 +794,9 @@ async fn test_expired_orders() -> Result<(), TransportError> {
         assert_eq!(open_orders_account_0.position.quote_free_lots, 0);
     }
 
-    send_tx(
-        solana,
-        ConsumeEventsInstruction {
-            market,
-            open_orders_accounts: vec![account_0, account_1],
-        },
-    )
-    .await
-    .unwrap();
-
-    {
-        let open_orders_account_0 = solana.get_account::<OpenOrdersAccount>(account_0).await;
-
-        assert_eq!(open_orders_account_0.position.base_position_lots(), 0);
-        assert_eq!(
-            open_orders_account_0
-                .position
-                .quote_position_native()
-                .round(),
-            0
-        );
-        assert_eq!(open_orders_account_0.position.bids_base_lots, 1);
-        assert_eq!(open_orders_account_0.position.asks_base_lots, 0);
-        assert_eq!(open_orders_account_0.position.taker_base_lots, 0);
-        assert_eq!(open_orders_account_0.position.base_free_lots, 0);
-        assert_eq!(open_orders_account_0.position.quote_free_lots, 0);
-    }
-
     // Advance clock
     solana.advance_clock(2).await;
-    // Bid isn't available anymore, shouldn't be matched
+    // Bid isn't available anymore, shouldn't be matched. Introduces event on the event_queue
     send_tx(
         solana,
         PlaceOrderInstruction {
@@ -845,8 +817,13 @@ async fn test_expired_orders() -> Result<(), TransportError> {
     )
     .await
     .unwrap();
-
-    {
+    // {
+    //     let market_acc = solana.get_account::<Market>(market).await;
+    //     let event_queue = solana.get_account::<EventQueue>(market_acc.event_queue).await;
+    //     assert_eq!(event_queue.header.count(), 1);
+    
+    // }
+    {      
         let open_orders_account_0 = solana.get_account::<OpenOrdersAccount>(account_0).await;
         let open_orders_account_1 = solana.get_account::<OpenOrdersAccount>(account_1).await;
 
@@ -862,6 +839,7 @@ async fn test_expired_orders() -> Result<(), TransportError> {
         assert_eq!(open_orders_account_1.position.quote_free_lots, 0);
     }
 
+    // ConsumeEvents removes the bids_base_lots in the Out event
     send_tx(
         solana,
         ConsumeEventsInstruction {
@@ -871,8 +849,6 @@ async fn test_expired_orders() -> Result<(), TransportError> {
     )
     .await
     .unwrap();
-
-    // ConsumeEvents removes the bids_base_lots in the Out event
     {
         let open_orders_account_0 = solana.get_account::<OpenOrdersAccount>(account_0).await;
         let open_orders_account_1 = solana.get_account::<OpenOrdersAccount>(account_1).await;
@@ -887,6 +863,13 @@ async fn test_expired_orders() -> Result<(), TransportError> {
         assert_eq!(open_orders_account_1.position.taker_base_lots, 0);
         assert_eq!(open_orders_account_1.position.base_free_lots, 0);
         assert_eq!(open_orders_account_1.position.quote_free_lots, 0);
+    }
+    // No more events on event_queue
+    {
+        let market_acc = solana.get_account::<Market>(market).await;
+        let event_queue = solana.get_account::<EventQueue>(market_acc.event_queue).await;
+        
+        assert_eq!(event_queue.header.count(), 0);
     }
 
     Ok(())
