@@ -1,0 +1,31 @@
+[workspace]
+members = [
+    "."
+]
+
+[features]
+seeds = false
+[programs.localnet]
+anchor_history_parser = "C7rn1qJkq9FjTwV86RrY5Uih91NgymRVLdJ81rqLNXRS"
+
+[registry]
+url = "https://anchor.projectserum.com"
+
+[provider]
+cluster = "devnet"
+# cluster = "localnet"
+wallet = "../../../payer-keypair.json"
+# wallet = "~/.config/solana/id.json"
+
+
+[scripts]
+test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.test.ts"
+
+[test.validator]
+url="https://api.devnet.solana.com"
+
+[[testnet.validator.clone]]
+address="GvDMxPzN1sCj7L26YDK2HnMRXEQmQ2aemov8YBtPS7vR" # sbv2 SOL/USD Feed
+
+[[testnet.validator.clone]]
+address="7LLvRhMs73FqcLkA8jvEE1AM2mYZXTmqfUv8GAEurymx" # sbv2 SOL/USD History Buffer

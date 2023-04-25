@@ -1,0 +1,18 @@
+{
+  "ts-node": {
+    // these options are overrides used only by ts-node
+    "compilerOptions": {
+      "module": "commonjs"
+    }
+  },
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "esModuleInterop": true,
+    "moduleResolution": "node",
+    "module": "es2022",
+    "target": "es2021",
+    "outDir": "lib/esm/",
+    "types": ["node"],
+    "rootDir": "./src"
+  }
+}

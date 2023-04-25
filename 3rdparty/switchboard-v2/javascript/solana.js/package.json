@@ -1,0 +1,93 @@
+{
+  "name": "@switchboard-xyz/solana.js",
+  "version": "2.0.41",
+  "author": "",
+  "license": "MIT",
+  "description": "API wrapper for integrating with the Switchboard V2 program on Solana",
+  "files": [
+    "lib",
+    "src",
+    "package.json",
+    "LICENSE"
+  ],
+  "exports": {
+    ".": {
+      "import": "./lib/esm/index.js",
+      "require": "./lib/cjs/index.js"
+    },
+    "./package.json": "./package.json",
+    "./idl/mainnet": {
+      "import": "./lib/esm/idl/mainnet.json",
+      "require": "./lib/cjs/idl/mainnet.json"
+    },
+    "./idl/devnet": {
+      "import": "./lib/esm/idl/devnet.json",
+      "require": "./lib/cjs/idl/devnet.json"
+    },
+    "./test": {
+      "import": "./lib/esm/test/index.js",
+      "require": "./lib/cjs/test/index.js"
+    }
+  },
+  "main": "lib/cjs/index.js",
+  "module": "lib/esm/index.js",
+  "types": "lib/cjs/index.d.ts",
+  "scripts": {
+    "keypair:create": "shx find ~/.config/solana/id.json || solana-keygen new -s --no-bip39-passphrase --outfile ~/.config/solana/id.json",
+    "local:validator": "solana-test-validator -q -r --ledger .anchor/test-ledger --mint $(solana-keygen pubkey ~/.config/solana/id.json) --bind-address 0.0.0.0 --url https://api.devnet.solana.com --rpc-port 8899  --clone 2TfB33aLaneQb5TNVwyDz3jSZXS6jdW2ARw1Dgf84XCG `# programId` --clone J4CArpsbrZqu1axqQ4AnrqREs3jwoyA1M5LMiQQmAzB9 `# programDataAddress` --clone CKwZcshn4XDvhaWVH9EXnk3iu19t6t5xP2Sy2pD6TRDp `# idlAddress` --clone BYM81n8HvTJuqZU1PmTVcwZ9G8uoji7FKM6EaPkwphPt `# programState` --clone FVLfR6C2ckZhbSwBzZY4CX7YBcddUSge5BNeGQv5eKhy `# switchboardVault`",
+    "generate:idl": "npx anchor-client-gen --program-id SW1TCH7qEPTdLsDHRgPuMQjbQxKdH2aBStViMFnt64f ./src/idl/mainnet.json ./src/generated && npx prettier ./src/generated --write",
+    "generate:client": "anchor idl fetch -o ./src/idl/mainnet.json SW1TCH7qEPTdLsDHRgPuMQjbQxKdH2aBStViMFnt64f --provider.cluster mainnet && anchor idl fetch -o ./src/idl/devnet.json 2TfB33aLaneQb5TNVwyDz3jSZXS6jdW2ARw1Dgf84XCG --provider.cluster devnet",
+    "generate": "node generate-client.js",
+    "prebuild": "npm run lint",
+    "build:cjs": "tsc -p tsconfig.cjs.json",
+    "build:esm": "tsc",
+    "build": "npm run build:cjs && npm run build:esm",
+    "watch": "tsc -p tsconfig.cjs.json --watch",
+    "pretest": "npm run build",
+    "test": "node ./node_modules/mocha/bin/mocha --loader=ts-node/esm --extension ts --timeout 10000",
+    "test:localnet": "SOLANA_LOCALNET=1 node ./node_modules/mocha/bin/mocha --loader=ts-node/esm --extension ts --timeout 10000",
+    "localnet:up": "npm run local:validator & sleep 15 && npm run test:localnet; kill -9 $(pgrep command solana-test-validator) || exit 0",
+    "posttest": "npm run lint",
+    "prepublishOnly": "shx rm -rf lib && npm run build && npm version patch",
+    "docs": "typedoc src/index.ts --githubPages --cleanOutputDir",
+    "lint": "gts lint ./src",
+    "clean": "gts clean",
+    "fix": "gts fix"
+  },
+  "dependencies": {
+    "@project-serum/anchor": "^0.25.0",
+    "@project-serum/borsh": "^0.2.5",
+    "@solana/spl-token": "^0.3.5",
+    "@solana/web3.js": "^1.66.1",
+    "@switchboard-xyz/common": "^2.1.8",
+    "big.js": "^6.2.1",
+    "bn.js": "^5.2.1"
+  },
+  "devDependencies": {
+    "@types/big.js": "^6.1.6",
+    "@types/bn.js": "^5.1.1",
+    "@types/chai": "^4.3.4",
+    "@types/expect": "^24.3.0",
+    "@types/mocha": "^10.0.0",
+    "@types/node": "^18.11.0",
+    "anchor-client-gen": "^0.25.0",
+    "chai": "^4.3.7",
+    "chalk": "^4.1.2",
+    "dotenv": "^16.0.3",
+    "gts": "^3.1.1",
+    "mocha": "^10.1.0",
+    "shelljs": "^0.8.5",
+    "shx": "^0.3.4",
+    "ts-mocha": "^10.0.0",
+    "ts-node": "^10.9.1",
+    "typedoc": "^0.23.16",
+    "typescript": "^4.8.4"
+  },
+  "pre-commit": [
+    "build"
+  ],
+  "engines": {
+    "npm": ">=7.0.0",
+    "node": ">=16.0.0"
+  }
+}

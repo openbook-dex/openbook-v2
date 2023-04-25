@@ -1,0 +1,20 @@
+{
+  "compilerOptions": {
+    "types": ["mocha", "chai"],
+    "typeRoots": ["./node_modules/@types"],
+    "module": "CommonJS",
+    "noEmit": true,
+    "esModuleInterop": true,
+    "rootDir": "../",
+    "resolveJsonModule": true,
+    "paths": {
+      "@switchboard-xyz/solana.js": ["../solana.js"]
+    }
+  },
+  "include": [
+    "./tests/**/*",
+    "./src/**/*",
+    "./target/types/anchor_feed_parser"
+  ],
+  "references": [{ "path": "../" }]
+}

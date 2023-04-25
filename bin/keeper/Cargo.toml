@@ -1,0 +1,28 @@
+[package]
+edition = "2021"
+name = "openbook-v2-keeper"
+version = "0.3.0"
+
+[[bin]]
+name = "keeper"
+path = "src/main.rs"
+
+[dependencies]
+anchor-client = "0.27.0"
+anchor-lang = "0.27.0"
+anchor-spl = "0.27.0"
+anyhow = "1.0"
+clap = {version = "3.1.8", features = ["derive", "env"]}
+dotenv = "0.15.0"
+env_logger = "0.8.4"
+fixed = {path = "../../3rdparty/fixed", version = "1.11.0", features = ["serde", "borsh"]}
+futures = "0.3.21"
+itertools = "0.10.3"
+log = "0.4.0"
+openbook-v2 = {path = "../../programs/openbook-v2", features = ["client"]}
+openbook-v2-client = {path = "../../lib/client"}
+pyth-sdk-solana = "0.1.0"
+serum_dex = {git = "https://github.com/openbook-dex/program.git", default-features = false, features = ["no-entrypoint", "program"]}
+solana-client = "~1.14.9"
+solana-sdk = "~1.14.9"
+tokio = {version = "1.14.1", features = ["rt-multi-thread", "time", "macros", "sync"]}

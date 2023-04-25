@@ -1,0 +1,15 @@
+version: "3.3"
+services:
+  switchboard:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    network_mode: host
+    restart: always
+    environment:
+      - RPC_URL=YOUR_RPC_URL_HERE
+      - CLUSTER=mainnet-beta
+      - AGGREGATOR_KEY=3RfJxApwV2tYB5mArdD7aRbBk7P6BQCSSFQzR2GXUzA2
+      - PAGERDUTY_EVENT_KEY=YOUR_PAGE_KEY_HERE
+      - PAGE_THRESHOLD=10000 # LAMPORTS
+      # - PAGE_THRESHOLD=1000000000 # LAMPORTS

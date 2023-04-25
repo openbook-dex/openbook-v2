@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "target": "ES2019",
+    "lib": ["es2019", "dom"],
+    "moduleResolution": "node",
+    "types": ["node", "mocha", "chai"],
+    "typeRoots": ["./node_modules/@types"],
+    "module": "CommonJS",
+    "noEmit": true,
+    "esModuleInterop": true,
+    "paths": {
+      "@switchboard-xyz/switchboard-v2": ["../../javascript/switchboard-v2"],
+      "@switchboard-xyz/sbv2-utils": ["../../javascript/sbv2-utils"]
+    }
+  },
+  "include": ["tests/**/*", "client/**/*", "./target/types/anchor_feed_parser"],
+  "references": [
+    { "path": "../../javascript/switchboard-v2" },
+    { "path": "../../javascript/sbv2-utils" }
+  ]
+}

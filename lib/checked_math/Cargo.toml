@@ -1,0 +1,24 @@
+[package]
+name = "checked_math"
+description = "Proc macros for changing the checking behavior of math expressions"
+version = "0.1.0"
+authors = ["Ryan Levick<ryan.levick@gmail.com>", "Christian Kamm <mail@ckamm.de>"]
+license = "MIT"
+edition = "2021"
+autotests = false
+
+[lib]
+proc-macro = true
+
+[[test]]
+name = "tests"
+path = "tests/progress.rs"
+
+[dev-dependencies]
+trybuild = "1.0"
+
+[dependencies]
+syn = { version = "1.0.86", features = ["full", "extra-traits"] }
+quote = "1.0.15"
+proc-macro2 = "1.0.36"
+proc-macro-error = "1.0.4"

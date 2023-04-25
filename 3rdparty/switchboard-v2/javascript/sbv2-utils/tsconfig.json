@@ -1,0 +1,16 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "esModuleInterop": true,
+    "moduleResolution": "node",
+    "module": "es2022",
+    "target": "es2019",
+    "outDir": "lib/esm/",
+    "rootDir": "./src",
+    "paths": {
+      "@solana/spl-token": [
+        "./node_modules/@solana/spl-token"
+      ]
+    }
+  }
+}

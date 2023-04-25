@@ -1,0 +1,57 @@
+[package]
+description = "Created with Anchor"
+edition = "2021"
+name = "openbook-v2"
+version = "0.1.0"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "openbook_v2"
+
+[features]
+cpi = ["no-entrypoint"]
+default = []
+no-entrypoint = []
+no-idl = []
+no-log-ix-name = []
+test-bpf = ["client"]
+client = ["solana-sdk", "no-entrypoint"]
+# Enables GPL-licensed parts of the code. See LICENSE file.
+enable-gpl = []
+
+
+[dependencies]
+anchor-lang = "0.27.0" 
+anchor-spl = "0.27.0" 
+arrayref = "0.3.6"
+bincode = "1.3.3"
+borsh = { version = "0.9.3", features = ["const-generics"] }
+bytemuck = { version = "^1.7.2", features = ["derive", "min_const_generics"] }
+default-env = "0.1.1"
+derivative = "2.2.0"
+fixed = {path = "../../3rdparty/fixed", version = "1.11.0", features = ["serde", "borsh", "debug-assert-in-release"]}
+num_enum = "0.5.1"
+pyth-sdk-solana = "0.1.0"
+serde = "^1.0"
+solana-address-lookup-table-program = "~1.14.16"
+solana-program = "~1.14.16"
+solana-sdk = {version = "~1.14.16", default-features = false, optional = true}
+solana-security-txt = "1.1.0"
+static_assertions = "1.1"
+switchboard-program = ">=0.2.0"
+switchboard-v2 = "0.1.17"
+
+[dev-dependencies]
+async-trait = "0.1.52"
+base64 = "0.13.0"
+bincode = "^1.3.1"
+log = "0.4.14"
+env_logger = "0.9.0"
+itertools = "0.10.3"
+lazy_static = "1.4.0"
+num = "0.4.0"
+rand = "0.8.4"
+solana-program-test = "~1.14.16"
+solana-logger = "~1.14.16"
+spl-token = { version = "^3.5.0", features = ["no-entrypoint"] }
+spl-associated-token-account = { version = "^1.0.3", features = ["no-entrypoint"] }
