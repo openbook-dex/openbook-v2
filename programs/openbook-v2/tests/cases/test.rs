@@ -796,11 +796,11 @@ async fn test_expired_orders() -> Result<(), TransportError> {
 
     // Advance clock
     solana.advance_clock(2).await;
-
+    // Bid isn't available anymore, shouldn't be matched
     send_tx(
         solana,
         PlaceOrderInstruction {
-            open_orders_account: account_0,
+            open_orders_account: account_1,
             market,
             owner,
             payer: owner_token_0,
@@ -818,7 +818,48 @@ async fn test_expired_orders() -> Result<(), TransportError> {
     .await
     .unwrap();
 
+    {
+        let open_orders_account_0 = solana.get_account::<OpenOrdersAccount>(account_0).await;
+        let open_orders_account_1 = solana.get_account::<OpenOrdersAccount>(account_1).await;
 
+        assert_eq!(open_orders_account_0.position.bids_base_lots, 1);
+        assert_eq!(open_orders_account_0.position.asks_base_lots, 0);
+        assert_eq!(open_orders_account_0.position.taker_base_lots, 0);
+        assert_eq!(open_orders_account_0.position.base_free_lots, 0);
+        assert_eq!(open_orders_account_0.position.quote_free_lots, 0);
+        assert_eq!(open_orders_account_1.position.bids_base_lots, 0);
+        assert_eq!(open_orders_account_1.position.asks_base_lots, 1);
+        assert_eq!(open_orders_account_1.position.taker_base_lots, 0);
+        assert_eq!(open_orders_account_1.position.base_free_lots, 0);
+        assert_eq!(open_orders_account_1.position.quote_free_lots, 0);
+    }
+
+    send_tx(
+        solana,
+        ConsumeEventsInstruction {
+            market,
+            open_orders_accounts: vec![account_0, account_1],
+        },
+    )
+    .await
+    .unwrap();
+
+    // ConsumeEvents removes the bids_base_lots in the Out event
+    {
+        let open_orders_account_0 = solana.get_account::<OpenOrdersAccount>(account_0).await;
+        let open_orders_account_1 = solana.get_account::<OpenOrdersAccount>(account_1).await;
+
+        assert_eq!(open_orders_account_0.position.bids_base_lots, 0);
+        assert_eq!(open_orders_account_0.position.asks_base_lots, 0);
+        assert_eq!(open_orders_account_0.position.taker_base_lots, 0);
+        assert_eq!(open_orders_account_0.position.base_free_lots, 0);
+        assert_eq!(open_orders_account_0.position.quote_free_lots, 10000);
+        assert_eq!(open_orders_account_1.position.bids_base_lots, 0);
+        assert_eq!(open_orders_account_1.position.asks_base_lots, 1);
+        assert_eq!(open_orders_account_1.position.taker_base_lots, 0);
+        assert_eq!(open_orders_account_1.position.base_free_lots, 0);
+        assert_eq!(open_orders_account_1.position.quote_free_lots, 0);
+    }
 
     Ok(())
 }
