@@ -9,6 +9,7 @@ pub struct CloseMarket<'info> {
 
     #[account(
         mut,
+        has_one = admin,
         has_one = bids,
         has_one = asks,
         has_one = event_queue,
