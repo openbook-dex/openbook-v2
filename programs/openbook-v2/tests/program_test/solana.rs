@@ -119,7 +119,7 @@ impl SolanaCookie {
         self.advance_clock_to(ts / window * window + window).await
     }
 
-    pub async fn advance_clock(&self) {
+    pub async fn advance_clock(&self, seconds: u64) {
         let clock = self.get_clock().await;
         self.advance_clock_to(clock.unix_timestamp + 1).await
     }

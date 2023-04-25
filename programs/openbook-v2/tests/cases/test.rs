@@ -794,7 +794,31 @@ async fn test_expired_orders() -> Result<(), TransportError> {
         assert_eq!(open_orders_account_0.position.quote_free_lots, 0);
     }
 
-    sleep(Duration::from_secs(2)).await;
+    // Advance clock
+    solana.advance_clock(2).await;
+
+    send_tx(
+        solana,
+        PlaceOrderInstruction {
+            open_orders_account: account_0,
+            market,
+            owner,
+            payer: owner_token_0,
+            base_vault,
+            quote_vault,
+            side: Side::Ask,
+            price_lots,
+            max_base_lots: 1,
+            max_quote_lots: 10000,
+            reduce_only: false,
+            client_order_id: 0,
+            expiry_timestamp: 0,
+        },
+    )
+    .await
+    .unwrap();
+
+
 
     Ok(())
 }
