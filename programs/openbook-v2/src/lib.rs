@@ -203,6 +203,3 @@ pub mod openbook_v2 {
         Ok(())
     }
 }
-
-#[derive(Accounts)]
-pub struct Initialize {}
