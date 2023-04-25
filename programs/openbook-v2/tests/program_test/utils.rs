@@ -75,6 +75,7 @@ impl<T: std::borrow::Borrow<Keypair>> From<T> for TestKeypair {
         Self(k.borrow().to_bytes())
     }
 }
+#[allow(clippy::from_over_into)]
 impl Into<Keypair> for &TestKeypair {
     fn into(self) -> Keypair {
         self.to_keypair()
@@ -93,18 +94,19 @@ pub fn assert_openbook_error<T>(
     expected_error: u32,
     comment: String,
 ) {
+    #[allow(clippy::collapsible_match)]
     match result {
-        Ok(_) => assert!(false, "No error returned"),
+        Ok(_) => panic!("No error returned"),
         Err(TransportError::TransactionError(tx_err)) => match tx_err {
             TransactionError::InstructionError(_, err) => match err {
                 InstructionError::Custom(err_num) => {
                     assert_eq!(*err_num, expected_error, "{}", comment);
                 }
-                _ => assert!(false, "Not an openbook error"),
+                _ => panic!("Not an openbook error"),
             },
-            _ => assert!(false, "Not an openbook error"),
+            _ => panic!("Not an openbook error"),
         },
-        _ => assert!(false, "Not an openbook error"),
+        _ => panic!("Not an openbook error"),
     }
 }
 

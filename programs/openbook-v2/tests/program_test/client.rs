@@ -1,11 +1,9 @@
 #![allow(dead_code)]
 
 use anchor_lang::prelude::*;
-use anchor_lang::solana_program::sysvar::{self, SysvarId};
-use anchor_spl::token::{Token, TokenAccount};
+use anchor_spl::token::Token;
 use fixed::types::I80F48;
-use itertools::Itertools;
-use openbook_v2::state::{OpenOrdersAccount, OpenOrdersAccountValue};
+use openbook_v2::state::OpenOrdersAccountValue;
 use solana_program::instruction::Instruction;
 use solana_program_test::BanksClientError;
 use solana_sdk::instruction;
@@ -126,7 +124,7 @@ async fn get_oracle_address_from_market_address(
     account_loader: &impl ClientAccountLoader,
     market_address: &Pubkey,
 ) -> Pubkey {
-    let market: Market = account_loader.load(&market_address).await.unwrap();
+    let market: Market = account_loader.load(market_address).await.unwrap();
     market.oracle
 }
 
@@ -140,7 +138,6 @@ pub async fn get_open_orders_account(
 
 pub async fn set_stub_oracle_price(
     solana: &SolanaCookie,
-    market: Pubkey,
     token: &super::setup::Token,
     admin: TestKeypair,
     price: f64,
@@ -359,7 +356,7 @@ impl ClientInstruction for PlaceOrderInstruction {
             token_program: Token::id(),
             system_program: System::id(),
         };
-        let mut instruction = make_instruction(program_id, &accounts, instruction);
+        let instruction = make_instruction(program_id, &accounts, instruction);
 
         (accounts, instruction)
     }
@@ -525,12 +522,10 @@ impl ClientInstruction for SettleFundsInstruction {
     type Instruction = openbook_v2::instruction::SettleFunds;
     async fn to_instruction(
         &self,
-        account_loader: impl ClientAccountLoader + 'async_trait,
+        _account_loader: impl ClientAccountLoader + 'async_trait,
     ) -> (Self::Accounts, instruction::Instruction) {
         let program_id = openbook_v2::id();
         let instruction = Self::Instruction {};
-
-        let market: Market = account_loader.load(&self.market).await.unwrap();
 
         let accounts = Self::Accounts {
             open_orders_account: self.open_orders_account,
@@ -542,7 +537,7 @@ impl ClientInstruction for SettleFundsInstruction {
             token_program: Token::id(),
             system_program: System::id(),
         };
-        let mut instruction = make_instruction(program_id, &accounts, instruction);
+        let instruction = make_instruction(program_id, &accounts, instruction);
 
         (accounts, instruction)
     }
@@ -569,15 +564,13 @@ impl ClientInstruction for DepositInstruction {
     type Instruction = openbook_v2::instruction::Deposit;
     async fn to_instruction(
         &self,
-        account_loader: impl ClientAccountLoader + 'async_trait,
+        _account_loader: impl ClientAccountLoader + 'async_trait,
     ) -> (Self::Accounts, instruction::Instruction) {
         let program_id = openbook_v2::id();
         let instruction = Self::Instruction {
             base_amount_lots: self.base_amount_lots,
             quote_amount_lots: self.quote_amount_lots,
         };
-
-        let market: Market = account_loader.load(&self.market).await.unwrap();
 
         let accounts = Self::Accounts {
             owner: self.owner.pubkey(),
@@ -590,7 +583,7 @@ impl ClientInstruction for DepositInstruction {
             token_program: Token::id(),
             system_program: System::id(),
         };
-        let mut instruction = make_instruction(program_id, &accounts, instruction);
+        let instruction = make_instruction(program_id, &accounts, instruction);
 
         (accounts, instruction)
     }

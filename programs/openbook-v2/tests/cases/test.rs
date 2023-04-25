@@ -13,8 +13,6 @@ async fn test_simple_settle() -> Result<(), TransportError> {
     let owner_token_0 = context.users[0].token_accounts[0];
     let owner_token_1 = context.users[0].token_accounts[1];
 
-    let initial_token_deposit = 10_000;
-
     let tokens = Token::create(mints.to_vec(), solana, admin, payer).await;
 
     //
@@ -48,37 +46,15 @@ async fn test_simple_settle() -> Result<(), TransportError> {
             quote_mint: mints[1].pubkey,
             base_vault,
             quote_vault,
-            ..CreateMarketInstruction::with_new_book_and_queue(&solana, &tokens[1]).await
+            ..CreateMarketInstruction::with_new_book_and_queue(solana, &tokens[1]).await
         },
     )
     .await
     .unwrap();
 
-    let settler =
-        create_funded_account(&solana, owner, market, 251, &context.users[1], &[], 0).await;
-    let settler_owner = owner.clone();
+    let account_0 = create_funded_account(solana, owner, market, 0, &context.users[1]).await;
 
-    let account_0 = create_funded_account(
-        &solana,
-        owner,
-        market,
-        0,
-        &context.users[1],
-        &mints[0..1],
-        initial_token_deposit,
-    )
-    .await;
-
-    let account_1 = create_funded_account(
-        &solana,
-        owner,
-        market,
-        1,
-        &context.users[1],
-        &mints[0..1],
-        initial_token_deposit,
-    )
-    .await;
+    let account_1 = create_funded_account(solana, owner, market, 1, &context.users[1]).await;
 
     //
     // TEST: Create another market
@@ -92,9 +68,7 @@ async fn test_simple_settle() -> Result<(), TransportError> {
         .create_associated_token_account(&market_2, mints[1].pubkey)
         .await;
 
-    let openbook_v2::accounts::CreateMarket {
-        market: market_2, ..
-    } = send_tx(
+    send_tx(
         solana,
         CreateMarketInstruction {
             admin,
@@ -108,7 +82,7 @@ async fn test_simple_settle() -> Result<(), TransportError> {
             quote_mint: mints[1].pubkey,
             base_vault: base_vault_2,
             quote_vault: quote_vault_2,
-            ..CreateMarketInstruction::with_new_book_and_queue(&solana, &tokens[2]).await
+            ..CreateMarketInstruction::with_new_book_and_queue(solana, &tokens[2]).await
         },
     )
     .await
@@ -120,7 +94,7 @@ async fn test_simple_settle() -> Result<(), TransportError> {
     };
 
     // Set the initial oracle price
-    set_stub_oracle_price(solana, market, &tokens[1], admin, 1000.0).await;
+    set_stub_oracle_price(solana, &tokens[1], admin, 1000.0).await;
 
     send_tx(
         solana,
@@ -293,8 +267,6 @@ async fn test_cancel_orders() -> Result<(), TransportError> {
     let owner_token_0 = context.users[0].token_accounts[0];
     let owner_token_1 = context.users[0].token_accounts[1];
 
-    let initial_token_deposit = 10_000;
-
     let tokens = Token::create(mints.to_vec(), solana, admin, payer).await;
 
     //
@@ -328,39 +300,17 @@ async fn test_cancel_orders() -> Result<(), TransportError> {
             quote_mint: mints[1].pubkey,
             base_vault,
             quote_vault,
-            ..CreateMarketInstruction::with_new_book_and_queue(&solana, &tokens[1]).await
+            ..CreateMarketInstruction::with_new_book_and_queue(solana, &tokens[1]).await
         },
     )
     .await
     .unwrap();
 
-    set_stub_oracle_price(solana, market, &tokens[1], admin, 1000.0).await;
+    set_stub_oracle_price(solana, &tokens[1], admin, 1000.0).await;
 
-    let settler =
-        create_funded_account(&solana, owner, market, 251, &context.users[1], &[], 0).await;
-    let settler_owner = owner.clone();
+    let account_0 = create_funded_account(solana, owner, market, 0, &context.users[1]).await;
 
-    let account_0 = create_funded_account(
-        &solana,
-        owner,
-        market,
-        0,
-        &context.users[1],
-        &mints[0..1],
-        initial_token_deposit,
-    )
-    .await;
-
-    let account_1 = create_funded_account(
-        &solana,
-        owner,
-        market,
-        1,
-        &context.users[1],
-        &mints[0..1],
-        initial_token_deposit,
-    )
-    .await;
+    let account_1 = create_funded_account(solana, owner, market, 1, &context.users[1]).await;
 
     let price_lots = {
         let market = solana.get_account::<Market>(market).await;
@@ -493,8 +443,6 @@ async fn test_cancel_orders() -> Result<(), TransportError> {
 
     {
         let open_orders_account_0 = solana.get_account::<OpenOrdersAccount>(account_0).await;
-        let open_orders_account_1 = solana.get_account::<OpenOrdersAccount>(account_1).await;
-
         assert_eq!(open_orders_account_0.position.base_free_lots, 101);
         assert_eq!(open_orders_account_0.position.quote_free_lots, 0);
     }
@@ -598,7 +546,6 @@ async fn test_cancel_orders() -> Result<(), TransportError> {
 
     {
         let open_orders_account_0 = solana.get_account::<OpenOrdersAccount>(account_0).await;
-        let open_orders_account_1 = solana.get_account::<OpenOrdersAccount>(account_1).await;
 
         assert_eq!(open_orders_account_0.position.asks_base_lots, 0);
         assert_eq!(open_orders_account_0.position.base_free_lots, 1);
@@ -629,7 +576,6 @@ async fn test_cancel_orders() -> Result<(), TransportError> {
 
     {
         let open_orders_account_0 = solana.get_account::<OpenOrdersAccount>(account_0).await;
-        let open_orders_account_1 = solana.get_account::<OpenOrdersAccount>(account_1).await;
 
         assert_eq!(open_orders_account_0.position.bids_base_lots, 1);
         assert_eq!(open_orders_account_0.position.asks_base_lots, 0);
@@ -657,7 +603,6 @@ async fn test_cancel_orders() -> Result<(), TransportError> {
 
     {
         let open_orders_account_0 = solana.get_account::<OpenOrdersAccount>(account_0).await;
-        let open_orders_account_1 = solana.get_account::<OpenOrdersAccount>(account_1).await;
 
         assert_eq!(open_orders_account_0.position.base_free_lots, 1);
         assert_eq!(open_orders_account_0.position.quote_free_lots, 10000);
@@ -678,8 +623,6 @@ async fn test_expired_orders() -> Result<(), TransportError> {
 
     let owner_token_0 = context.users[0].token_accounts[0];
     let owner_token_1 = context.users[0].token_accounts[1];
-
-    let initial_token_deposit = 10_000;
 
     let tokens = Token::create(mints.to_vec(), solana, admin, payer).await;
 
@@ -714,39 +657,17 @@ async fn test_expired_orders() -> Result<(), TransportError> {
             quote_mint: mints[1].pubkey,
             base_vault,
             quote_vault,
-            ..CreateMarketInstruction::with_new_book_and_queue(&solana, &tokens[1]).await
+            ..CreateMarketInstruction::with_new_book_and_queue(solana, &tokens[1]).await
         },
     )
     .await
     .unwrap();
 
-    set_stub_oracle_price(solana, market, &tokens[1], admin, 1000.0).await;
+    set_stub_oracle_price(solana, &tokens[1], admin, 1000.0).await;
 
-    let settler =
-        create_funded_account(&solana, owner, market, 251, &context.users[1], &[], 0).await;
-    let settler_owner = owner.clone();
+    let account_0 = create_funded_account(solana, owner, market, 0, &context.users[1]).await;
 
-    let account_0 = create_funded_account(
-        &solana,
-        owner,
-        market,
-        0,
-        &context.users[1],
-        &mints[0..1],
-        initial_token_deposit,
-    )
-    .await;
-
-    let account_1 = create_funded_account(
-        &solana,
-        owner,
-        market,
-        1,
-        &context.users[1],
-        &mints[0..1],
-        initial_token_deposit,
-    )
-    .await;
+    let account_1 = create_funded_account(solana, owner, market, 1, &context.users[1]).await;
 
     let price_lots = {
         let market = solana.get_account::<Market>(market).await;
@@ -821,9 +742,9 @@ async fn test_expired_orders() -> Result<(), TransportError> {
     //     let market_acc = solana.get_account::<Market>(market).await;
     //     let event_queue = solana.get_account::<EventQueue>(market_acc.event_queue).await;
     //     assert_eq!(event_queue.header.count(), 1);
-    
+
     // }
-    {      
+    {
         let open_orders_account_0 = solana.get_account::<OpenOrdersAccount>(account_0).await;
         let open_orders_account_1 = solana.get_account::<OpenOrdersAccount>(account_1).await;
 
@@ -867,8 +788,10 @@ async fn test_expired_orders() -> Result<(), TransportError> {
     // No more events on event_queue
     {
         let market_acc = solana.get_account::<Market>(market).await;
-        let event_queue = solana.get_account::<EventQueue>(market_acc.event_queue).await;
-        
+        let event_queue = solana
+            .get_account::<EventQueue>(market_acc.event_queue)
+            .await;
+
         assert_eq!(event_queue.header.count(), 0);
     }
 

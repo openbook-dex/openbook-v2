@@ -1,10 +1,9 @@
 use std::cmp;
 
 use anchor_lang::prelude::*;
-use anchor_lang::system_program;
+
 use anchor_spl::token::{self, Transfer};
 use fixed::types::I80F48;
-use fixed::FixedI128;
 
 use crate::accounts_ix::*;
 use crate::accounts_zerocopy::*;
@@ -112,6 +111,7 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<
     Ok(order_id_opt)
 }
 
+#[cfg(test)]
 fn reduce_only_max_base_lots(pp: &Position, order: &Order, market_reduce_only: bool) -> i64 {
     let effective_pos = pp.effective_base_position_lots();
     msg!(

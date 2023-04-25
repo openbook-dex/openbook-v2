@@ -1,4 +1,5 @@
 #![allow(dead_code)]
+#![allow(clippy::await_holding_refcell_ref)]
 
 use std::cell::RefCell;
 use std::sync::{Arc, RwLock};
@@ -44,14 +45,14 @@ impl SolanaCookie {
         let mut context = self.context.borrow_mut();
 
         let mut transaction =
-            Transaction::new_with_payer(&instructions, Some(&context.payer.pubkey()));
+            Transaction::new_with_payer(instructions, Some(&context.payer.pubkey()));
 
         let mut all_signers = vec![&context.payer];
         let signer_keypairs =
             signers.map(|signers| signers.iter().map(|s| s.into()).collect::<Vec<Keypair>>());
         let signer_keypair_refs = signer_keypairs
             .as_ref()
-            .map(|kps| kps.iter().map(|kp| kp).collect::<Vec<&Keypair>>());
+            .map(|kps| kps.iter().collect::<Vec<&Keypair>>());
 
         if let Some(signer_keypair_refs) = signer_keypair_refs {
             all_signers.extend(signer_keypair_refs.iter());
@@ -119,9 +120,9 @@ impl SolanaCookie {
         self.advance_clock_to(ts / window * window + window).await
     }
 
-    pub async fn advance_clock(&self, seconds: u64) {
+    pub async fn advance_clock(&self, seconds: i64) {
         let clock = self.get_clock().await;
-        self.advance_clock_to(clock.unix_timestamp + 1).await
+        self.advance_clock_to(clock.unix_timestamp + seconds).await
     }
 
     pub async fn get_newest_slot_from_history(&self) -> u64 {
@@ -142,7 +143,7 @@ impl SolanaCookie {
             &key.pubkey(),
             rent,
             len as u64,
-            &owner,
+            owner,
         );
         self.process_transaction(&[create_account_instr], Some(&[key]))
             .await
@@ -159,7 +160,7 @@ impl SolanaCookie {
             &key.pubkey(),
             rent,
             len as u64,
-            &owner,
+            owner,
         );
         self.process_transaction(&[create_account_instr], Some(&[key]))
             .await
@@ -191,7 +192,7 @@ impl SolanaCookie {
         self.process_transaction(&instructions, Some(&[keypair]))
             .await
             .unwrap();
-        return keypair.pubkey();
+        keypair.pubkey()
     }
 
     pub async fn create_associated_token_account(&self, owner: &Pubkey, mint: Pubkey) -> Pubkey {
@@ -207,7 +208,7 @@ impl SolanaCookie {
             .await
             .unwrap();
 
-        return spl_associated_token_account::get_associated_token_address(owner, &mint);
+        spl_associated_token_account::get_associated_token_address(owner, &mint)
     }
 
     // Note: Only one table can be created per authority per slot!

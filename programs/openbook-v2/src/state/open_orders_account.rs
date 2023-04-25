@@ -11,7 +11,6 @@ use solana_program::program_memory::sol_memmove;
 use static_assertions::const_assert_eq;
 
 use crate::error::*;
-use crate::state::FREE_ORDER_SLOT;
 
 use super::FillEvent;
 use super::LeafNode;

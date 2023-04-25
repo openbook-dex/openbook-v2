@@ -48,7 +48,7 @@ impl Token {
             let token_index = index as u16;
             tokens.push(Token {
                 index: token_index,
-                mint: mint.clone(),
+                mint: *mint,
                 oracle,
                 mint_info: mint.pubkey,
             });
@@ -63,8 +63,6 @@ pub async fn create_funded_account(
     market: Pubkey,
     account_num: u32,
     payer: &UserCookie,
-    mints: &[MintCookie],
-    amounts: u64,
 ) -> Pubkey {
     let account = send_tx(
         solana,
