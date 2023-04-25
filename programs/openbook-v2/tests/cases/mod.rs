@@ -11,7 +11,4 @@ pub use super::program_test;
 
 pub use utils::assert_equal_fixed_f64 as assert_equal;
 
-use std::time::Duration;
-use tokio::time::sleep;
-
 mod test;

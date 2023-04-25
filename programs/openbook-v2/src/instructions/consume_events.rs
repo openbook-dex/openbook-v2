@@ -7,6 +7,9 @@ use crate::state::*;
 use crate::accounts_ix::*;
 use crate::logs::{emit_balances, FillLogV2};
 
+// Max events to consume per ix.
+const MAX_EVENTS_CONSUME: usize = 8;
+
 /// Load a open_orders account by key from the list of account infos.
 ///
 /// Message and return Ok() if it's missing, to lock in successful processing
@@ -45,7 +48,7 @@ macro_rules! load_open_orders_acc {
 }
 
 pub fn consume_events(ctx: Context<ConsumeEvents>, limit: usize) -> Result<()> {
-    let limit = std::cmp::min(limit, 8);
+    let limit = std::cmp::min(limit, MAX_EVENTS_CONSUME);
 
     let mut market = ctx.accounts.market.load_mut()?;
     let mut event_queue = ctx.accounts.event_queue.load_mut()?;

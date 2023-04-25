@@ -130,10 +130,6 @@ async fn get_oracle_address_from_market_address(
     market.oracle
 }
 
-fn from_serum_style_pubkey(d: &[u64; 4]) -> Pubkey {
-    Pubkey::new(bytemuck::cast_slice(d as &[_]))
-}
-
 pub async fn get_open_orders_account(
     solana: &SolanaCookie,
     account: Pubkey,
