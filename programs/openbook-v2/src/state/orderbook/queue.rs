@@ -125,7 +125,7 @@ impl<'a> Iterator for EventQueueIterator<'a> {
 #[derive(bytemuck::Pod, bytemuck::Zeroable)]
 pub struct EventQueueHeader {
     head: u32,
-    count: u32,
+    pub count: u32,
     pub seq_num: u64,
 }
 const_assert_eq!(std::mem::size_of::<EventQueueHeader>(), 16);

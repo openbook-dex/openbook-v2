@@ -251,6 +251,17 @@ async fn test_simple_settle() -> Result<(), TransportError> {
         assert_eq!(open_orders_account_1.position.quote_free_lots, 0);
     }
 
+    send_tx(
+        solana,
+        CloseMarketInstruction {
+            admin,
+            market,
+            sol_destination: owner.pubkey(),
+        },
+    )
+    .await
+    .unwrap();
+
     Ok(())
 }
 

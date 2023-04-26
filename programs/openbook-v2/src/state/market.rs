@@ -14,6 +14,8 @@ pub type MarketIndex = u16;
 #[account(zero_copy)]
 #[derive(Debug)]
 pub struct Market {
+    /// Admin who can close this market
+    pub admin: Pubkey,
     /// Index of this market
     pub market_index: MarketIndex,
 
@@ -102,6 +104,7 @@ pub struct Market {
 
 const_assert_eq!(
     size_of::<Market>(),
+    32 + // admin
     size_of::<MarketIndex>() + // size of MarketIndex
     1 + // size of bump
     1 + // size of base_decimals
@@ -129,7 +132,7 @@ const_assert_eq!(
     8 + // size of quote_fees_accrued
     1888 // size of reserved
 );
-const_assert_eq!(size_of::<Market>(), 2704);
+const_assert_eq!(size_of::<Market>(), 2736);
 const_assert_eq!(size_of::<Market>() % 8, 0);
 
 impl Market {
@@ -174,6 +177,7 @@ impl Market {
     /// Creates default market for tests
     pub fn default_for_tests() -> Market {
         Market {
+            admin: Pubkey::new_unique(),
             market_index: 0,
             bump: 0,
             base_decimals: 0,

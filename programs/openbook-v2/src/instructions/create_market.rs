@@ -24,6 +24,7 @@ pub fn create_market(
 
     let mut openbook_market = ctx.accounts.market.load_init()?;
     *openbook_market = Market {
+        admin: ctx.accounts.admin.key(),
         market_index,
         bump: *ctx.bumps.get("market").ok_or(OpenBookError::SomeError)?,
         base_decimals: ctx.accounts.base_mint.decimals,
