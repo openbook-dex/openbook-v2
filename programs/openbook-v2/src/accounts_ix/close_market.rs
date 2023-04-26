@@ -1,7 +1,6 @@
+use crate::state::*;
 use anchor_lang::prelude::*;
 use anchor_spl::token::Token;
-
-use crate::{error::OpenBookError, state::*};
 
 #[derive(Accounts)]
 pub struct CloseMarket<'info> {

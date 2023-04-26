@@ -98,7 +98,7 @@ pub enum OpenBookError {
     #[msg("HealthRegions allow only specific instructions between Begin and End")]
     HealthRegionBadInnerInstruction,
     #[msg("Event queue contains elements and market can't be closed")]
-    EventQueueContainsElements
+    EventQueueContainsElements,
 }
 
 impl OpenBookError {
