@@ -5,7 +5,7 @@ use crate::error::OpenBookError;
 use crate::state::*;
 
 use crate::accounts_ix::*;
-use crate::logs::{emit_balances, FillLogV2};
+use crate::logs::{emit_balances, FillLog};
 
 // Max events to consume per ix.
 const MAX_EVENTS_CONSUME: usize = 8;
@@ -80,7 +80,7 @@ pub fn consume_events(ctx: Context<ConsumeEvents>, limit: usize) -> Result<()> {
                     emit_balances(fill.maker, &maker.fixed.position, &market);
                     emit_balances(fill.taker, &taker.fixed.position, &market);
                 }
-                emit!(FillLogV2 {
+                emit!(FillLog {
                     taker_side: fill.taker_side,
                     maker_slot: fill.maker_slot,
                     maker_out: fill.maker_out(),

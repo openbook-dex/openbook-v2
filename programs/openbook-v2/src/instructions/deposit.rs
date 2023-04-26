@@ -1,4 +1,5 @@
 use crate::accounts_ix::Deposit;
+use crate::logs::DepositLog;
 use crate::state::*;
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Transfer};
@@ -21,6 +22,12 @@ pub fn deposit(ctx: Context<Deposit>, base_amount_lots: u64, quote_amount_lots: 
             base_amount_lots * (market.base_lot_size as u64),
         )?;
         open_orders_account.fixed.position.base_free_lots += base_amount_lots as i64;
+
+        emit!(DepositLog {
+            open_orders_acc: ctx.accounts.open_orders_account.key(),
+            signer: ctx.accounts.owner.key(),
+            quantity: base_amount_lots * (market.base_lot_size as u64),
+        });
     }
 
     if quote_amount_lots != 0 {
@@ -38,6 +45,12 @@ pub fn deposit(ctx: Context<Deposit>, base_amount_lots: u64, quote_amount_lots: 
         )?;
 
         open_orders_account.fixed.position.quote_free_lots += quote_amount_lots as i64;
+
+        emit!(DepositLog {
+            open_orders_acc: ctx.accounts.open_orders_account.key(),
+            signer: ctx.accounts.owner.key(),
+            quantity: quote_amount_lots * (market.quote_lot_size as u64),
+        });
     }
 
     Ok(())
