@@ -1,0 +1,6 @@
+[submodule "3rdparty/fixed"]
+	path = 3rdparty/fixed
+	url = https://gitlab.com/ckamm/fixed.git
+[submodule "3rdparty/switchboard-v2"]
+	path = 3rdparty/switchboard-v2
+	url = https://github.com/blockworks-foundation/sbv2-solana.git
