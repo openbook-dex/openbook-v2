@@ -325,7 +325,7 @@ mod tests {
                 power_of_ten(idx),
                 I80F48::from_str(&format!(
                     "0.{}1",
-                    str::repeat("0", (idx.abs() as usize) - 1)
+                    str::repeat("0", (idx.unsigned_abs() as usize) - 1)
                 ))
                 .unwrap()
             )
@@ -336,7 +336,11 @@ mod tests {
         for idx in 1..=12 {
             assert_eq!(
                 power_of_ten(idx),
-                I80F48::from_str(&format!("1{}", str::repeat("0", idx.abs() as usize))).unwrap()
+                I80F48::from_str(&format!(
+                    "1{}",
+                    str::repeat("0", idx.unsigned_abs() as usize)
+                ))
+                .unwrap()
             )
         }
     }

@@ -1,4 +1,4 @@
-use crate::{error::OpenBookError, state::*};
+use crate::state::*;
 use anchor_lang::prelude::*;
 use anchor_spl::token::Mint;
 

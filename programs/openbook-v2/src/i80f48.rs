@@ -193,6 +193,7 @@ mod tests {
                 }))
             })();
             assert_eq!(actual.is_some(), expected.is_some());
+            #[allow(clippy::unnecessary_unwrap)]
             if actual.is_some() && expected.is_some() {
                 let actual = actual.unwrap();
                 let expected = expected.unwrap();
@@ -231,7 +232,7 @@ mod tests {
                 let a = I80F48::from_bits(1 << i);
                 let b = I80F48::from_bits(1 << j);
                 let s = i + 48 - j;
-                let r = if s >= 0 && s < 127 {
+                let r = if (0..127).contains(&s) {
                     Some(I80F48::from_bits(1 << s))
                 } else if s < 0 {
                     Some(I80F48::ZERO)
@@ -251,6 +252,7 @@ mod tests {
             let actual = a.checked_div_30bit_precision(b);
             let expected = a.checked_div(b);
             assert_eq!(actual.is_some(), expected.is_some());
+            #[allow(clippy::unnecessary_unwrap)]
             if actual.is_some() && expected.is_some() {
                 let actual = actual.unwrap();
                 let expected = expected.unwrap();
@@ -278,6 +280,7 @@ mod tests {
             let actual = a.checked_div_f64_precision(b);
             let expected = a.checked_div(b);
             assert_eq!(actual.is_some(), expected.is_some());
+            #[allow(clippy::unnecessary_unwrap)]
             if actual.is_some() && expected.is_some() {
                 let actual = actual.unwrap();
                 let expected = expected.unwrap();

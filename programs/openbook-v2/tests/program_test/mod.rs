@@ -1,7 +1,6 @@
 #![allow(dead_code)]
 
 use std::cell::RefCell;
-use std::str::FromStr;
 use std::{sync::Arc, sync::RwLock};
 
 use log::*;
@@ -73,6 +72,7 @@ impl Log for LoggerWrapper {
     fn flush(&self) {}
 }
 
+#[derive(Default)]
 pub struct TestContextBuilder {
     test: ProgramTest,
     logger_capture: Arc<RwLock<Vec<String>>>,
@@ -126,8 +126,8 @@ impl TestContextBuilder {
                 index: 0,
                 decimals: 6,
                 unit: 10u64.pow(6) as f64,
-                base_lot: 100 as f64,
-                quote_lot: 10 as f64,
+                base_lot: 100_f64,
+                quote_lot: 10_f64,
                 pubkey: self.mint0,
                 authority: TestKeypair::new(),
             }, // symbol: "MNGO".to_string()
@@ -137,29 +137,28 @@ impl TestContextBuilder {
                 index: i,
                 decimals: 6,
                 unit: 10u64.pow(6) as f64,
-                base_lot: 100 as f64,
-                quote_lot: 10 as f64,
+                base_lot: 100_f64,
+                quote_lot: 10_f64,
                 pubkey: Pubkey::default(),
                 authority: TestKeypair::new(),
             });
         }
         // Add mints in loop
-        for mint_index in 0..mints.len() {
-            let mint_pk: Pubkey;
-            if mints[mint_index].pubkey == Pubkey::default() {
-                mint_pk = Pubkey::new_unique();
+        for mint in &mut mints {
+            let mint_pk = if mint.pubkey == Pubkey::default() {
+                Pubkey::new_unique()
             } else {
-                mint_pk = mints[mint_index].pubkey;
-            }
-            mints[mint_index].pubkey = mint_pk;
+                mint.pubkey
+            };
+            mint.pubkey = mint_pk;
 
             self.test.add_packable_account(
                 mint_pk,
                 u32::MAX as u64,
                 &Mint {
                     is_initialized: true,
-                    mint_authority: COption::Some(mints[mint_index].authority.pubkey()),
-                    decimals: mints[mint_index].decimals,
+                    mint_authority: COption::Some(mint.authority.pubkey()),
+                    decimals: mint.decimals,
                     ..Mint::default()
                 },
                 &spl_token::id(),
@@ -186,13 +185,13 @@ impl TestContextBuilder {
             // give every user 10^18 (< 2^60) of every token
             // ~~ 1 trillion in case of 6 decimals
             let mut token_accounts = Vec::new();
-            for mint_index in 0..mints.len() {
+            for mint in mints {
                 let token_key = Pubkey::new_unique();
                 self.test.add_packable_account(
                     token_key,
                     u32::MAX as u64,
                     &spl_token::state::Account {
-                        mint: mints[mint_index].pubkey,
+                        mint: mint.pubkey,
                         owner: user_key.pubkey(),
                         amount: 1_000_000_000_000_000_000,
                         state: spl_token::state::AccountState::Initialized,
@@ -219,7 +218,7 @@ impl TestContextBuilder {
         let solana = self.start().await;
 
         TestContext {
-            solana: solana.clone(),
+            solana,
             mints,
             users,
         }
@@ -229,15 +228,13 @@ impl TestContextBuilder {
         let mut context = self.test.start_with_context().await;
         let rent = context.banks_client.get_rent().await.unwrap();
 
-        let solana = Arc::new(SolanaCookie {
+        Arc::new(SolanaCookie {
             context: RefCell::new(context),
             rent,
             logger_capture: self.logger_capture.clone(),
             logger_lock: LOGGER_LOCK.clone(),
             last_transaction_log: RefCell::new(vec![]),
-        });
-
-        solana
+        })
     }
 }
 

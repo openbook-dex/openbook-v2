@@ -2,7 +2,7 @@ use crate::state::{Market, Position};
 use anchor_lang::prelude::*;
 use borsh::BorshSerialize;
 
-pub fn emit_balances(open_orders_acc: Pubkey, p: &Position, m: &Market) {
+pub fn emit_balances(open_orders_acc: Pubkey, p: &Position, _m: &Market) {
     emit!(BalanceLog {
         open_orders_acc,
         base_position: p.base_position_lots(),

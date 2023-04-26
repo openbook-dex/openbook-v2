@@ -2,7 +2,6 @@ use crate::accounts_ix::Deposit;
 use crate::state::*;
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Transfer};
-use fixed::types::I80F48;
 
 pub fn deposit(ctx: Context<Deposit>, base_amount_lots: u64, quote_amount_lots: u64) -> Result<()> {
     let mut open_orders_account = ctx.accounts.open_orders_account.load_full_mut()?;

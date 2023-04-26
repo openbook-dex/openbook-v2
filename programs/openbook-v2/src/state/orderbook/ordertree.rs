@@ -133,7 +133,7 @@ impl OrderTreeNodes {
     // only for fixed-price ordertrees
     #[cfg(test)]
     #[allow(dead_code)]
-    fn to_price_quantity_vec(&self, root: &OrderTreeRoot, reverse: bool) -> Vec<(i64, i64)> {
+    fn as_price_quantity_vec(&self, root: &OrderTreeRoot, reverse: bool) -> Vec<(i64, i64)> {
         let mut pqs = vec![];
         let mut current: NodeHandle = match root.node() {
             None => return pqs,
@@ -471,24 +471,21 @@ mod tests {
     // check that BookSide binary tree key invariant holds
     fn verify_order_tree_invariant(order_tree: &OrderTreeNodes, root: &OrderTreeRoot) {
         fn recursive_check(order_tree: &OrderTreeNodes, h: NodeHandle) {
-            match order_tree.node(h).unwrap().case().unwrap() {
-                NodeRef::Inner(&inner) => {
-                    let left = order_tree.node(inner.children[0]).unwrap().key().unwrap();
-                    let right = order_tree.node(inner.children[1]).unwrap().key().unwrap();
+            if let NodeRef::Inner(&inner) = order_tree.node(h).unwrap().case().unwrap() {
+                let left = order_tree.node(inner.children[0]).unwrap().key().unwrap();
+                let right = order_tree.node(inner.children[1]).unwrap().key().unwrap();
 
-                    // the left and right keys share the InnerNode's prefix
-                    assert!((inner.key ^ left).leading_zeros() >= inner.prefix_len);
-                    assert!((inner.key ^ right).leading_zeros() >= inner.prefix_len);
+                // the left and right keys share the InnerNode's prefix
+                assert!((inner.key ^ left).leading_zeros() >= inner.prefix_len);
+                assert!((inner.key ^ right).leading_zeros() >= inner.prefix_len);
 
-                    // the left and right node key have the critbit unset and set respectively
-                    let crit_bit_mask: u128 = 1u128 << (127 - inner.prefix_len);
-                    assert!(left & crit_bit_mask == 0);
-                    assert!(right & crit_bit_mask != 0);
+                // the left and right node key have the critbit unset and set respectively
+                let crit_bit_mask: u128 = 1u128 << (127 - inner.prefix_len);
+                assert!(left & crit_bit_mask == 0);
+                assert!(right & crit_bit_mask != 0);
 
-                    recursive_check(order_tree, inner.children[0]);
-                    recursive_check(order_tree, inner.children[1]);
-                }
-                _ => {}
+                recursive_check(order_tree, inner.children[0]);
+                recursive_check(order_tree, inner.children[1]);
             }
         }
 
@@ -518,25 +515,22 @@ mod tests {
     // check that BookSide::child_expiry invariant holds
     fn verify_order_tree_expiry(order_tree: &OrderTreeNodes, root: &OrderTreeRoot) {
         fn recursive_check(order_tree: &OrderTreeNodes, h: NodeHandle) {
-            match order_tree.node(h).unwrap().case().unwrap() {
-                NodeRef::Inner(&inner) => {
-                    let left = order_tree
-                        .node(inner.children[0])
-                        .unwrap()
-                        .earliest_expiry();
-                    let right = order_tree
-                        .node(inner.children[1])
-                        .unwrap()
-                        .earliest_expiry();
+            if let NodeRef::Inner(&inner) = order_tree.node(h).unwrap().case().unwrap() {
+                let left = order_tree
+                    .node(inner.children[0])
+                    .unwrap()
+                    .earliest_expiry();
+                let right = order_tree
+                    .node(inner.children[1])
+                    .unwrap()
+                    .earliest_expiry();
 
-                    // child_expiry must hold the expiry of the children
-                    assert_eq!(inner.child_earliest_expiry[0], left);
-                    assert_eq!(inner.child_earliest_expiry[1], right);
+                // child_expiry must hold the expiry of the children
+                assert_eq!(inner.child_earliest_expiry[0], left);
+                assert_eq!(inner.child_earliest_expiry[1], right);
 
-                    recursive_check(order_tree, inner.children[0]);
-                    recursive_check(order_tree, inner.children[1]);
-                }
-                _ => {}
+                recursive_check(order_tree, inner.children[0]);
+                recursive_check(order_tree, inner.children[1]);
             }
         }
         if let Some(r) = root.node() {
@@ -670,7 +664,7 @@ mod tests {
 
         // remove 50 at random
         for _ in 0..50 {
-            if keys.len() == 0 {
+            if keys.is_empty() {
                 break;
             }
             let k = keys[rng.gen_range(0..keys.len())];

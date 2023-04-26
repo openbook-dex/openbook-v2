@@ -140,19 +140,19 @@ impl Position {
         let new_position = old_position + base_change;
 
         // amount of lots that were reduced (so going from -5 to 10 lots is a reduction of 5)
-        let reduced_lots;
+        let _reduced_lots;
         // amount of pnl that was realized by the reduction (signed)
-        let newly_realized_pnl;
+        let _newly_realized_pnl;
 
         if new_position == 0 {
-            reduced_lots = -old_position;
+            _reduced_lots = -old_position;
 
             // clear out display fields that live only while the position lasts
             self.avg_entry_price_per_base_lot = 0.0;
             self.quote_running_native = 0;
         } else if old_position.signum() != new_position.signum() {
             // If the base position changes sign, we've crossed base_pos == 0 (or old_position == 0)
-            reduced_lots = -old_position;
+            _reduced_lots = -old_position;
             let _old_position = old_position as f64;
             let _new_position = new_position as f64;
             let base_change = base_change as f64;
@@ -169,8 +169,8 @@ impl Position {
             let is_increasing = old_position.signum() == base_change.signum();
             if is_increasing {
                 // Increasing position: avg entry price updates, no new realized pnl
-                reduced_lots = 0;
-                newly_realized_pnl = I80F48::ZERO;
+                _reduced_lots = 0;
+                _newly_realized_pnl = I80F48::ZERO;
                 let old_position_abs = old_position.abs() as f64;
                 let new_position_abs = new_position.abs() as f64;
                 let old_avg_entry = self.avg_entry_price_per_base_lot;
@@ -179,7 +179,7 @@ impl Position {
                 self.avg_entry_price_per_base_lot = new_position_quote_value / new_position_abs;
             } else {
                 // Decreasing position: pnl is realized, avg entry price does not change
-                reduced_lots = base_change;
+                _reduced_lots = base_change;
                 let _avg_entry = I80F48::from_num(self.avg_entry_price_per_base_lot);
             }
         }
@@ -188,7 +188,7 @@ impl Position {
     /// Change the base and quote positions as the result of a trade
     pub fn record_trade(
         &mut self,
-        market: &mut Market,
+        _market: &mut Market,
         base_change: i64,
         quote_change_native: I80F48,
     ) {

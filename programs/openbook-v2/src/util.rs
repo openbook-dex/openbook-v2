@@ -38,14 +38,8 @@ mod tests {
     #[test]
     fn test_fill_from_str() {
         assert_eq!(fill_from_str::<4>(""), Ok([0, 0, 0, 0]));
-        assert_eq!(
-            fill_from_str::<4>("abc"),
-            Ok(['a' as u8, 'b' as u8, 'c' as u8, 0])
-        );
-        assert_eq!(
-            fill_from_str::<4>("abcd"),
-            Ok(['a' as u8, 'b' as u8, 'c' as u8, 'd' as u8])
-        );
+        assert_eq!(fill_from_str::<4>("abc"), Ok([b'a', b'b', b'c', 0]));
+        assert_eq!(fill_from_str::<4>("abcd"), Ok([b'a', b'b', b'c', b'd']));
         assert!(fill_from_str::<4>("abcde").is_err());
     }
 }
