@@ -1,3 +1,5 @@
+build:
+    cargo build-sbf --features enable-gpl
 lint:
     cargo clippy --no-deps --tests --features enable-gpl --features test-bpf -- --allow=clippy::result-large-err
 
