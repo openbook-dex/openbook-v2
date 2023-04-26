@@ -233,7 +233,7 @@ impl Position {
             / ((self.base_position_lots * market.base_lot_size) as f64)
     }
 
-    /// Update perp position for a maker/taker fee payment
+    /// Update position for a maker/taker fee payment
     pub fn record_trading_fee(&mut self, fee: I80F48) {
         self.change_quote_position(-fee);
     }

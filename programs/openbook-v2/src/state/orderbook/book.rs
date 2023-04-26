@@ -145,11 +145,9 @@ impl<'a> Orderbook<'a> {
                 event_queue.header.seq_num,
                 best_opposing.node.owner,
                 best_opposing.node.client_order_id,
-                market.maker_fee,
                 best_opposing.node.timestamp,
                 *owner,
                 order.client_order_id,
-                market.taker_fee,
                 best_opposing_price,
                 match_base_lots,
             );

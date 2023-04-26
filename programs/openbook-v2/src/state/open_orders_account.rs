@@ -396,7 +396,7 @@ impl<
         let side = fill.taker_side().invert_side();
         let (base_change, quote_change) = fill.base_quote_change(side);
         let quote = I80F48::from(market.quote_lot_size) * I80F48::from(quote_change);
-        let fees = quote.abs() * I80F48::from_num(fill.maker_fee);
+        let fees = quote.abs() * I80F48::from_num(market.maker_fee);
         if fees.is_positive() {
             self.fixed_mut()
                 .accrue_buyback_fees(fees.floor().to_num::<u64>());
