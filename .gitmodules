@@ -1,0 +1,3 @@
+[submodule "3rdparty/fixed"]
+	path = 3rdparty/fixed
+	url = https://gitlab.com/ckamm/fixed.git
