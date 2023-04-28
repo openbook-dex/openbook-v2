@@ -73,11 +73,17 @@ impl<'a> Orderbook<'a> {
         // Any changes to matching orders on the other side of the book are collected in
         // matched_changes/matched_deletes and then applied after this loop.
         let mut remaining_base_lots = order.max_base_lots;
-        let mut remaining_quote_lots = order.max_quote_lots;
+        let mut remaining_quote_lots = order.max_quote_lots_including_fees;
         let mut matched_order_changes: Vec<(BookSideOrderHandle, i64)> = vec![];
         let mut matched_order_deletes: Vec<(BookSideOrderTree, u128)> = vec![];
         let mut number_of_dropped_expired_orders = 0;
         let opposing_bookside = self.bookside_mut(other_side);
+
+        // Substract fees in case of bid
+        if side == Side::Bid {
+            remaining_quote_lots = market.substract_taker_fees(remaining_quote_lots);
+            msg!("11xxx {}", remaining_quote_lots);
+        }
 
         for best_opposing in opposing_bookside.iter_all_including_invalid(now_ts, oracle_price_lots)
         {
@@ -154,7 +160,7 @@ impl<'a> Orderbook<'a> {
             event_queue.push_back(cast(fill)).unwrap();
             limit -= 1;
         }
-        let total_quote_lots_taken = order.max_quote_lots - remaining_quote_lots;
+        let total_quote_lots_taken = order.max_quote_lots_including_fees - remaining_quote_lots;
         let total_base_lots_taken = order.max_base_lots - remaining_base_lots;
         assert!(total_quote_lots_taken >= 0);
         assert!(total_base_lots_taken >= 0);
@@ -168,7 +174,11 @@ impl<'a> Orderbook<'a> {
                 total_quote_lots_taken,
             );
             apply_fees(market, &mut open_orders_acc, total_quote_lots_taken)?;
+            // Update remaining based on quote_lots taken. If nothing taken, same as the beggining
+            remaining_quote_lots = order.max_quote_lots_including_fees
+                - (market.taker_fee * I80F48::from_num(total_quote_lots_taken)).to_num::<i64>();
         }
+        msg!("remaining_quote_lots {}", remaining_quote_lots);
 
         // Apply changes to matched asks (handles invalidate on delete!)
         for (handle, new_quantity) in matched_order_changes {
@@ -188,6 +198,12 @@ impl<'a> Orderbook<'a> {
         //
 
         // If there are still quantity unmatched, place on the book
+        msg!(
+            "remaining_base_lots {}, remaining_quote_lots {}, price_lots {}",
+            remaining_base_lots,
+            remaining_quote_lots,
+            price_lots
+        );
         let book_base_quantity = remaining_base_lots.min(remaining_quote_lots / price_lots);
         if book_base_quantity <= 0 {
             post_target = None;
@@ -195,7 +211,6 @@ impl<'a> Orderbook<'a> {
 
         if let Some(order_tree_target) = post_target {
             let bookside = self.bookside_mut(side);
-
             // Drop an expired order if possible
             if let Some(expired_order) = bookside.remove_one_expired(order_tree_target, now_ts) {
                 let event = OutEvent::new(

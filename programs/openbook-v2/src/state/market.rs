@@ -220,4 +220,8 @@ impl Market {
             reserved: [0; 1888],
         }
     }
+
+    pub fn substract_taker_fees(&self, quote: i64) -> i64 {
+        (I80F48::from(quote) / (I80F48::ONE + self.taker_fee)).to_num()
+    }
 }

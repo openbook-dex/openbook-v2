@@ -10,7 +10,7 @@ pub struct Order {
     pub max_base_lots: i64,
 
     /// Max quote lots to pay/receive (not taking fees into account).
-    pub max_quote_lots: i64,
+    pub max_quote_lots_including_fees: i64,
 
     /// Arbitrary user-controlled order id.
     pub client_order_id: u64,

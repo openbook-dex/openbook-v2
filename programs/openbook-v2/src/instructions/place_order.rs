@@ -14,7 +14,7 @@ use crate::state::*;
 #[allow(clippy::too_many_arguments)]
 pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<Option<u128>> {
     require_gte!(order.max_base_lots, 0);
-    require_gte!(order.max_quote_lots, 0);
+    require_gte!(order.max_quote_lots_including_fees, 0);
 
     let _now_ts: u64 = Clock::get()?.unix_timestamp.try_into().unwrap();
     let oracle_price;
@@ -54,9 +54,10 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<
         .position
         .effective_base_position_lots();
 
-    let max_quote_lots = order.max_quote_lots;
+    let max_quote_lots_including_fees = order.max_quote_lots_including_fees;
     let max_base_lots = order.max_base_lots;
     let side = order.side;
+    let fees_before = market.fees_accrued;
 
     let order_id_opt = book.new_order(
         order,
@@ -69,17 +70,21 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<
         limit,
     )?;
 
+    let fees_applied = market.fees_accrued - fees_before;
+    msg!("fees_applied {}", fees_applied);
+
     let mut position = &mut open_orders_account.fixed_mut().position;
     let (to_vault, deposit_amount) = match side {
         Side::Bid => {
             let free_assets_lots = position.quote_free_lots;
 
-            let min_qua = cmp::min(max_quote_lots, free_assets_lots);
+            let min_qua = cmp::min(max_quote_lots_including_fees, free_assets_lots);
             position.quote_free_lots -= min_qua;
 
             (
                 ctx.accounts.quote_vault.to_account_info(),
-                I80F48::from(max_quote_lots - min_qua) * I80F48::from(market.quote_lot_size),
+                I80F48::from(max_quote_lots_including_fees - min_qua)
+                    * I80F48::from(market.quote_lot_size),
             )
         }
 
@@ -191,7 +196,7 @@ mod tests {
             let order = Order {
                 side,
                 max_base_lots: amount,
-                max_quote_lots: 0,
+                max_quote_lots_including_fees: 0,
                 client_order_id: 0,
                 reduce_only: true,
                 time_in_force: 0,

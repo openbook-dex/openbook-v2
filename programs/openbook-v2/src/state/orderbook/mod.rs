@@ -122,7 +122,7 @@ mod queue;
 //                 Order {
 //                     side,
 //                     max_base_lots,
-//                     max_quote_lots: i64::MAX,
+//                     max_quote_lots_including_fees: i64::MAX,
 //                     client_order_id: 0,
 //                     time_in_force,
 //                     reduce_only: false,
@@ -270,7 +270,7 @@ mod queue;
 //             Order {
 //                 side: Side::Bid,
 //                 max_base_lots: bid_quantity,
-//                 max_quote_lots: i64::MAX,
+//                 max_quote_lots_including_fees: i64::MAX,
 //                 client_order_id: 42,
 //                 time_in_force: 0,
 //                 reduce_only: false,
@@ -331,7 +331,7 @@ mod queue;
 //             Order {
 //                 side: Side::Ask,
 //                 max_base_lots: match_quantity,
-//                 max_quote_lots: i64::MAX,
+//                 max_quote_lots_including_fees: i64::MAX,
 //                 client_order_id: 43,
 //                 time_in_force: 0,
 //                 reduce_only: false,
@@ -450,7 +450,7 @@ mod queue;
 //             Order {
 //                 side: Side::Ask,
 //                 max_base_lots: 2,
-//                 max_quote_lots: i64::MAX,
+//                 max_quote_lots_including_fees: i64::MAX,
 //                 client_order_id: 43,
 //                 time_in_force: 0,
 //                 reduce_only: false,
@@ -474,7 +474,7 @@ mod queue;
 //             Order {
 //                 side: Side::Bid,
 //                 max_base_lots: 1,
-//                 max_quote_lots: i64::MAX,
+//                 max_quote_lots_including_fees: i64::MAX,
 //                 client_order_id: 43,
 //                 time_in_force: 0,
 //                 reduce_only: false,
@@ -512,7 +512,7 @@ mod queue;
 //             Order {
 //                 side: Side::Bid,
 //                 max_base_lots: 1,
-//                 max_quote_lots: i64::MAX,
+//                 max_quote_lots_including_fees: i64::MAX,
 //                 client_order_id: 43,
 //                 time_in_force: 0,
 //                 reduce_only: false,
