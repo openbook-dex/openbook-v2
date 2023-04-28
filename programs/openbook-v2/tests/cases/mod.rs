@@ -1,4 +1,5 @@
 pub use anchor_lang::prelude::Pubkey;
+pub use anchor_spl::token::TokenAccount;
 pub use fixed::types::I80F48;
 pub use solana_program_test::*;
 pub use solana_sdk::transport::TransportError;
@@ -12,3 +13,4 @@ pub use super::program_test;
 pub use utils::assert_equal_fixed_f64 as assert_equal;
 
 mod test;
+mod test_oracle_peg;
