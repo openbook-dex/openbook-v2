@@ -176,6 +176,7 @@ impl<'a> Orderbook<'a> {
             apply_fees(market, &mut open_orders_acc, total_quote_lots_taken)?;
             // Update remaining based on quote_lots taken. If nothing taken, same as the beggining
             remaining_quote_lots = order.max_quote_lots_including_fees
+                - total_quote_lots_taken
                 - (market.taker_fee * I80F48::from_num(total_quote_lots_taken)).to_num::<i64>();
         }
         msg!("remaining_quote_lots {}", remaining_quote_lots);

@@ -5,6 +5,7 @@ use anchor_lang::prelude::*;
 use anchor_lang::Discriminator;
 use arrayref::array_ref;
 
+use fixed::traits::Fixed;
 use fixed::types::I80F48;
 
 use solana_program::program_memory::sol_memmove;
@@ -131,7 +132,7 @@ const_assert_eq!(
         - size_of::<u64>() * 3
         - size_of::<[u8; 208]>()
 );
-const_assert_eq!(size_of::<OpenOrdersAccountFixed>(), 528);
+const_assert_eq!(size_of::<OpenOrdersAccountFixed>(), 536);
 const_assert_eq!(size_of::<OpenOrdersAccountFixed>() % 8, 0);
 
 impl OpenOrdersAccountFixed {
@@ -415,34 +416,76 @@ impl<
 
         pa.maker_volume += quote.abs().to_num::<u64>();
 
+        msg!(
+            " maker price {}, quantity {}, base_change {}, quote_change {}",
+            fill.price,
+            fill.quantity,
+            base_change,
+            quote_change,
+        );
+
         if fill.maker_out() {
-            self.remove_order(fill.maker_slot as usize, base_change.abs(), false)
+            self.remove_order(fill.maker_slot as usize, base_change.abs(), false)?;
         } else {
             match side {
                 Side::Bid => {
                     pa.bids_base_lots -= base_change.abs();
-                    pa.base_free_lots += base_change.abs();
                 }
                 Side::Ask => {
                     pa.asks_base_lots -= base_change.abs();
-                    pa.quote_free_lots += quote_change.abs();
                 }
-            }
-            Ok(())
+            };
         }
+        // Update free_lots
+        match side {
+            Side::Bid => {
+                pa.base_free_lots += base_change.abs();
+                pa.quote_free_lots += fees.to_num::<i64>();
+            }
+            Side::Ask => {
+                // TODO Binye. Is market.maker_fee the rebate?
+                pa.quote_free_lots +=
+                    quote_change.abs() * (market.maker_fee + I80F48::ONE).to_num::<i64>();
+            }
+        };
+        Ok(())
     }
 
     pub fn execute_taker(&mut self, market: &mut Market, fill: &FillEvent) -> Result<()> {
         let mut pa = &mut self.fixed_mut().position;
 
-        let (base_change, quote_change) = fill.base_quote_change(fill.taker_side());
-        pa.remove_taker_trade(base_change, quote_change);
+        // Replicate the base_quote_change function but substracting the fees for an Ask
+        // let (base_change, quote_change) = fill.base_quote_change(fill.taker_side());
+        let mut base_change: i64;
+        let mut quote_change: i64;
+        match fill.taker_side() {
+            Side::Bid => {
+                base_change = fill.quantity;
+                quote_change = -fill.price * fill.quantity;
+
+                pa.base_free_lots += base_change;
+            }
+            Side::Ask => {
+                // remove fee from quote_change
+                base_change = -fill.quantity;
+                quote_change = fill.price * fill.quantity * (1 - market.taker_fee.to_num::<i64>());
+
+                pa.quote_free_lots += quote_change;
+            }
+        };
+
+        pa.taker_base_lots -= base_change;
+        pa.taker_quote_lots -= quote_change;
+        // TODO Call external function instead
+        //  pa.remove_taker_trade(fill.taker_side(), base_change, quote_change);
+
         // fees are assessed at time of trade; no need to assess fees here
         let quote_change_native = I80F48::from(market.quote_lot_size) * I80F48::from(quote_change);
         msg!(
-            " taker price {}, quantity {},quote_change {}, quote {}",
+            " taker price {}, quantity {}, base_change {}, quote_change {}, quote {}",
             fill.price,
             fill.quantity,
+            base_change,
             quote_change,
             quote_change_native
         );
@@ -541,16 +584,12 @@ impl<
                     position.bids_base_lots -= base_quantity;
                     if cancel {
                         position.quote_free_lots += quote_quantity;
-                    } else {
-                        position.base_free_lots += base_quantity;
                     }
                 }
                 Side::Ask => {
                     position.asks_base_lots -= base_quantity;
                     if cancel {
                         position.base_free_lots += base_quantity;
-                    } else {
-                        position.quote_free_lots += quote_quantity;
                     }
                 }
             }

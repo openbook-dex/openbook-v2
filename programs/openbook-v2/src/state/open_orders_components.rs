@@ -35,6 +35,8 @@ pub struct Position {
     pub base_free_lots: i64,
     pub quote_free_lots: i64,
 
+    pub referrer_rebates_accrued: u64,
+
     /// Cumulative maker volume in quote native units
     ///
     /// (Display only)
@@ -54,9 +56,9 @@ pub struct Position {
 
 const_assert_eq!(
     size_of::<Position>(),
-    8 + 16 + 8 + 8 + 8 + 8 + 8 + 8 + 8 + 8 + 8 + 8 + 88
+    8 + 16 + 8 + 8 + 8 + 8 + 8 + 8 + 8 + 8 + 8 + 8 + 8 + 88
 );
-const_assert_eq!(size_of::<Position>(), 192);
+const_assert_eq!(size_of::<Position>(), 200);
 const_assert_eq!(size_of::<Position>() % 8, 0);
 
 impl Default for Position {
@@ -71,6 +73,7 @@ impl Default for Position {
             taker_quote_lots: 0,
             base_free_lots: 0,
             quote_free_lots: 0,
+            referrer_rebates_accrued: 0,
             maker_volume: 0,
             taker_volume: 0,
             avg_entry_price_per_base_lot: 0.0,
