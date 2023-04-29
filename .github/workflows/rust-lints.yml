@@ -1,0 +1,20 @@
+name: Rust lints
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  cargo-fmt:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v3 
+        with:
+          submodules: recursive
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          profile: minimal
+          components: rustfmt
+          override: true
+      - run: cargo fmt --check

@@ -1,0 +1,25 @@
+name: Rust tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  rust-tests:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+      - uses: extractions/setup-just@v1
+      - name: Install Cargo toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          profile: minimal
+          components: rustc
+      - name: Cache Cargo dependencies
+        uses: Swatinem/rust-cache@v2
+      - name: Run tests
+        run: just test-all
+        shell: bash
