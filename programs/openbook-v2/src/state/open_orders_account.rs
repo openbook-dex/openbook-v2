@@ -5,7 +5,6 @@ use anchor_lang::prelude::*;
 use anchor_lang::Discriminator;
 use arrayref::array_ref;
 
-use fixed::traits::Fixed;
 use fixed::types::I80F48;
 
 use solana_program::program_memory::sol_memmove;
@@ -402,7 +401,7 @@ impl<
             self.fixed_mut()
                 .accrue_buyback_fees(fees.floor().to_num::<u64>());
         }
-        let mut pa = &mut self.fixed_mut().position;
+        let pa = &mut self.fixed_mut().position;
         pa.record_trading_fee(fees);
         msg!(
             "price {}, quantity {},quote_change {}, quote {}, fees {}",
@@ -424,18 +423,6 @@ impl<
             quote_change,
         );
 
-        if fill.maker_out() {
-            self.remove_order(fill.maker_slot as usize, base_change.abs(), false)?;
-        } else {
-            match side {
-                Side::Bid => {
-                    pa.bids_base_lots -= base_change.abs();
-                }
-                Side::Ask => {
-                    pa.asks_base_lots -= base_change.abs();
-                }
-            };
-        }
         // Update free_lots
         match side {
             Side::Bid => {
@@ -448,6 +435,20 @@ impl<
                     quote_change.abs() * (market.maker_fee + I80F48::ONE).to_num::<i64>();
             }
         };
+
+        if fill.maker_out() {
+            self.remove_order(fill.maker_slot as usize, base_change.abs(), false)?;
+        } else {
+            match side {
+                Side::Bid => {
+                    pa.bids_base_lots -= base_change.abs();
+                }
+                Side::Ask => {
+                    pa.asks_base_lots -= base_change.abs();
+                }
+            };
+        }
+
         Ok(())
     }
 
@@ -456,8 +457,8 @@ impl<
 
         // Replicate the base_quote_change function but substracting the fees for an Ask
         // let (base_change, quote_change) = fill.base_quote_change(fill.taker_side());
-        let mut base_change: i64;
-        let mut quote_change: i64;
+        let base_change: i64;
+        let quote_change: i64;
         match fill.taker_side() {
             Side::Bid => {
                 base_change = fill.quantity;

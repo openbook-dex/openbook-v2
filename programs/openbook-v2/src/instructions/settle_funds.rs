@@ -7,7 +7,7 @@ use crate::state::*;
 
 pub fn settle_funds(ctx: Context<SettleFunds>) -> Result<()> {
     let mut open_orders_account = ctx.accounts.open_orders_account.load_full_mut()?;
-    let mut market = ctx.accounts.market.load_mut()?;
+    let market = ctx.accounts.market.load_mut()?;
     let mut position = &mut open_orders_account.fixed_mut().position;
 
     let seeds = [
