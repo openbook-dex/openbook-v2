@@ -174,8 +174,9 @@ impl<'a> Orderbook<'a> {
                 total_base_lots_taken,
                 total_quote_lots_taken,
             );
-            apply_fees(
-                other_side,
+
+            release_funds_fees(
+                side,
                 market,
                 &mut open_orders_acc,
                 total_base_lots_taken,
@@ -206,13 +207,7 @@ impl<'a> Orderbook<'a> {
 
         // If there are still quantity unmatched, place on the book
         let book_base_quantity = remaining_base_lots.min(remaining_quote_lots / price_lots);
-        msg!(
-            "book_base_quantity {}, remaining_base_lots {}, remaining_quote_lots {}, price_lots {}",
-            book_base_quantity,
-            remaining_base_lots,
-            remaining_quote_lots,
-            price_lots
-        );
+
         if book_base_quantity <= 0 {
             post_target = None;
         }
@@ -367,8 +362,8 @@ impl<'a> Orderbook<'a> {
     }
 }
 
-/// Apply taker fees to the taker account
-fn apply_fees(
+/// Release funds and apply taker fees to the taker account
+fn release_funds_fees(
     taker_side: Side,
     market: &mut Market,
     open_orders_acc: &mut OpenOrdersAccountRefMut,
@@ -395,8 +390,7 @@ fn apply_fees(
                 I80F48::from_num(base_lots) * I80F48::from_num(market.base_lot_size);
         }
         Side::Ask => {
-            pa.quote_free_native +=
-                I80F48::from_num(quote_lots) * I80F48::from_num(market.quote_lot_size);
+            pa.quote_free_native += quote_native - taker_fees;
         }
     };
 

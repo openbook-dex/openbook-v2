@@ -347,10 +347,7 @@ impl<
     }
 
     pub fn find_order_with_order_id(&self, order_id: u128) -> Option<&OpenOrder> {
-        self.all_orders().find(|&oo| {
-            msg!("id {}", oo.id);
-            oo.id == order_id
-        })
+        self.all_orders().find(|&oo| oo.id == order_id)
     }
 
     pub fn borrow(&self) -> OpenOrdersAccountRef {
@@ -404,14 +401,7 @@ impl<
         }
         let pa = &mut self.fixed_mut().position;
         pa.record_trading_fee(fees);
-        msg!(
-            "price {}, quantity {},quote_change {}, quote_native {}, fees {}",
-            fill.price,
-            fill.quantity,
-            quote_change,
-            quote_native,
-            fees
-        );
+
         pa.record_trade(market, base_change, quote_native);
 
         pa.maker_volume += quote_native.abs().to_num::<u64>();
@@ -447,6 +437,9 @@ impl<
                 }
             };
         }
+
+        // Update market fees
+        market.fees_accrued += market.maker_fee * quote_native.abs();
 
         Ok(())
     }
@@ -495,10 +488,7 @@ impl<
 
     fn write_oo_length(&mut self) {
         let oo_offset = self.header().oo_offset(0);
-        // msg!(
-        //     "writing perp length at {}",
-        //     offset - size_of::<BorshVecLength>()
-        // );
+
         let count = self.header().oo_count;
         let dst: &mut [u8] = &mut self.dynamic_mut()[oo_offset - BORSH_VEC_SIZE_BYTES..oo_offset];
         dst.copy_from_slice(&BorshVecLength::from(count).to_le_bytes());

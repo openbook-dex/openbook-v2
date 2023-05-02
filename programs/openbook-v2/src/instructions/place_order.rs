@@ -70,9 +70,6 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<
         limit,
     )?;
 
-    let fees_applied = market.fees_accrued - fees_before;
-    msg!("fees_applied {}", fees_applied);
-
     let position = &mut open_orders_account.fixed_mut().position;
     let (to_vault, deposit_amount) = match side {
         Side::Bid => {
