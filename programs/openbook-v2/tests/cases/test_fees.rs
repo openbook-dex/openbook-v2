@@ -40,7 +40,7 @@ async fn test_fees_acrued() -> Result<(), TransportError> {
             market_index: 1,
             quote_lot_size: 10,
             base_lot_size: 100,
-            maker_fee: 0.0,
+            maker_fee: 0.0001,
             taker_fee: 0.0002, // 2bps
             base_mint: mints[0].pubkey,
             quote_mint: mints[1].pubkey,
@@ -134,10 +134,10 @@ async fn test_fees_acrued() -> Result<(), TransportError> {
         assert_eq!(open_orders_account_1.position.asks_base_lots, 0);
         assert_eq!(open_orders_account_0.position.taker_base_lots, 0);
         assert_eq!(open_orders_account_1.position.taker_quote_lots, 10000);
-        assert_eq!(open_orders_account_0.position.base_free_lots, 0);
-        assert_eq!(open_orders_account_1.position.base_free_lots, 0);
-        assert_eq!(open_orders_account_0.position.quote_free_lots, 0);
-        assert_eq!(open_orders_account_1.position.quote_free_lots, 0);
+        assert_eq!(open_orders_account_0.position.base_free_native, 0);
+        assert_eq!(open_orders_account_1.position.base_free_native, 0);
+        assert_eq!(open_orders_account_0.position.quote_free_native, 0);
+        assert_eq!(open_orders_account_1.position.quote_free_native, 0);
     }
 
     {
@@ -196,10 +196,10 @@ async fn test_fees_acrued() -> Result<(), TransportError> {
         assert_eq!(open_orders_account_1.position.asks_base_lots, 0);
         assert_eq!(open_orders_account_0.position.taker_base_lots, 0);
         assert_eq!(open_orders_account_1.position.taker_quote_lots, 0);
-        assert_eq!(open_orders_account_0.position.base_free_lots, 1);
-        assert_eq!(open_orders_account_1.position.base_free_lots, 0);
-        assert_eq!(open_orders_account_0.position.quote_free_lots, 0);
-        assert_eq!(open_orders_account_1.position.quote_free_lots, 10000);
+        assert_eq!(open_orders_account_0.position.base_free_native, 1);
+        assert_eq!(open_orders_account_1.position.base_free_native, 0);
+        assert_eq!(open_orders_account_0.position.quote_free_native, 0);
+        assert_eq!(open_orders_account_1.position.quote_free_native, 10000);
     }
 
     Ok(())

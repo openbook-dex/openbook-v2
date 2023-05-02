@@ -11,7 +11,6 @@ pub struct CancelOrderByClientOrderId<'info> {
     pub owner: Signer<'info>,
 
     #[account(
-        mut,
         has_one = bids,
         has_one = asks,
     )]

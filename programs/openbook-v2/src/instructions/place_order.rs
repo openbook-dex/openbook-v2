@@ -73,30 +73,32 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<
     let fees_applied = market.fees_accrued - fees_before;
     msg!("fees_applied {}", fees_applied);
 
-    let mut position = &mut open_orders_account.fixed_mut().position;
+    let position = &mut open_orders_account.fixed_mut().position;
     let (to_vault, deposit_amount) = match side {
         Side::Bid => {
-            let free_assets_lots = position.quote_free_lots;
+            let free_assets_native = position.quote_free_native;
+            let max_native_including_fees = I80F48::from_num(max_quote_lots_including_fees)
+                * I80F48::from_num(market.quote_lot_size);
 
-            let min_qua = cmp::min(max_quote_lots_including_fees, free_assets_lots);
-            position.quote_free_lots -= min_qua;
+            let min_qua = cmp::min(max_native_including_fees, free_assets_native);
+            position.quote_free_native -= min_qua;
 
             (
                 ctx.accounts.quote_vault.to_account_info(),
-                I80F48::from(max_quote_lots_including_fees - min_qua)
-                    * I80F48::from(market.quote_lot_size),
+                max_native_including_fees - min_qua,
             )
         }
 
         Side::Ask => {
-            let free_assets_lots = position.base_free_lots;
-
-            let min_qua = cmp::min(max_base_lots, free_assets_lots);
-            position.base_free_lots -= min_qua;
+            let free_assets_native = position.base_free_native;
+            let max_base_native =
+                I80F48::from_num(max_base_lots) * I80F48::from_num(market.base_lot_size);
+            let min_qua = cmp::min(max_base_native, free_assets_native);
+            position.base_free_native -= min_qua;
 
             (
                 ctx.accounts.base_vault.to_account_info(),
-                I80F48::from(max_base_lots - min_qua) * I80F48::from(market.base_lot_size),
+                max_base_native - min_qua,
             )
         }
     };

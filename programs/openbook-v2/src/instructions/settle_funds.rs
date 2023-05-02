@@ -17,41 +17,7 @@ pub fn settle_funds(ctx: Context<SettleFunds>) -> Result<()> {
     ];
     let signer = &[&seeds[..]];
 
-    let base_amount_native =
-        I80F48::from(market.base_lot_size) * I80F48::from(position.base_free_lots);
-    position.base_free_lots = 0;
-
-    let quote_amount_native =
-        I80F48::from(market.quote_lot_size) * I80F48::from(position.quote_free_lots);
-    position.quote_free_lots = 0;
-
-    if base_amount_native > 0 {
-        let cpi_context = CpiContext::new(
-            ctx.accounts.token_program.to_account_info(),
-            Transfer {
-                from: ctx.accounts.base_vault.to_account_info(),
-                to: ctx.accounts.payer_base.to_account_info(),
-                authority: ctx.accounts.market.to_account_info(),
-            },
-        );
-        token::transfer(cpi_context.with_signer(signer), base_amount_native.to_num())?;
-    }
-
-    if quote_amount_native > 0 {
-        let cpi_context = CpiContext::new(
-            ctx.accounts.token_program.to_account_info(),
-            Transfer {
-                from: ctx.accounts.quote_vault.to_account_info(),
-                to: ctx.accounts.payer_quote.to_account_info(),
-                authority: ctx.accounts.market.to_account_info(),
-            },
-        );
-        token::transfer(
-            cpi_context.with_signer(signer),
-            quote_amount_native.to_num(),
-        )?;
-    }
-
+    // TODO Binye
     // let fee_amount = market.fees_accrued;
     // if ctx.remaining_accounts.len() > 0 && fee_amount >0 {
     //     let referrer = &ctx.remaining_accounts[0].to_account_info();
@@ -71,6 +37,40 @@ pub fn settle_funds(ctx: Context<SettleFunds>) -> Result<()> {
     //     market.fees_settled += market.fees_accrued;
     //     market.fee_acrued -=fee_amount;
     // }
+
+    if position.base_free_native > 0 {
+        let cpi_context = CpiContext::new(
+            ctx.accounts.token_program.to_account_info(),
+            Transfer {
+                from: ctx.accounts.base_vault.to_account_info(),
+                to: ctx.accounts.payer_base.to_account_info(),
+                authority: ctx.accounts.market.to_account_info(),
+            },
+        );
+        token::transfer(
+            cpi_context.with_signer(signer),
+            position.base_free_native.to_num(),
+        )?;
+    }
+
+    if position.quote_free_native > 0 {
+        let cpi_context = CpiContext::new(
+            ctx.accounts.token_program.to_account_info(),
+            Transfer {
+                from: ctx.accounts.quote_vault.to_account_info(),
+                to: ctx.accounts.payer_quote.to_account_info(),
+                authority: ctx.accounts.market.to_account_info(),
+            },
+        );
+        token::transfer(
+            cpi_context.with_signer(signer),
+            position.quote_free_native.to_num(),
+        )?;
+    }
+
+    // Set to 0 after transfer
+    position.base_free_native = I80F48::ZERO;
+    position.quote_free_native = I80F48::ZERO;
 
     Ok(())
 }

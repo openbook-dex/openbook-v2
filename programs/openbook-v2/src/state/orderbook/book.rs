@@ -173,7 +173,13 @@ impl<'a> Orderbook<'a> {
                 total_base_lots_taken,
                 total_quote_lots_taken,
             );
-            apply_fees(market, &mut open_orders_acc, total_quote_lots_taken)?;
+            apply_fees(
+                other_side,
+                market,
+                &mut open_orders_acc,
+                total_base_lots_taken,
+                total_quote_lots_taken,
+            )?;
             // Update remaining based on quote_lots taken. If nothing taken, same as the beggining
             remaining_quote_lots = order.max_quote_lots_including_fees
                 - total_quote_lots_taken
@@ -292,7 +298,7 @@ impl<'a> Orderbook<'a> {
     pub fn cancel_all_orders(
         &mut self,
         open_orders_acc: &mut OpenOrdersAccountRefMut,
-        _open_book_market: &mut Market,
+        market: Market,
         mut limit: u8,
         side_to_cancel_option: Option<Side>,
     ) -> Result<()> {
@@ -309,7 +315,7 @@ impl<'a> Orderbook<'a> {
             let order_id = oo.id;
 
             let cancel_result =
-                self.cancel_order(open_orders_acc, order_id, order_side_and_tree, None);
+                self.cancel_order(open_orders_acc, order_id, order_side_and_tree, market, None);
             if cancel_result.is_anchor_error_with_code(OpenBookError::OrderIdNotFound.into()) {
                 // It's possible for the order to be filled or expired already.
                 // There will be an event on the queue, the perp order slot is freed once
@@ -336,6 +342,7 @@ impl<'a> Orderbook<'a> {
         open_orders_acc: &mut OpenOrdersAccountRefMut,
         order_id: u128,
         side_and_tree: SideAndOrderTree,
+        market: Market,
         expected_owner: Option<Pubkey>,
     ) -> Result<LeafNode> {
         let side = side_and_tree.side();
@@ -348,45 +355,54 @@ impl<'a> Orderbook<'a> {
         if let Some(owner) = expected_owner {
             require_keys_eq!(leaf_node.owner, owner);
         }
-        open_orders_acc.remove_order(leaf_node.owner_slot as usize, leaf_node.quantity, true)?;
+        open_orders_acc.remove_order(
+            leaf_node.owner_slot as usize,
+            leaf_node.quantity,
+            market,
+            true,
+        )?;
 
         Ok(leaf_node)
     }
 }
 
-/// Apply taker fees to the taker account and update the markets' fees_accrued for
-/// both the maker and taker fees.
+/// Apply taker fees to the taker account
 fn apply_fees(
+    taker_side: Side,
     market: &mut Market,
     open_orders_acc: &mut OpenOrdersAccountRefMut,
+    base_lots: i64,
     quote_lots: i64,
 ) -> Result<()> {
     let quote_native = I80F48::from_num(market.quote_lot_size * quote_lots);
-
-    // The maker fees apply to the maker's account only when the fill event is consumed.
-    let maker_fees = quote_native * market.maker_fee;
 
     let taker_fees = quote_native * market.taker_fee;
 
     // taker fees should never be negative
     require_gte!(taker_fees, 0);
 
-    // Part of the taker fees that go to the dao, instead of paying for maker rebates
-    let taker_dao_fees = (taker_fees + maker_fees.min(I80F48::ZERO)).max(I80F48::ZERO);
-    open_orders_acc
-        .fixed
-        .accrue_buyback_fees(taker_dao_fees.floor().to_num::<u64>());
-
     open_orders_acc
         .fixed
         .position
         .record_trading_fee(taker_fees);
+
+    let pa = &mut open_orders_acc.fixed_mut().position;
+    // Update free_lots
+    match taker_side {
+        Side::Bid => {
+            pa.base_free_native +=
+                I80F48::from_num(base_lots) * I80F48::from_num(market.base_lot_size);
+        }
+        Side::Ask => {
+            pa.quote_free_native +=
+                I80F48::from_num(quote_lots) * I80F48::from_num(market.quote_lot_size);
+        }
+    };
+
     open_orders_acc.fixed.position.taker_volume += taker_fees.to_num::<u64>();
 
-    // Accrue maker fees immediately: they can be negative and applying them later
-    // risks that fees_accrued is settled to 0 before they apply. It going negative
-    // breaks assumptions.
-    market.fees_accrued += taker_fees + maker_fees;
+    // Binye only apply taker fees now. Maker fees applied once processing the event
+    market.fees_accrued += taker_fees;
 
     Ok(())
 }

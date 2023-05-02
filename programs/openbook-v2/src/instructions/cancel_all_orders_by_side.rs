@@ -16,13 +16,13 @@ pub fn cancel_all_orders_by_side(
         OpenBookError::SomeError
     );
 
-    let mut market = ctx.accounts.market.load_mut()?;
+    let market = ctx.accounts.market.load()?;
     let mut book = Orderbook {
         bids: ctx.accounts.bids.load_mut()?,
         asks: ctx.accounts.asks.load_mut()?,
     };
 
-    book.cancel_all_orders(&mut account.borrow_mut(), &mut market, limit, side_option)?;
+    book.cancel_all_orders(&mut account.borrow_mut(), *market, limit, side_option)?;
 
     Ok(())
 }

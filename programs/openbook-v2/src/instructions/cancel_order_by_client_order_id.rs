@@ -15,7 +15,7 @@ pub fn cancel_order_by_client_order_id(
         OpenBookError::SomeError
     );
 
-    let _market = ctx.accounts.market.load_mut()?;
+    let market = ctx.accounts.market.load()?;
     let mut book = Orderbook {
         bids: ctx.accounts.bids.load_mut()?,
         asks: ctx.accounts.asks.load_mut()?,
@@ -35,6 +35,7 @@ pub fn cancel_order_by_client_order_id(
         &mut account.borrow_mut(),
         order_id,
         order_side_and_tree,
+        *market,
         Some(ctx.accounts.open_orders_account.key()),
     )?;
 
