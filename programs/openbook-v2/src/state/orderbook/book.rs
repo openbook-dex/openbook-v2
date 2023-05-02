@@ -74,6 +74,7 @@ impl<'a> Orderbook<'a> {
         // matched_changes/matched_deletes and then applied after this loop.
         let mut remaining_base_lots = order.max_base_lots;
         let mut remaining_quote_lots = order.max_quote_lots_including_fees;
+        let mut max_quote_lots = remaining_quote_lots;
         let mut matched_order_changes: Vec<(BookSideOrderHandle, i64)> = vec![];
         let mut matched_order_deletes: Vec<(BookSideOrderTree, u128)> = vec![];
         let mut number_of_dropped_expired_orders = 0;
@@ -81,8 +82,8 @@ impl<'a> Orderbook<'a> {
 
         // Substract fees in case of bid
         if side == Side::Bid {
-            remaining_quote_lots = market.substract_taker_fees(remaining_quote_lots);
-            msg!("11xxx {}", remaining_quote_lots);
+            max_quote_lots = market.substract_taker_fees(remaining_quote_lots);
+            remaining_quote_lots = max_quote_lots;
         }
 
         for best_opposing in opposing_bookside.iter_all_including_invalid(now_ts, oracle_price_lots)
@@ -160,7 +161,7 @@ impl<'a> Orderbook<'a> {
             event_queue.push_back(cast(fill)).unwrap();
             limit -= 1;
         }
-        let total_quote_lots_taken = order.max_quote_lots_including_fees - remaining_quote_lots;
+        let total_quote_lots_taken = max_quote_lots - remaining_quote_lots;
         let total_base_lots_taken = order.max_base_lots - remaining_base_lots;
         assert!(total_quote_lots_taken >= 0);
         assert!(total_base_lots_taken >= 0);
@@ -180,12 +181,11 @@ impl<'a> Orderbook<'a> {
                 total_base_lots_taken,
                 total_quote_lots_taken,
             )?;
-            // Update remaining based on quote_lots taken. If nothing taken, same as the beggining
-            remaining_quote_lots = order.max_quote_lots_including_fees
-                - total_quote_lots_taken
-                - (market.taker_fee * I80F48::from_num(total_quote_lots_taken)).to_num::<i64>();
         }
-        msg!("remaining_quote_lots {}", remaining_quote_lots);
+        // Update remaining based on quote_lots taken. If nothing taken, same as the beggining
+        remaining_quote_lots = order.max_quote_lots_including_fees
+            - total_quote_lots_taken
+            - (market.taker_fee * I80F48::from_num(total_quote_lots_taken)).to_num::<i64>();
 
         // Apply changes to matched asks (handles invalidate on delete!)
         for (handle, new_quantity) in matched_order_changes {
@@ -205,13 +205,14 @@ impl<'a> Orderbook<'a> {
         //
 
         // If there are still quantity unmatched, place on the book
+        let book_base_quantity = remaining_base_lots.min(remaining_quote_lots / price_lots);
         msg!(
-            "remaining_base_lots {}, remaining_quote_lots {}, price_lots {}",
+            "book_base_quantity {}, remaining_base_lots {}, remaining_quote_lots {}, price_lots {}",
+            book_base_quantity,
             remaining_base_lots,
             remaining_quote_lots,
             price_lots
         );
-        let book_base_quantity = remaining_base_lots.min(remaining_quote_lots / price_lots);
         if book_base_quantity <= 0 {
             post_target = None;
         }
