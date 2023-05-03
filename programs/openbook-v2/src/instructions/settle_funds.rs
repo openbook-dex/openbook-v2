@@ -25,28 +25,32 @@ pub fn settle_funds(ctx: Context<SettleFunds>) -> Result<()> {
         I80F48::from(market.quote_lot_size) * I80F48::from(position.quote_free_lots);
     position.quote_free_lots = 0;
 
-    let cpi_context = CpiContext::new(
-        ctx.accounts.token_program.to_account_info(),
-        Transfer {
-            from: ctx.accounts.base_vault.to_account_info(),
-            to: ctx.accounts.payer_base.to_account_info(),
-            authority: ctx.accounts.market.to_account_info(),
-        },
-    );
-    token::transfer(cpi_context.with_signer(signer), base_amount_native.to_num())?;
+    if base_amount_native > 0 {
+        let cpi_context = CpiContext::new(
+            ctx.accounts.token_program.to_account_info(),
+            Transfer {
+                from: ctx.accounts.base_vault.to_account_info(),
+                to: ctx.accounts.payer_base.to_account_info(),
+                authority: ctx.accounts.market.to_account_info(),
+            },
+        );
+        token::transfer(cpi_context.with_signer(signer), base_amount_native.to_num())?;
+    }
 
-    let cpi_context = CpiContext::new(
-        ctx.accounts.token_program.to_account_info(),
-        Transfer {
-            from: ctx.accounts.quote_vault.to_account_info(),
-            to: ctx.accounts.payer_quote.to_account_info(),
-            authority: ctx.accounts.market.to_account_info(),
-        },
-    );
-    token::transfer(
-        cpi_context.with_signer(signer),
-        quote_amount_native.to_num(),
-    )?;
+    if quote_amount_native > 0 {
+        let cpi_context = CpiContext::new(
+            ctx.accounts.token_program.to_account_info(),
+            Transfer {
+                from: ctx.accounts.quote_vault.to_account_info(),
+                to: ctx.accounts.payer_quote.to_account_info(),
+                authority: ctx.accounts.market.to_account_info(),
+            },
+        );
+        token::transfer(
+            cpi_context.with_signer(signer),
+            quote_amount_native.to_num(),
+        )?;
+    }
 
     Ok(())
 }
