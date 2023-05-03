@@ -149,6 +149,7 @@ impl OpenOrdersAccountFixed {
         self.delegate == ix_signer
     }
 
+    // TODO Binye remove this code
     /// Updates the buyback_fees_* fields for staggered expiry of available amounts.
     pub fn expire_buyback_fees(&mut self, now_ts: u64, interval: u64) {
         if interval == 0 || now_ts < self.buyback_fees_expiry_timestamp {

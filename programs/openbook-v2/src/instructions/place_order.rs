@@ -45,25 +45,20 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<
 
     let now_ts: u64 = Clock::get()?.unix_timestamp.try_into().unwrap();
 
-    open_orders_account
-        .fixed
-        .expire_buyback_fees(now_ts, market.buyback_fees_expiry_interval);
-
-    let _effective_pos = open_orders_account
-        .fixed
-        .position
-        .effective_base_position_lots();
-
     let max_quote_lots_including_fees = order.max_quote_lots_including_fees;
     let max_base_lots = order.max_base_lots;
     let side = order.side;
 
-    let order_id_opt = book.new_order(
+    let TakenQuantitiesIncludingFees {
+        order_id,
+        total_base_lots_taken,
+        total_quote_lots_taken_native,
+    } = book.new_order(
         order,
         &mut market,
         &mut event_queue,
         oracle_price,
-        open_orders_account.borrow_mut(),
+        Some(open_orders_account.borrow_mut()),
         &open_orders_account_pk,
         now_ts,
         limit,
@@ -111,7 +106,7 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<
         );
         token::transfer(cpi_context, deposit_amount.to_num())?;
     }
-    Ok(order_id_opt)
+    Ok(order_id)
 }
 
 #[cfg(test)]

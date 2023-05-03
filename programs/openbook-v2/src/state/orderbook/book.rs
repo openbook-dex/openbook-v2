@@ -19,6 +19,12 @@ pub struct Orderbook<'a> {
     pub asks: RefMut<'a, BookSide>,
 }
 
+pub struct TakenQuantitiesIncludingFees {
+    pub order_id: Option<u128>,
+    pub total_base_lots_taken: Option<I80F48>,
+    pub total_quote_lots_taken_native: Option<I80F48>,
+}
+
 impl<'a> Orderbook<'a> {
     pub fn init(&mut self) {
         self.bids.nodes.order_tree_type = OrderTreeType::Bids.into();
@@ -46,11 +52,11 @@ impl<'a> Orderbook<'a> {
         open_book_market: &mut Market,
         event_queue: &mut EventQueue,
         oracle_price: I80F48,
-        mut open_orders_acc: OpenOrdersAccountRefMut,
+        mut open_orders_acc: Option<OpenOrdersAccountRefMut>,
         owner: &Pubkey,
         now_ts: u64,
         mut limit: u8,
-    ) -> std::result::Result<Option<u128>, Error> {
+    ) -> std::result::Result<TakenQuantitiesIncludingFees, Error> {
         let side = order.side;
 
         let other_side = side.invert_side();
@@ -64,8 +70,10 @@ impl<'a> Orderbook<'a> {
         let order_id = market.gen_order_id(side, price_data);
 
         // // IOC orders have a fee penalty applied regardless of match
-        if order.needs_penalty_fee() {
-            apply_penalty(market, &mut open_orders_acc)?;
+        if let Some(acco) = &mut open_orders_acc {
+            if order.needs_penalty_fee() {
+                apply_penalty(market, acco)?;
+            }
         }
 
         // Iterate through book and match against this new order.
@@ -162,26 +170,30 @@ impl<'a> Orderbook<'a> {
             limit -= 1;
         }
         let total_quote_lots_taken = max_quote_lots - remaining_quote_lots;
+        let total_quote_lots_taken_native =
+            I80F48::from_num(market.quote_lot_size * total_quote_lots_taken);
         let total_base_lots_taken = order.max_base_lots - remaining_base_lots;
         assert!(total_quote_lots_taken >= 0);
         assert!(total_base_lots_taken >= 0);
 
         // Record the taker trade in the account already, even though it will only be
         // realized when the fill event gets executed
-        if total_quote_lots_taken > 0 || total_base_lots_taken > 0 {
-            open_orders_acc.fixed.position.add_taker_trade(
-                side,
-                total_base_lots_taken,
-                total_quote_lots_taken,
-            );
+        if let Some(open_orders_acc) = &mut open_orders_acc {
+            if total_quote_lots_taken > 0 || total_base_lots_taken > 0 {
+                open_orders_acc.fixed.position.add_taker_trade(
+                    side,
+                    total_base_lots_taken,
+                    total_quote_lots_taken,
+                );
 
-            release_funds_fees(
-                side,
-                market,
-                &mut open_orders_acc,
-                total_base_lots_taken,
-                total_quote_lots_taken,
-            )?;
+                release_funds_fees(
+                    side,
+                    market,
+                    open_orders_acc,
+                    total_base_lots_taken,
+                    total_quote_lots_taken_native,
+                )?;
+            }
         }
         // Update remaining based on quote_lots taken. If nothing taken, same as the beggining
         remaining_quote_lots = order.max_quote_lots_including_fees
@@ -213,6 +225,7 @@ impl<'a> Orderbook<'a> {
         }
 
         if let Some(order_tree_target) = post_target {
+            let mut open_orders_acc = open_orders_acc.unwrap();
             let bookside = self.bookside_mut(side);
             // Drop an expired order if possible
             if let Some(expired_order) = bookside.remove_one_expired(order_tree_target, now_ts) {
@@ -282,9 +295,22 @@ impl<'a> Orderbook<'a> {
         }
 
         if post_target.is_some() {
-            Ok(Some(order_id))
+            Ok(TakenQuantitiesIncludingFees {
+                order_id: Some(order_id),
+                total_base_lots_taken: None,
+                total_quote_lots_taken_native: None,
+            })
         } else {
-            Ok(None)
+            Ok(TakenQuantitiesIncludingFees {
+                order_id: None,
+                total_base_lots_taken: Some(
+                    I80F48::from_num(total_base_lots_taken)
+                        * I80F48::from_num(market.base_lot_size),
+                ),
+                total_quote_lots_taken_native: Some(
+                    total_quote_lots_taken_native * (I80F48::ONE + market.taker_fee),
+                ),
+            })
         }
     }
 
@@ -368,10 +394,8 @@ fn release_funds_fees(
     market: &mut Market,
     open_orders_acc: &mut OpenOrdersAccountRefMut,
     base_lots: i64,
-    quote_lots: i64,
+    quote_native: I80F48,
 ) -> Result<()> {
-    let quote_native = I80F48::from_num(market.quote_lot_size * quote_lots);
-
     let taker_fees = quote_native * market.taker_fee;
 
     // taker fees should never be negative
