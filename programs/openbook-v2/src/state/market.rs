@@ -98,6 +98,7 @@ pub struct Market {
     pub quote_vault: Pubkey,
     pub quote_deposit_total: u64,
     pub quote_fees_accrued: u64,
+    pub referrer_rebates_accrued: u64,
 
     pub reserved: [u8; 1888],
 }
@@ -130,9 +131,10 @@ const_assert_eq!(
     8 + // size of base_fees_accrued
     8 + // size of quote_deposit_total
     8 + // size of quote_fees_accrued
+    8 + // size of referrer_rebates_accrued
     1888 // size of reserved
 );
-const_assert_eq!(size_of::<Market>(), 2736);
+const_assert_eq!(size_of::<Market>(), 2744);
 const_assert_eq!(size_of::<Market>() % 8, 0);
 
 impl Market {
@@ -217,11 +219,16 @@ impl Market {
             quote_vault: Pubkey::new_unique(),
             quote_deposit_total: 0,
             quote_fees_accrued: 0,
+            referrer_rebates_accrued: 0,
             reserved: [0; 1888],
         }
     }
 
     pub fn substract_taker_fees(&self, quote: i64) -> i64 {
         (I80F48::from(quote) / (I80F48::ONE + self.taker_fee)).to_num()
+    }
+
+    pub fn referrer_rebate(&self, quote: I80F48) -> i64 {
+        (quote * (self.taker_fee - self.taker_fee)).to_num()
     }
 }

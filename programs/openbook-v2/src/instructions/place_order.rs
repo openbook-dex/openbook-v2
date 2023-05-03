@@ -57,7 +57,6 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<
     let max_quote_lots_including_fees = order.max_quote_lots_including_fees;
     let max_base_lots = order.max_base_lots;
     let side = order.side;
-    let fees_before = market.fees_accrued;
 
     let order_id_opt = book.new_order(
         order,

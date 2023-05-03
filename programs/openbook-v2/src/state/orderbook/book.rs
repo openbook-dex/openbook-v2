@@ -394,9 +394,12 @@ fn release_funds_fees(
         }
     };
 
-    open_orders_acc.fixed.position.taker_volume += taker_fees.to_num::<u64>();
+    // Referrer rebates
+    pa.referrer_rebates_accrued += market.referrer_rebate(quote_native) as u64;
+    market.referrer_rebates_accrued += market.referrer_rebate(quote_native) as u64;
 
-    // Binye only apply taker fees now. Maker fees applied once processing the event
+    open_orders_acc.fixed.position.taker_volume += taker_fees.to_num::<u64>();
+    // Only apply taker fees now. Maker fees applied once processing the event
     market.fees_accrued += taker_fees;
 
     Ok(())

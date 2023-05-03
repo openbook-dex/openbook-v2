@@ -174,7 +174,7 @@ pub mod openbook_v2 {
         Ok(())
     }
 
-    pub fn settle_funds(ctx: Context<SettleFunds>) -> Result<()> {
+    pub fn settle_funds<'info>(ctx: Context<'_, '_, '_, 'info, SettleFunds<'info>>) -> Result<()> {
         #[cfg(feature = "enable-gpl")]
         instructions::settle_funds(ctx)?;
         Ok(())

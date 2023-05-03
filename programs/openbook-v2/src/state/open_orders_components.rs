@@ -13,10 +13,10 @@ pub const FREE_ORDER_SLOT: MarketIndex = MarketIndex::MAX;
 #[derive(AnchorSerialize, AnchorDeserialize, Derivative)]
 #[derivative(Debug)]
 pub struct Position {
-    /// Active position size, measured in base lots
+    // TODO Binye To be deleted?
+    /// Currenlty not being used
     pub base_position_lots: i64,
-    /// Active position in quote (conversation rate is that of the time the order was settled)
-    /// measured in native quote
+    /// Currenlty not being used
     pub quote_position_native: I80F48,
 
     /// Tracks what the position is to calculate average entry & break even price

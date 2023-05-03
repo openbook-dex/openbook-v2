@@ -5,9 +5,9 @@ use fixed::types::I80F48;
 use crate::accounts_ix::*;
 use crate::state::*;
 
-pub fn settle_funds(ctx: Context<SettleFunds>) -> Result<()> {
+pub fn settle_funds<'info>(ctx: Context<'_, '_, '_, 'info, SettleFunds<'info>>) -> Result<()> {
     let mut open_orders_account = ctx.accounts.open_orders_account.load_full_mut()?;
-    let market = ctx.accounts.market.load_mut()?;
+    let market = &mut ctx.accounts.market.load_mut()?;
     let mut position = &mut open_orders_account.fixed_mut().position;
 
     let seeds = [
@@ -17,26 +17,25 @@ pub fn settle_funds(ctx: Context<SettleFunds>) -> Result<()> {
     ];
     let signer = &[&seeds[..]];
 
-    // TODO Binye
-    // let fee_amount = market.fees_accrued;
-    // if ctx.remaining_accounts.len() > 0 && fee_amount >0 {
-    //     let referrer = &ctx.remaining_accounts[0].to_account_info();
-    //         let cpi_context = CpiContext::new(
-    //             ctx.accounts.token_program.to_account_info(),
-    //             Transfer {
-    //                 from: ctx.accounts.quote_vault.to_account_info(),
-    //                 to: referrer,
-    //                 authority: ctx.accounts.market.to_account_info(),
-    //             },
-    //         );
-    //         token::transfer(
-    //             cpi_context.with_signer(signer),
-    //             fee_amount.to_num(),
-    //         )?;
-
-    //     market.fees_settled += market.fees_accrued;
-    //     market.fee_acrued -=fee_amount;
-    // }
+    if !ctx.remaining_accounts.is_empty() && position.referrer_rebates_accrued > 0 {
+        let referrer = ctx.remaining_accounts[0].to_account_info();
+        let cpi_context = CpiContext::new(
+            ctx.accounts.token_program.to_account_info(),
+            Transfer {
+                from: ctx.accounts.quote_vault.to_account_info(),
+                to: referrer,
+                authority: ctx.accounts.market.to_account_info(),
+            },
+        );
+        token::transfer(
+            cpi_context.with_signer(signer),
+            position.referrer_rebates_accrued,
+        )?;
+    } else {
+        market.quote_fees_accrued += position.referrer_rebates_accrued;
+    }
+    market.referrer_rebates_accrued -= position.referrer_rebates_accrued;
+    position.referrer_rebates_accrued = 0;
 
     if position.base_free_native > 0 {
         let cpi_context = CpiContext::new(
