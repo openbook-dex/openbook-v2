@@ -229,6 +229,6 @@ impl Market {
     }
 
     pub fn referrer_rebate(&self, quote: I80F48) -> i64 {
-        (quote * (self.taker_fee - self.taker_fee)).to_num()
+        (quote * (self.taker_fee - self.maker_fee)).to_num()
     }
 }

@@ -180,6 +180,12 @@ pub mod openbook_v2 {
         Ok(())
     }
 
+    pub fn sweep_fees(ctx: Context<SweepFees>) -> Result<()> {
+        #[cfg(feature = "enable-gpl")]
+        instructions::sweep_fees(ctx)?;
+        Ok(())
+    }
+
     pub fn close_market(ctx: Context<CloseMarket>) -> Result<()> {
         #[cfg(feature = "enable-gpl")]
         instructions::close_market(ctx)?;

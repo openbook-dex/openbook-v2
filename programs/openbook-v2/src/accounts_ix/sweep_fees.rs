@@ -3,7 +3,7 @@ use anchor_lang::prelude::*;
 use anchor_spl::token::{Token, TokenAccount};
 
 #[derive(Accounts)]
-pub struct SettleFees<'info> {
+pub struct SweepFees<'info> {
     #[account(mut)]
     pub market: AccountLoader<'info, Market>,
 

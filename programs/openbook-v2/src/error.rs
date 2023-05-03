@@ -99,6 +99,8 @@ pub enum OpenBookError {
     HealthRegionBadInnerInstruction,
     #[msg("Event queue contains elements and market can't be closed")]
     EventQueueContainsElements,
+    #[msg("Taker fees should be >= maker fees")]
+    InvalidFeesError,
 }
 
 impl OpenBookError {

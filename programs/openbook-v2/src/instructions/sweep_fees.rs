@@ -1,13 +1,10 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Transfer};
-use fixed::types::I80F48;
 
 use crate::accounts_ix::*;
 
-pub fn sweep_fees(ctx: Context<SettleFees>) -> Result<()> {
+pub fn sweep_fees(ctx: Context<SweepFees>) -> Result<()> {
     let mut market = ctx.accounts.market.load_mut()?;
-
-    let fees_amount = market.fees_accrued;
 
     let seeds = [
         b"Market".as_ref(),
@@ -24,10 +21,8 @@ pub fn sweep_fees(ctx: Context<SettleFees>) -> Result<()> {
             authority: ctx.accounts.market.to_account_info(),
         },
     );
-    token::transfer(cpi_context.with_signer(signer), fees_amount.to_num())?;
+    token::transfer(cpi_context.with_signer(signer), market.quote_fees_accrued)?;
 
-    market.fees_settled += fees_amount;
-    market.fees_accrued = I80F48::ZERO;
-
+    market.quote_fees_accrued = 0;
     Ok(())
 }
