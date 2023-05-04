@@ -1,3 +1,4 @@
+use crate::error::OpenBookError;
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Transfer};
 
@@ -5,6 +6,11 @@ use crate::accounts_ix::*;
 
 pub fn sweep_fees(ctx: Context<SweepFees>) -> Result<()> {
     let mut market = ctx.accounts.market.load_mut()?;
+    // Enforce only admin can withdraw fees
+    require!(
+        market.admin == ctx.accounts.receiver.owner,
+        OpenBookError::InvalidFundsReceiver
+    );
 
     let seeds = [
         b"Market".as_ref(),

@@ -15,30 +15,6 @@ pub enum OpenBookError {
     UnexpectedOracle,
     #[msg("oracle type cannot be determined")]
     UnknownOracleType,
-    #[msg("")]
-    InvalidFlashLoanTargetCpiProgram,
-    #[msg("health must be positive")]
-    HealthMustBePositive,
-    #[msg("health must be positive or increase")]
-    HealthMustBePositiveOrIncrease,
-    #[msg("health must be negative")]
-    HealthMustBeNegative,
-    #[msg("the account is bankrupt")]
-    IsBankrupt,
-    #[msg("the account is not bankrupt")]
-    IsNotBankrupt,
-    #[msg("no free token position index")]
-    NoFreeTokenPositionIndex,
-    #[msg("no free serum3 open orders index")]
-    NoFreeSerum3OpenOrdersIndex,
-    #[msg("no free perp position index")]
-    NoFreePositionIndex,
-    #[msg("serum3 open orders exist already")]
-    Serum3OpenOrdersExistAlready,
-    #[msg("bank vault has insufficent funds")]
-    InsufficentBankVaultFunds,
-    #[msg("account is currently being liquidated")]
-    BeingLiquidated,
     #[msg("invalid bank")]
     InvalidBank,
     #[msg("account profitability is mismatched")]
@@ -103,6 +79,8 @@ pub enum OpenBookError {
     InvalidFeesError,
     #[msg("The order type is invalid. A taker order must be ImmediateOrCancel")]
     InvalidOrderType,
+    #[msg("The receiver is invalid. Makes sure the receiver's owner is the market admin")]
+    InvalidFundsReceiver,
 }
 
 impl OpenBookError {

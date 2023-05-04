@@ -176,5 +176,45 @@ async fn test_fees_acrued() -> Result<(), TransportError> {
         );
     }
 
+    let admin_token_0 = solana
+        .create_associated_token_account(&admin.pubkey(), mints[0].pubkey)
+        .await;
+
+    send_tx(
+        solana,
+        SettleFundsInstruction {
+            market,
+            open_orders_account: account_0,
+            base_vault,
+            quote_vault,
+            payer_base: owner_token_0,
+            payer_quote: owner_token_1,
+            referrer: Some(admin_token_0),
+        },
+    )
+    .await
+    .unwrap();
+
+    {
+        let market = solana.get_account::<Market>(market).await;
+        assert_eq!(market.quote_fees_accrued, 10);
+    }
+
+    send_tx(
+        solana,
+        SweepFeesInstruction {
+            market,
+            quote_vault,
+            receiver: admin_token_0,
+        },
+    )
+    .await
+    .unwrap();
+
+    {
+        let market = solana.get_account::<Market>(market).await;
+        assert_eq!(market.quote_fees_accrued, 0);
+    }
+
     Ok(())
 }

@@ -178,6 +178,7 @@ async fn test_take_ask_order() -> Result<(), TransportError> {
             quote_vault,
             payer_base: owner_token_0,
             payer_quote: owner_token_1,
+            referrer: None,
         },
     )
     .await
@@ -390,6 +391,7 @@ async fn test_take_bid_order() -> Result<(), TransportError> {
             quote_vault,
             payer_base: owner_token_0,
             payer_quote: owner_token_1,
+            referrer: None,
         },
     )
     .await

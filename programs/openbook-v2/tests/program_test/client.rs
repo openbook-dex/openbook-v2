@@ -577,6 +577,7 @@ pub struct SettleFundsInstruction {
     pub quote_vault: Pubkey,
     pub payer_base: Pubkey,
     pub payer_quote: Pubkey,
+    pub referrer: Option<Pubkey>,
 }
 #[async_trait::async_trait(?Send)]
 impl ClientInstruction for SettleFundsInstruction {
@@ -599,7 +600,15 @@ impl ClientInstruction for SettleFundsInstruction {
             token_program: Token::id(),
             system_program: System::id(),
         };
-        let instruction = make_instruction(program_id, &accounts, instruction);
+        let mut instruction = make_instruction(program_id, &accounts, instruction);
+        if let Some(ref3) = self.referrer {
+            let remaining = &mut vec![AccountMeta {
+                pubkey: ref3,
+                is_signer: false,
+                is_writable: true,
+            }];
+            instruction.accounts.append(remaining);
+        }
 
         (accounts, instruction)
     }
@@ -611,7 +620,6 @@ impl ClientInstruction for SettleFundsInstruction {
 
 pub struct SweepFeesInstruction {
     pub market: Pubkey,
-    pub base_vault: Pubkey,
     pub quote_vault: Pubkey,
     pub receiver: Pubkey,
 }
@@ -628,7 +636,6 @@ impl ClientInstruction for SweepFeesInstruction {
 
         let accounts = Self::Accounts {
             market: self.market,
-            base_vault: self.base_vault,
             quote_vault: self.quote_vault,
             receiver: self.receiver,
             token_program: Token::id(),

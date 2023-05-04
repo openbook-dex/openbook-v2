@@ -218,6 +218,7 @@ async fn test_simple_settle() -> Result<(), TransportError> {
             quote_vault,
             payer_base: owner_token_0,
             payer_quote: owner_token_1,
+            referrer: None,
         },
     )
     .await
@@ -245,6 +246,7 @@ async fn test_simple_settle() -> Result<(), TransportError> {
             quote_vault,
             payer_base: owner_token_0,
             payer_quote: owner_token_1,
+            referrer: None,
         },
     )
     .await
@@ -539,6 +541,7 @@ async fn test_cancel_orders() -> Result<(), TransportError> {
             quote_vault,
             payer_base: owner_token_0,
             payer_quote: owner_token_1,
+            referrer: None,
         },
     )
     .await
