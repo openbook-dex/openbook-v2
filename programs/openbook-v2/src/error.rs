@@ -101,6 +101,8 @@ pub enum OpenBookError {
     EventQueueContainsElements,
     #[msg("Taker fees should be >= maker fees")]
     InvalidFeesError,
+    #[msg("The order type is invalid. A taker order must be ImmediateOrCancel")]
+    InvalidOrderType,
 }
 
 impl OpenBookError {

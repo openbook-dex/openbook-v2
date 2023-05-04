@@ -9,6 +9,7 @@ pub use deposit::*;
 pub use init_open_orders::*;
 pub use place_order::*;
 pub use place_take_order::*;
+pub use place_take_order::*;
 pub use settle_funds::*;
 pub use stub_oracle_close::*;
 pub use stub_oracle_create::*;

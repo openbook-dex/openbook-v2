@@ -21,8 +21,8 @@ pub struct Orderbook<'a> {
 
 pub struct TakenQuantitiesIncludingFees {
     pub order_id: Option<u128>,
-    pub total_base_lots_taken: Option<I80F48>,
-    pub total_quote_lots_taken_native: Option<I80F48>,
+    pub total_base_taken_native: Option<I80F48>,
+    pub total_quote_taken_native: Option<I80F48>,
 }
 
 impl<'a> Orderbook<'a> {
@@ -170,7 +170,7 @@ impl<'a> Orderbook<'a> {
             limit -= 1;
         }
         let total_quote_lots_taken = max_quote_lots - remaining_quote_lots;
-        let total_quote_lots_taken_native =
+        let total_quote_taken_native =
             I80F48::from_num(market.quote_lot_size * total_quote_lots_taken);
         let total_base_lots_taken = order.max_base_lots - remaining_base_lots;
         assert!(total_quote_lots_taken >= 0);
@@ -191,7 +191,7 @@ impl<'a> Orderbook<'a> {
                     market,
                     open_orders_acc,
                     total_base_lots_taken,
-                    total_quote_lots_taken_native,
+                    total_quote_taken_native,
                 )?;
             }
         }
@@ -294,24 +294,29 @@ impl<'a> Orderbook<'a> {
             )?;
         }
 
-        if post_target.is_some() {
-            Ok(TakenQuantitiesIncludingFees {
+        let mut taken_quantities = match side {
+            Side::Bid => TakenQuantitiesIncludingFees {
                 order_id: Some(order_id),
-                total_base_lots_taken: None,
-                total_quote_lots_taken_native: None,
-            })
-        } else {
-            Ok(TakenQuantitiesIncludingFees {
-                order_id: None,
-                total_base_lots_taken: Some(
+                total_base_taken_native: None,
+                total_quote_taken_native: Some(
+                    total_quote_taken_native * (I80F48::ONE + market.taker_fee),
+                ),
+            },
+            Side::Ask => TakenQuantitiesIncludingFees {
+                order_id: Some(order_id),
+                total_base_taken_native: Some(
                     I80F48::from_num(total_base_lots_taken)
                         * I80F48::from_num(market.base_lot_size),
                 ),
-                total_quote_lots_taken_native: Some(
-                    total_quote_lots_taken_native * (I80F48::ONE + market.taker_fee),
-                ),
-            })
+                total_quote_taken_native: None,
+            },
+        };
+
+        if post_target.is_none() {
+            taken_quantities.order_id = None;
         }
+
+        Ok(taken_quantities)
     }
 
     /// Cancels up to `limit` orders that are listed on the openorders account for the given market.

@@ -51,8 +51,8 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<
 
     let TakenQuantitiesIncludingFees {
         order_id,
-        total_base_lots_taken,
-        total_quote_lots_taken_native,
+        total_base_taken_native: _,
+        total_quote_taken_native: _,
     } = book.new_order(
         order,
         &mut market,

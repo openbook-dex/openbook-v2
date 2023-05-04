@@ -4,7 +4,6 @@ use anchor_spl::token::{self, Transfer};
 
 use crate::accounts_ix::*;
 use crate::accounts_zerocopy::*;
-use crate::error::*;
 use crate::state::*;
 
 // TODO
@@ -16,7 +15,6 @@ pub fn place_take_order(
 ) -> Result<Option<u128>> {
     require_gte!(order.max_base_lots, 0);
     require_gte!(order.max_quote_lots_including_fees, 0);
-    require!(order.is_post_only(), OpenBookError::InvalidFeesError);
 
     let _now_ts: u64 = Clock::get()?.unix_timestamp.try_into().unwrap();
     let oracle_price;
@@ -42,8 +40,8 @@ pub fn place_take_order(
 
     let TakenQuantitiesIncludingFees {
         order_id,
-        total_base_lots_taken,
-        total_quote_lots_taken_native,
+        total_base_taken_native,
+        total_quote_taken_native,
     } = book.new_order(
         order,
         &mut market,
@@ -58,12 +56,12 @@ pub fn place_take_order(
     let (to_vault, deposit_amount) = match side {
         Side::Bid => (
             ctx.accounts.quote_vault.to_account_info(),
-            total_quote_lots_taken_native,
+            total_quote_taken_native,
         ),
 
         Side::Ask => (
             ctx.accounts.base_vault.to_account_info(),
-            total_base_lots_taken,
+            total_base_taken_native,
         ),
     };
 
