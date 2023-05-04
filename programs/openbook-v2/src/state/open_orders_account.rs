@@ -426,7 +426,7 @@ impl<
         };
 
         if fill.maker_out() {
-            self.remove_order(fill.maker_slot as usize, base_change.abs(), *market, false)?;
+            self.remove_order(fill.maker_slot as usize, base_change.abs())?;
         } else {
             match side {
                 Side::Bid => {
@@ -554,22 +554,11 @@ impl<
         Ok(())
     }
 
-    pub fn remove_order(
-        &mut self,
-        slot: usize,
-        base_quantity: i64,
-        market: Market,
-        cancel: bool,
-    ) -> Result<()> {
+    pub fn remove_order(&mut self, slot: usize, base_quantity: i64) -> Result<()> {
         {
             let oo = self.open_order_mut_by_raw_index(slot);
             require_neq!(oo.id, 0);
 
-            // TODO check this conversion
-            let price = (oo.id >> 64) as i64;
-            let base_quantity_native = base_quantity * market.base_lot_size;
-            let quote_quantity_native =
-                base_quantity.checked_mul(price).unwrap() * market.quote_lot_size;
             let order_side = oo.side_and_tree().side();
             let mut position = &mut self.fixed_mut().position;
 
@@ -577,15 +566,9 @@ impl<
             match order_side {
                 Side::Bid => {
                     position.bids_base_lots -= base_quantity;
-                    if cancel {
-                        position.quote_free_native += I80F48::from_num(quote_quantity_native);
-                    }
                 }
                 Side::Ask => {
                     position.asks_base_lots -= base_quantity;
-                    if cancel {
-                        position.base_free_native += I80F48::from_num(base_quantity_native);
-                    }
                 }
             }
         }
@@ -596,6 +579,33 @@ impl<
         oo.id = 0;
         oo.client_id = 0;
         Ok(())
+    }
+
+    pub fn cancel_order(&mut self, slot: usize, base_quantity: i64, market: Market) -> Result<()> {
+        {
+            let oo = self.open_order_mut_by_raw_index(slot);
+
+            // TODO check this conversion
+            let price = (oo.id >> 64) as i64;
+            let base_quantity_native = base_quantity * market.base_lot_size;
+            let quote_quantity_native =
+                base_quantity.checked_mul(price).unwrap() * market.quote_lot_size;
+            let order_side = oo.side_and_tree().side();
+
+            let position = &mut self.fixed_mut().position;
+
+            // accounting
+            match order_side {
+                Side::Bid => {
+                    position.quote_free_native += I80F48::from_num(quote_quantity_native);
+                }
+                Side::Ask => {
+                    position.base_free_native += I80F48::from_num(base_quantity_native);
+                }
+            }
+        }
+
+        self.remove_order(slot, base_quantity)
     }
 }
 

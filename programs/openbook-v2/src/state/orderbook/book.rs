@@ -351,12 +351,7 @@ impl<'a> Orderbook<'a> {
         if let Some(owner) = expected_owner {
             require_keys_eq!(leaf_node.owner, owner);
         }
-        open_orders_acc.remove_order(
-            leaf_node.owner_slot as usize,
-            leaf_node.quantity,
-            market,
-            true,
-        )?;
+        open_orders_acc.cancel_order(leaf_node.owner_slot as usize, leaf_node.quantity, market)?;
 
         Ok(leaf_node)
     }

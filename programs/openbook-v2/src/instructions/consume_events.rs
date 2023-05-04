@@ -100,7 +100,7 @@ pub fn consume_events(ctx: Context<ConsumeEvents>, limit: usize) -> Result<()> {
             EventType::Out => {
                 let out: &OutEvent = cast_ref(event);
                 load_open_orders_acc!(owner, out.owner, remaining_accs, event_queue);
-                owner.remove_order(out.owner_slot as usize, out.quantity, *market, true)?;
+                owner.cancel_order(out.owner_slot as usize, out.quantity, *market)?;
             }
         }
 
