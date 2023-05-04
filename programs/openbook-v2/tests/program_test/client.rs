@@ -376,7 +376,7 @@ pub struct PlaceOrderPeggedInstruction {
     pub side: Side,
     pub price_offset: i64,
     pub max_base_lots: i64,
-    pub max_quote_lots: i64,
+    pub max_quote_lots_including_fees: i64,
     pub client_order_id: u64,
     pub peg_limit: i64,
 }
@@ -395,7 +395,7 @@ impl ClientInstruction for PlaceOrderPeggedInstruction {
             price_offset_lots: self.price_offset,
             peg_limit: self.peg_limit,
             max_base_lots: self.max_base_lots,
-            max_quote_lots: self.max_quote_lots,
+            max_quote_lots_including_fees: self.max_quote_lots_including_fees,
             client_order_id: self.client_order_id,
             order_type: PlaceOrderType::Limit,
             reduce_only: false,

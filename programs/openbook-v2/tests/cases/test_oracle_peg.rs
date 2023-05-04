@@ -36,8 +36,8 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
             market_index: 1,
             base_lot_size: market_base_lot_size,
             quote_lot_size: market_quote_lot_size,
-            maker_fee: 0.0002,
-            taker_fee: 0.000,
+            maker_fee: 0.0,
+            taker_fee: 0.0,
             base_mint: mints[0].pubkey,
             quote_mint: mints[1].pubkey,
             base_vault,
@@ -57,7 +57,7 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
     };
     assert_eq!(price_lots, market_base_lot_size / market_quote_lot_size);
 
-    let max_quote_lots = {
+    let max_quote_lots_including_fees = {
         let acc = solana
             .get_account::<TokenAccount>(context.users[0].token_accounts[1])
             .await;
@@ -81,7 +81,7 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
             price_offset: -1,
             peg_limit: -1,
             max_base_lots: 1,
-            max_quote_lots,
+            max_quote_lots_including_fees,
             client_order_id: 0,
         },
     )
@@ -125,7 +125,7 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
             price_offset: 0,
             peg_limit: -1,
             max_base_lots: 2,
-            max_quote_lots,
+            max_quote_lots_including_fees,
             client_order_id: 5,
         },
     )
@@ -144,7 +144,7 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
             side: Side::Ask,
             price_lots,
             max_base_lots: 1,
-            max_quote_lots,
+            max_quote_lots_including_fees,
             reduce_only: false,
             client_order_id: 6,
             expiry_timestamp: 0,
@@ -166,7 +166,7 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
             price_offset: 0,
             peg_limit: -1,
             max_base_lots: 1,
-            max_quote_lots,
+            max_quote_lots_including_fees,
             client_order_id: 7,
         },
     )
@@ -215,7 +215,7 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
             price_offset: -1,
             peg_limit: -1,
             max_base_lots: 2,
-            max_quote_lots,
+            max_quote_lots_including_fees,
             client_order_id: 5,
         },
     )
@@ -237,7 +237,7 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
             side: Side::Ask,
             price_lots,
             max_base_lots: 1,
-            max_quote_lots,
+            max_quote_lots_including_fees,
             reduce_only: false,
             client_order_id: 60,
             expiry_timestamp: 0,
@@ -271,7 +271,7 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
             side: Side::Ask,
             price_lots,
             max_base_lots: 2,
-            max_quote_lots,
+            max_quote_lots_including_fees,
             reduce_only: false,
             client_order_id: 61,
             expiry_timestamp: 0,
@@ -307,7 +307,7 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
             price_offset: -1,
             peg_limit: price_lots + 2,
             max_base_lots: 2,
-            max_quote_lots,
+            max_quote_lots_including_fees,
             client_order_id: 5,
         },
     )
@@ -328,7 +328,7 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
             side: Side::Ask,
             price_lots: price_lots + 2,
             max_base_lots: 1,
-            max_quote_lots,
+            max_quote_lots_including_fees,
             reduce_only: false,
             client_order_id: 62,
             expiry_timestamp: 0,
@@ -362,7 +362,7 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
             side: Side::Ask,
             price_lots: price_lots + 3,
             max_base_lots: 1,
-            max_quote_lots,
+            max_quote_lots_including_fees,
             reduce_only: false,
             client_order_id: 63,
             expiry_timestamp: 0,

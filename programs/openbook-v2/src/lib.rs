@@ -143,7 +143,7 @@ pub mod openbook_v2 {
         peg_limit: i64,
 
         max_base_lots: i64,
-        max_quote_lots: i64,
+        max_quote_lots_including_fees: i64,
         client_order_id: u64,
         order_type: PlaceOrderType,
         reduce_only: bool,
@@ -180,7 +180,7 @@ pub mod openbook_v2 {
         let order = Order {
             side,
             max_base_lots,
-            max_quote_lots,
+            max_quote_lots_including_fees,
             client_order_id,
             reduce_only,
             time_in_force,
