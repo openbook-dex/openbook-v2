@@ -7,17 +7,27 @@ use crate::state::*;
 
 pub fn settle_funds<'info>(ctx: Context<'_, '_, '_, 'info, SettleFunds<'info>>) -> Result<()> {
     let mut open_orders_account = ctx.accounts.open_orders_account.load_full_mut()?;
-    let market = &mut ctx.accounts.market.load_mut()?;
     let mut position = &mut open_orders_account.fixed_mut().position;
+
+    let is_referrer = !ctx.remaining_accounts.is_empty() && position.referrer_rebates_accrued > 0;
+
+    let (market_index, market_bump) = {
+        let market = &mut ctx.accounts.market.load_mut()?;
+        if !is_referrer {
+            market.quote_fees_accrued += position.referrer_rebates_accrued;
+        }
+        market.referrer_rebates_accrued -= position.referrer_rebates_accrued;
+        (market.market_index, market.bump)
+    };
 
     let seeds = [
         b"Market".as_ref(),
-        &market.market_index.to_le_bytes(),
-        &[market.bump],
+        &market_index.to_le_bytes(),
+        &[market_bump],
     ];
     let signer = &[&seeds[..]];
 
-    if !ctx.remaining_accounts.is_empty() && position.referrer_rebates_accrued > 0 {
+    if is_referrer {
         let referrer = ctx.remaining_accounts[0].to_account_info();
         let cpi_context = CpiContext::new(
             ctx.accounts.token_program.to_account_info(),
@@ -31,11 +41,7 @@ pub fn settle_funds<'info>(ctx: Context<'_, '_, '_, 'info, SettleFunds<'info>>) 
             cpi_context.with_signer(signer),
             position.referrer_rebates_accrued,
         )?;
-    } else {
-        market.quote_fees_accrued += position.referrer_rebates_accrued;
     }
-    market.referrer_rebates_accrued -= position.referrer_rebates_accrued;
-    position.referrer_rebates_accrued = 0;
 
     if position.base_free_native > 0 {
         let cpi_context = CpiContext::new(
@@ -70,6 +76,7 @@ pub fn settle_funds<'info>(ctx: Context<'_, '_, '_, 'info, SettleFunds<'info>>) 
     // Set to 0 after transfer
     position.base_free_native = I80F48::ZERO;
     position.quote_free_native = I80F48::ZERO;
+    position.referrer_rebates_accrued = 0;
 
     Ok(())
 }
