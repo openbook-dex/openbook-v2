@@ -14,8 +14,9 @@ pub fn settle_funds<'info>(ctx: Context<'_, '_, '_, 'info, SettleFunds<'info>>) 
     let (market_index, market_bump) = {
         let market = &mut ctx.accounts.market.load_mut()?;
         if !is_referrer {
-            market.referrer_rebates_accrued -= position.referrer_rebates_accrued;
+            market.quote_fees_accrued += position.referrer_rebates_accrued;
         }
+        market.referrer_rebates_accrued -= position.referrer_rebates_accrued;
         (market.market_index, market.bump)
     };
 
