@@ -12,6 +12,7 @@ pub use settle_funds::*;
 pub use stub_oracle_close::*;
 pub use stub_oracle_create::*;
 pub use stub_oracle_set::*;
+pub use sweep_fees::*;
 
 mod cancel_all_orders;
 mod cancel_all_orders_by_side;
@@ -27,3 +28,4 @@ mod settle_funds;
 mod stub_oracle_close;
 mod stub_oracle_create;
 mod stub_oracle_set;
+mod sweep_fees;

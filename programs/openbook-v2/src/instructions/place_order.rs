@@ -14,7 +14,7 @@ use crate::state::*;
 #[allow(clippy::too_many_arguments)]
 pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<Option<u128>> {
     require_gte!(order.max_base_lots, 0);
-    require_gte!(order.max_quote_lots, 0);
+    require_gte!(order.max_quote_lots_including_fees, 0);
 
     let _now_ts: u64 = Clock::get()?.unix_timestamp.try_into().unwrap();
     let oracle_price;
@@ -54,7 +54,7 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<
         .position
         .effective_base_position_lots();
 
-    let max_quote_lots = order.max_quote_lots;
+    let max_quote_lots_including_fees = order.max_quote_lots_including_fees;
     let max_base_lots = order.max_base_lots;
     let side = order.side;
 
@@ -69,29 +69,32 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<
         limit,
     )?;
 
-    let mut position = &mut open_orders_account.fixed_mut().position;
+    let position = &mut open_orders_account.fixed_mut().position;
     let (to_vault, deposit_amount) = match side {
         Side::Bid => {
-            let free_assets_lots = position.quote_free_lots;
+            let free_assets_native = position.quote_free_native;
+            let max_native_including_fees = I80F48::from_num(max_quote_lots_including_fees)
+                * I80F48::from_num(market.quote_lot_size);
 
-            let min_qua = cmp::min(max_quote_lots, free_assets_lots);
-            position.quote_free_lots -= min_qua;
+            let min_qua = cmp::min(max_native_including_fees, free_assets_native);
+            position.quote_free_native -= min_qua;
 
             (
                 ctx.accounts.quote_vault.to_account_info(),
-                I80F48::from(max_quote_lots - min_qua) * I80F48::from(market.quote_lot_size),
+                max_native_including_fees - min_qua,
             )
         }
 
         Side::Ask => {
-            let free_assets_lots = position.base_free_lots;
-
-            let min_qua = cmp::min(max_base_lots, free_assets_lots);
-            position.base_free_lots -= min_qua;
+            let free_assets_native = position.base_free_native;
+            let max_base_native =
+                I80F48::from_num(max_base_lots) * I80F48::from_num(market.base_lot_size);
+            let min_qua = cmp::min(max_base_native, free_assets_native);
+            position.base_free_native -= min_qua;
 
             (
                 ctx.accounts.base_vault.to_account_info(),
-                I80F48::from(max_base_lots - min_qua) * I80F48::from(market.base_lot_size),
+                max_base_native - min_qua,
             )
         }
     };
@@ -191,7 +194,7 @@ mod tests {
             let order = Order {
                 side,
                 max_base_lots: amount,
-                max_quote_lots: 0,
+                max_quote_lots_including_fees: 0,
                 client_order_id: 0,
                 reduce_only: true,
                 time_in_force: 0,

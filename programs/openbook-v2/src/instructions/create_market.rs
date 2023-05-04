@@ -22,6 +22,9 @@ pub fn create_market(
 ) -> Result<()> {
     let now_ts: u64 = Clock::get()?.unix_timestamp.try_into().unwrap();
 
+    // Enforce taker fees >=0 go to maker
+    require!(taker_fee >= maker_fee, OpenBookError::InvalidFeesError);
+
     let mut openbook_market = ctx.accounts.market.load_init()?;
     *openbook_market = Market {
         admin: ctx.accounts.admin.key(),
@@ -59,6 +62,7 @@ pub fn create_market(
         quote_vault: ctx.accounts.quote_vault.key(),
         quote_deposit_total: 0,
         quote_fees_accrued: 0,
+        referrer_rebates_accrued: 0,
 
         reserved: [0; 1888],
     };

@@ -13,10 +13,10 @@ pub const FREE_ORDER_SLOT: MarketIndex = MarketIndex::MAX;
 #[derive(AnchorSerialize, AnchorDeserialize, Derivative)]
 #[derivative(Debug)]
 pub struct Position {
-    /// Active position size, measured in base lots
+    // TODO Binye To be deleted?
+    /// Currenlty not being used
     pub base_position_lots: i64,
-    /// Active position in quote (conversation rate is that of the time the order was settled)
-    /// measured in native quote
+    /// Currenlty not being used
     pub quote_position_native: I80F48,
 
     /// Tracks what the position is to calculate average entry & break even price
@@ -32,8 +32,10 @@ pub struct Position {
     /// Amount of quote lots on the EventQueue waiting to be processed
     pub taker_quote_lots: i64,
 
-    pub base_free_lots: i64,
-    pub quote_free_lots: i64,
+    pub base_free_native: I80F48,
+    pub quote_free_native: I80F48,
+
+    pub referrer_rebates_accrued: u64,
 
     /// Cumulative maker volume in quote native units
     ///
@@ -54,9 +56,9 @@ pub struct Position {
 
 const_assert_eq!(
     size_of::<Position>(),
-    8 + 16 + 8 + 8 + 8 + 8 + 8 + 8 + 8 + 8 + 8 + 8 + 88
+    8 + 16 + 8 + 8 + 8 + 2 * size_of::<I80F48>() + 8 + 8 + 8 + 8 + 8 + 8 + 88
 );
-const_assert_eq!(size_of::<Position>(), 192);
+const_assert_eq!(size_of::<Position>(), 216);
 const_assert_eq!(size_of::<Position>() % 8, 0);
 
 impl Default for Position {
@@ -69,8 +71,9 @@ impl Default for Position {
             asks_base_lots: 0,
             taker_base_lots: 0,
             taker_quote_lots: 0,
-            base_free_lots: 0,
-            quote_free_lots: 0,
+            base_free_native: I80F48::ZERO,
+            quote_free_native: I80F48::ZERO,
+            referrer_rebates_accrued: 0,
             maker_volume: 0,
             taker_volume: 0,
             avg_entry_price_per_base_lot: 0.0,
@@ -96,13 +99,6 @@ impl Position {
 
     /// Remove taker trade after it has been processed on EventQueue
     pub fn remove_taker_trade(&mut self, base_change: i64, quote_change: i64) {
-        if base_change > 0 {
-            self.base_free_lots += base_change;
-        }
-        if quote_change > 0 {
-            self.quote_free_lots += quote_change;
-        }
-
         self.taker_base_lots -= base_change;
         self.taker_quote_lots -= quote_change;
     }
@@ -233,7 +229,7 @@ impl Position {
             / ((self.base_position_lots * market.base_lot_size) as f64)
     }
 
-    /// Update perp position for a maker/taker fee payment
+    /// Update position for a maker/taker quote
     pub fn record_trading_fee(&mut self, fee: I80F48) {
         self.change_quote_position(-fee);
     }

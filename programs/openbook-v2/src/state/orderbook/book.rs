@@ -73,11 +73,18 @@ impl<'a> Orderbook<'a> {
         // Any changes to matching orders on the other side of the book are collected in
         // matched_changes/matched_deletes and then applied after this loop.
         let mut remaining_base_lots = order.max_base_lots;
-        let mut remaining_quote_lots = order.max_quote_lots;
+        let mut remaining_quote_lots = order.max_quote_lots_including_fees;
+        let mut max_quote_lots = remaining_quote_lots;
         let mut matched_order_changes: Vec<(BookSideOrderHandle, i64)> = vec![];
         let mut matched_order_deletes: Vec<(BookSideOrderTree, u128)> = vec![];
         let mut number_of_dropped_expired_orders = 0;
         let opposing_bookside = self.bookside_mut(other_side);
+
+        // Substract fees in case of bid
+        if side == Side::Bid {
+            max_quote_lots = market.substract_taker_fees(remaining_quote_lots);
+            remaining_quote_lots = max_quote_lots;
+        }
 
         for best_opposing in opposing_bookside.iter_all_including_invalid(now_ts, oracle_price_lots)
         {
@@ -145,18 +152,16 @@ impl<'a> Orderbook<'a> {
                 event_queue.header.seq_num,
                 best_opposing.node.owner,
                 best_opposing.node.client_order_id,
-                market.maker_fee,
                 best_opposing.node.timestamp,
                 *owner,
                 order.client_order_id,
-                market.taker_fee,
                 best_opposing_price,
                 match_base_lots,
             );
             event_queue.push_back(cast(fill)).unwrap();
             limit -= 1;
         }
-        let total_quote_lots_taken = order.max_quote_lots - remaining_quote_lots;
+        let total_quote_lots_taken = max_quote_lots - remaining_quote_lots;
         let total_base_lots_taken = order.max_base_lots - remaining_base_lots;
         assert!(total_quote_lots_taken >= 0);
         assert!(total_base_lots_taken >= 0);
@@ -169,8 +174,19 @@ impl<'a> Orderbook<'a> {
                 total_base_lots_taken,
                 total_quote_lots_taken,
             );
-            apply_fees(market, &mut open_orders_acc, total_quote_lots_taken)?;
+
+            release_funds_fees(
+                side,
+                market,
+                &mut open_orders_acc,
+                total_base_lots_taken,
+                total_quote_lots_taken,
+            )?;
         }
+        // Update remaining based on quote_lots taken. If nothing taken, same as the beggining
+        remaining_quote_lots = order.max_quote_lots_including_fees
+            - total_quote_lots_taken
+            - (market.taker_fee * I80F48::from_num(total_quote_lots_taken)).to_num::<i64>();
 
         // Apply changes to matched asks (handles invalidate on delete!)
         for (handle, new_quantity) in matched_order_changes {
@@ -191,13 +207,13 @@ impl<'a> Orderbook<'a> {
 
         // If there are still quantity unmatched, place on the book
         let book_base_quantity = remaining_base_lots.min(remaining_quote_lots / price_lots);
+
         if book_base_quantity <= 0 {
             post_target = None;
         }
 
         if let Some(order_tree_target) = post_target {
             let bookside = self.bookside_mut(side);
-
             // Drop an expired order if possible
             if let Some(expired_order) = bookside.remove_one_expired(order_tree_target, now_ts) {
                 let event = OutEvent::new(
@@ -278,7 +294,7 @@ impl<'a> Orderbook<'a> {
     pub fn cancel_all_orders(
         &mut self,
         open_orders_acc: &mut OpenOrdersAccountRefMut,
-        _open_book_market: &mut Market,
+        market: Market,
         mut limit: u8,
         side_to_cancel_option: Option<Side>,
     ) -> Result<()> {
@@ -295,7 +311,7 @@ impl<'a> Orderbook<'a> {
             let order_id = oo.id;
 
             let cancel_result =
-                self.cancel_order(open_orders_acc, order_id, order_side_and_tree, None);
+                self.cancel_order(open_orders_acc, order_id, order_side_and_tree, market, None);
             if cancel_result.is_anchor_error_with_code(OpenBookError::OrderIdNotFound.into()) {
                 // It's possible for the order to be filled or expired already.
                 // There will be an event on the queue, the perp order slot is freed once
@@ -322,6 +338,7 @@ impl<'a> Orderbook<'a> {
         open_orders_acc: &mut OpenOrdersAccountRefMut,
         order_id: u128,
         side_and_tree: SideAndOrderTree,
+        market: Market,
         expected_owner: Option<Pubkey>,
     ) -> Result<LeafNode> {
         let side = side_and_tree.side();
@@ -334,45 +351,56 @@ impl<'a> Orderbook<'a> {
         if let Some(owner) = expected_owner {
             require_keys_eq!(leaf_node.owner, owner);
         }
-        open_orders_acc.remove_order(leaf_node.owner_slot as usize, leaf_node.quantity, true)?;
+        open_orders_acc.remove_order(
+            leaf_node.owner_slot as usize,
+            leaf_node.quantity,
+            market,
+            true,
+        )?;
 
         Ok(leaf_node)
     }
 }
 
-/// Apply taker fees to the taker account and update the markets' fees_accrued for
-/// both the maker and taker fees.
-fn apply_fees(
+/// Release funds and apply taker fees to the taker account
+fn release_funds_fees(
+    taker_side: Side,
     market: &mut Market,
     open_orders_acc: &mut OpenOrdersAccountRefMut,
+    base_lots: i64,
     quote_lots: i64,
 ) -> Result<()> {
     let quote_native = I80F48::from_num(market.quote_lot_size * quote_lots);
-
-    // The maker fees apply to the maker's account only when the fill event is consumed.
-    let maker_fees = quote_native * market.maker_fee;
 
     let taker_fees = quote_native * market.taker_fee;
 
     // taker fees should never be negative
     require_gte!(taker_fees, 0);
 
-    // Part of the taker fees that go to the dao, instead of paying for maker rebates
-    let taker_dao_fees = (taker_fees + maker_fees.min(I80F48::ZERO)).max(I80F48::ZERO);
-    open_orders_acc
-        .fixed
-        .accrue_buyback_fees(taker_dao_fees.floor().to_num::<u64>());
-
     open_orders_acc
         .fixed
         .position
         .record_trading_fee(taker_fees);
-    open_orders_acc.fixed.position.taker_volume += taker_fees.to_num::<u64>();
 
-    // Accrue maker fees immediately: they can be negative and applying them later
-    // risks that fees_accrued is settled to 0 before they apply. It going negative
-    // breaks assumptions.
-    market.fees_accrued += taker_fees + maker_fees;
+    let pa = &mut open_orders_acc.fixed_mut().position;
+    // Update free_lots
+    match taker_side {
+        Side::Bid => {
+            pa.base_free_native +=
+                I80F48::from_num(base_lots) * I80F48::from_num(market.base_lot_size);
+        }
+        Side::Ask => {
+            pa.quote_free_native += quote_native - taker_fees;
+        }
+    };
+
+    // Referrer rebates
+    pa.referrer_rebates_accrued += market.referrer_rebate(quote_native) as u64;
+    market.referrer_rebates_accrued += market.referrer_rebate(quote_native) as u64;
+
+    open_orders_acc.fixed.position.taker_volume += taker_fees.to_num::<u64>();
+    // Only apply taker fees now. Maker fees applied once processing the event
+    market.fees_accrued += taker_fees;
 
     Ok(())
 }
