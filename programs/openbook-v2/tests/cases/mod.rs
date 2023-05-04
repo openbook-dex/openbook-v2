@@ -13,4 +13,5 @@ pub use super::program_test;
 pub use utils::assert_equal_fixed_f64 as assert_equal;
 
 mod test;
+mod test_fees;
 mod test_oracle_peg;

@@ -12,13 +12,13 @@ pub fn cancel_all_orders(ctx: Context<CancelAllOrders>, limit: u8) -> Result<()>
         OpenBookError::SomeError
     );
 
-    let mut market = ctx.accounts.market.load_mut()?;
+    let market = ctx.accounts.market.load()?;
     let mut book = Orderbook {
         bids: ctx.accounts.bids.load_mut()?,
         asks: ctx.accounts.asks.load_mut()?,
     };
 
-    book.cancel_all_orders(&mut account.borrow_mut(), &mut market, limit, None)?;
+    book.cancel_all_orders(&mut account.borrow_mut(), *market, limit, None)?;
 
     Ok(())
 }

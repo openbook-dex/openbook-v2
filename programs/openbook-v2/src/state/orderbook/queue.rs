@@ -1,6 +1,5 @@
 use crate::error::OpenBookError;
 use anchor_lang::prelude::*;
-use fixed::types::I80F48;
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 use static_assertions::const_assert_eq;
 use std::mem::size_of;
@@ -27,8 +26,8 @@ pub struct EventQueue {
     pub buf: [AnyEvent; MAX_NUM_EVENTS as usize],
     pub reserved: [u8; 64],
 }
-const_assert_eq!(std::mem::size_of::<EventQueue>(), 16 + 488 * 208 + 64);
-const_assert_eq!(std::mem::size_of::<EventQueue>(), 101584);
+const_assert_eq!(std::mem::size_of::<EventQueue>(), 16 + 488 * 200 + 64);
+const_assert_eq!(std::mem::size_of::<EventQueue>(), 97680);
 const_assert_eq!(std::mem::size_of::<EventQueue>() % 8, 0);
 
 impl EventQueue {
@@ -154,12 +153,12 @@ impl QueueHeader for EventQueueHeader {
     }
 }
 
-const EVENT_SIZE: usize = 208;
+const EVENT_SIZE: usize = 200;
 #[zero_copy]
 #[derive(Debug, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct AnyEvent {
     pub event_type: u8,
-    pub padding: [u8; 207],
+    pub padding: [u8; 199],
 }
 
 const_assert_eq!(size_of::<AnyEvent>(), EVENT_SIZE);
@@ -198,8 +197,6 @@ pub struct FillEvent {
     pub price: i64,
     pub quantity: i64, // number of quote lots
     pub maker_client_order_id: u64,
-    pub maker_fee: f32,
-    pub taker_fee: f32,
     pub reserved: [u8; 8],
 }
 const_assert_eq!(size_of::<FillEvent>() % 8, 0);
@@ -215,11 +212,9 @@ impl FillEvent {
         seq_num: u64,
         maker: Pubkey,
         maker_client_order_id: u64,
-        maker_fee: I80F48,
         maker_timestamp: u64,
         taker: Pubkey,
         taker_client_order_id: u64,
-        taker_fee: I80F48,
         price: i64,
         quantity: i64,
     ) -> FillEvent {
@@ -232,11 +227,9 @@ impl FillEvent {
             seq_num,
             maker,
             maker_client_order_id,
-            maker_fee: maker_fee.to_num::<f32>(),
             maker_timestamp,
             taker,
             taker_client_order_id,
-            taker_fee: taker_fee.to_num::<f32>(),
             price,
             quantity,
             padding: Default::default(),
@@ -275,7 +268,7 @@ pub struct OutEvent {
     pub seq_num: u64,
     pub owner: Pubkey,
     pub quantity: i64,
-    padding1: [u8; 144],
+    padding1: [u8; 136],
 }
 const_assert_eq!(size_of::<OutEvent>() % 8, 0);
 const_assert_eq!(size_of::<OutEvent>(), EVENT_SIZE);

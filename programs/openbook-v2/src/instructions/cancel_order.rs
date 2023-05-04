@@ -24,10 +24,13 @@ pub fn cancel_order(ctx: Context<CancelOrder>, order_id: u128) -> Result<()> {
     let order_id = oo.id;
     let order_side_and_tree = oo.side_and_tree();
 
+    let market = ctx.accounts.market.load()?;
+
     book.cancel_order(
         &mut account.borrow_mut(),
         order_id,
         order_side_and_tree,
+        *market,
         Some(ctx.accounts.open_orders_account.key()),
     )?;
 

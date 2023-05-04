@@ -88,11 +88,11 @@ pub fn consume_events(ctx: Context<ConsumeEvents>, limit: usize) -> Result<()> {
                     seq_num: fill.seq_num,
                     maker: fill.maker,
                     maker_client_order_id: fill.maker_client_order_id,
-                    maker_fee: fill.maker_fee,
+                    maker_fee: market.maker_fee.to_num(),
                     maker_timestamp: fill.maker_timestamp,
                     taker: fill.taker,
                     taker_client_order_id: fill.taker_client_order_id,
-                    taker_fee: fill.taker_fee,
+                    taker_fee: market.taker_fee.to_num(),
                     price: fill.price,
                     quantity: fill.quantity,
                 });
@@ -100,7 +100,7 @@ pub fn consume_events(ctx: Context<ConsumeEvents>, limit: usize) -> Result<()> {
             EventType::Out => {
                 let out: &OutEvent = cast_ref(event);
                 load_open_orders_acc!(owner, out.owner, remaining_accs, event_queue);
-                owner.remove_order(out.owner_slot as usize, out.quantity, true)?;
+                owner.remove_order(out.owner_slot as usize, out.quantity, *market, true)?;
             }
         }
 
