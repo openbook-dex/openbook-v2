@@ -21,6 +21,8 @@ pub struct PlaceTakeOrder<'info> {
     #[account(mut, constraint = payer.owner == owner.key())]
     pub payer: Account<'info, TokenAccount>,
     #[account(mut)]
+    pub receiver: Account<'info, TokenAccount>,
+    #[account(mut)]
     pub base_vault: Account<'info, TokenAccount>,
     #[account(mut)]
     pub quote_vault: Account<'info, TokenAccount>,

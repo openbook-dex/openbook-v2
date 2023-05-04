@@ -53,19 +53,23 @@ pub fn place_take_order(
         limit,
     )?;
 
-    let (to_vault, deposit_amount) = match side {
+    let (from_vault, to_vault, deposit_amount, withdraw_amount) = match side {
         Side::Bid => (
+            ctx.accounts.base_vault.to_account_info(),
             ctx.accounts.quote_vault.to_account_info(),
             total_quote_taken_native,
+            total_base_taken_native,
         ),
 
         Side::Ask => (
+            ctx.accounts.quote_vault.to_account_info(),
             ctx.accounts.base_vault.to_account_info(),
             total_base_taken_native,
+            total_quote_taken_native,
         ),
     };
 
-    // Transfer funds
+    // Transfer funds from payer
     if let Some(amount) = deposit_amount {
         if amount > 0 {
             let cpi_context = CpiContext::new(
@@ -79,5 +83,32 @@ pub fn place_take_order(
             token::transfer(cpi_context, amount.to_num())?;
         }
     }
+    drop(market);
+
+    // Transfer funds received
+    if let Some(amount) = withdraw_amount {
+        let (market_index, market_bump) = {
+            let market = &mut ctx.accounts.market.load_mut()?;
+            (market.market_index, market.bump)
+        };
+        let seeds = [
+            b"Market".as_ref(),
+            &market_index.to_le_bytes(),
+            &[market_bump],
+        ];
+        let signer = &[&seeds[..]];
+        if amount > 0 {
+            let cpi_context = CpiContext::new(
+                ctx.accounts.token_program.to_account_info(),
+                Transfer {
+                    from: from_vault,
+                    to: ctx.accounts.receiver.to_account_info(),
+                    authority: ctx.accounts.market.to_account_info(),
+                },
+            );
+            token::transfer(cpi_context.with_signer(signer), amount.to_num())?;
+        }
+    }
+
     Ok(order_id)
 }

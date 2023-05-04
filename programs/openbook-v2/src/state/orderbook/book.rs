@@ -170,7 +170,7 @@ impl<'a> Orderbook<'a> {
             limit -= 1;
         }
         let total_quote_lots_taken = max_quote_lots - remaining_quote_lots;
-        let total_quote_taken_native =
+        let mut total_quote_taken_native =
             I80F48::from_num(market.quote_lot_size * total_quote_lots_taken);
         let total_base_lots_taken = order.max_base_lots - remaining_base_lots;
         assert!(total_quote_lots_taken >= 0);
@@ -178,8 +178,8 @@ impl<'a> Orderbook<'a> {
 
         // Record the taker trade in the account already, even though it will only be
         // realized when the fill event gets executed
-        if let Some(open_orders_acc) = &mut open_orders_acc {
-            if total_quote_lots_taken > 0 || total_base_lots_taken > 0 {
+        if total_quote_lots_taken > 0 || total_base_lots_taken > 0 {
+            if let Some(open_orders_acc) = &mut open_orders_acc {
                 open_orders_acc.fixed.position.add_taker_trade(
                     side,
                     total_base_lots_taken,
@@ -194,7 +194,13 @@ impl<'a> Orderbook<'a> {
                     total_quote_taken_native,
                 )?;
             }
+            // Apply fees
+            total_quote_taken_native = match side {
+                Side::Bid => total_quote_taken_native * (I80F48::ONE + market.taker_fee),
+                Side::Ask => total_quote_taken_native * (I80F48::ONE - market.taker_fee),
+            };
         }
+
         // Update remaining based on quote_lots taken. If nothing taken, same as the beggining
         remaining_quote_lots = order.max_quote_lots_including_fees
             - total_quote_lots_taken
@@ -294,22 +300,12 @@ impl<'a> Orderbook<'a> {
             )?;
         }
 
-        let mut taken_quantities = match side {
-            Side::Bid => TakenQuantitiesIncludingFees {
-                order_id: Some(order_id),
-                total_base_taken_native: None,
-                total_quote_taken_native: Some(
-                    total_quote_taken_native * (I80F48::ONE + market.taker_fee),
-                ),
-            },
-            Side::Ask => TakenQuantitiesIncludingFees {
-                order_id: Some(order_id),
-                total_base_taken_native: Some(
-                    I80F48::from_num(total_base_lots_taken)
-                        * I80F48::from_num(market.base_lot_size),
-                ),
-                total_quote_taken_native: None,
-            },
+        let mut taken_quantities = TakenQuantitiesIncludingFees {
+            order_id: Some(order_id),
+            total_base_taken_native: Some(
+                I80F48::from_num(total_base_lots_taken) * I80F48::from_num(market.base_lot_size),
+            ),
+            total_quote_taken_native: Some(total_quote_taken_native),
         };
 
         if post_target.is_none() {
