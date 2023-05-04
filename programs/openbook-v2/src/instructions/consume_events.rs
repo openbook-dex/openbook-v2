@@ -73,12 +73,14 @@ pub fn consume_events(ctx: Context<ConsumeEvents>, limit: usize) -> Result<()> {
                     emit_balances(fill.maker, &maker_taker.fixed.position, &market);
                 } else {
                     load_open_orders_acc!(maker, fill.maker, remaining_accs, event_queue);
-                    load_open_orders_acc!(taker, fill.taker, remaining_accs, event_queue);
-
                     maker.execute_maker(&mut market, fill)?;
-                    taker.execute_taker(&mut market, fill)?;
                     emit_balances(fill.maker, &maker.fixed.position, &market);
-                    emit_balances(fill.taker, &taker.fixed.position, &market);
+
+                    if remaining_accs.len() < 2 {
+                        load_open_orders_acc!(taker, fill.taker, remaining_accs, event_queue);
+                        taker.execute_taker(&mut market, fill)?;
+                        emit_balances(fill.taker, &taker.fixed.position, &market);
+                    }
                 }
                 emit!(FillLog {
                     taker_side: fill.taker_side,
