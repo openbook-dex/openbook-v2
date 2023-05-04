@@ -104,7 +104,8 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<
                 authority: ctx.accounts.owner.to_account_info(),
             },
         );
-        token::transfer(cpi_context, deposit_amount.to_num())?;
+        // TODO Binye check if this is correct
+        token::transfer(cpi_context, deposit_amount.ceil().to_num())?;
     }
     Ok(order_id)
 }

@@ -76,7 +76,7 @@ pub fn consume_events(ctx: Context<ConsumeEvents>, limit: usize) -> Result<()> {
                     maker.execute_maker(&mut market, fill)?;
                     emit_balances(fill.maker, &maker.fixed.position, &market);
 
-                    if remaining_accs.len() < 2 {
+                    if remaining_accs.len() > 1 {
                         load_open_orders_acc!(taker, fill.taker, remaining_accs, event_queue);
                         taker.execute_taker(&mut market, fill)?;
                         emit_balances(fill.taker, &taker.fixed.position, &market);

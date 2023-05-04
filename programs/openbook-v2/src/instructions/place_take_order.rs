@@ -69,7 +69,7 @@ pub fn place_take_order(
         ),
     };
 
-    // Transfer funds from payer
+    // Transfer funds from payer to vault
     if let Some(amount) = deposit_amount {
         if amount > 0 {
             let cpi_context = CpiContext::new(
@@ -80,12 +80,13 @@ pub fn place_take_order(
                     authority: ctx.accounts.owner.to_account_info(),
                 },
             );
-            token::transfer(cpi_context, amount.to_num())?;
+            // TODO Binye check if this is correct
+            token::transfer(cpi_context, amount.ceil().to_num())?;
         }
     }
     drop(market);
 
-    // Transfer funds received
+    // Transfer funds received from vault to user
     if let Some(amount) = withdraw_amount {
         let (market_index, market_bump) = {
             let market = &mut ctx.accounts.market.load_mut()?;
