@@ -1,7 +1,7 @@
 name: Rust lints
 
 on:
-  pull_request:
+  push:
 
 jobs:
   cargo-fmt:
