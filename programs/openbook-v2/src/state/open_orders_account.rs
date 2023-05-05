@@ -392,18 +392,24 @@ impl<
     pub fn execute_maker(&mut self, market: &mut Market, fill: &FillEvent) -> Result<()> {
         let side = fill.taker_side().invert_side();
         let (base_change, quote_change) = fill.base_quote_change(side);
-        let base_native = I80F48::from(market.base_lot_size) * I80F48::from(base_change);
         let quote_native = I80F48::from(market.quote_lot_size) * I80F48::from(quote_change);
         let fees = quote_native.abs() * I80F48::from_num(market.maker_fee);
         if fees.is_positive() {
             self.fixed_mut()
                 .accrue_buyback_fees(fees.floor().to_num::<u64>());
         }
+
+        let locked_price = {
+            let oo = self.order_by_raw_index(fill.maker_slot as usize);
+            match oo.side_and_tree().order_tree() {
+                BookSideOrderTree::Fixed => fill.price,
+                BookSideOrderTree::OraclePegged => oo.peg_limit,
+            }
+        };
+
         let pa = &mut self.fixed_mut().position;
         pa.record_trading_fee(fees);
-
         pa.record_trade(market, base_change, quote_native);
-
         pa.maker_volume += quote_native.abs().to_num::<u64>();
 
         msg!(
@@ -415,16 +421,27 @@ impl<
         );
 
         // Update free_lots
-        match side {
-            Side::Bid => {
-                pa.base_free_native += base_native.abs();
-                pa.quote_free_native += fees;
-            }
-            Side::Ask => {
-                pa.quote_free_native += quote_native.abs() * (market.maker_fee + I80F48::ONE);
-            }
-        };
+        {
+            let (base_locked_change, quote_locked_change): (i64, i64) = match side {
+                Side::Bid => (fill.quantity, -locked_price * fill.quantity),
+                Side::Ask => (-fill.quantity, locked_price * fill.quantity),
+            };
 
+            let base_to_free =
+                I80F48::from(market.base_lot_size) * I80F48::from(base_locked_change);
+            let quote_to_free =
+                I80F48::from(market.quote_lot_size) * I80F48::from(quote_locked_change);
+
+            match side {
+                Side::Bid => {
+                    pa.base_free_native += base_to_free.abs();
+                    pa.quote_free_native += fees;
+                }
+                Side::Ask => {
+                    pa.quote_free_native += quote_to_free.abs() * (market.maker_fee + I80F48::ONE);
+                }
+            };
+        }
         if fill.maker_out() {
             self.remove_order(fill.maker_slot as usize, base_change.abs())?;
         } else {
