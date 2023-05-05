@@ -69,14 +69,13 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: &Order, limit: u8) -> Result
         Side::Bid => {
             let free_assets_native = position.quote_free_native;
 
-            let max_native_including_fees: I80F48;
-            match order.params {
+            let max_native_including_fees: I80F48 = match order.params {
                 OrderParams::Market | OrderParams::ImmediateOrCancel { .. } => {
-                    max_native_including_fees = total_quote_taken_native.unwrap();
+                    total_quote_taken_native.unwrap()
                 }
                 OrderParams::Fixed { .. } => {
-                    max_native_including_fees = I80F48::from_num(max_quote_lots_including_fees)
-                        * I80F48::from_num(market.quote_lot_size);
+                    I80F48::from_num(max_quote_lots_including_fees)
+                        * I80F48::from_num(market.quote_lot_size)
                 }
                 OrderParams::OraclePegged { .. } => todo!(),
             };
@@ -96,16 +95,11 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: &Order, limit: u8) -> Result
         Side::Ask => {
             let free_assets_native = position.base_free_native;
 
-            let max_base_native: I80F48;
-
-            match order.params {
+            let max_base_native: I80F48 = match order.params {
                 OrderParams::Market | OrderParams::ImmediateOrCancel { .. } => {
-                    max_base_native =
-                        I80F48::from_num(max_base_lots) * I80F48::from_num(market.base_lot_size);
+                    I80F48::from_num(max_base_lots) * I80F48::from_num(market.base_lot_size)
                 }
-                OrderParams::Fixed { .. } => {
-                    max_base_native = total_base_taken_native.unwrap();
-                }
+                OrderParams::Fixed { .. } => total_base_taken_native.unwrap(),
                 OrderParams::OraclePegged { .. } => todo!(),
             };
 
