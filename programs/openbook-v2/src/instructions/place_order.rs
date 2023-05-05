@@ -12,7 +12,7 @@ use crate::state::*;
 
 // TODO
 #[allow(clippy::too_many_arguments)]
-pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<Option<u128>> {
+pub fn place_order(ctx: Context<PlaceOrder>, order: &Order, limit: u8) -> Result<Option<u128>> {
     require_gte!(order.max_base_lots, 0);
     require_gte!(order.max_quote_lots_including_fees, 0);
 
@@ -51,8 +51,8 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<
 
     let TakenQuantitiesIncludingFees {
         order_id,
-        total_base_taken_native: _,
-        total_quote_taken_native: _,
+        total_base_taken_native,
+        total_quote_taken_native,
     } = book.new_order(
         order,
         &mut market,
@@ -68,8 +68,18 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<
     let (to_vault, deposit_amount) = match side {
         Side::Bid => {
             let free_assets_native = position.quote_free_native;
-            let max_native_including_fees = I80F48::from_num(max_quote_lots_including_fees)
-                * I80F48::from_num(market.quote_lot_size);
+
+            let max_native_including_fees: I80F48;
+            match order.params {
+                OrderParams::Market | OrderParams::ImmediateOrCancel { .. } => {
+                    max_native_including_fees = total_quote_taken_native.unwrap();
+                }
+                OrderParams::Fixed { .. } => {
+                    max_native_including_fees = I80F48::from_num(max_quote_lots_including_fees)
+                        * I80F48::from_num(market.quote_lot_size);
+                }
+                OrderParams::OraclePegged { .. } => todo!(),
+            };
 
             let free_qty_to_lock = cmp::min(max_native_including_fees, free_assets_native);
             position.quote_free_native -= free_qty_to_lock;
@@ -85,8 +95,20 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<
 
         Side::Ask => {
             let free_assets_native = position.base_free_native;
-            let max_base_native =
-                I80F48::from_num(max_base_lots) * I80F48::from_num(market.base_lot_size);
+
+            let max_base_native: I80F48;
+
+            match order.params {
+                OrderParams::Market | OrderParams::ImmediateOrCancel { .. } => {
+                    max_base_native =
+                        I80F48::from_num(max_base_lots) * I80F48::from_num(market.base_lot_size);
+                }
+                OrderParams::Fixed { .. } => {
+                    max_base_native = total_base_taken_native.unwrap();
+                }
+                OrderParams::OraclePegged { .. } => todo!(),
+            };
+
             let free_qty_to_lock = cmp::min(max_base_native, free_assets_native);
             position.base_free_native -= free_qty_to_lock;
 

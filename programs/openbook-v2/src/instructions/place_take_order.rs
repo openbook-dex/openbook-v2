@@ -10,7 +10,7 @@ use crate::state::*;
 #[allow(clippy::too_many_arguments)]
 pub fn place_take_order(
     ctx: Context<PlaceTakeOrder>,
-    order: Order,
+    order: &Order,
     limit: u8,
 ) -> Result<Option<u128>> {
     require_gte!(order.max_base_lots, 0);

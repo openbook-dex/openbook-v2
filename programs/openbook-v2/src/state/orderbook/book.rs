@@ -48,7 +48,7 @@ impl<'a> Orderbook<'a> {
     #[allow(clippy::too_many_arguments)]
     pub fn new_order(
         &mut self,
-        order: Order,
+        order: &Order,
         open_book_market: &mut Market,
         event_queue: &mut EventQueue,
         oracle_price: I80F48,
