@@ -71,7 +71,7 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: &Order, limit: u8) -> Result
 
             let max_native_including_fees: I80F48 = match order.params {
                 OrderParams::Market | OrderParams::ImmediateOrCancel { .. } => {
-                    total_quote_taken_native.unwrap()
+                    total_quote_taken_native
                 }
                 OrderParams::Fixed { .. } => {
                     I80F48::from_num(max_quote_lots_including_fees)
@@ -79,13 +79,14 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: &Order, limit: u8) -> Result
                 }
                 OrderParams::OraclePegged { .. } => todo!(),
             };
-
             let free_qty_to_lock = cmp::min(max_native_including_fees, free_assets_native);
             position.quote_free_native -= free_qty_to_lock;
 
             // Update market deposit total
-            market.quote_deposit_total +=
-                (max_native_including_fees - free_qty_to_lock).to_num::<u64>();
+            market.quote_deposit_total += ((max_native_including_fees - free_qty_to_lock)
+                - (total_quote_taken_native * (market.taker_fee - market.maker_fee)))
+                .to_num::<u64>();
+
             (
                 ctx.accounts.quote_vault.to_account_info(),
                 max_native_including_fees - free_qty_to_lock,
@@ -97,9 +98,11 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: &Order, limit: u8) -> Result
 
             let max_base_native: I80F48 = match order.params {
                 OrderParams::Market | OrderParams::ImmediateOrCancel { .. } => {
+                    total_base_taken_native
+                }
+                OrderParams::Fixed { .. } => {
                     I80F48::from_num(max_base_lots) * I80F48::from_num(market.base_lot_size)
                 }
-                OrderParams::Fixed { .. } => total_base_taken_native.unwrap(),
                 OrderParams::OraclePegged { .. } => todo!(),
             };
 

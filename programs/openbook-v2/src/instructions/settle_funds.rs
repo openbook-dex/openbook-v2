@@ -9,16 +9,20 @@ pub fn settle_funds<'info>(ctx: Context<'_, '_, '_, 'info, SettleFunds<'info>>) 
     let mut open_orders_account = ctx.accounts.open_orders_account.load_full_mut()?;
     let mut position = &mut open_orders_account.fixed_mut().position;
 
-    msg!(
-        " ctx.remaining_accounts.is_empty() {}",
-        position.referrer_rebates_accrued
-    );
     let (market_index, market_bump) = {
         let market = &mut ctx.accounts.market.load_mut()?;
         if ctx.remaining_accounts.is_empty() {
             market.quote_fees_accrued += position.referrer_rebates_accrued;
         }
         market.referrer_rebates_accrued -= position.referrer_rebates_accrued;
+        market.base_deposit_total -= position.base_free_native.to_num::<u64>();
+        msg!(
+            "market.quote_deposit_total {}, position.quote_free_native.to_ {}",
+            market.quote_deposit_total,
+            position.quote_free_native
+        );
+        market.quote_deposit_total -= position.quote_free_native.to_num::<u64>();
+
         (market.market_index, market.bump)
     };
 

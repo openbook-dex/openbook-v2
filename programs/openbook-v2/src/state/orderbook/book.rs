@@ -21,8 +21,8 @@ pub struct Orderbook<'a> {
 
 pub struct TakenQuantitiesIncludingFees {
     pub order_id: Option<u128>,
-    pub total_base_taken_native: Option<I80F48>,
-    pub total_quote_taken_native: Option<I80F48>,
+    pub total_base_taken_native: I80F48,
+    pub total_quote_taken_native: I80F48,
 }
 
 impl<'a> Orderbook<'a> {
@@ -195,13 +195,12 @@ impl<'a> Orderbook<'a> {
                     total_quote_taken_native,
                 )?;
             }
+
             // Apply fees
             total_quote_taken_native = match side {
                 Side::Bid => total_quote_taken_native * (I80F48::ONE + market.taker_fee),
                 Side::Ask => total_quote_taken_native * (I80F48::ONE - market.taker_fee),
             };
-            market.quote_deposit_total -=
-                (total_quote_taken_native * (market.taker_fee - market.maker_fee)).to_num::<u64>();
         }
 
         // Update remaining based on quote_lots taken. If nothing taken, same as the beggining
@@ -305,10 +304,9 @@ impl<'a> Orderbook<'a> {
 
         let mut taken_quantities = TakenQuantitiesIncludingFees {
             order_id: Some(order_id),
-            total_base_taken_native: Some(
-                I80F48::from_num(total_base_lots_taken) * I80F48::from_num(market.base_lot_size),
-            ),
-            total_quote_taken_native: Some(total_quote_taken_native),
+            total_base_taken_native: I80F48::from_num(total_base_lots_taken)
+                * I80F48::from_num(market.base_lot_size),
+            total_quote_taken_native,
         };
 
         if post_target.is_none() {
