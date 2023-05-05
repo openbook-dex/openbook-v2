@@ -318,6 +318,7 @@ pub struct PlaceOrderInstruction {
     pub reduce_only: bool,
     pub client_order_id: u64,
     pub expiry_timestamp: u64,
+    pub order_type: PlaceOrderType,
 }
 #[async_trait::async_trait(?Send)]
 impl ClientInstruction for PlaceOrderInstruction {
