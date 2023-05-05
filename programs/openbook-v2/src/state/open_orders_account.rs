@@ -438,7 +438,8 @@ impl<
                     pa.quote_free_native += fees;
                 }
                 Side::Ask => {
-                    pa.quote_free_native += quote_to_free.abs() * (market.maker_fee + I80F48::ONE);
+                    pa.quote_free_native +=
+                        quote_to_free.abs() + quote_native.abs() * market.maker_fee;
                 }
             };
         }
