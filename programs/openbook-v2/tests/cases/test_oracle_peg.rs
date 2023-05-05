@@ -55,7 +55,6 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
     };
     assert_eq!(price_lots, market_base_lot_size / market_quote_lot_size);
 
-
     // TEST: Place and cancel order with order_id
     send_tx(
         solana,
