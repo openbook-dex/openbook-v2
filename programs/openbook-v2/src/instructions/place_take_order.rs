@@ -8,8 +8,8 @@ use crate::state::*;
 
 // TODO
 #[allow(clippy::too_many_arguments)]
-pub fn place_take_order(
-    ctx: Context<PlaceTakeOrder>,
+pub fn place_take_order<'info>(
+    ctx: Context<'_, '_, '_, 'info, PlaceTakeOrder<'info>>,
     order: &Order,
     limit: u8,
 ) -> Result<Option<u128>> {
@@ -42,6 +42,7 @@ pub fn place_take_order(
         order_id,
         total_base_taken_native,
         total_quote_taken_native,
+        referrer_amount,
     } = book.new_order(
         order,
         &mut market,
@@ -110,6 +111,20 @@ pub fn place_take_order(
             },
         );
         token::transfer(cpi_context.with_signer(signer), withdraw_amount.to_num())?;
+    }
+
+    // Transfer to referrer
+    if !ctx.remaining_accounts.is_empty() && referrer_amount > 0 {
+        let referrer = ctx.remaining_accounts[0].to_account_info();
+        let cpi_context = CpiContext::new(
+            ctx.accounts.token_program.to_account_info(),
+            Transfer {
+                from: ctx.accounts.quote_vault.to_account_info(),
+                to: referrer,
+                authority: ctx.accounts.market.to_account_info(),
+            },
+        );
+        token::transfer(cpi_context.with_signer(signer), referrer_amount)?;
     }
 
     Ok(order_id)

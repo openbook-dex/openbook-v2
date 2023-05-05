@@ -53,6 +53,7 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: &Order, limit: u8) -> Result
         order_id,
         total_base_taken_native,
         total_quote_taken_native,
+        referrer_amount: _,
     } = book.new_order(
         order,
         &mut market,

@@ -380,6 +380,7 @@ pub struct PlaceTakeOrderInstruction {
     pub reduce_only: bool,
     pub client_order_id: u64,
     pub expiry_timestamp: u64,
+    pub referrer: Option<Pubkey>,
 }
 #[async_trait::async_trait(?Send)]
 impl ClientInstruction for PlaceTakeOrderInstruction {
@@ -419,7 +420,14 @@ impl ClientInstruction for PlaceTakeOrderInstruction {
             system_program: System::id(),
         };
         let instruction = make_instruction(program_id, &accounts, instruction);
-
+        if let Some(ref3) = self.referrer {
+            let remaining = &mut vec![AccountMeta {
+                pubkey: ref3,
+                is_signer: false,
+                is_writable: true,
+            }];
+            instruction.accounts.append(remaining);
+        }
         (accounts, instruction)
     }
 

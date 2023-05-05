@@ -129,8 +129,8 @@ pub mod openbook_v2 {
     }
 
     #[allow(clippy::too_many_arguments)]
-    pub fn place_take_order(
-        ctx: Context<PlaceTakeOrder>,
+    pub fn place_take_order<'info>(
+        ctx: Context<'_, '_, '_, 'info, PlaceTakeOrder<'info>>,
         side: Side,
 
         // The price in lots (quote lots per base lots)

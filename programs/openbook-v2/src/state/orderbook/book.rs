@@ -23,6 +23,7 @@ pub struct TakenQuantitiesIncludingFees {
     pub order_id: Option<u128>,
     pub total_base_taken_native: I80F48,
     pub total_quote_taken_native: I80F48,
+    pub referrer_amount: u64,
 }
 
 impl<'a> Orderbook<'a> {
@@ -86,6 +87,8 @@ impl<'a> Orderbook<'a> {
         let mut matched_order_changes: Vec<(BookSideOrderHandle, i64)> = vec![];
         let mut matched_order_deletes: Vec<(BookSideOrderTree, u128)> = vec![];
         let mut number_of_dropped_expired_orders = 0;
+        // In case of take order, need this
+        let mut referrer_amount: u64= 0;
         let opposing_bookside = self.bookside_mut(other_side);
 
         // Substract fees in case of bid
@@ -194,6 +197,9 @@ impl<'a> Orderbook<'a> {
                     total_base_lots_taken,
                     total_quote_taken_native,
                 )?;
+            } else {
+                // It's a taker order, transfer to referrer
+                referrer_amount += market.referrer_rebate(total_quote_taken_native) as u64;
             }
 
             // Apply fees
@@ -307,6 +313,7 @@ impl<'a> Orderbook<'a> {
             total_base_taken_native: I80F48::from_num(total_base_lots_taken)
                 * I80F48::from_num(market.base_lot_size),
             total_quote_taken_native,
+            referrer_amount,
         };
 
         if post_target.is_none() {
