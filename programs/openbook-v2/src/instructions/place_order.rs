@@ -71,12 +71,15 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<
             let max_native_including_fees = I80F48::from_num(max_quote_lots_including_fees)
                 * I80F48::from_num(market.quote_lot_size);
 
-            let min_qua = cmp::min(max_native_including_fees, free_assets_native);
-            position.quote_free_native -= min_qua;
+            let free_qty_to_lock = cmp::min(max_native_including_fees, free_assets_native);
+            position.quote_free_native -= free_qty_to_lock;
 
+            // Update market deposit total
+            market.quote_deposit_total +=
+                (max_native_including_fees - free_qty_to_lock).to_num::<u64>();
             (
                 ctx.accounts.quote_vault.to_account_info(),
-                max_native_including_fees - min_qua,
+                max_native_including_fees - free_qty_to_lock,
             )
         }
 
@@ -84,12 +87,12 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<
             let free_assets_native = position.base_free_native;
             let max_base_native =
                 I80F48::from_num(max_base_lots) * I80F48::from_num(market.base_lot_size);
-            let min_qua = cmp::min(max_base_native, free_assets_native);
-            position.base_free_native -= min_qua;
+            let free_qty_to_lock = cmp::min(max_base_native, free_assets_native);
+            position.base_free_native -= free_qty_to_lock;
 
             (
                 ctx.accounts.base_vault.to_account_info(),
-                max_base_native - min_qua,
+                max_base_native - free_qty_to_lock,
             )
         }
     };

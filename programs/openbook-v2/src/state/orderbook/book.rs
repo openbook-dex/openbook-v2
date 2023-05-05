@@ -200,6 +200,8 @@ impl<'a> Orderbook<'a> {
                 Side::Bid => total_quote_taken_native * (I80F48::ONE + market.taker_fee),
                 Side::Ask => total_quote_taken_native * (I80F48::ONE - market.taker_fee),
             };
+            market.quote_deposit_total -=
+                (total_quote_taken_native * (market.taker_fee - market.maker_fee)).to_num::<u64>();
         }
 
         // Update remaining based on quote_lots taken. If nothing taken, same as the beggining
