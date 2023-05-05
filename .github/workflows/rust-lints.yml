@@ -1,7 +1,6 @@
 name: Rust lints
 
 on:
-  push:
   pull_request:
 
 jobs:
