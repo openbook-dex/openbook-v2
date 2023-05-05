@@ -286,6 +286,11 @@ async fn test_take_bid_order() -> Result<(), TransportError> {
     let balance_base = solana.token_account_balance(owner_token_0).await;
     let balance_quote = solana.token_account_balance(owner_token_1).await;
 
+    let admin_token_1 = solana
+        .create_associated_token_account(&admin.pubkey(), mints[1].pubkey)
+        .await;
+    let balance_referral = solana.token_account_balance(admin_token_1).await;
+
     send_tx(
         solana,
         PlaceTakeOrderInstruction {
@@ -302,7 +307,7 @@ async fn test_take_bid_order() -> Result<(), TransportError> {
             reduce_only: false,
             client_order_id: 0,
             expiry_timestamp: 0,
-            referrer: None,
+            referrer: Some(admin_token_1),
         },
     )
     .await
@@ -339,6 +344,10 @@ async fn test_take_bid_order() -> Result<(), TransportError> {
         assert_eq!(
             balance_quote - 100040,
             solana.token_account_balance(owner_token_1).await
+        );
+        assert_eq!(
+            balance_referral + 19,
+            solana.token_account_balance(admin_token_1).await
         );
     }
 
