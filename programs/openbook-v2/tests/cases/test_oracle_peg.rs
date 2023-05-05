@@ -1,7 +1,5 @@
 use super::*;
 
-// TODO test quantities after fees implemented
-
 #[tokio::test]
 async fn test_oracle_peg() -> Result<(), TransportError> {
     let context = TestContext::new().await;
@@ -70,7 +68,7 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
             quote_vault,
             side: Side::Bid,
             price_offset: -1,
-            peg_limit: -1,
+            peg_limit: 0,
             max_base_lots: 1,
             max_quote_lots_including_fees: 100_000,
             client_order_id: 0,
@@ -114,7 +112,7 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
             quote_vault,
             side: Side::Bid,
             price_offset: 0,
-            peg_limit: -1,
+            peg_limit: price_lots,
             max_base_lots: 2,
             max_quote_lots_including_fees: 100_000,
             client_order_id: 5,
@@ -155,7 +153,7 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
             quote_vault,
             side: Side::Ask,
             price_offset: 0,
-            peg_limit: -1,
+            peg_limit: price_lots,
             max_base_lots: 1,
             max_quote_lots_including_fees: 100_000,
             client_order_id: 7,
@@ -177,19 +175,19 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
     {
         let open_orders_account_0 = solana.get_account::<OpenOrdersAccount>(account_0).await;
         assert_eq!(open_orders_account_0.position.base_position_lots(), 2);
-        //assert!(assert_equal(
-        //    open_orders_account_0.position.quote_position_native(),
-        //    -19998.0,
-        //    0.001
-        //));
+        assert!(assert_equal(
+            open_orders_account_0.position.quote_position_native(),
+            -20000.0,
+            0.001
+        ));
 
         let open_orders_account_1 = solana.get_account::<OpenOrdersAccount>(account_1).await;
         assert_eq!(open_orders_account_1.position.base_position_lots(), -2);
-        //assert!(assert_equal(
-        //    open_orders_account_1.position.quote_position_native(),
-        //    19996.0,
-        //    0.001
-        //));
+        assert!(assert_equal(
+            open_orders_account_1.position.quote_position_native(),
+            20000.0,
+            0.001
+        ));
     }
 
     // TEST: Place a pegged order and check how it behaves with oracle changes
@@ -204,7 +202,7 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
             quote_vault,
             side: Side::Bid,
             price_offset: -1,
-            peg_limit: -1,
+            peg_limit: 0,
             max_base_lots: 2,
             max_quote_lots_including_fees: 100_000,
             client_order_id: 5,
@@ -212,8 +210,6 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
     )
     .await
     .unwrap();
-
-    panic!();
 
     // TEST: an ask at current oracle price does not match
     send_tx(

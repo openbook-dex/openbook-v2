@@ -535,6 +535,7 @@ impl<
         order_tree: BookSideOrderTree,
         order: &LeafNode,
         client_order_id: u64,
+        peg_limit: i64,
     ) -> Result<()> {
         let mut position = &mut self.fixed_mut().position;
         match side {
@@ -551,6 +552,7 @@ impl<
         oo.side_and_tree = SideAndOrderTree::new(side, order_tree).into();
         oo.id = order.key;
         oo.client_id = client_order_id;
+        oo.peg_limit = peg_limit;
         Ok(())
     }
 
@@ -585,8 +587,11 @@ impl<
         {
             let oo = self.open_order_mut_by_raw_index(slot);
 
-            // TODO check this conversion
-            let price = (oo.id >> 64) as i64;
+            let price = match oo.side_and_tree().order_tree() {
+                BookSideOrderTree::Fixed => (oo.id >> 64) as i64,
+                BookSideOrderTree::OraclePegged => oo.peg_limit,
+            };
+
             let base_quantity_native = base_quantity * market.base_lot_size;
             let quote_quantity_native =
                 base_quantity.checked_mul(price).unwrap() * market.quote_lot_size;

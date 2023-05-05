@@ -137,7 +137,6 @@ pub mod openbook_v2 {
         price_offset_lots: i64,
 
         // The limit at which the pegged order shall expire.
-        // May be -1 to denote no peg limit.
         //
         // Example: An bid pegged to -20 with peg_limit 100 would expire if the oracle hits 121.
         peg_limit: i64,
@@ -166,7 +165,7 @@ pub mod openbook_v2 {
         // WARNING: Not currently implemented.
         max_oracle_staleness_slots: i32,
     ) -> Result<Option<u128>> {
-        require_gte!(peg_limit, -1);
+        require_gte!(peg_limit, 0);
         require_eq!(max_oracle_staleness_slots, -1); // unimplemented
 
         use crate::state::{Order, OrderParams};

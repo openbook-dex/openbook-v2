@@ -278,6 +278,7 @@ impl<'a> Orderbook<'a> {
                 order_tree_target,
                 &new_order,
                 order.client_order_id,
+                order.peg_limit(),
             )?;
         }
 

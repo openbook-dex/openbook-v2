@@ -89,6 +89,7 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<
             let free_assets_native = position.base_free_native;
             let max_base_native =
                 I80F48::from_num(max_base_lots) * I80F48::from_num(market.base_lot_size);
+
             let min_qua = cmp::min(max_base_native, free_assets_native);
             position.base_free_native -= min_qua;
 
