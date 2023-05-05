@@ -419,7 +419,7 @@ impl ClientInstruction for PlaceTakeOrderInstruction {
             token_program: Token::id(),
             system_program: System::id(),
         };
-        let instruction = make_instruction(program_id, &accounts, instruction);
+        let mut instruction = make_instruction(program_id, &accounts, instruction);
         if let Some(ref3) = self.referrer {
             let remaining = &mut vec![AccountMeta {
                 pubkey: ref3,

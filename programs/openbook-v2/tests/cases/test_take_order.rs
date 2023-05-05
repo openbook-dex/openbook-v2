@@ -104,6 +104,7 @@ async fn test_take_ask_order() -> Result<(), TransportError> {
             reduce_only: false,
             client_order_id: 0,
             expiry_timestamp: 0,
+            referrer: None,
         },
     )
     .await
@@ -301,6 +302,7 @@ async fn test_take_bid_order() -> Result<(), TransportError> {
             reduce_only: false,
             client_order_id: 0,
             expiry_timestamp: 0,
+            referrer: None,
         },
     )
     .await

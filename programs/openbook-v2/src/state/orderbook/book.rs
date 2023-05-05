@@ -88,7 +88,7 @@ impl<'a> Orderbook<'a> {
         let mut matched_order_deletes: Vec<(BookSideOrderTree, u128)> = vec![];
         let mut number_of_dropped_expired_orders = 0;
         // In case of take order, need this
-        let mut referrer_amount: u64= 0;
+        let mut referrer_amount: u64 = 0;
         let opposing_bookside = self.bookside_mut(other_side);
 
         // Substract fees in case of bid
