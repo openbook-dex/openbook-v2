@@ -9,11 +9,13 @@ pub fn settle_funds<'info>(ctx: Context<'_, '_, '_, 'info, SettleFunds<'info>>) 
     let mut open_orders_account = ctx.accounts.open_orders_account.load_full_mut()?;
     let mut position = &mut open_orders_account.fixed_mut().position;
 
-    let is_referrer = !ctx.remaining_accounts.is_empty() && position.referrer_rebates_accrued > 0;
-
+    msg!(
+        " ctx.remaining_accounts.is_empty() {}",
+        position.referrer_rebates_accrued
+    );
     let (market_index, market_bump) = {
         let market = &mut ctx.accounts.market.load_mut()?;
-        if !is_referrer {
+        if ctx.remaining_accounts.is_empty() {
             market.quote_fees_accrued += position.referrer_rebates_accrued;
         }
         market.referrer_rebates_accrued -= position.referrer_rebates_accrued;
@@ -27,7 +29,7 @@ pub fn settle_funds<'info>(ctx: Context<'_, '_, '_, 'info, SettleFunds<'info>>) 
     ];
     let signer = &[&seeds[..]];
 
-    if is_referrer {
+    if !ctx.remaining_accounts.is_empty() && position.referrer_rebates_accrued > 0 {
         let referrer = ctx.remaining_accounts[0].to_account_info();
         let cpi_context = CpiContext::new(
             ctx.accounts.token_program.to_account_info(),

@@ -420,6 +420,11 @@ fn release_funds_fees(
         }
     };
 
+    msg!(
+        "quote_native {}, referrer_rebates_accrued {}",
+        quote_native,
+        market.referrer_rebate(quote_native) as u64
+    );
     // Referrer rebates
     pa.referrer_rebates_accrued += market.referrer_rebate(quote_native) as u64;
     market.referrer_rebates_accrued += market.referrer_rebate(quote_native) as u64;

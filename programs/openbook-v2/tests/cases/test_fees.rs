@@ -176,20 +176,20 @@ async fn test_fees_acrued() -> Result<(), TransportError> {
         );
     }
 
-    let admin_token_0 = solana
-        .create_associated_token_account(&admin.pubkey(), mints[0].pubkey)
+    let admin_token_1 = solana
+        .create_associated_token_account(&admin.pubkey(), mints[1].pubkey)
         .await;
 
     send_tx(
         solana,
         SettleFundsInstruction {
             market,
-            open_orders_account: account_0,
+            open_orders_account: account_1,
             base_vault,
             quote_vault,
             payer_base: owner_token_0,
             payer_quote: owner_token_1,
-            referrer: Some(admin_token_0),
+            referrer: None,
         },
     )
     .await
@@ -197,7 +197,7 @@ async fn test_fees_acrued() -> Result<(), TransportError> {
 
     {
         let market = solana.get_account::<Market>(market).await;
-        assert_eq!(market.quote_fees_accrued, 10);
+        assert_eq!(market.quote_fees_accrued, 9);
     }
 
     send_tx(
@@ -205,7 +205,7 @@ async fn test_fees_acrued() -> Result<(), TransportError> {
         SweepFeesInstruction {
             market,
             quote_vault,
-            receiver: admin_token_0,
+            receiver: admin_token_1,
         },
     )
     .await
