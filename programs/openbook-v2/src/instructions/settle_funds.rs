@@ -15,11 +15,6 @@ pub fn settle_funds<'info>(ctx: Context<'_, '_, '_, 'info, SettleFunds<'info>>) 
             market.quote_fees_accrued += position.referrer_rebates_accrued;
         }
         market.referrer_rebates_accrued -= position.referrer_rebates_accrued;
-        msg!(
-            "market.quote_deposit_total {}, position.quote_free_native.to_ {}",
-            market.quote_deposit_total,
-            position.quote_free_native
-        );
         market.base_deposit_total -= position.base_free_native.to_num::<u64>();
         market.quote_deposit_total -= position.quote_free_native.to_num::<u64>();
 

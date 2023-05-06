@@ -128,7 +128,7 @@ impl<'a> Orderbook<'a> {
                 break;
             } else if post_only {
                 msg!("Order could not be placed due to PostOnly");
-                post_target = None;
+                // post_target = None;
                 break; // return silently to not fail other instructions in tx
             } else if limit == 0 {
                 msg!("Order matching limit reached");
@@ -427,11 +427,6 @@ fn release_funds_fees(
         }
     };
 
-    msg!(
-        "quote_native {}, referrer_rebates_accrued {}",
-        quote_native,
-        market.referrer_rebate(quote_native) as u64
-    );
     // Referrer rebates
     pa.referrer_rebates_accrued += market.referrer_rebate(quote_native) as u64;
     market.referrer_rebates_accrued += market.referrer_rebate(quote_native) as u64;

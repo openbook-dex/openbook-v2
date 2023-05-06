@@ -335,7 +335,7 @@ impl ClientInstruction for PlaceOrderInstruction {
             max_base_lots: self.max_base_lots,
             max_quote_lots_including_fees: self.max_quote_lots_including_fees,
             client_order_id: self.client_order_id,
-            order_type: PlaceOrderType::Limit,
+            order_type: self.order_type,
             reduce_only: self.reduce_only,
             expiry_timestamp: self.expiry_timestamp,
             limit: 10,
