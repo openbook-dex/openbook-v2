@@ -66,12 +66,16 @@ pub fn place_take_order<'info>(
             )
         }
 
-        Side::Ask => (
-            ctx.accounts.quote_vault.to_account_info(),
-            ctx.accounts.base_vault.to_account_info(),
-            total_base_taken_native,
-            total_quote_taken_native,
-        ),
+        Side::Ask => {
+            // Update market deposit total
+            market.base_deposit_total += (total_base_taken_native).to_num::<u64>();
+            (
+                ctx.accounts.quote_vault.to_account_info(),
+                ctx.accounts.base_vault.to_account_info(),
+                total_base_taken_native,
+                total_quote_taken_native,
+            )
+        }
     };
 
     // Transfer funds from payer to vault
@@ -84,7 +88,7 @@ pub fn place_take_order<'info>(
                 authority: ctx.accounts.owner.to_account_info(),
             },
         );
-        // TODO Binye check if this is correct
+        // TODO Binye check if this ceil is correct
         token::transfer(cpi_context, deposit_amount.ceil().to_num())?;
     }
     drop(market);

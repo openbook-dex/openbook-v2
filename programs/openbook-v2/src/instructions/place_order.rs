@@ -110,6 +110,9 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: &Order, limit: u8) -> Result
             let free_qty_to_lock = cmp::min(max_base_native, free_assets_native);
             position.base_free_native -= free_qty_to_lock;
 
+            // Update market deposit total
+            market.base_deposit_total += (max_base_native - free_qty_to_lock).to_num::<u64>();
+
             (
                 ctx.accounts.base_vault.to_account_info(),
                 max_base_native - free_qty_to_lock,

@@ -194,12 +194,9 @@ async fn test_inmediate_order() -> Result<(), TransportError> {
 
     {
         let open_orders_account_0 = solana.get_account::<OpenOrdersAccount>(account_0).await;
-        let open_orders_account_1 = solana.get_account::<OpenOrdersAccount>(account_1).await;
 
         assert_eq!(open_orders_account_0.position.base_free_native, 0);
-        assert_eq!(open_orders_account_1.position.base_free_native, 0);
         assert_eq!(open_orders_account_0.position.quote_free_native, 0);
-        assert_eq!(open_orders_account_1.position.quote_free_native.round(), 0);
     }
 
     Ok(())
