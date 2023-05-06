@@ -237,6 +237,8 @@ impl<'a> Orderbook<'a> {
             post_target = None;
         }
 
+        msg!("post_target {:?}", post_target);
+
         if let Some(order_tree_target) = post_target {
             let mut open_orders_acc = open_orders_acc.unwrap();
             let bookside = self.bookside_mut(side);

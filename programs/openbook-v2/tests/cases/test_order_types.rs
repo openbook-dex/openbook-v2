@@ -270,5 +270,98 @@ async fn test_inmediate_order() -> Result<(), TransportError> {
         );
     }
 
+    // Change the price, so no matching and order posts
+    // let price_lots_2 = price_lots - 100;
+    // send_tx(
+    //     solana,
+    //     PlaceOrderInstruction {
+    //         open_orders_account: account_1,
+    //         market,
+    //         owner,
+    //         payer: owner_token_0,
+    //         base_vault,
+    //         quote_vault,
+    //         side: Side::Ask,
+    //         price_lots: price_lots_2,
+    //         max_base_lots: 1,
+    //         max_quote_lots_including_fees: 10000,
+    //         reduce_only: false,
+    //         client_order_id: 0,
+    //         expiry_timestamp: 0,
+    //         order_type: PlaceOrderType::PostOnly,
+    //     },
+    // )
+    // .await
+    // .unwrap();
+
+    // {
+    //     let open_orders_account_0 = solana.get_account::<OpenOrdersAccount>(account_0).await;
+    //     let open_orders_account_1 = solana.get_account::<OpenOrdersAccount>(account_1).await;
+
+    //     assert_eq!(open_orders_account_0.position.bids_base_lots, 1);
+    //     assert_eq!(open_orders_account_1.position.bids_base_lots, 0);
+    //     assert_eq!(open_orders_account_0.position.asks_base_lots, 0);
+    //     assert_eq!(open_orders_account_1.position.asks_base_lots, 1);
+    //     assert_eq!(open_orders_account_0.position.taker_base_lots, 0);
+    //     assert_eq!(open_orders_account_1.position.taker_quote_lots, 0);
+    //     assert_eq!(open_orders_account_0.position.base_free_native, 0);
+    //     assert_eq!(open_orders_account_1.position.base_free_native, 0);
+    //     assert_eq!(open_orders_account_0.position.quote_free_native, 0);
+    //     assert_eq!(
+    //         balance_base,
+    //         solana.token_account_balance(owner_token_0).await
+    //     );
+    //     assert_eq!(
+    //         balance_quote,
+    //         solana.token_account_balance(owner_token_1).await
+    //     );
+    // }
+
+    // PostOnlySlide always post on book
+    send_tx(
+        solana,
+        PlaceOrderInstruction {
+            open_orders_account: account_1,
+            market,
+            owner,
+            payer: owner_token_0,
+            base_vault,
+            quote_vault,
+            side: Side::Ask,
+            price_lots,
+            max_base_lots: 1,
+            max_quote_lots_including_fees: 10040,
+            reduce_only: false,
+            client_order_id: 0,
+            expiry_timestamp: 0,
+            order_type: PlaceOrderType::PostOnlySlide,
+        },
+    )
+    .await
+    .unwrap();
+
+    {
+        let open_orders_account_0 = solana.get_account::<OpenOrdersAccount>(account_0).await;
+        let open_orders_account_1 = solana.get_account::<OpenOrdersAccount>(account_1).await;
+
+        assert_eq!(open_orders_account_0.position.bids_base_lots, 1);
+        assert_eq!(open_orders_account_1.position.bids_base_lots, 0);
+        assert_eq!(open_orders_account_0.position.asks_base_lots, 0);
+        assert_eq!(open_orders_account_1.position.asks_base_lots, 1);
+        assert_eq!(open_orders_account_0.position.taker_base_lots, 0);
+        assert_eq!(open_orders_account_1.position.taker_quote_lots, 0);
+        assert_eq!(open_orders_account_0.position.base_free_native, 0);
+        assert_eq!(open_orders_account_1.position.base_free_native, 0);
+        assert_eq!(open_orders_account_0.position.quote_free_native, 0);
+        assert_eq!(
+            balance_base - 100,
+            solana.token_account_balance(owner_token_0).await
+        );
+        assert_eq!(
+            balance_quote,
+            solana.token_account_balance(owner_token_1).await
+        );
+    }
+
     Ok(())
 }
