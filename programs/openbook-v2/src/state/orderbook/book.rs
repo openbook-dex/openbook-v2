@@ -71,10 +71,9 @@ impl<'a> Orderbook<'a> {
         let order_id = market.gen_order_id(side, price_data);
 
         // // IOC orders have a fee penalty applied regardless of match
-        if let Some(acco) = &mut open_orders_acc {
-            if order.needs_penalty_fee() {
-                apply_penalty(market, acco)?;
-            }
+        // TODO Binye Do not apply penalty fees now
+        if order.needs_penalty_fee() {
+            // apply_penalty(market, acco)?;
         }
 
         // Iterate through book and match against this new order.
@@ -128,7 +127,7 @@ impl<'a> Orderbook<'a> {
                 break;
             } else if post_only {
                 msg!("Order could not be placed due to PostOnly");
-                // post_target = None;
+                post_target = None;
                 break; // return silently to not fail other instructions in tx
             } else if limit == 0 {
                 msg!("Order matching limit reached");
@@ -439,7 +438,11 @@ fn release_funds_fees(
 }
 
 /// Applies a fixed penalty fee to the account, and update the market's fees_accrued
-fn apply_penalty(market: &mut Market, open_orders_acc: &mut OpenOrdersAccountRefMut) -> Result<()> {
+/// TODO Binye the implementation isn't correct as this is not used for now
+fn _apply_penalty(
+    market: &mut Market,
+    open_orders_acc: &mut OpenOrdersAccountRefMut,
+) -> Result<()> {
     let fee_penalty = I80F48::from_num(market.fee_penalty);
     open_orders_acc
         .fixed

@@ -221,7 +221,10 @@ async fn test_inmediate_order() -> Result<(), TransportError> {
     .await
     .unwrap();
 
-    // There is a bid in the book, post only doesnt match the order
+    let balance_base = solana.token_account_balance(owner_token_0).await;
+    let balance_quote = solana.token_account_balance(owner_token_1).await;
+
+    // There is a bid in the book, post only doesn't do anything since there is a match
     send_tx(
         solana,
         PlaceOrderInstruction {
@@ -251,12 +254,20 @@ async fn test_inmediate_order() -> Result<(), TransportError> {
         assert_eq!(open_orders_account_0.position.bids_base_lots, 1);
         assert_eq!(open_orders_account_1.position.bids_base_lots, 0);
         assert_eq!(open_orders_account_0.position.asks_base_lots, 0);
-        assert_eq!(open_orders_account_1.position.asks_base_lots, 1);
+        assert_eq!(open_orders_account_1.position.asks_base_lots, 0);
         assert_eq!(open_orders_account_0.position.taker_base_lots, 0);
         assert_eq!(open_orders_account_1.position.taker_quote_lots, 0);
         assert_eq!(open_orders_account_0.position.base_free_native, 0);
         assert_eq!(open_orders_account_1.position.base_free_native, 0);
         assert_eq!(open_orders_account_0.position.quote_free_native, 0);
+        assert_eq!(
+            balance_base,
+            solana.token_account_balance(owner_token_0).await
+        );
+        assert_eq!(
+            balance_quote,
+            solana.token_account_balance(owner_token_1).await
+        );
     }
 
     Ok(())

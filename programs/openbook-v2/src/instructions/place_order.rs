@@ -74,9 +74,17 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: &Order, limit: u8) -> Result
                 OrderParams::Market | OrderParams::ImmediateOrCancel { .. } => {
                     total_quote_taken_native
                 }
-                OrderParams::Fixed { .. } => {
-                    I80F48::from_num(max_quote_lots_including_fees)
-                        * I80F48::from_num(market.quote_lot_size)
+                OrderParams::Fixed {
+                    price_lots: _,
+                    order_type,
+                } => {
+                    // For PostOnly If existing orders can match with this order, do nothing
+                    if order_type == PostOrderType::PostOnly && order_id.is_none() {
+                        I80F48::ZERO
+                    } else {
+                        I80F48::from_num(max_quote_lots_including_fees)
+                            * I80F48::from_num(market.quote_lot_size)
+                    }
                 }
                 OrderParams::OraclePegged { .. } => todo!(),
             };
@@ -101,8 +109,16 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: &Order, limit: u8) -> Result
                 OrderParams::Market | OrderParams::ImmediateOrCancel { .. } => {
                     total_base_taken_native
                 }
-                OrderParams::Fixed { .. } => {
-                    I80F48::from_num(max_base_lots) * I80F48::from_num(market.base_lot_size)
+                OrderParams::Fixed {
+                    price_lots: _,
+                    order_type,
+                } => {
+                    // For PostOnly If existing orders can match with this order, do nothing
+                    if order_type == PostOrderType::PostOnly && order_id.is_none() {
+                        I80F48::ZERO
+                    } else {
+                        I80F48::from_num(max_base_lots) * I80F48::from_num(market.base_lot_size)
+                    }
                 }
                 OrderParams::OraclePegged { .. } => todo!(),
             };
