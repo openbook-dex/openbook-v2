@@ -9,7 +9,7 @@ use crate::{accounts_zerocopy::KeyedAccountReader, state::orderbook::Side};
 use super::{orderbook, OracleConfig, StablePriceModel};
 
 pub type TokenIndex = u16;
-pub type MarketIndex = u16;
+pub type MarketIndex = u32;
 
 #[account(zero_copy)]
 #[derive(Debug)]
@@ -28,7 +28,7 @@ pub struct Market {
     pub base_decimals: u8,
     pub quote_decimals: u8,
 
-    pub padding1: [u8; 3],
+    pub padding1: [u8; 1],
 
     /// Name. Trailing zero bytes are ignored.
     pub name: [u8; 16],
@@ -110,7 +110,7 @@ const_assert_eq!(
     1 + // size of bump
     1 + // size of base_decimals
     1 + // size of quote_decimals
-    3 + // size of padding1
+    1 + // size of padding1
     16 + // size of name
     3 * 32 + // size of bids, asks, and event_queue
     32 + // size of oracle
