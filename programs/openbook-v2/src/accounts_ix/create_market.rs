@@ -27,13 +27,13 @@ pub struct CreateMarket<'info> {
     #[account(mut)]
     pub payer: Signer<'info>,
 
-    #[account(mut, constraint = base_vault.mint == base_mint.key())]
+    #[account(mut, token::mint = base_mint, token::authority = market)]
     pub base_vault: Account<'info, TokenAccount>,
-    #[account(mut, constraint = quote_vault.mint == quote_mint.key())]
+    #[account(mut, token::mint = quote_mint, token::authority = market)]
     pub quote_vault: Account<'info, TokenAccount>,
 
     pub base_mint: Account<'info, Mint>,
-    pub quote_mint: Box<Account<'info, Mint>>,
+    pub quote_mint: Account<'info, Mint>,
 
     pub system_program: Program<'info, System>,
     /// CHECK: The oracle can be one of several different account types and the pubkey is checked above
