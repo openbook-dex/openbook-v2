@@ -205,10 +205,20 @@ impl<'a> Orderbook<'a> {
             };
         }
 
+        msg!(
+            "order.max_quote_lots_including_fees {} total_quote_lots_taken {}",
+            order.max_quote_lots_including_fees,
+            total_quote_lots_taken
+        );
         // Update remaining based on quote_lots taken. If nothing taken, same as the beggining
-        remaining_quote_lots = order.max_quote_lots_including_fees
-            - total_quote_lots_taken
-            - (market.taker_fee * I80F48::from_num(total_quote_lots_taken)).to_num::<u64>();
+        remaining_quote_lots = match side {
+            Side::Bid => {
+                order.max_quote_lots_including_fees
+                    - total_quote_lots_taken
+                    - (market.taker_fee * I80F48::from_num(total_quote_lots_taken)).to_num::<u64>()
+            }
+            Side::Ask => order.max_quote_lots_including_fees - total_quote_lots_taken,
+        };
 
         // Apply changes to matched asks (handles invalidate on delete!)
         for (handle, new_quantity) in matched_order_changes {
