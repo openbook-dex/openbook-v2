@@ -94,7 +94,7 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<
                         let price = I80F48::from(peg_limit);
                         total_quote_taken_native
                             + I80F48::from_num(placed_quantity)
-                                * I80F48::from_num(market.base_lot_size)
+                                * I80F48::from_num(market.quote_lot_size)
                                 * price
                     }
                 }
@@ -126,7 +126,9 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<
                     if order_type == PostOrderType::PostOnly && order_id.is_none() {
                         I80F48::ZERO
                     } else {
-                        total_base_taken_native + I80F48::from_num(placed_quantity)
+                        total_base_taken_native
+                            + I80F48::from_num(placed_quantity)
+                                * I80F48::from_num(market.base_lot_size)
                     }
                 }
             };
