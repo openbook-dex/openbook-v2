@@ -105,7 +105,7 @@ impl Position {
     }
 
     /// Updates avg entry price, breakeven price, realized pnl, realized pnl limit
-    fn update_trade_stats(&mut self, base_change: u64, quote_change_native: I80F48) {
+    fn update_trade_stats(&mut self, _base_change: u64, _quote_change_native: I80F48) {
         // TODO Binye. Replace this with another different event
         // if base_change == 0 {
         //     return;

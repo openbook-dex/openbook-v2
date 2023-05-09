@@ -1,4 +1,4 @@
-use crate::state::{Market, MarketIndex, Position};
+use crate::state::MarketIndex;
 use anchor_lang::prelude::*;
 use borsh::BorshSerialize;
 

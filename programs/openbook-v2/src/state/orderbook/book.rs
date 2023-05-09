@@ -144,7 +144,6 @@ impl<'a> Orderbook<'a> {
             let match_quote_lots = match_base_lots * best_opposing_price;
             remaining_base_lots -= match_base_lots;
             remaining_quote_lots -= match_quote_lots;
-            assert!(remaining_quote_lots >= 0);
 
             let new_best_opposing_quantity = best_opposing.node.quantity - match_base_lots;
             let maker_out = new_best_opposing_quantity == 0;
@@ -176,8 +175,6 @@ impl<'a> Orderbook<'a> {
         let mut total_quote_taken_native =
             I80F48::from_num(market.quote_lot_size * total_quote_lots_taken);
         let total_base_lots_taken = order.max_base_lots - remaining_base_lots;
-        assert!(total_quote_lots_taken >= 0);
-        assert!(total_base_lots_taken >= 0);
 
         // Record the taker trade in the account already, even though it will only be
         // realized when the fill event gets executed
@@ -198,7 +195,7 @@ impl<'a> Orderbook<'a> {
                 )?;
             } else {
                 // It's a taker order, transfer to referrer
-                referrer_amount += market.referrer_rebate(total_quote_taken_native) as u64;
+                referrer_amount += market.referrer_rebate(total_quote_taken_native);
             }
 
             // Apply fees
@@ -233,7 +230,7 @@ impl<'a> Orderbook<'a> {
         // If there are still quantity unmatched, place on the book
         let book_base_quantity = remaining_base_lots.min(remaining_quote_lots / price_lots);
 
-        if book_base_quantity <= 0 {
+        if book_base_quantity == 0 {
             post_target = None;
         }
 
@@ -420,8 +417,8 @@ fn release_funds_fees(
     };
 
     // Referrer rebates
-    pa.referrer_rebates_accrued += market.referrer_rebate(quote_native) as u64;
-    market.referrer_rebates_accrued += market.referrer_rebate(quote_native) as u64;
+    pa.referrer_rebates_accrued += market.referrer_rebate(quote_native);
+    market.referrer_rebates_accrued += market.referrer_rebate(quote_native);
 
     open_orders_acc.fixed.position.taker_volume += taker_fees.to_num::<u64>();
     // Only apply taker fees now. Maker fees applied once processing the event
