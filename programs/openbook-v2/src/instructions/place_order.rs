@@ -12,7 +12,7 @@ use crate::state::*;
 
 // TODO
 #[allow(clippy::too_many_arguments)]
-pub fn place_order(ctx: Context<PlaceOrder>, order: &Order, limit: u8) -> Result<Option<u128>> {
+pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<Option<u128>> {
     require_gte!(order.max_base_lots, 0);
     require_gte!(order.max_quote_lots_including_fees, 0);
 
@@ -55,7 +55,7 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: &Order, limit: u8) -> Result
         total_quote_taken_native,
         referrer_amount: _,
     } = book.new_order(
-        order,
+        &order,
         &mut market,
         &mut event_queue,
         oracle_price,

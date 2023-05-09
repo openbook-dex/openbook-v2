@@ -105,7 +105,7 @@ pub mod openbook_v2 {
                 return Ok(None);
             }
         };
-        let order = &Order {
+        let order = Order {
             side,
             max_base_lots,
             max_quote_lots_including_fees,
@@ -172,7 +172,7 @@ pub mod openbook_v2 {
             order_type == PlaceOrderType::ImmediateOrCancel,
             OpenBookError::InvalidOrderType
         );
-        let order = &Order {
+        let order = Order {
             side,
             max_base_lots,
             max_quote_lots_including_fees,
