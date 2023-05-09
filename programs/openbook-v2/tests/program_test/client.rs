@@ -367,6 +367,69 @@ impl ClientInstruction for PlaceOrderInstruction {
     }
 }
 
+pub struct PlaceOrderPeggedInstruction {
+    pub open_orders_account: Pubkey,
+    pub market: Pubkey,
+    pub owner: TestKeypair,
+    pub payer: Pubkey,
+    pub base_vault: Pubkey,
+    pub quote_vault: Pubkey,
+    pub side: Side,
+    pub price_offset: i64,
+    pub max_base_lots: i64,
+    pub max_quote_lots_including_fees: i64,
+    pub client_order_id: u64,
+    pub peg_limit: i64,
+}
+#[async_trait::async_trait(?Send)]
+impl ClientInstruction for PlaceOrderPeggedInstruction {
+    type Accounts = openbook_v2::accounts::PlaceOrder;
+    type Instruction = openbook_v2::instruction::PlaceOrderPegged;
+    async fn to_instruction(
+        &self,
+        account_loader: impl ClientAccountLoader + 'async_trait,
+    ) -> (Self::Accounts, instruction::Instruction) {
+        let program_id = openbook_v2::id();
+        let instruction = Self::Instruction {
+            side: self.side,
+            price_offset_lots: self.price_offset,
+            peg_limit: self.peg_limit,
+            max_base_lots: self.max_base_lots,
+            max_quote_lots_including_fees: self.max_quote_lots_including_fees,
+            client_order_id: self.client_order_id,
+            order_type: PlaceOrderType::Limit,
+            reduce_only: false,
+            expiry_timestamp: 0,
+            limit: 10,
+            max_oracle_staleness_slots: -1,
+        };
+
+        let market: Market = account_loader.load(&self.market).await.unwrap();
+
+        let accounts = Self::Accounts {
+            open_orders_account: self.open_orders_account,
+            market: self.market,
+            bids: market.bids,
+            asks: market.asks,
+            event_queue: market.event_queue,
+            oracle: market.oracle,
+            owner: self.owner.pubkey(),
+            payer: self.payer,
+            base_vault: self.base_vault,
+            quote_vault: self.quote_vault,
+            token_program: Token::id(),
+            system_program: System::id(),
+        };
+        let instruction = make_instruction(program_id, &accounts, instruction);
+
+        (accounts, instruction)
+    }
+
+    fn signers(&self) -> Vec<TestKeypair> {
+        vec![self.owner]
+    }
+}
+
 pub struct PlaceTakeOrderInstruction {
     pub market: Pubkey,
     pub owner: TestKeypair,

@@ -129,6 +129,76 @@ pub mod openbook_v2 {
     }
 
     #[allow(clippy::too_many_arguments)]
+    pub fn place_order_pegged(
+        ctx: Context<PlaceOrder>,
+        side: Side,
+
+        // The adjustment from the oracle price, in lots (quote lots per base lots).
+        // Orders on the book may be filled at oracle + adjustment (depends on order type).
+        price_offset_lots: i64,
+
+        // The limit at which the pegged order shall expire.
+        //
+        // Example: An bid pegged to -20 with peg_limit 100 would expire if the oracle hits 121.
+        peg_limit: i64,
+
+        max_base_lots: i64,
+        max_quote_lots_including_fees: i64,
+        client_order_id: u64,
+        order_type: PlaceOrderType,
+        reduce_only: bool,
+
+        // Timestamp of when order expires
+        //
+        // Send 0 if you want the order to never expire.
+        // Timestamps in the past mean the instruction is skipped.
+        // Timestamps in the future are reduced to now + 65535s.
+        expiry_timestamp: u64,
+
+        // Maximum number of orders from the book to fill.
+        //
+        // Use this to limit compute used during order matching.
+        // When the limit is reached, processing stops and the instruction succeeds.
+        limit: u8,
+
+        // Oracle staleness limit, in slots. Set to -1 to disable.
+        //
+        // WARNING: Not currently implemented.
+        max_oracle_staleness_slots: i32,
+    ) -> Result<Option<u128>> {
+        require_gte!(peg_limit, 0);
+        require_eq!(max_oracle_staleness_slots, -1); // unimplemented
+
+        use crate::state::{Order, OrderParams};
+        let time_in_force = match Order::tif_from_expiry(expiry_timestamp) {
+            Some(t) => t,
+            None => {
+                msg!("Order is already expired");
+                return Ok(None);
+            }
+        };
+        let order = Order {
+            side,
+            max_base_lots,
+            max_quote_lots_including_fees,
+            client_order_id,
+            reduce_only,
+            time_in_force,
+            params: OrderParams::OraclePegged {
+                price_offset_lots,
+                order_type: order_type.to_post_order_type()?,
+                peg_limit,
+                max_oracle_staleness_slots,
+            },
+        };
+        #[cfg(feature = "enable-gpl")]
+        return instructions::place_order(ctx, order, limit);
+
+        #[cfg(not(feature = "enable-gpl"))]
+        Ok(None)
+    }
+
+    #[allow(clippy::too_many_arguments)]
     pub fn place_take_order<'info>(
         ctx: Context<'_, '_, '_, 'info, PlaceTakeOrder<'info>>,
         side: Side,
