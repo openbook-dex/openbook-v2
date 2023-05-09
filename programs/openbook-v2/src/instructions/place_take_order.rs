@@ -38,11 +38,12 @@ pub fn place_take_order<'info>(
 
     let side = order.side;
 
-    let TakenQuantitiesIncludingFees {
+    let OrderWithAmounts {
         order_id,
         total_base_taken_native,
         total_quote_taken_native,
         referrer_amount,
+        ..
     } = book.new_order(
         &order,
         &mut market,
