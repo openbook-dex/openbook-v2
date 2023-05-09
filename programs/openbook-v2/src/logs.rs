@@ -1,4 +1,4 @@
-use crate::state::{Market, Position};
+use crate::state::{Market, MarketIndex, Position};
 use anchor_lang::prelude::*;
 use borsh::BorshSerialize;
 
@@ -50,7 +50,7 @@ pub struct FillLog {
 #[event]
 pub struct MarketMetaDataLog {
     pub market: Pubkey,
-    pub market_index: u16,
+    pub market_index: MarketIndex,
     pub base_decimals: u8,
     pub quote_decimals: u8,
     pub base_lot_size: i64,

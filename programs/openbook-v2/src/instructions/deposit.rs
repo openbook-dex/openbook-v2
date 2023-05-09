@@ -7,7 +7,7 @@ use fixed::types::I80F48;
 
 pub fn deposit(ctx: Context<Deposit>, base_amount_lots: u64, quote_amount_lots: u64) -> Result<()> {
     let mut open_orders_account = ctx.accounts.open_orders_account.load_full_mut()?;
-    let market = ctx.accounts.market.load()?;
+    let market = &mut ctx.accounts.market.load_mut()?;
 
     if base_amount_lots != 0 {
         let base_amount_native =
@@ -22,6 +22,7 @@ pub fn deposit(ctx: Context<Deposit>, base_amount_lots: u64, quote_amount_lots: 
         );
         token::transfer(cpi_context, base_amount_native.to_num())?;
         open_orders_account.fixed.position.base_free_native += base_amount_native;
+        market.base_deposit_total += base_amount_native.to_num::<u64>();
 
         emit!(DepositLog {
             open_orders_acc: ctx.accounts.open_orders_account.key(),
@@ -44,6 +45,7 @@ pub fn deposit(ctx: Context<Deposit>, base_amount_lots: u64, quote_amount_lots: 
         token::transfer(cpi_context, quote_amount_native.to_num())?;
 
         open_orders_account.fixed.position.quote_free_native += quote_amount_native;
+        market.quote_deposit_total += quote_amount_native.to_num::<u64>();
 
         emit!(DepositLog {
             open_orders_acc: ctx.accounts.open_orders_account.key(),

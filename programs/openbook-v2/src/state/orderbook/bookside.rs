@@ -264,7 +264,6 @@ mod tests {
 
         // verify iteration order for different oracle prices
         for oracle_price_lots in 1..40 {
-            println!("oracle {oracle_price_lots}");
             let mut total = 0;
             let ascending = order_tree_type == OrderTreeType::Asks;
             let mut last_price = if ascending { 0 } else { i64::MAX };
