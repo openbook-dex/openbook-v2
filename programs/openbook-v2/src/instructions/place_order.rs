@@ -45,14 +45,11 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<
 
     let now_ts: u64 = Clock::get()?.unix_timestamp.try_into().unwrap();
 
-    let max_quote_lots_including_fees = order.max_quote_lots_including_fees;
-    let max_base_lots = order.max_base_lots;
-    let side = order.side;
-
     let OrderWithAmounts {
         order_id,
         total_base_taken_native,
         total_quote_taken_native,
+        placed_quantity,
         ..
     } = book.new_order(
         &order,
@@ -66,7 +63,7 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<
     )?;
 
     let position = &mut open_orders_account.fixed_mut().position;
-    let (to_vault, deposit_amount) = match side {
+    let (to_vault, deposit_amount) = match order.side {
         Side::Bid => {
             let free_assets_native = position.quote_free_native;
 
@@ -74,22 +71,26 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<
                 OrderParams::Market | OrderParams::ImmediateOrCancel { .. } => {
                     total_quote_taken_native
                 }
-                OrderParams::Fixed {
-                    price_lots: _,
-                    order_type,
-                } => {
+                OrderParams::Fixed { order_type, .. } => {
                     // For PostOnly If existing orders can match with this order, do nothing
                     if order_type == PostOrderType::PostOnly && order_id.is_none() {
                         I80F48::ZERO
                     } else {
-                        I80F48::from_num(max_quote_lots_including_fees)
-                            * I80F48::from_num(market.quote_lot_size)
+                        let price = I80F48::from((order_id.unwrap() >> 64) as u64);
+                        total_quote_taken_native + I80F48::from_num(placed_quantity) * price
                     }
                 }
-                // TODO use peg_limit
-                OrderParams::OraclePegged { .. } => {
-                    I80F48::from_num(max_quote_lots_including_fees)
-                        * I80F48::from_num(market.quote_lot_size)
+                OrderParams::OraclePegged {
+                    order_type,
+                    peg_limit,
+                    ..
+                } => {
+                    if order_type == PostOrderType::PostOnly && order_id.is_none() {
+                        I80F48::ZERO
+                    } else {
+                        let price = I80F48::from(peg_limit);
+                        total_quote_taken_native + I80F48::from_num(placed_quantity) * price
+                    }
                 }
             };
             let free_qty_to_lock = cmp::min(max_native_including_fees, free_assets_native);
@@ -113,20 +114,14 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<
                 OrderParams::Market | OrderParams::ImmediateOrCancel { .. } => {
                     total_base_taken_native
                 }
-                OrderParams::Fixed {
-                    price_lots: _,
-                    order_type,
-                } => {
+                OrderParams::Fixed { order_type, .. }
+                | OrderParams::OraclePegged { order_type, .. } => {
                     // For PostOnly If existing orders can match with this order, do nothing
                     if order_type == PostOrderType::PostOnly && order_id.is_none() {
                         I80F48::ZERO
                     } else {
-                        I80F48::from_num(max_base_lots) * I80F48::from_num(market.base_lot_size)
+                        total_base_taken_native + I80F48::from_num(placed_quantity)
                     }
-                }
-                // TODO use peg_limit
-                OrderParams::OraclePegged { .. } => {
-                    I80F48::from_num(max_base_lots) * I80F48::from_num(market.base_lot_size)
                 }
             };
 
