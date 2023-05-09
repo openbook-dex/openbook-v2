@@ -77,7 +77,10 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<
                         I80F48::ZERO
                     } else {
                         let price = I80F48::from((order_id.unwrap() >> 64) as u64);
-                        total_quote_taken_native + I80F48::from_num(placed_quantity) * price
+                        total_quote_taken_native
+                            + I80F48::from_num(placed_quantity)
+                                * I80F48::from_num(market.quote_lot_size)
+                                * price
                     }
                 }
                 OrderParams::OraclePegged {
@@ -89,7 +92,10 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<
                         I80F48::ZERO
                     } else {
                         let price = I80F48::from(peg_limit);
-                        total_quote_taken_native + I80F48::from_num(placed_quantity) * price
+                        total_quote_taken_native
+                            + I80F48::from_num(placed_quantity)
+                                * I80F48::from_num(market.base_lot_size)
+                                * price
                     }
                 }
             };
