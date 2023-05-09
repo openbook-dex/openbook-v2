@@ -240,13 +240,6 @@ impl FillEvent {
         }
     }
 
-    pub fn base_quote_change(&self, side: Side) -> (i64, i64) {
-        match side {
-            Side::Bid => (self.quantity, -self.price * self.quantity),
-            Side::Ask => (-self.quantity, self.price * self.quantity),
-        }
-    }
-
     pub fn taker_side(&self) -> Side {
         self.taker_side.try_into().unwrap()
     }

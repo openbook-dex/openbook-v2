@@ -407,11 +407,6 @@ fn release_funds_fees(
     // taker fees should never be negative
     require_gte!(taker_fees, 0);
 
-    open_orders_acc
-        .fixed
-        .position
-        .record_trading_fee(taker_fees);
-
     let pa = &mut open_orders_acc.fixed_mut().position;
     // Update free_lots
     match taker_side {
@@ -445,11 +440,6 @@ fn _apply_penalty(
     open_orders_acc
         .fixed
         .accrue_buyback_fees(fee_penalty.floor().to_num::<u64>());
-
-    open_orders_acc
-        .fixed
-        .position
-        .record_trading_fee(fee_penalty);
     market.fees_accrued += fee_penalty;
     Ok(())
 }

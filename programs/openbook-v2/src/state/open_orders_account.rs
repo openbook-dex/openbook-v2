@@ -131,7 +131,7 @@ const_assert_eq!(
         - size_of::<u64>() * 3
         - size_of::<[u8; 208]>()
 );
-const_assert_eq!(size_of::<OpenOrdersAccountFixed>(), 552);
+const_assert_eq!(size_of::<OpenOrdersAccountFixed>(), 528);
 const_assert_eq!(size_of::<OpenOrdersAccountFixed>() % 8, 0);
 
 impl OpenOrdersAccountFixed {
@@ -392,7 +392,15 @@ impl<
 
     pub fn execute_maker(&mut self, market: &mut Market, fill: &FillEvent) -> Result<()> {
         let side = fill.taker_side().invert_side();
-        let (base_change, quote_change) = fill.base_quote_change(side);
+        // pub fn base_quote_change(&self, side: Side) -> (i64, i64) {
+        //     match side {
+        //         Side::Bid => (self.quantity, -self.price * self.quantity),
+        //         Side::Ask => (-self.quantity, self.price * self.quantity),
+        //     }
+        // }
+        let base_change = fill.quantity;
+        let quote_change = fill.price * fill.quantity;
+        // let (base_change, quote_change) = fill.base_quote_change(side);
         let quote_native = I80F48::from(market.quote_lot_size) * I80F48::from(quote_change);
         let fees = quote_native.abs() * I80F48::from_num(market.maker_fee);
         if fees.is_positive() {
@@ -409,8 +417,7 @@ impl<
         };
 
         let pa = &mut self.fixed_mut().position;
-        pa.record_trading_fee(fees);
-        pa.record_trade(market, base_change, quote_native);
+        pa.record_trade(base_change, quote_native);
         pa.maker_volume += quote_native.abs().to_num::<u64>();
 
         msg!(
@@ -423,10 +430,13 @@ impl<
 
         // Update free_lots
         {
-            let (base_locked_change, quote_locked_change): (i64, i64) = match side {
-                Side::Bid => (fill.quantity, -locked_price * fill.quantity),
-                Side::Ask => (-fill.quantity, locked_price * fill.quantity),
-            };
+            let base_locked_change = fill.quantity;
+            let quote_locked_change = locked_price * fill.quantity;
+
+            // let (base_locked_change, quote_locked_change): (i64, i64) = match side {
+            //     Side::Bid => (fill.quantity, -locked_price * fill.quantity),
+            //     Side::Ask => (-fill.quantity, locked_price * fill.quantity),
+            // };
 
             let base_to_free =
                 I80F48::from(market.base_lot_size) * I80F48::from(base_locked_change);
@@ -445,14 +455,14 @@ impl<
             };
         }
         if fill.maker_out() {
-            self.remove_order(fill.maker_slot as usize, base_change.abs())?;
+            self.remove_order(fill.maker_slot as usize, base_change)?;
         } else {
             match side {
                 Side::Bid => {
-                    pa.bids_base_lots -= base_change.abs();
+                    pa.bids_base_lots -= base_change;
                 }
                 Side::Ask => {
-                    pa.asks_base_lots -= base_change.abs();
+                    pa.asks_base_lots += base_change;
                 }
             };
         }
@@ -468,25 +478,25 @@ impl<
 
         // Replicate the base_quote_change function but substracting the fees for an Ask
         // let (base_change, quote_change) = fill.base_quote_change(fill.taker_side());
-        let base_change: i64;
-        let quote_change: i64;
+        let base_change: u64;
+        let quote_change: u64;
         match fill.taker_side() {
             Side::Bid => {
                 base_change = fill.quantity;
-                quote_change = -fill.price * fill.quantity;
+                quote_change = fill.price * fill.quantity;
                 // TODO Binye: remove Already done on matching
                 // pa.base_free_lots += base_change;
             }
             Side::Ask => {
                 // remove fee from quote_change
-                base_change = -fill.quantity;
-                quote_change = fill.price * fill.quantity * (1 - market.taker_fee.to_num::<i64>());
+                base_change = fill.quantity;
+                quote_change = fill.price * fill.quantity * (1 - market.taker_fee.to_num::<u64>());
                 // TODO Binye remove: Already done on matching
                 // pa.quote_free_lots += quote_change;
             }
         };
 
-        pa.remove_taker_trade(base_change, quote_change);
+        pa.remove_taker_trade(fill.taker_side(), base_change, quote_change);
 
         // fees are assessed at time of trade; no need to assess fees here
         let quote_change_native = I80F48::from(market.quote_lot_size) * I80F48::from(quote_change);
@@ -498,7 +508,7 @@ impl<
             quote_change,
             quote_change_native
         );
-        pa.record_trade(market, base_change, quote_change_native);
+        pa.record_trade(base_change, quote_change_native);
 
         pa.taker_volume += quote_change_native.abs().to_num::<u64>();
 
