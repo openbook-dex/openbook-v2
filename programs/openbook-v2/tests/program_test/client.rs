@@ -318,6 +318,7 @@ pub struct PlaceOrderInstruction {
     pub reduce_only: bool,
     pub client_order_id: u64,
     pub expiry_timestamp: u64,
+    pub order_type: PlaceOrderType,
 }
 #[async_trait::async_trait(?Send)]
 impl ClientInstruction for PlaceOrderInstruction {
@@ -334,7 +335,7 @@ impl ClientInstruction for PlaceOrderInstruction {
             max_base_lots: self.max_base_lots,
             max_quote_lots_including_fees: self.max_quote_lots_including_fees,
             client_order_id: self.client_order_id,
-            order_type: PlaceOrderType::Limit,
+            order_type: self.order_type,
             reduce_only: self.reduce_only,
             expiry_timestamp: self.expiry_timestamp,
             limit: 10,
@@ -358,6 +359,76 @@ impl ClientInstruction for PlaceOrderInstruction {
         };
         let instruction = make_instruction(program_id, &accounts, instruction);
 
+        (accounts, instruction)
+    }
+
+    fn signers(&self) -> Vec<TestKeypair> {
+        vec![self.owner]
+    }
+}
+
+pub struct PlaceTakeOrderInstruction {
+    pub market: Pubkey,
+    pub owner: TestKeypair,
+    pub base_vault: Pubkey,
+    pub quote_vault: Pubkey,
+    pub payer: Pubkey,
+    pub receiver: Pubkey,
+    pub side: Side,
+    pub price_lots: i64,
+    pub max_base_lots: i64,
+    pub max_quote_lots_including_fees: i64,
+    pub reduce_only: bool,
+    pub client_order_id: u64,
+    pub expiry_timestamp: u64,
+    pub referrer: Option<Pubkey>,
+}
+#[async_trait::async_trait(?Send)]
+impl ClientInstruction for PlaceTakeOrderInstruction {
+    type Accounts = openbook_v2::accounts::PlaceTakeOrder;
+    type Instruction = openbook_v2::instruction::PlaceTakeOrder;
+    async fn to_instruction(
+        &self,
+        account_loader: impl ClientAccountLoader + 'async_trait,
+    ) -> (Self::Accounts, instruction::Instruction) {
+        let program_id = openbook_v2::id();
+        let instruction = Self::Instruction {
+            side: self.side,
+            price_lots: self.price_lots,
+            max_base_lots: self.max_base_lots,
+            max_quote_lots_including_fees: self.max_quote_lots_including_fees,
+            client_order_id: self.client_order_id,
+            order_type: PlaceOrderType::ImmediateOrCancel,
+            reduce_only: self.reduce_only,
+            expiry_timestamp: self.expiry_timestamp,
+            limit: 10,
+        };
+
+        let market: Market = account_loader.load(&self.market).await.unwrap();
+
+        let accounts = Self::Accounts {
+            market: self.market,
+            bids: market.bids,
+            asks: market.asks,
+            event_queue: market.event_queue,
+            oracle: market.oracle,
+            owner: self.owner.pubkey(),
+            payer: self.payer,
+            receiver: self.receiver,
+            base_vault: self.base_vault,
+            quote_vault: self.quote_vault,
+            token_program: Token::id(),
+            system_program: System::id(),
+        };
+        let mut instruction = make_instruction(program_id, &accounts, instruction);
+        if let Some(ref3) = self.referrer {
+            let remaining = &mut vec![AccountMeta {
+                pubkey: ref3,
+                is_signer: false,
+                is_writable: true,
+            }];
+            instruction.accounts.append(remaining);
+        }
         (accounts, instruction)
     }
 
@@ -515,6 +586,7 @@ pub struct SettleFundsInstruction {
     pub quote_vault: Pubkey,
     pub payer_base: Pubkey,
     pub payer_quote: Pubkey,
+    pub referrer: Option<Pubkey>,
 }
 #[async_trait::async_trait(?Send)]
 impl ClientInstruction for SettleFundsInstruction {
@@ -534,6 +606,47 @@ impl ClientInstruction for SettleFundsInstruction {
             quote_vault: self.quote_vault,
             payer_base: self.payer_base,
             payer_quote: self.payer_quote,
+            token_program: Token::id(),
+            system_program: System::id(),
+        };
+        let mut instruction = make_instruction(program_id, &accounts, instruction);
+        if let Some(ref3) = self.referrer {
+            let remaining = &mut vec![AccountMeta {
+                pubkey: ref3,
+                is_signer: false,
+                is_writable: true,
+            }];
+            instruction.accounts.append(remaining);
+        }
+
+        (accounts, instruction)
+    }
+
+    fn signers(&self) -> Vec<TestKeypair> {
+        vec![]
+    }
+}
+
+pub struct SweepFeesInstruction {
+    pub market: Pubkey,
+    pub quote_vault: Pubkey,
+    pub receiver: Pubkey,
+}
+#[async_trait::async_trait(?Send)]
+impl ClientInstruction for SweepFeesInstruction {
+    type Accounts = openbook_v2::accounts::SweepFees;
+    type Instruction = openbook_v2::instruction::SweepFees;
+    async fn to_instruction(
+        &self,
+        _account_loader: impl ClientAccountLoader + 'async_trait,
+    ) -> (Self::Accounts, instruction::Instruction) {
+        let program_id = openbook_v2::id();
+        let instruction = Self::Instruction {};
+
+        let accounts = Self::Accounts {
+            market: self.market,
+            quote_vault: self.quote_vault,
+            receiver: self.receiver,
             token_program: Token::id(),
             system_program: System::id(),
         };

@@ -11,7 +11,7 @@ pub struct Deposit<'info> {
     pub payer_quote: Account<'info, TokenAccount>,
     #[account(mut)]
     pub open_orders_account: AccountLoader<'info, OpenOrdersAccountFixed>,
-
+    #[account(mut)]
     pub market: AccountLoader<'info, Market>,
 
     #[account(mut)]

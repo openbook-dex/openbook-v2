@@ -14,6 +14,7 @@ pub mod i80f48;
 pub mod logs;
 pub mod state;
 
+use error::*;
 use fixed::types::I80F48;
 use state::{MarketIndex, OracleConfigParams, PlaceOrderType, Side};
 
@@ -122,6 +123,72 @@ pub mod openbook_v2 {
         };
         #[cfg(feature = "enable-gpl")]
         return instructions::place_order(ctx, order, limit);
+
+        #[cfg(not(feature = "enable-gpl"))]
+        Ok(None)
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    pub fn place_take_order<'info>(
+        ctx: Context<'_, '_, '_, 'info, PlaceTakeOrder<'info>>,
+        side: Side,
+
+        // The price in lots (quote lots per base lots)
+        // - fill orders on the book up to this price or
+        // - place an order on the book at this price.
+        // - ignored for Market orders and potentially adjusted for PostOnlySlide orders.
+        price_lots: i64,
+
+        max_base_lots: i64,
+        max_quote_lots_including_fees: i64,
+        client_order_id: u64,
+        order_type: PlaceOrderType,
+        reduce_only: bool,
+
+        // Timestamp of when order expires
+        //
+        // Send 0 if you want the order to never expire.
+        // Timestamps in the past mean the instruction is skipped.
+        // Timestamps in the future are reduced to now + 65535s.
+        expiry_timestamp: u64,
+
+        // Maximum number of orders from the book to fill.
+        //
+        // Use this to limit compute used during order matching.
+        // When the limit is reached, processing stops and the instruction succeeds.
+        limit: u8,
+    ) -> Result<Option<u128>> {
+        require_gte!(price_lots, 0);
+
+        use crate::state::{Order, OrderParams};
+        let time_in_force = match Order::tif_from_expiry(expiry_timestamp) {
+            Some(t) => t,
+            None => {
+                msg!("Order is already expired");
+                return Ok(None);
+            }
+        };
+        require!(
+            order_type == PlaceOrderType::ImmediateOrCancel,
+            OpenBookError::InvalidOrderType
+        );
+        let order = Order {
+            side,
+            max_base_lots,
+            max_quote_lots_including_fees,
+            client_order_id,
+            reduce_only,
+            time_in_force,
+            params: match order_type {
+                PlaceOrderType::ImmediateOrCancel => OrderParams::ImmediateOrCancel { price_lots },
+                _ => OrderParams::Fixed {
+                    price_lots,
+                    order_type: order_type.to_post_order_type()?,
+                },
+            },
+        };
+        #[cfg(feature = "enable-gpl")]
+        return instructions::place_take_order(ctx, order, limit);
 
         #[cfg(not(feature = "enable-gpl"))]
         Ok(None)
