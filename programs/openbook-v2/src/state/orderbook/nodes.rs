@@ -66,7 +66,6 @@ pub fn fixed_price_data(price_lots: u64) -> Result<u64> {
 ///
 /// Reverse of fixed_price_data().
 pub fn fixed_price_lots(price_data: u64) -> u64 {
-    assert!(price_data <= u64::MAX);
     price_data
 }
 

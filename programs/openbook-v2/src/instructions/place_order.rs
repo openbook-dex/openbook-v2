@@ -160,46 +160,6 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<
 }
 
 #[cfg(test)]
-fn reduce_only_max_base_lots(pp: &Position, order: &Order, market_reduce_only: bool) -> i64 {
-    let effective_pos = pp.effective_base_position_lots();
-    msg!(
-        "reduce only: current effective position: {} lots",
-        effective_pos
-    );
-    let allowed_base_lots = if (order.side == Side::Bid && effective_pos >= 0)
-        || (order.side == Side::Ask && effective_pos <= 0)
-    {
-        msg!("reduce only: cannot increase magnitude of effective position");
-        0
-    } else if market_reduce_only {
-        // If the market is in reduce-only mode, we are stricter and pretend
-        // all open orders that go into the same direction as the new order
-        // execute.
-        if order.side == Side::Bid {
-            msg!(
-                "reduce only: effective base position incl open bids is {} lots",
-                effective_pos + pp.bids_base_lots
-            );
-            (effective_pos + pp.bids_base_lots).min(0).abs()
-        } else {
-            msg!(
-                "reduce only: effective base position incl open asks is {} lots",
-                effective_pos - pp.asks_base_lots
-            );
-            (effective_pos - pp.asks_base_lots).max(0)
-        }
-    } else {
-        effective_pos.abs()
-    };
-    msg!(
-        "reduce only: max allowed {:?}: {} base lots",
-        order.side,
-        allowed_base_lots
-    );
-    allowed_base_lots.min(order.max_base_lots)
-}
-
-#[cfg(test)]
 mod tests {
     use super::*;
 
