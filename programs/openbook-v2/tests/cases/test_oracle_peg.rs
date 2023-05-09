@@ -136,6 +136,7 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
             reduce_only: false,
             client_order_id: 6,
             expiry_timestamp: 0,
+            order_type: PlaceOrderType::Limit,
         },
     )
     .await
@@ -227,6 +228,7 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
             reduce_only: false,
             client_order_id: 60,
             expiry_timestamp: 0,
+            order_type: PlaceOrderType::Limit,
         },
     )
     .await
@@ -261,6 +263,7 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
             reduce_only: false,
             client_order_id: 61,
             expiry_timestamp: 0,
+            order_type: PlaceOrderType::Limit,
         },
     )
     .await
@@ -318,6 +321,7 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
             reduce_only: false,
             client_order_id: 62,
             expiry_timestamp: 0,
+            order_type: PlaceOrderType::Limit,
         },
     )
     .await
@@ -352,6 +356,7 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
             reduce_only: false,
             client_order_id: 63,
             expiry_timestamp: 0,
+            order_type: PlaceOrderType::Limit,
         },
     )
     .await
