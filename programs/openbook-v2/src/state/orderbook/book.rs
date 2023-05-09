@@ -19,8 +19,9 @@ pub struct Orderbook<'a> {
     pub asks: RefMut<'a, BookSide>,
 }
 
-pub struct TakenQuantitiesIncludingFees {
+pub struct OrderWithAmounts {
     pub order_id: Option<u128>,
+    pub placed_quantity: i64,
     pub total_base_taken_native: I80F48,
     pub total_quote_taken_native: I80F48,
     pub referrer_amount: u64,
@@ -57,7 +58,7 @@ impl<'a> Orderbook<'a> {
         owner: &Pubkey,
         now_ts: u64,
         mut limit: u8,
-    ) -> std::result::Result<TakenQuantitiesIncludingFees, Error> {
+    ) -> std::result::Result<OrderWithAmounts, Error> {
         let side = order.side;
 
         let other_side = side.invert_side();
@@ -313,19 +314,20 @@ impl<'a> Orderbook<'a> {
             )?;
         }
 
-        let mut taken_quantities = TakenQuantitiesIncludingFees {
-            order_id: Some(order_id),
+        let placed_order_id = if post_target.is_some() {
+            Some(order_id)
+        } else {
+            None
+        };
+
+        Ok(OrderWithAmounts {
+            order_id: placed_order_id,
+            placed_quantity: book_base_quantity,
             total_base_taken_native: I80F48::from_num(total_base_lots_taken)
                 * I80F48::from_num(market.base_lot_size),
             total_quote_taken_native,
             referrer_amount,
-        };
-
-        if post_target.is_none() {
-            taken_quantities.order_id = None;
-        }
-
-        Ok(taken_quantities)
+        })
     }
 
     /// Cancels up to `limit` orders that are listed on the openorders account for the given market.
