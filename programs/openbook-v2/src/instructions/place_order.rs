@@ -86,7 +86,11 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<
                             * I80F48::from_num(market.quote_lot_size)
                     }
                 }
-                OrderParams::OraclePegged { .. } => todo!(),
+                // TODO use peg_limit
+                OrderParams::OraclePegged { .. } => {
+                    I80F48::from_num(max_quote_lots_including_fees)
+                        * I80F48::from_num(market.quote_lot_size)
+                }
             };
             let free_qty_to_lock = cmp::min(max_native_including_fees, free_assets_native);
             position.quote_free_native -= free_qty_to_lock;
@@ -120,7 +124,10 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<
                         I80F48::from_num(max_base_lots) * I80F48::from_num(market.base_lot_size)
                     }
                 }
-                OrderParams::OraclePegged { .. } => todo!(),
+                // TODO use peg_limit
+                OrderParams::OraclePegged { .. } => {
+                    I80F48::from_num(max_base_lots) * I80F48::from_num(market.base_lot_size)
+                }
             };
 
             let free_qty_to_lock = cmp::min(max_base_native, free_assets_native);
