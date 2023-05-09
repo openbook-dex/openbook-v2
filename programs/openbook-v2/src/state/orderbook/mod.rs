@@ -544,4 +544,67 @@ mod queue;
 
 //         Ok(())
 //     }
+
+//  	 // Check that there are no zero-quantity fills when max_quote_lots is not
+//  	 // enough for a single lot
+//     #[test]
+//     fn book_max_quote_lots() {
+//         let (mut market, oracle_price, mut event_queue, book_accs) = test_setup(5000.0);
+//         let mut book = book_accs.orderbook();
+//         let settle_token_index = 0;
+//
+//         let mut new_order = |book: &mut Orderbook,
+//                              event_queue: &mut EventQueue,
+//                              side,
+//                              price_lots,
+//                              max_base_lots: i64,
+//                              max_quote_lots: i64|
+//          -> u128 {
+//             let buffer = MangoAccount::default_for_tests().try_to_vec().unwrap();
+//             let mut account = MangoAccountValue::from_bytes(&buffer).unwrap();
+//             account
+//                 .ensure_position(market.market_index, settle_token_index)
+//                 .unwrap();
+//
+//             book.new_order(
+//                 Order {
+//                     side,
+//                     max_base_lots,
+//                     max_quote_lots,
+//                     client_order_id: 0,
+//                     time_in_force: 0,
+//                     reduce_only: false,
+//                     params: OrderParams::Fixed {
+//                         price_lots,
+//                         order_type: PostOrderType::Limit,
+//                     },
+//                 },
+//                 &mut market,
+//                 event_queue,
+//                 oracle_price,
+//                 &mut account.borrow_mut(),
+//                 &Pubkey::default(),
+//                 0, // now_ts
+//                 u8::MAX,
+//             )
+//             .unwrap();
+//             account.order_by_raw_index(0).id
+//         };
+//
+//         // Setup
+//         new_order(&mut book, &mut event_queue, Side::Ask, 5000, 5, i64::MAX);
+//         new_order(&mut book, &mut event_queue, Side::Ask, 5001, 5, i64::MAX);
+//         new_order(&mut book, &mut event_queue, Side::Ask, 5002, 5, i64::MAX);
+//
+//         // Try taking: the quote limit allows only one base lot to be taken.
+//         new_order(&mut book, &mut event_queue, Side::Bid, 5005, 30, 6000);
+//         // Only one fill event is generated, the matching aborts even though neither the base nor quote limit
+//         // is exhausted.
+//         assert_eq!(event_queue.len(), 1);
+//
+//         // Try taking: the quote limit allows no fills
+//         new_order(&mut book, &mut event_queue, Side::Bid, 5005, 30, 1);
+//         assert_eq!(event_queue.len(), 1);
+//     }
+
 // }
