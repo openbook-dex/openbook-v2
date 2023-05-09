@@ -39,25 +39,25 @@ pub fn new_node_key(side: Side, price_data: u64, seq_num: u64) -> u128 {
 /// Creates price data for an oracle pegged order from the price offset
 ///
 /// Reverse of oracle_pegged_price_offset()
-pub fn oracle_pegged_price_data(price_offset_lots: i64) -> u64 {
+pub fn oracle_pegged_price_data(price_offset_lots: u64) -> u64 {
     // Price data is used for ordering in the bookside's top bits of the u128 key.
-    // Map i64::MIN to be 0 and i64::MAX to u64::MAX, that way comparisons on the
-    // u64 produce the same result as on the source i64.
-    // Equivalent: (price_offset_lots as i128 - (i64::MIN as i128) as u64
+    // Map u64::MIN to be 0 and u64::MAX to u64::MAX, that way comparisons on the
+    // u64 produce the same result as on the source u64.
+    // Equivalent: (price_offset_lots as i128 - (u64::MIN as i128) as u64
     (price_offset_lots as u64).wrapping_add(u64::MAX / 2 + 1)
 }
 
 /// Retrieves the price offset (in lots) from an oracle pegged order's price data
 ///
 /// Reverse of oracle_pegged_price_data()
-pub fn oracle_pegged_price_offset(price_data: u64) -> i64 {
-    price_data.wrapping_sub(u64::MAX / 2 + 1) as i64
+pub fn oracle_pegged_price_offset(price_data: u64) -> u64 {
+    price_data.wrapping_sub(u64::MAX / 2 + 1) as u64
 }
 
 /// Creates price data for a fixed order's price
 ///
 /// Reverse of fixed_price_lots()
-pub fn fixed_price_data(price_lots: i64) -> Result<u64> {
+pub fn fixed_price_data(price_lots: u64) -> Result<u64> {
     require_gte!(price_lots, 1);
     Ok(price_lots as u64)
 }
@@ -65,9 +65,9 @@ pub fn fixed_price_data(price_lots: i64) -> Result<u64> {
 /// Retrieves the price (in lots) from a fixed order's price data
 ///
 /// Reverse of fixed_price_data().
-pub fn fixed_price_lots(price_data: u64) -> i64 {
-    assert!(price_data <= i64::MAX as u64);
-    price_data as i64
+pub fn fixed_price_lots(price_data: u64) -> u64 {
+    assert!(price_data <= u64::MAX as u64);
+    price_data as u64
 }
 
 /// InnerNodes and LeafNodes compose the binary tree of orders.
@@ -168,7 +168,7 @@ pub struct LeafNode {
     pub owner: Pubkey,
 
     /// Number of base lots to buy or sell, always >=1
-    pub quantity: i64,
+    pub quantity: u64,
 
     /// The time the order was placed
     pub timestamp: u64,
@@ -177,7 +177,7 @@ pub struct LeafNode {
     /// it will be considered invalid and may be removed.
     ///
     /// Only applicable in the oracle_pegged OrderTree
-    pub peg_limit: i64,
+    pub peg_limit: u64,
 
     /// User defined id for this order, used in FillEvents
     pub client_order_id: u64,
@@ -197,11 +197,11 @@ impl LeafNode {
         owner_slot: u8,
         key: u128,
         owner: Pubkey,
-        quantity: i64,
+        quantity: u64,
         timestamp: u64,
         order_type: PostOrderType,
         time_in_force: u16,
-        peg_limit: i64,
+        peg_limit: u64,
         client_order_id: u64,
     ) -> Self {
         Self {
@@ -371,11 +371,11 @@ mod tests {
 
     #[test]
     fn order_tree_price_data() {
-        for price in [1, 42, i64::MAX] {
+        for price in [1, 42, u64::MAX] {
             assert_eq!(price, fixed_price_lots(fixed_price_data(price).unwrap()));
         }
 
-        let seq = [-i64::MAX, -i64::MAX + 1, 0, i64::MAX - 1, i64::MAX];
+        let seq = [0, 1, 0, u64::MAX - 1, u64::MAX];
         for price_offset in seq {
             assert_eq!(
                 price_offset,
@@ -388,18 +388,18 @@ mod tests {
             assert!(l_price_data < r_price_data);
         }
 
-        assert_eq!(oracle_pegged_price_data(i64::MIN), 0);
-        assert_eq!(oracle_pegged_price_data(i64::MAX), u64::MAX);
-        assert_eq!(oracle_pegged_price_data(0), -(i64::MIN as i128) as u64); // remember -i64::MIN is not a valid i64
+        assert_eq!(oracle_pegged_price_data(u64::MIN), 0);
+        assert_eq!(oracle_pegged_price_data(u64::MAX), u64::MAX);
+        assert_eq!(oracle_pegged_price_data(0), -(u64::MIN as i128) as u64); // remember -u64::MIN is not a valid u64
     }
 
     #[test]
     fn order_tree_key_ordering() {
-        let bid_seq: Vec<(i64, u64)> = vec![
-            (-5, 15),
-            (-5, 10),
-            (-4, 6),
-            (-4, 5),
+        let bid_seq: Vec<(u64, u64)> = vec![
+            (5, 15),
+            (5, 10),
+            (4, 6),
+            (4, 5),
             (0, 20),
             (0, 1),
             (4, 6),
@@ -414,11 +414,11 @@ mod tests {
             assert!(l_key < r_key);
         }
 
-        let ask_seq: Vec<(i64, u64)> = vec![
-            (-5, 10),
-            (-5, 15),
-            (-4, 6),
-            (-4, 7),
+        let ask_seq: Vec<(u64, u64)> = vec![
+            (5, 10),
+            (5, 15),
+            (4, 6),
+            (4, 7),
             (0, 1),
             (0, 20),
             (4, 5),

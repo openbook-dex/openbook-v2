@@ -7,11 +7,11 @@ pub struct Order {
     pub side: Side,
 
     /// Max base lots to buy/sell.
-    pub max_base_lots: i64,
+    pub max_base_lots: u64,
 
     /// Max quote lots to pay/receive including fees.
     /// TODO Binye Use native instead?
-    pub max_quote_lots_including_fees: i64,
+    pub max_quote_lots_including_fees: u64,
 
     /// Arbitrary user-controlled order id.
     pub client_order_id: u64,
@@ -29,16 +29,16 @@ pub struct Order {
 pub enum OrderParams {
     Market,
     ImmediateOrCancel {
-        price_lots: i64,
+        price_lots: u64,
     },
     Fixed {
-        price_lots: i64,
+        price_lots: u64,
         order_type: PostOrderType,
     },
     OraclePegged {
-        price_offset_lots: i64,
+        price_offset_lots: u64,
         order_type: PostOrderType,
-        peg_limit: i64,
+        peg_limit: u64,
         max_oracle_staleness_slots: i32,
     },
 }
@@ -93,11 +93,11 @@ impl Order {
     fn price_for_order_type(
         &self,
         now_ts: u64,
-        oracle_price_lots: i64,
-        price_lots: i64,
+        oracle_price_lots: u64,
+        price_lots: u64,
         order_type: PostOrderType,
         order_book: &Orderbook,
-    ) -> i64 {
+    ) -> u64 {
         if order_type == PostOrderType::PostOnlySlide {
             if let Some(best_other_price) = order_book
                 .bookside(self.side.invert_side())
@@ -117,9 +117,9 @@ impl Order {
     pub fn price(
         &self,
         now_ts: u64,
-        oracle_price_lots: i64,
+        oracle_price_lots: u64,
         order_book: &Orderbook,
-    ) -> Result<(i64, u64)> {
+    ) -> Result<(u64, u64)> {
         let price_lots = match self.params {
             OrderParams::Market => market_order_limit_for_side(self.side),
             OrderParams::ImmediateOrCancel { price_lots } => price_lots,
@@ -158,26 +158,26 @@ impl Order {
         Ok((price_lots, price_data))
     }
 
-    /// pegging limit for oracle peg orders, otherwise -1
-    pub fn peg_limit(&self) -> i64 {
+    /// pegging limit for oracle peg orders, otherwise 0
+    pub fn peg_limit(&self) -> u64 {
         match self.params {
             OrderParams::OraclePegged { peg_limit, .. } => peg_limit,
-            _ => -1,
+            _ => 0,
         }
     }
 }
 
 /// The implicit limit price to use for market orders
-fn market_order_limit_for_side(side: Side) -> i64 {
+fn market_order_limit_for_side(side: Side) -> u64 {
     match side {
-        Side::Bid => i64::MAX,
+        Side::Bid => u64::MAX,
         Side::Ask => 1,
     }
 }
 
 /// The limit to use for PostOnlySlide orders: the tinyest bit better than
 /// the best opposing order
-fn post_only_slide_limit(side: Side, best_other_side: i64, limit: i64) -> i64 {
+fn post_only_slide_limit(side: Side, best_other_side: u64, limit: u64) -> u64 {
     match side {
         Side::Bid => limit.min(best_other_side - 1),
         Side::Ask => limit.max(best_other_side + 1),

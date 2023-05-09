@@ -194,8 +194,8 @@ pub struct FillEvent {
     pub taker_client_order_id: u64,
     pub padding4: [u8; 16],
 
-    pub price: i64,
-    pub quantity: i64, // number of quote lots
+    pub price: u64,
+    pub quantity: u64, // number of quote lots
     pub maker_client_order_id: u64,
     pub reserved: [u8; 8],
 }
@@ -215,8 +215,8 @@ impl FillEvent {
         maker_timestamp: u64,
         taker: Pubkey,
         taker_client_order_id: u64,
-        price: i64,
-        quantity: i64,
+        price: u64,
+        quantity: u64,
     ) -> FillEvent {
         Self {
             event_type: EventType::Fill as u8,
@@ -267,7 +267,7 @@ pub struct OutEvent {
     pub timestamp: u64,
     pub seq_num: u64,
     pub owner: Pubkey,
-    pub quantity: i64,
+    pub quantity: u64,
     padding1: [u8; 136],
 }
 const_assert_eq!(size_of::<OutEvent>() % 8, 0);
@@ -280,7 +280,7 @@ impl OutEvent {
         timestamp: u64,
         seq_num: u64,
         owner: Pubkey,
-        quantity: i64,
+        quantity: u64,
     ) -> Self {
         Self {
             event_type: EventType::Out.into(),

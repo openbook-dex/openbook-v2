@@ -15,22 +15,22 @@ pub const FREE_ORDER_SLOT: MarketIndex = MarketIndex::MAX;
 pub struct Position {
     // TODO Binye To be deleted?
     /// Currenlty not being used
-    pub base_position_lots: i64,
+    pub base_position_lots: u64,
     /// Currenlty not being used
     pub quote_position_native: I80F48,
 
     /// Tracks what the position is to calculate average entry & break even price
-    pub quote_running_native: i64,
+    pub quote_running_native: u64,
 
     /// Base lots in open bids
-    pub bids_base_lots: i64,
+    pub bids_base_lots: u64,
     /// Base lots in open asks
-    pub asks_base_lots: i64,
+    pub asks_base_lots: u64,
 
     /// Amount of base lots on the EventQueue waiting to be processed
-    pub taker_base_lots: i64,
+    pub taker_base_lots: u64,
     /// Amount of quote lots on the EventQueue waiting to be processed
-    pub taker_quote_lots: i64,
+    pub taker_quote_lots: u64,
 
     pub base_free_native: I80F48,
     pub quote_free_native: I80F48,
@@ -84,7 +84,7 @@ impl Default for Position {
 
 impl Position {
     /// Add taker trade after it has been matched but before it has been process on EventQueue
-    pub fn add_taker_trade(&mut self, side: Side, base_lots: i64, quote_lots: i64) {
+    pub fn add_taker_trade(&mut self, side: Side, base_lots: u64, quote_lots: u64) {
         match side {
             Side::Bid => {
                 self.taker_base_lots += base_lots;
@@ -98,7 +98,7 @@ impl Position {
     }
 
     /// Remove taker trade after it has been processed on EventQueue
-    pub fn remove_taker_trade(&mut self, base_change: i64, quote_change: i64) {
+    pub fn remove_taker_trade(&mut self, base_change: u64, quote_change: u64) {
         self.taker_base_lots -= base_change;
         self.taker_quote_lots -= quote_change;
     }
@@ -108,12 +108,12 @@ impl Position {
         I80F48::from(self.base_position_lots * market.base_lot_size)
     }
 
-    pub fn base_position_lots(&self) -> i64 {
+    pub fn base_position_lots(&self) -> u64 {
         self.base_position_lots
     }
 
     // This takes into account base lots from unprocessed events, but not anything from open orders
-    pub fn effective_base_position_lots(&self) -> i64 {
+    pub fn effective_base_position_lots(&self) -> u64 {
         self.base_position_lots + self.taker_base_lots
     }
 
@@ -160,7 +160,7 @@ impl Position {
         } else {
             // The old and new position have the same sign
 
-            self.quote_running_native += quote_change_native.round_to_zero().to_num::<i64>();
+            self.quote_running_native += quote_change_native.round_to_zero().to_num::<u64>();
 
             let is_increasing = old_position.signum() == base_change.signum();
             if is_increasing {
@@ -241,7 +241,7 @@ pub struct OpenOrder {
     pub side_and_tree: u8, // SideAndOrderTree -- enums aren't POD
     pub padding1: [u8; 7],
     pub client_id: u64,
-    pub peg_limit: i64,
+    pub peg_limit: u64,
     pub id: u128,
     pub reserved: [u8; 64],
 }
@@ -293,8 +293,8 @@ pub use account_seeds;
 
 //     fn create_position(
 //         market: &Market,
-//         base_pos: i64,
-//         entry_price_per_lot: i64,
+//         base_pos: u64,
+//         entry_price_per_lot: u64,
 //     ) -> Position {
 //         let mut pos = Position::default();
 //         pos.market_index = market.market_index;
@@ -570,11 +570,11 @@ pub use account_seeds;
 
 //         // Generate array of random trades
 //         let mut rng = rand::thread_rng();
-//         let mut trades: Vec<[i64; 2]> = Vec::with_capacity(500);
+//         let mut trades: Vec<[u64; 2]> = Vec::with_capacity(500);
 //         for _ in 0..trades.capacity() {
-//             let qty: i64 = rng.gen_range(1..=1000);
+//             let qty: u64 = rng.gen_range(1..=1000);
 //             let px: f64 = rng.gen_range(0.1..=100.0);
-//             let quote: i64 = (-qty as f64 * px).round() as i64;
+//             let quote: u64 = (-qty as f64 * px).round() as u64;
 //             trades.push([qty, quote]);
 //         }
 //         // Apply all of the trades going forward
@@ -743,7 +743,7 @@ pub use account_seeds;
 //         let mut pos = create_position(&market, 100, 1);
 //         pos.realized_trade_pnl_native = I80F48::from(60); // no effect
 
-//         let limited_pnl = |pos: &Position, market: &Market, pnl: i64| {
+//         let limited_pnl = |pos: &Position, market: &Market, pnl: u64| {
 //             pos.apply_pnl_settle_limit(market, I80F48::from(pnl))
 //                 .to_num::<f64>()
 //         };

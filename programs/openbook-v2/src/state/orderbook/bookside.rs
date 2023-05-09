@@ -49,13 +49,13 @@ impl BookSide {
     pub fn iter_valid(
         &self,
         now_ts: u64,
-        oracle_price_lots: i64,
+        oracle_price_lots: u64,
     ) -> impl Iterator<Item = BookSideIterItem> {
         BookSideIter::new(self, now_ts, oracle_price_lots).filter(|it| it.is_valid())
     }
 
     /// Iterate over all entries, including invalid orders
-    pub fn iter_all_including_invalid(&self, now_ts: u64, oracle_price_lots: i64) -> BookSideIter {
+    pub fn iter_all_including_invalid(&self, now_ts: u64, oracle_price_lots: u64) -> BookSideIter {
         BookSideIter::new(self, now_ts, oracle_price_lots)
     }
 
@@ -89,7 +89,7 @@ impl BookSide {
     }
 
     /// Remove the overall worst-price order.
-    pub fn remove_worst(&mut self, now_ts: u64, oracle_price_lots: i64) -> Option<(LeafNode, i64)> {
+    pub fn remove_worst(&mut self, now_ts: u64, oracle_price_lots: u64) -> Option<(LeafNode, u64)> {
         let worst_fixed = self.nodes.find_worst(&self.roots[0]);
         let worst_pegged = self.nodes.find_worst(&self.roots[1]);
         let side = self.nodes.order_tree_type().side();
@@ -144,10 +144,10 @@ impl BookSide {
     /// Return the quantity of orders that can be matched by an order at `limit_price_lots`
     pub fn quantity_at_price(
         &self,
-        limit_price_lots: i64,
+        limit_price_lots: u64,
         now_ts: u64,
-        oracle_price_lots: i64,
-    ) -> i64 {
+        oracle_price_lots: u64,
+    ) -> u64 {
         let side = self.side();
         let mut sum = 0;
         for item in self.iter_valid(now_ts, oracle_price_lots) {
@@ -160,7 +160,7 @@ impl BookSide {
     }
 
     /// Return the price of the order closest to the spread
-    pub fn best_price(&self, now_ts: u64, oracle_price_lots: i64) -> Option<i64> {
+    pub fn best_price(&self, now_ts: u64, oracle_price_lots: u64) -> Option<u64> {
         Some(
             self.iter_valid(now_ts, oracle_price_lots)
                 .next()?
@@ -170,8 +170,8 @@ impl BookSide {
 
     /// Walk up the book `quantity` units and return the price at that level. If `quantity` units
     /// not on book, return None
-    pub fn impact_price(&self, quantity: i64, now_ts: u64, oracle_price_lots: i64) -> Option<i64> {
-        let mut sum: i64 = 0;
+    pub fn impact_price(&self, quantity: u64, now_ts: u64, oracle_price_lots: u64) -> Option<u64> {
+        let mut sum: u64 = 0;
         for order in self.iter_valid(now_ts, oracle_price_lots) {
             sum += order.node.quantity;
             if sum >= quantity {
@@ -214,7 +214,7 @@ mod tests {
                 1,
                 PostOrderType::Limit,
                 0,
-                -1,
+                0,
                 0,
             )
         };
@@ -230,7 +230,7 @@ mod tests {
             .unwrap();
 
         while root_pegged.leaf_count < 100 {
-            let price_data: u64 = oracle_pegged_price_data(rng.gen_range(-20..20));
+            let price_data: u64 = oracle_pegged_price_data(rng.gen_range(0..20));
             let seq_num: u64 = rng.gen_range(0..1000);
             let key = new_node_key(side, price_data, seq_num);
             if keys.contains(&key) {
@@ -266,7 +266,7 @@ mod tests {
         for oracle_price_lots in 1..40 {
             let mut total = 0;
             let ascending = order_tree_type == OrderTreeType::Asks;
-            let mut last_price = if ascending { 0 } else { i64::MAX };
+            let mut last_price = if ascending { 0 } else { u64::MAX };
             for order in bookside.iter_all_including_invalid(0, oracle_price_lots) {
                 let price = order.price_lots;
                 println!("{} {:?} {price}", order.node.key, order.handle.order_tree);
@@ -300,7 +300,7 @@ mod tests {
         let order_tree = RefCell::new(new_order_tree(order_tree_type));
         let mut root_fixed = OrderTreeRoot::zeroed();
         let mut root_pegged = OrderTreeRoot::zeroed();
-        let new_node = |key: u128, tif: u16, peg_limit: i64| {
+        let new_node = |key: u128, tif: u16, peg_limit: u64| {
             LeafNode::new(
                 0,
                 key,
@@ -313,14 +313,14 @@ mod tests {
                 0,
             )
         };
-        let mut add_fixed = |price: i64, tif: u16| {
+        let mut add_fixed = |price: u64, tif: u16| {
             let key = new_node_key(side, fixed_price_data(price).unwrap(), 0);
             order_tree
                 .borrow_mut()
-                .insert_leaf(&mut root_fixed, &new_node(key, tif, -1))
+                .insert_leaf(&mut root_fixed, &new_node(key, tif, 0))
                 .unwrap();
         };
-        let mut add_pegged = |price_offset: i64, tif: u16, peg_limit: i64| {
+        let mut add_pegged = |price_offset: u64, tif: u16, peg_limit: u64| {
             let key = new_node_key(side, oracle_pegged_price_data(price_offset), 0);
             order_tree
                 .borrow_mut()
@@ -330,9 +330,9 @@ mod tests {
 
         add_fixed(100, 0);
         add_fixed(120, 5);
-        add_pegged(-10, 0, 100);
-        add_pegged(-15, 0, -1);
-        add_pegged(-20, 7, 95);
+        add_pegged(5, 0, 100);
+        add_pegged(15, 0, 0);
+        add_pegged(20, 7, 95);
 
         BookSide {
             roots: [root_fixed, root_pegged],
@@ -346,7 +346,7 @@ mod tests {
     fn bookside_order_filtering() {
         let bookside = bookside_setup();
 
-        let order_prices = |now_ts: u64, oracle: i64| -> Vec<i64> {
+        let order_prices = |now_ts: u64, oracle: u64| -> Vec<u64> {
             bookside
                 .iter_valid(now_ts, oracle)
                 .map(|it| it.price_lots)
@@ -372,7 +372,7 @@ mod tests {
 
         let bookside = RefCell::new(bookside_setup());
 
-        let order_prices = |now_ts: u64, oracle: i64| -> Vec<i64> {
+        let order_prices = |now_ts: u64, oracle: u64| -> Vec<u64> {
             bookside
                 .borrow()
                 .iter_valid(now_ts, oracle)
@@ -403,6 +403,6 @@ mod tests {
         assert_eq!(order_prices(0, 100), vec![120]);
         let (_, p) = bookside.borrow_mut().remove_worst(0, 100).unwrap();
         assert_eq!(p, 120);
-        assert_eq!(order_prices(0, 100), Vec::<i64>::new());
+        assert_eq!(order_prices(0, 100), Vec::<u64>::new());
     }
 }

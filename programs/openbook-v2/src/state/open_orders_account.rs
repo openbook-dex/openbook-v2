@@ -554,7 +554,7 @@ impl<
         order_tree: BookSideOrderTree,
         order: &LeafNode,
         client_order_id: u64,
-        peg_limit: i64,
+        peg_limit: u64,
     ) -> Result<()> {
         let mut position = &mut self.fixed_mut().position;
         match side {
@@ -575,7 +575,7 @@ impl<
         Ok(())
     }
 
-    pub fn remove_order(&mut self, slot: usize, base_quantity: i64) -> Result<()> {
+    pub fn remove_order(&mut self, slot: usize, base_quantity: u64) -> Result<()> {
         {
             let oo = self.open_order_mut_by_raw_index(slot);
             require_neq!(oo.id, 0);
@@ -602,12 +602,12 @@ impl<
         Ok(())
     }
 
-    pub fn cancel_order(&mut self, slot: usize, base_quantity: i64, market: Market) -> Result<()> {
+    pub fn cancel_order(&mut self, slot: usize, base_quantity: u64, market: Market) -> Result<()> {
         {
             let oo = self.open_order_mut_by_raw_index(slot);
 
             let price = match oo.side_and_tree().order_tree() {
-                BookSideOrderTree::Fixed => (oo.id >> 64) as i64,
+                BookSideOrderTree::Fixed => (oo.id >> 64) as u64,
                 BookSideOrderTree::OraclePegged => oo.peg_limit,
             };
 

@@ -83,7 +83,7 @@ impl<'a> Orderbook<'a> {
         let mut remaining_base_lots = order.max_base_lots;
         let mut remaining_quote_lots = order.max_quote_lots_including_fees;
         let mut max_quote_lots = remaining_quote_lots;
-        let mut matched_order_changes: Vec<(BookSideOrderHandle, i64)> = vec![];
+        let mut matched_order_changes: Vec<(BookSideOrderHandle, u64)> = vec![];
         let mut matched_order_deletes: Vec<(BookSideOrderTree, u128)> = vec![];
         let mut number_of_dropped_expired_orders = 0;
         // In case of take order, need this
@@ -211,7 +211,7 @@ impl<'a> Orderbook<'a> {
         // Update remaining based on quote_lots taken. If nothing taken, same as the beggining
         remaining_quote_lots = order.max_quote_lots_including_fees
             - total_quote_lots_taken
-            - (market.taker_fee * I80F48::from_num(total_quote_lots_taken)).to_num::<i64>();
+            - (market.taker_fee * I80F48::from_num(total_quote_lots_taken)).to_num::<u64>();
 
         // Apply changes to matched asks (handles invalidate on delete!)
         for (handle, new_quantity) in matched_order_changes {
@@ -399,7 +399,7 @@ fn release_funds_fees(
     taker_side: Side,
     market: &mut Market,
     open_orders_acc: &mut OpenOrdersAccountRefMut,
-    base_lots: i64,
+    base_lots: u64,
     quote_native: I80F48,
 ) -> Result<()> {
     let taker_fees = quote_native * market.taker_fee;

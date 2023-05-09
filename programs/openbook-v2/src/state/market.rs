@@ -52,14 +52,14 @@ pub struct Market {
     /// Primarily useful for increasing the tick size on the market: A lot price
     /// of 1 becomes a native price of quote_lot_size/base_lot_size becomes a
     /// ui price of quote_lot_size*base_decimals/base_lot_size/quote_decimals.
-    pub quote_lot_size: i64,
+    pub quote_lot_size: u64,
 
     /// Number of base native in a base lot. Must be a power of 10.
     ///
     /// Example: If base decimals for the underlying asset is 6, base lot size
     /// is 100 and and base position lots is 10_000 then base position native is
     /// 1_000_000 and base position ui is 1.
-    pub base_lot_size: i64,
+    pub base_lot_size: u64,
 
     /// Total number of orders seen
     pub seq_num: u64,
@@ -150,12 +150,12 @@ impl Market {
     }
 
     /// Convert from the price stored on the book to the price used in value calculations
-    pub fn lot_to_native_price(&self, price: i64) -> I80F48 {
+    pub fn lot_to_native_price(&self, price: u64) -> I80F48 {
         I80F48::from_num(price) * I80F48::from_num(self.quote_lot_size)
             / I80F48::from_num(self.base_lot_size)
     }
 
-    pub fn native_price_to_lot(&self, price: I80F48) -> i64 {
+    pub fn native_price_to_lot(&self, price: I80F48) -> u64 {
         (price * I80F48::from_num(self.base_lot_size) / I80F48::from_num(self.quote_lot_size))
             .to_num()
     }
@@ -224,11 +224,11 @@ impl Market {
         }
     }
 
-    pub fn substract_taker_fees(&self, quote: i64) -> i64 {
+    pub fn substract_taker_fees(&self, quote: u64) -> u64 {
         (I80F48::from(quote) / (I80F48::ONE + self.taker_fee)).to_num()
     }
 
-    pub fn referrer_rebate(&self, quote: I80F48) -> i64 {
+    pub fn referrer_rebate(&self, quote: I80F48) -> u64 {
         (quote * (self.taker_fee - self.maker_fee)).to_num()
     }
 }

@@ -133,7 +133,7 @@ impl OrderTreeNodes {
     // only for fixed-price ordertrees
     #[cfg(test)]
     #[allow(dead_code)]
-    fn as_price_quantity_vec(&self, root: &OrderTreeRoot, reverse: bool) -> Vec<(i64, i64)> {
+    fn as_price_quantity_vec(&self, root: &OrderTreeRoot, reverse: bool) -> Vec<(u64, u64)> {
         let mut pqs = vec![];
         let mut current: NodeHandle = match root.node() {
             None => return pqs,
@@ -550,7 +550,7 @@ mod tests {
                 expiry - 1,
                 PostOrderType::Limit,
                 1,
-                -1,
+                0,
                 0,
             )
         };
@@ -643,7 +643,7 @@ mod tests {
                 expiry - 1,
                 PostOrderType::Limit,
                 1,
-                -1,
+                0,
                 0,
             )
         };

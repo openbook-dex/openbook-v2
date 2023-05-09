@@ -34,8 +34,8 @@ pub mod openbook_v2 {
         market_index: MarketIndex,
         name: String,
         oracle_config: OracleConfigParams,
-        quote_lot_size: i64,
-        base_lot_size: i64,
+        quote_lot_size: u64,
+        base_lot_size: u64,
         maker_fee: f32,
         taker_fee: f32,
         fee_penalty: f32,
@@ -74,10 +74,10 @@ pub mod openbook_v2 {
         // - fill orders on the book up to this price or
         // - place an order on the book at this price.
         // - ignored for Market orders and potentially adjusted for PostOnlySlide orders.
-        price_lots: i64,
+        price_lots: u64,
 
-        max_base_lots: i64,
-        max_quote_lots_including_fees: i64,
+        max_base_lots: u64,
+        max_quote_lots_including_fees: u64,
         client_order_id: u64,
         order_type: PlaceOrderType,
         reduce_only: bool,
@@ -95,8 +95,6 @@ pub mod openbook_v2 {
         // When the limit is reached, processing stops and the instruction succeeds.
         limit: u8,
     ) -> Result<Option<u128>> {
-        require_gte!(price_lots, 0);
-
         use crate::state::{Order, OrderParams};
         let time_in_force = match Order::tif_from_expiry(expiry_timestamp) {
             Some(t) => t,
@@ -135,15 +133,15 @@ pub mod openbook_v2 {
 
         // The adjustment from the oracle price, in lots (quote lots per base lots).
         // Orders on the book may be filled at oracle + adjustment (depends on order type).
-        price_offset_lots: i64,
+        price_offset_lots: u64,
 
         // The limit at which the pegged order shall expire.
         //
         // Example: An bid pegged to -20 with peg_limit 100 would expire if the oracle hits 121.
-        peg_limit: i64,
+        peg_limit: u64,
 
-        max_base_lots: i64,
-        max_quote_lots_including_fees: i64,
+        max_base_lots: u64,
+        max_quote_lots_including_fees: u64,
         client_order_id: u64,
         order_type: PlaceOrderType,
         reduce_only: bool,
@@ -166,7 +164,6 @@ pub mod openbook_v2 {
         // WARNING: Not currently implemented.
         max_oracle_staleness_slots: i32,
     ) -> Result<Option<u128>> {
-        require_gte!(peg_limit, 0);
         require_eq!(max_oracle_staleness_slots, -1); // unimplemented
 
         use crate::state::{Order, OrderParams};
@@ -207,10 +204,10 @@ pub mod openbook_v2 {
         // - fill orders on the book up to this price or
         // - place an order on the book at this price.
         // - ignored for Market orders and potentially adjusted for PostOnlySlide orders.
-        price_lots: i64,
+        price_lots: u64,
 
-        max_base_lots: i64,
-        max_quote_lots_including_fees: i64,
+        max_base_lots: u64,
+        max_quote_lots_including_fees: u64,
         client_order_id: u64,
         order_type: PlaceOrderType,
         reduce_only: bool,
