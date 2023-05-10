@@ -463,7 +463,6 @@ impl ClientInstruction for PlaceTakeOrderInstruction {
             client_order_id: self.client_order_id,
             order_type: PlaceOrderType::ImmediateOrCancel,
             reduce_only: self.reduce_only,
-            expiry_timestamp: self.expiry_timestamp,
             limit: 10,
         };
 
