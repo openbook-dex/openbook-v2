@@ -375,7 +375,7 @@ pub struct PlaceOrderPeggedInstruction {
     pub base_vault: Pubkey,
     pub quote_vault: Pubkey,
     pub side: Side,
-    pub price_offset: u64,
+    pub price_offset: i64,
     pub max_base_lots: u64,
     pub max_quote_lots_including_fees: u64,
     pub client_order_id: u64,

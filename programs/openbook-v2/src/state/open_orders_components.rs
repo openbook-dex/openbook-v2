@@ -81,10 +81,10 @@ impl Position {
         match side {
             Side::Bid => {
                 self.taker_base_lots += base_lots;
-                self.taker_quote_lots -= quote_lots;
+                self.taker_quote_lots += quote_lots;
             }
             Side::Ask => {
-                self.taker_base_lots -= base_lots;
+                self.taker_base_lots += base_lots;
                 self.taker_quote_lots += quote_lots;
             }
         }
@@ -95,10 +95,10 @@ impl Position {
         match side {
             Side::Bid => {
                 self.taker_base_lots -= base_change;
-                self.taker_quote_lots += quote_change;
+                self.taker_quote_lots -= quote_change;
             }
             Side::Ask => {
-                self.taker_base_lots += base_change;
+                self.taker_base_lots -= base_change;
                 self.taker_quote_lots -= quote_change;
             }
         }
