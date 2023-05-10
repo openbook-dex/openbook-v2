@@ -462,7 +462,7 @@ impl<
                     pa.bids_base_lots -= base_change;
                 }
                 Side::Ask => {
-                    pa.asks_base_lots += base_change;
+                    pa.asks_base_lots -= base_change;
                 }
             };
         }

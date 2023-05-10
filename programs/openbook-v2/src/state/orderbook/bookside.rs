@@ -230,7 +230,7 @@ mod tests {
             .unwrap();
 
         while root_pegged.leaf_count < 100 {
-            let price_data: u64 = oracle_pegged_price_data(rng.gen_range(0..20));
+            let price_data: u64 = oracle_pegged_price_data(rng.gen_range(-20..20));
             let seq_num: u64 = rng.gen_range(0..1000);
             let key = new_node_key(side, price_data, seq_num);
             if keys.contains(&key) {
@@ -330,9 +330,9 @@ mod tests {
 
         add_fixed(100, 0);
         add_fixed(120, 5);
-        add_pegged(5, 0, 100);
-        add_pegged(15, 0, 0);
-        add_pegged(20, 7, 95);
+        add_pegged(-10, 0, 100);
+        add_pegged(-15, 0, 0);
+        add_pegged(-20, 7, 95);
 
         BookSide {
             roots: [root_fixed, root_pegged],

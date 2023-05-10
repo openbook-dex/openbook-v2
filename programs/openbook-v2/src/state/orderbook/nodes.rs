@@ -41,9 +41,9 @@ pub fn new_node_key(side: Side, price_data: u64, seq_num: u64) -> u128 {
 /// Reverse of oracle_pegged_price_offset()
 pub fn oracle_pegged_price_data(price_offset_lots: i64) -> u64 {
     // Price data is used for ordering in the bookside's top bits of the u128 key.
-    // Map u64::MIN to be 0 and u64::MAX to u64::MAX, that way comparisons on the
-    // u64 produce the same result as on the source u64.
-    // Equivalent: (price_offset_lots as i128 - (u64::MIN as i128) as u64
+    // Map i64::MIN to be 0 and i64::MAX to i64::MAX, that way comparisons on the
+    // u64 produce the same result as on the source i64.
+    // Equivalent: (price_offset_lots as i128 - (i64::MIN as i128) as u64
     (price_offset_lots as u64).wrapping_add(u64::MAX / 2 + 1)
 }
 
