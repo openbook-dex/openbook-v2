@@ -43,16 +43,6 @@ pub enum OrderParams {
     },
 }
 
-macro_rules! add_i64 {
-    ($a:expr,$b:expr) => {{
-        if $a > 0 {
-            $a + ($b.abs() as u64)
-        } else {
-            $a - ($b.abs() as u64)
-        }
-    }};
-}
-
 impl Order {
     /// Convert an input expiry timestamp to a time_in_force value
     pub fn tif_from_expiry(expiry_timestamp: u64) -> Option<u16> {
@@ -159,9 +149,9 @@ impl Order {
             }
         };
         let price_data = match self.params {
-            OrderParams::OraclePegged { .. } => {
-                oracle_pegged_price_data(price_lots - oracle_price_lots)
-            }
+            OrderParams::OraclePegged { .. } => oracle_pegged_price_data(
+                i64::try_from(price_lots as i128 - oracle_price_lots as i128).unwrap(),
+            ),
             _ => fixed_price_data(price_lots)?,
         };
         require_gte!(price_lots, 1);

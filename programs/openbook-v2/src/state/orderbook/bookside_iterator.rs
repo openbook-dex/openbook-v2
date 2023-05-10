@@ -59,7 +59,7 @@ pub enum OrderState {
 fn oracle_pegged_price(oracle_price_lots: u64, node: &LeafNode, side: Side) -> (OrderState, u64) {
     let price_data = node.price_data();
     let price_offset = oracle_pegged_price_offset(price_data);
-    let price = oracle_price_lots.saturating_add(price_offset);
+    let price = add_i64!(oracle_price_lots, price_offset);
     if (1..u64::MAX).contains(&price) {
         if side.is_price_better(price, node.peg_limit) {
             return (OrderState::Invalid, price);

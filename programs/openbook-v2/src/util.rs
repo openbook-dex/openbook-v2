@@ -31,6 +31,16 @@ pub fn format_zero_terminated_utf8_bytes(
     )
 }
 
+macro_rules! add_i64 {
+    ($a:expr,$b:expr) => {{
+        if $a > 0 {
+            $a + ($b.abs() as u64)
+        } else {
+            $a - ($b.abs() as u64)
+        }
+    }};
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

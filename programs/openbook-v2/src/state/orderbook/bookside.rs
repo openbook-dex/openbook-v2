@@ -320,7 +320,7 @@ mod tests {
                 .insert_leaf(&mut root_fixed, &new_node(key, tif, 0))
                 .unwrap();
         };
-        let mut add_pegged = |price_offset: u64, tif: u16, peg_limit: u64| {
+        let mut add_pegged = |price_offset: i64, tif: u16, peg_limit: u64| {
             let key = new_node_key(side, oracle_pegged_price_data(price_offset), 0);
             order_tree
                 .borrow_mut()
