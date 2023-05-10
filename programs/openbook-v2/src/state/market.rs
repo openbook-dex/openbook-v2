@@ -8,7 +8,6 @@ use crate::{accounts_zerocopy::KeyedAccountReader, state::orderbook::Side};
 
 use super::{orderbook, OracleConfig, StablePriceModel};
 
-pub type TokenIndex = u16;
 pub type MarketIndex = u32;
 
 #[account(zero_copy)]
