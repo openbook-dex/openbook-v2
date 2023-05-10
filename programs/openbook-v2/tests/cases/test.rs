@@ -19,7 +19,7 @@ async fn test_simple_settle() -> Result<(), TransportError> {
     // TEST: Create a market
     //
 
-    let market = get_market_address_by_index(1);
+    let market = get_market_address(admin.pubkey(), 1);
     let base_vault = solana
         .create_associated_token_account(&market, mints[0].pubkey)
         .await;
@@ -60,7 +60,7 @@ async fn test_simple_settle() -> Result<(), TransportError> {
     // TEST: Create another market
     //
 
-    let market_2 = get_market_address_by_index(2);
+    let market_2 = get_market_address(admin.pubkey(), 2);
     let base_vault_2 = solana
         .create_associated_token_account(&market_2, mints[0].pubkey)
         .await;
@@ -297,7 +297,7 @@ async fn test_cancel_orders() -> Result<(), TransportError> {
     // TEST: Create a market
     //
 
-    let market = get_market_address_by_index(1);
+    let market = get_market_address(admin.pubkey(), 1);
     let base_vault = solana
         .create_associated_token_account(&market, mints[0].pubkey)
         .await;
@@ -671,7 +671,7 @@ async fn test_expired_orders() -> Result<(), TransportError> {
     // TEST: Create a market
     //
 
-    let market = get_market_address_by_index(1);
+    let market = get_market_address(admin.pubkey(), 1);
     let base_vault = solana
         .create_associated_token_account(&market, mints[0].pubkey)
         .await;

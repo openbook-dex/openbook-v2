@@ -19,7 +19,7 @@ async fn test_fees_acrued() -> Result<(), TransportError> {
     // TEST: Create a market
     //
 
-    let market = get_market_address_by_index(1);
+    let market = get_market_address(admin.pubkey(), 1);
     let base_vault = solana
         .create_associated_token_account(&market, mints[0].pubkey)
         .await;
