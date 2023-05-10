@@ -3,14 +3,23 @@
 # Anchor works purely on a token level and does not know that the index types
 # are just type aliases for a primitive type. This hack replaces them with the
 # primitive in the idl json and types ts file.
-
-PAIRS_TO_REPLACE=(
-  "MarketIndex u32"
-  "NodeHandle u32"
-  "usize u64"
+TYPES_TO_REPLACE=(
+  "MarketIndex"
+  "NodeHandle"
+  "usize"
 )
 
-for pair_str in "${PAIRS_TO_REPLACE[@]}"; do
+pairs=()
+for type in ${TYPES_TO_REPLACE[@]}; do
+  if [[ "$type" == "usize" ]]; then
+    pairs+=("usize u64")
+  else
+    value=$(grep -r "type $type" "./programs/openbook-v2/src" | awk '{print $NF}' | tr -d ';')
+    pairs+=("$type $value")
+  fi
+done
+
+for pair_str in "${pairs[@]}"; do
   pair=($pair_str)
   perl -0777 -pi -e "s/\{\s*\"defined\":\s*\"${pair[0]}\"\s*\}/\"${pair[1]}\"/g" \
     target/idl/openbook_v2.json target/types/openbook_v2.ts
