@@ -128,20 +128,16 @@ pub fn determine_oracle_type(acc_info: &impl KeyedAccountReader) -> Result<Oracl
 /// Returns the price of one native base token, in native quote tokens
 ///
 /// Example: The for SOL at 40 USDC/SOL it would return 0.04 (the unit is USDC-native/SOL-native)
-///
-/// This currently assumes that quote decimals is 6, like for USDC.
-///
-/// Pass `staleness_slot` = None to skip the staleness check
+/// given that quote decimals is 6 and native decimals is 9.
 pub fn oracle_price(
     acc_info: &impl KeyedAccountReader,
     config: &OracleConfig,
     base_decimals: u8,
     quote_decimals: u8,
-    staleness_slot: Option<u64>,
+    staleness_slot: u64,
 ) -> Result<I80F48> {
     let data = &acc_info.data();
     let oracle_type = determine_oracle_type(acc_info)?;
-    let staleness_slot = staleness_slot.unwrap_or(0);
 
     Ok(match oracle_type {
         OracleType::Stub => acc_info.load::<StubOracle>()?.price,

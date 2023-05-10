@@ -22,7 +22,7 @@ pub fn place_take_order<'info>(
         let market = ctx.accounts.market.load_mut()?;
         oracle_price = market.oracle_price(
             &AccountInfoRef::borrow(ctx.accounts.oracle.as_ref())?,
-            None, // staleness checked in health
+            Clock::get()?.slot,
         )?;
     }
 

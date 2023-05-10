@@ -22,7 +22,7 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<
         let market = ctx.accounts.market.load_mut()?;
         oracle_price = market.oracle_price(
             &AccountInfoRef::borrow(ctx.accounts.oracle.as_ref())?,
-            Some(Clock::get()?.slot),
+            Clock::get()?.slot,
         )?;
     }
     let mut open_orders_account = ctx.accounts.open_orders_account.load_full_mut()?;
