@@ -13,6 +13,7 @@ pub mod error;
 pub mod i80f48;
 pub mod logs;
 pub mod state;
+pub mod types;
 
 use error::*;
 use fixed::types::I80F48;
