@@ -220,7 +220,6 @@ pub mod openbook_v2 {
         // Send 0 if you want the order to never expire.
         // Timestamps in the past mean the instruction is skipped.
         // Timestamps in the future are reduced to now + 65535s.
-        expiry_timestamp: u64,
 
         // Maximum number of orders from the book to fill.
         //
@@ -231,13 +230,6 @@ pub mod openbook_v2 {
         require_gte!(price_lots, 0);
 
         use crate::state::{Order, OrderParams};
-        let time_in_force = match Order::tif_from_expiry(expiry_timestamp) {
-            Some(t) => t,
-            None => {
-                msg!("Order is already expired");
-                return Ok(None);
-            }
-        };
         require!(
             order_type == PlaceOrderType::ImmediateOrCancel,
             OpenBookError::InvalidOrderType
@@ -248,7 +240,7 @@ pub mod openbook_v2 {
             max_quote_lots_including_fees,
             client_order_id,
             reduce_only,
-            time_in_force,
+            time_in_force: 0,
             params: match order_type {
                 PlaceOrderType::ImmediateOrCancel => OrderParams::ImmediateOrCancel { price_lots },
                 _ => OrderParams::Fixed {
