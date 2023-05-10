@@ -7,7 +7,7 @@ use fixed::types::I80F48;
 
 pub fn deposit(ctx: Context<Deposit>, base_amount_lots: u64, quote_amount_lots: u64) -> Result<()> {
     let mut open_orders_account = ctx.accounts.open_orders_account.load_full_mut()?;
-    let market = &mut ctx.accounts.market.load_mut()?;
+    let mut market = ctx.accounts.market.load_mut()?;
 
     if base_amount_lots != 0 {
         let base_amount_native =

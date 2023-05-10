@@ -92,19 +92,11 @@ pub fn place_take_order<'info>(
         // TODO Binye check if this ceil is correct
         token::transfer(cpi_context, deposit_amount.ceil().to_num())?;
     }
-    drop(market);
 
-    // Transfer funds received from vault to user
-    let (market_index, market_bump) = {
-        let market = &mut ctx.accounts.market.load_mut()?;
-        (market.market_index, market.bump)
-    };
-    let seeds = [
-        b"Market".as_ref(),
-        &market_index.to_le_bytes(),
-        &[market_bump],
-    ];
+    let seeds = market_seeds!(market);
     let signer = &[&seeds[..]];
+
+    drop(market);
 
     if withdraw_amount > 0 {
         let cpi_context = CpiContext::new(

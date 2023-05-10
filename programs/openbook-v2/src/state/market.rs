@@ -231,3 +231,15 @@ impl Market {
         (quote * (self.taker_fee - self.maker_fee)).to_num()
     }
 }
+
+/// Generate signed seeds for the market
+macro_rules! market_seeds {
+    ($market:expr) => {
+        &[
+            b"Market".as_ref(),
+            &$market.market_index.to_le_bytes(),
+            &[$market.bump],
+        ]
+    };
+}
+pub(crate) use market_seeds;
