@@ -163,7 +163,7 @@ impl Market {
     pub fn oracle_price(
         &self,
         oracle_acc: &impl KeyedAccountReader,
-        staleness_slot: Option<u64>,
+        staleness_slot: u64,
     ) -> Result<I80F48> {
         require_keys_eq!(self.oracle, *oracle_acc.key());
         oracle::oracle_price(
