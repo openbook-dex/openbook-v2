@@ -26,6 +26,7 @@ available under GPL.
 ### Pre-requisites
 
 Before you can build the program, you will first need to install the following:
+
 - [Rust](https://www.rust-lang.org/tools/install)
 - [Solana](https://docs.solana.com/cli/install-solana-cli-tools)
 - [Anchor](https://www.anchor-lang.com/docs/installation) (v0.27.0)
@@ -58,6 +59,14 @@ To build, run:
 
 ```bash
 just build
+```
+
+### IDL
+
+To generate the progam & typescript IDLs, run:
+
+```bash
+just idl
 ```
 
 ### Testing

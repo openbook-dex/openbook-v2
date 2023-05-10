@@ -9,3 +9,7 @@ test TEST_NAME:
 
 test-all:
     (cd ./programs/openbook-v2 && RUST_LOG=ERROR cargo test --features enable-gpl --features test-bpf)
+
+idl:
+    anchor build -- --features enable-gpl
+    bash ./{{justfile_directory()}}/idl-fixup.sh
