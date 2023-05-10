@@ -133,7 +133,7 @@ pub mod openbook_v2 {
 
         // The adjustment from the oracle price, in lots (quote lots per base lots).
         // Orders on the book may be filled at oracle + adjustment (depends on order type).
-        price_offset_lots: u64,
+        price_offset_lots: i64,
 
         // The limit at which the pegged order shall expire.
         //

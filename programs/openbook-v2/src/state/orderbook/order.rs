@@ -36,11 +36,21 @@ pub enum OrderParams {
         order_type: PostOrderType,
     },
     OraclePegged {
-        price_offset_lots: u64,
+        price_offset_lots: i64,
         order_type: PostOrderType,
         peg_limit: u64,
         max_oracle_staleness_slots: i32,
     },
+}
+
+macro_rules! add_i64 {
+    ($a:expr,$b:expr) => {{
+        if $a > 0 {
+            $a + ($b.abs() as u64)
+        } else {
+            $a - ($b.abs() as u64)
+        }
+    }};
 }
 
 impl Order {
@@ -138,7 +148,7 @@ impl Order {
                 order_type,
                 ..
             } => {
-                let price_lots = oracle_price_lots + price_offset_lots;
+                let price_lots = add_i64!(oracle_price_lots, price_offset_lots);
                 self.price_for_order_type(
                     now_ts,
                     oracle_price_lots,
