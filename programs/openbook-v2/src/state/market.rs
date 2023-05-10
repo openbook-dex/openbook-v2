@@ -8,7 +8,6 @@ use crate::{accounts_zerocopy::KeyedAccountReader, state::orderbook::Side};
 
 use super::{orderbook, OracleConfig, StablePriceModel};
 
-pub type TokenIndex = u16;
 pub type MarketIndex = u32;
 
 #[account(zero_copy)]
@@ -232,3 +231,16 @@ impl Market {
         (quote * (self.taker_fee - self.maker_fee)).to_num()
     }
 }
+
+/// Generate signed seeds for the market
+macro_rules! market_seeds {
+    ($market:expr) => {
+        &[
+            b"Market".as_ref(),
+            &$market.admin.to_bytes(),
+            &$market.market_index.to_le_bytes(),
+            &[$market.bump],
+        ]
+    };
+}
+pub(crate) use market_seeds;

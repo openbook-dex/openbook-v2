@@ -112,9 +112,13 @@ fn make_instruction(
     }
 }
 
-pub fn get_market_address_by_index(market_index: MarketIndex) -> Pubkey {
+pub fn get_market_address(admin: Pubkey, market_index: MarketIndex) -> Pubkey {
     Pubkey::find_program_address(
-        &[b"Market".as_ref(), &market_index.to_le_bytes()],
+        &[
+            b"Market".as_ref(),
+            admin.as_ref(),
+            &market_index.to_le_bytes(),
+        ],
         &openbook_v2::id(),
     )
     .0
@@ -270,7 +274,11 @@ impl ClientInstruction for CreateMarketInstruction {
         };
 
         let market = Pubkey::find_program_address(
-            &[b"Market".as_ref(), self.market_index.to_le_bytes().as_ref()],
+            &[
+                b"Market".as_ref(),
+                self.admin.pubkey().as_ref(),
+                self.market_index.to_le_bytes().as_ref(),
+            ],
             &program_id,
         )
         .0;

@@ -8,7 +8,7 @@ pub struct CreateMarket<'info> {
     pub admin: Signer<'info>,
     #[account(
         init,
-        seeds = [b"Market".as_ref(), market_index.to_le_bytes().as_ref()],
+        seeds = [b"Market".as_ref(), admin.key().as_ref(), &market_index.to_le_bytes()],
         bump,
         payer = payer,
         space = 8 + std::mem::size_of::<Market>(),

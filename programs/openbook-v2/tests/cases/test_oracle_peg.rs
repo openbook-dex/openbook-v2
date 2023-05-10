@@ -15,7 +15,7 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
     let tokens = Token::create(mints.to_vec(), solana, admin, payer).await;
 
     // SETUP: Create a perp market
-    let market = get_market_address_by_index(1);
+    let market = get_market_address(admin.pubkey(), 1);
     let base_vault = solana
         .create_associated_token_account(&market, mints[0].pubkey)
         .await;

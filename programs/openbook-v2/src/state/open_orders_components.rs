@@ -268,21 +268,6 @@ impl OpenOrder {
     }
 }
 
-#[macro_export]
-macro_rules! account_seeds {
-    ( $account:expr ) => {
-        &[
-            b"OpenOrdersAccount".as_ref(),
-            $account.group.as_ref(),
-            $account.owner.as_ref(),
-            &$account.account_num.to_le_bytes(),
-            &[$account.bump],
-        ]
-    };
-}
-
-pub use account_seeds;
-
 // #[cfg(test)]
 // mod tests {
 //     use crate::state::Market;
