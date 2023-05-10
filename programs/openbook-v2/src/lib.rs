@@ -231,7 +231,7 @@ pub mod openbook_v2 {
 
         use crate::state::{Order, OrderParams};
         require!(
-            order_type == PlaceOrderType::ImmediateOrCancel,
+            order_type == PlaceOrderType::Market || order_type == PlaceOrderType::ImmediateOrCancel,
             OpenBookError::InvalidOrderType
         );
         let order = Order {
@@ -242,11 +242,10 @@ pub mod openbook_v2 {
             reduce_only,
             time_in_force: 0,
             params: match order_type {
+                PlaceOrderType::Market => OrderParams::Market,
                 PlaceOrderType::ImmediateOrCancel => OrderParams::ImmediateOrCancel { price_lots },
-                _ => OrderParams::Fixed {
-                    price_lots,
-                    order_type: order_type.to_post_order_type()?,
-                },
+                // never goes here, order type already checked
+                _ => panic!(),
             },
         };
         #[cfg(feature = "enable-gpl")]
