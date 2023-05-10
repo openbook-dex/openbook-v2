@@ -2403,7 +2403,6 @@ dependencies = [
  "pyth-sdk-solana",
  "rand 0.8.5",
  "serde",
- "solana-address-lookup-table-program",
  "solana-logger",
  "solana-program",
  "solana-program-test",

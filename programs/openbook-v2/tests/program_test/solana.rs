@@ -212,22 +212,22 @@ impl SolanaCookie {
     }
 
     // Note: Only one table can be created per authority per slot!
-    pub async fn create_address_lookup_table(
-        &self,
-        authority: TestKeypair,
-        payer: TestKeypair,
-    ) -> Pubkey {
-        let (instruction, alt_address) =
-            solana_address_lookup_table_program::instruction::create_lookup_table(
-                authority.pubkey(),
-                payer.pubkey(),
-                self.get_newest_slot_from_history().await,
-            );
-        self.process_transaction(&[instruction], Some(&[authority, payer]))
-            .await
-            .unwrap();
-        alt_address
-    }
+    // pub async fn create_address_lookup_table(
+    //     &self,
+    //     authority: TestKeypair,
+    //     payer: TestKeypair,
+    // ) -> Pubkey {
+    //     let (instruction, alt_address) =
+    //         solana_address_lookup_table_program::instruction::create_lookup_table(
+    //             authority.pubkey(),
+    //             payer.pubkey(),
+    //             self.get_newest_slot_from_history().await,
+    //         );
+    //     self.process_transaction(&[instruction], Some(&[authority, payer]))
+    //         .await
+    //         .unwrap();
+    //     alt_address
+    // }
 
     pub async fn get_account_data(&self, address: Pubkey) -> Option<Vec<u8>> {
         Some(

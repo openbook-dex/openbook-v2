@@ -33,7 +33,6 @@ fixed = {path = "../../3rdparty/fixed", version = "1.11.0", features = ["serde",
 num_enum = "0.5.1"
 pyth-sdk-solana = "0.1.0"
 serde = "^1.0"
-solana-address-lookup-table-program = "~1.14.16"
 solana-program = "~1.14.16"
 solana-sdk = {version = "~1.14.16", default-features = false, optional = true}
 solana-security-txt = "1.1.0"
