@@ -12,4 +12,4 @@ test-all:
 
 idl:
     anchor build -- --features enable-gpl
-    bash ./{{justfile_directory()}}/idl-fixup.sh
+    bash {{ justfile_directory() }}/idl-fixup.sh
