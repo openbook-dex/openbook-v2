@@ -189,12 +189,6 @@ impl<'a> Orderbook<'a> {
         // realized when the fill event gets executed
         if total_quote_lots_taken > 0 || total_base_lots_taken > 0 {
             if let Some(open_orders_acc) = &mut open_orders_acc {
-                open_orders_acc.fixed.position.add_taker_trade(
-                    side,
-                    total_base_lots_taken,
-                    total_quote_lots_taken,
-                );
-
                 release_funds_fees(
                     side,
                     market,

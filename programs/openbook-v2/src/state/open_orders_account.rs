@@ -131,7 +131,7 @@ const_assert_eq!(
         - size_of::<u64>() * 3
         - size_of::<[u8; 208]>()
 );
-const_assert_eq!(size_of::<OpenOrdersAccountFixed>(), 528);
+const_assert_eq!(size_of::<OpenOrdersAccountFixed>(), 512);
 const_assert_eq!(size_of::<OpenOrdersAccountFixed>() % 8, 0);
 
 impl OpenOrdersAccountFixed {
@@ -484,8 +484,6 @@ impl<
                 // pa.quote_free_lots += quote_change;
             }
         };
-
-        pa.remove_taker_trade(base_change, quote_change);
 
         // fees are assessed at time of trade; no need to assess fees here
         let quote_change_native = I80F48::from(market.quote_lot_size) * I80F48::from(quote_change);
