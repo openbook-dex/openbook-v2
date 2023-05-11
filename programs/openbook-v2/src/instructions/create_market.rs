@@ -22,8 +22,12 @@ pub fn create_market(
 ) -> Result<()> {
     let now_ts: u64 = Clock::get()?.unix_timestamp.try_into().unwrap();
 
-    // Enforce taker fees >=0 go to maker
-    require!(taker_fee >= maker_fee, OpenBookError::InvalidFeesError);
+    if maker_fee < 0_f32 {
+        require!(
+            maker_fee.abs() <= taker_fee,
+            OpenBookError::InvalidFeesError
+        );
+    }
 
     let mut openbook_market = ctx.accounts.market.load_init()?;
     *openbook_market = Market {

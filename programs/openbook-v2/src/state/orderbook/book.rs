@@ -71,12 +71,6 @@ impl<'a> Orderbook<'a> {
         // generate new order id
         let order_id = market.gen_order_id(side, price_data);
 
-        // // IOC orders have a fee penalty applied regardless of match
-        // TODO Binye Do not apply penalty fees now
-        if order.needs_penalty_fee() {
-            // apply_penalty(market, acco)?;
-        }
-
         // Iterate through book and match against this new order.
         //
         // Any changes to matching orders on the other side of the book are collected in
@@ -186,6 +180,8 @@ impl<'a> Orderbook<'a> {
         assert!(total_quote_lots_taken >= 0);
         assert!(total_base_lots_taken >= 0);
 
+        let mut total_base_taken_native: Option<I80F48> = None;
+
         // Record the taker trade in the account already, even though it will only be
         // realized when the fill event gets executed
         if total_quote_lots_taken > 0 || total_base_lots_taken > 0 {
@@ -199,7 +195,7 @@ impl<'a> Orderbook<'a> {
                 )?;
             } else {
                 // It's a taker order, transfer to referrer
-                referrer_amount += market.referrer_rebate(total_quote_taken_native) as u64;
+                referrer_amount += market.referrer_taker_rebate(total_quote_taken_native) as u64;
             }
 
             // Apply fees
@@ -207,6 +203,12 @@ impl<'a> Orderbook<'a> {
                 Side::Bid => total_quote_taken_native * (I80F48::ONE + market.taker_fee),
                 Side::Ask => total_quote_taken_native * (I80F48::ONE - market.taker_fee),
             };
+        } else {
+            // // IOC orders have a fee penalty applied if not match to avoid spam
+            if order.needs_penalty_fee() {
+                total_base_taken_native =
+                    Some(apply_penalty(market)? / I80F48::from_num(market.quote_lot_size));
+            }
         }
 
         // Update remaining based on quote_lots taken. If nothing taken, same as the beggining
@@ -232,16 +234,27 @@ impl<'a> Orderbook<'a> {
         //
 
         // If there are still quantity unmatched, place on the book
-        let book_base_quantity = remaining_base_lots.min(remaining_quote_lots / price_lots);
+        let mut book_base_quantity_lots =
+            remaining_base_lots.min(remaining_quote_lots / price_lots);
 
-        if book_base_quantity <= 0 {
+        if book_base_quantity_lots <= 0 {
             post_target = None;
         }
 
-        msg!("post_target {:?}", post_target);
-
         if let Some(order_tree_target) = post_target {
             let mut open_orders_acc = open_orders_acc.unwrap();
+
+            // Substract fees. Orders in book don't contain fees
+            if market.maker_fee.is_positive() {
+                let book_quote_quantity_lots =
+                    I80F48::from_num(book_base_quantity_lots) * I80F48::from_num(price_data);
+                let fees = (book_quote_quantity_lots * market.maker_fee).to_num::<u64>();
+                open_orders_acc.fixed.position.referrer_rebates_accrued +=
+                    fees * market.quote_lot_size as u64;
+                market.referrer_rebates_accrued += fees * market.quote_lot_size as u64;
+                book_base_quantity_lots -= i64::try_from(fees / price_data).unwrap();
+            }
+
             let bookside = self.bookside_mut(side);
             // Drop an expired order if possible
             if let Some(expired_order) = bookside.remove_one_expired(order_tree_target, now_ts) {
@@ -281,7 +294,7 @@ impl<'a> Orderbook<'a> {
                 owner_slot as u8,
                 order_id,
                 *owner,
-                book_base_quantity,
+                book_base_quantity_lots,
                 now_ts,
                 PostOrderType::Limit, // TODO: Support order types? needed?
                 order.time_in_force,
@@ -298,7 +311,7 @@ impl<'a> Orderbook<'a> {
                     Side::Ask => "ask",
                 },
                 order_id,
-                book_base_quantity,
+                book_base_quantity_lots,
                 price_lots
             );
 
@@ -317,14 +330,24 @@ impl<'a> Orderbook<'a> {
             None
         };
 
-        Ok(OrderWithAmounts {
-            order_id: placed_order_id,
-            placed_quantity: book_base_quantity,
-            total_base_taken_native: I80F48::from_num(total_base_lots_taken)
-                * I80F48::from_num(market.base_lot_size),
-            total_quote_taken_native,
-            referrer_amount,
-        })
+        if let Some(amount) = total_base_taken_native {
+            Ok(OrderWithAmounts {
+                order_id: placed_order_id,
+                placed_quantity: book_base_quantity_lots,
+                total_base_taken_native: amount,
+                total_quote_taken_native,
+                referrer_amount,
+            })
+        } else {
+            Ok(OrderWithAmounts {
+                order_id: placed_order_id,
+                placed_quantity: book_base_quantity_lots,
+                total_base_taken_native: I80F48::from_num(total_base_lots_taken)
+                    * I80F48::from_num(market.base_lot_size),
+                total_quote_taken_native,
+                referrer_amount,
+            })
+        }
     }
 
     /// Cancels up to `limit` orders that are listed on the openorders account for the given market.
@@ -396,7 +419,7 @@ impl<'a> Orderbook<'a> {
     }
 }
 
-/// Release funds and apply taker fees to the taker account
+/// Release funds and apply taker fees to the taker account. Account fees for referrer
 fn release_funds_fees(
     taker_side: Side,
     market: &mut Market,
@@ -422,8 +445,8 @@ fn release_funds_fees(
     };
 
     // Referrer rebates
-    pa.referrer_rebates_accrued += market.referrer_rebate(quote_native) as u64;
-    market.referrer_rebates_accrued += market.referrer_rebate(quote_native) as u64;
+    pa.referrer_rebates_accrued += market.referrer_taker_rebate(quote_native) as u64;
+    market.referrer_rebates_accrued += market.referrer_taker_rebate(quote_native) as u64;
 
     open_orders_acc.fixed.position.taker_volume += taker_fees.to_num::<u64>();
     // Only apply taker fees now. Maker fees applied once processing the event
@@ -434,15 +457,8 @@ fn release_funds_fees(
 
 /// Applies a fixed penalty fee to the account, and update the market's fees_accrued
 /// TODO Binye the implementation isn't correct as this is not used for now
-fn _apply_penalty(
-    market: &mut Market,
-    open_orders_acc: &mut OpenOrdersAccountRefMut,
-) -> Result<()> {
+fn apply_penalty(market: &mut Market) -> Result<I80F48> {
     let fee_penalty = I80F48::from_num(market.fee_penalty);
-    open_orders_acc
-        .fixed
-        .accrue_buyback_fees(fee_penalty.floor().to_num::<u64>());
-
     market.fees_accrued += fee_penalty;
-    Ok(())
+    Ok(fee_penalty)
 }
