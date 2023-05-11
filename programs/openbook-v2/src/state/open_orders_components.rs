@@ -127,74 +127,63 @@ impl Position {
     }
 
     /// Updates avg entry price, breakeven price, realized pnl, realized pnl limit
-    fn update_trade_stats(&mut self, base_change: i64, quote_change_native: I80F48) {
-        if base_change == 0 {
-            return;
-        }
+    fn update_trade_stats(&mut self, _base_change: i64, _quote_change_native: I80F48) {
+        // TODO Binye. Replace this with another different event
+        // if base_change == 0 {
+        //     return;
+        // }
 
-        let old_position = self.base_position_lots;
-        let new_position = old_position + base_change;
+        // let old_position = self.base_position_lots;
+        // let new_position = old_position + base_change;
 
-        // amount of lots that were reduced (so going from -5 to 10 lots is a reduction of 5)
-        let _reduced_lots;
-        // amount of pnl that was realized by the reduction (signed)
-        let _newly_realized_pnl;
+        // // amount of lots that were reduced (so going from -5 to 10 lots is a reduction of 5)
+        // let _reduced_lots;
+        // // amount of pnl that was realized by the reduction (signed)
+        // let _newly_realized_pnl;
 
-        if new_position == 0 {
-            _reduced_lots = -old_position;
+        // if new_position == 0 {
+        //     _reduced_lots = -old_position;
 
-            // clear out display fields that live only while the position lasts
-            self.avg_entry_price_per_base_lot = 0.0;
-            self.quote_running_native = 0;
-        } else if old_position.signum() != new_position.signum() {
-            // If the base position changes sign, we've crossed base_pos == 0 (or old_position == 0)
-            _reduced_lots = -old_position;
-            let _old_position = old_position as f64;
-            let _new_position = new_position as f64;
-            let base_change = base_change as f64;
-            let _old_avg_entry = self.avg_entry_price_per_base_lot;
-            let new_avg_entry = (quote_change_native.to_num::<f64>() / base_change).abs();
+        //     // clear out display fields that live only while the position lasts
+        //     self.avg_entry_price_per_base_lot = 0.0;
+        //     self.quote_running_native = 0;
+        // } else if old_position.signum() != new_position.signum() {
+        //     // If the base position changes sign, we've crossed base_pos == 0 (or old_position == 0)
+        //     _reduced_lots = -old_position;
+        //     let _old_position = old_position as f64;
+        //     let _new_position = new_position as f64;
+        //     let base_change = base_change as f64;
+        //     let _old_avg_entry = self.avg_entry_price_per_base_lot;
+        //     let new_avg_entry = (quote_change_native.to_num::<f64>() / base_change).abs();
 
-            // Set entry and break-even based on the new_position entered
-            self.avg_entry_price_per_base_lot = new_avg_entry;
-        } else {
-            // The old and new position have the same sign
+        //     // Set entry and break-even based on the new_position entered
+        //     self.avg_entry_price_per_base_lot = new_avg_entry;
+        // } else {
+        //     // The old and new position have the same sign
 
-            self.quote_running_native += quote_change_native.round_to_zero().to_num::<i64>();
+        //     self.quote_running_native += quote_change_native.round_to_zero().to_num::<i64>();
 
-            let is_increasing = old_position.signum() == base_change.signum();
-            if is_increasing {
-                // Increasing position: avg entry price updates, no new realized pnl
-                _reduced_lots = 0;
-                _newly_realized_pnl = I80F48::ZERO;
-                let old_position_abs = old_position.abs() as f64;
-                let new_position_abs = new_position.abs() as f64;
-                let old_avg_entry = self.avg_entry_price_per_base_lot;
-                let new_position_quote_value =
-                    old_position_abs * old_avg_entry + quote_change_native.to_num::<f64>().abs();
-                self.avg_entry_price_per_base_lot = new_position_quote_value / new_position_abs;
-            } else {
-                // Decreasing position: pnl is realized, avg entry price does not change
-                _reduced_lots = base_change;
-                let _avg_entry = I80F48::from_num(self.avg_entry_price_per_base_lot);
-            }
-        }
+        //     let is_increasing = old_position.signum() == base_change.signum();
+        //     if is_increasing {
+        //         // Increasing position: avg entry price updates, no new realized pnl
+        //         _reduced_lots = 0;
+        //         _newly_realized_pnl = I80F48::ZERO;
+        //         let old_position_abs = old_position.abs() as f64;
+        //         let new_position_abs = new_position.abs() as f64;
+        //         let old_avg_entry = self.avg_entry_price_per_base_lot;
+        //         let new_position_quote_value =
+        //             old_position_abs * old_avg_entry + quote_change_native.to_num::<f64>().abs();
+        //         self.avg_entry_price_per_base_lot = new_position_quote_value / new_position_abs;
+        //     } else {
+        //         // Decreasing position: pnl is realized, avg entry price does not change
+        //         _reduced_lots = base_change;
+        //         let _avg_entry = I80F48::from_num(self.avg_entry_price_per_base_lot);
+        //     }
+        // }
     }
 
-    /// Change the base and quote positions as the result of a trade
-    pub fn record_trade(
-        &mut self,
-        _market: &mut Market,
-        base_change: i64,
-        quote_change_native: I80F48,
-    ) {
+    pub fn record_trade(&mut self, base_change: i64, quote_change_native: I80F48) {
         self.update_trade_stats(base_change, quote_change_native);
-        self.change_base_position(base_change);
-        self.change_quote_position(quote_change_native);
-    }
-
-    pub fn change_quote_position(&mut self, quote_change_native: I80F48) {
-        self.quote_position_native += quote_change_native;
     }
 
     /// Does the user have any orders on the book?
@@ -218,20 +207,6 @@ impl Position {
     /// Calculate the average entry price of the position, in native/native units
     pub fn avg_entry_price(&self, market: &Market) -> f64 {
         self.avg_entry_price_per_base_lot / (market.base_lot_size as f64)
-    }
-
-    /// Calculate the break even price of the position, in native/native units
-    pub fn break_even_price(&self, market: &Market) -> f64 {
-        if self.base_position_lots == 0 {
-            return 0.0;
-        }
-        -(self.quote_running_native as f64)
-            / ((self.base_position_lots * market.base_lot_size) as f64)
-    }
-
-    /// Update position for a maker/taker quote
-    pub fn record_trading_fee(&mut self, fee: I80F48) {
-        self.change_quote_position(-fee);
     }
 }
 

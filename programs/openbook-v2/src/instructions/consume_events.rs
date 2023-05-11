@@ -5,7 +5,7 @@ use crate::error::OpenBookError;
 use crate::state::*;
 
 use crate::accounts_ix::*;
-use crate::logs::{emit_balances, FillLog};
+use crate::logs::FillLog;
 
 // Max events to consume per ix.
 const MAX_EVENTS_CONSUME: usize = 8;
@@ -66,20 +66,21 @@ pub fn consume_events(ctx: Context<ConsumeEvents>, limit: usize) -> Result<()> {
                 let fill: &FillEvent = cast_ref(event);
 
                 // handle self trade separately because of rust borrow checker
+                // TODO Binye is there any emit_balances event needed?
                 if fill.maker == fill.taker {
                     load_open_orders_acc!(maker_taker, fill.maker, remaining_accs, event_queue);
                     maker_taker.execute_maker(&mut market, fill)?;
                     maker_taker.execute_taker(&mut market, fill)?;
-                    emit_balances(fill.maker, &maker_taker.fixed.position, &market);
+                    // emit_balances(fill.maker, &maker_taker.fixed.position, &market);
                 } else {
                     load_open_orders_acc!(maker, fill.maker, remaining_accs, event_queue);
                     maker.execute_maker(&mut market, fill)?;
-                    emit_balances(fill.maker, &maker.fixed.position, &market);
+                    // emit_balances(fill.maker, &maker.fixed.position, &market);
 
                     if remaining_accs.len() > 1 {
                         load_open_orders_acc!(taker, fill.taker, remaining_accs, event_queue);
                         taker.execute_taker(&mut market, fill)?;
-                        emit_balances(fill.taker, &taker.fixed.position, &market);
+                        // emit_balances(fill.taker, &taker.fixed.position, &market);
                     }
                 }
                 emit!(FillLog {
