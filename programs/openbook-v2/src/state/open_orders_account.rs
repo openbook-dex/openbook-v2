@@ -489,14 +489,7 @@ impl<
 
         // fees are assessed at time of trade; no need to assess fees here
         let quote_change_native = I80F48::from(market.quote_lot_size) * I80F48::from(quote_change);
-        msg!(
-            " taker price {}, quantity {}, base_change {}, quote_change {}, quote {}",
-            fill.price,
-            fill.quantity,
-            base_change,
-            quote_change,
-            quote_change_native
-        );
+
         pa.update_trade_stats(base_change, quote_change_native);
 
         pa.taker_volume += quote_change_native.abs().to_num::<u64>();

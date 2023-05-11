@@ -175,6 +175,8 @@ impl<'a> Orderbook<'a> {
             );
             event_queue.push_back(cast(fill)).unwrap();
             limit -= 1;
+            let open_orders_acc = open_orders_acc.as_mut().unwrap();
+            open_orders_acc.execute_taker(market, &fill)?;
         }
         let total_quote_lots_taken = max_quote_lots - remaining_quote_lots;
         let mut total_quote_taken_native =
