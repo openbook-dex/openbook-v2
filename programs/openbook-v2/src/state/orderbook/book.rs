@@ -248,11 +248,12 @@ impl<'a> Orderbook<'a> {
             if market.maker_fee.is_positive() {
                 let book_quote_quantity_lots =
                     I80F48::from_num(book_base_quantity_lots) * I80F48::from_num(price_data);
-                let fees = (book_quote_quantity_lots * market.maker_fee).to_num::<u64>();
+                let fees = book_quote_quantity_lots * market.maker_fee;
                 open_orders_acc.fixed.position.referrer_rebates_accrued +=
-                    fees * market.quote_lot_size as u64;
-                market.referrer_rebates_accrued += fees * market.quote_lot_size as u64;
-                book_base_quantity_lots -= i64::try_from(fees / price_data).unwrap();
+                    (fees * I80F48::from_num(market.quote_lot_size)).to_num::<u64>();
+                market.referrer_rebates_accrued +=
+                    (fees * I80F48::from_num(market.quote_lot_size)).to_num::<u64>();
+                book_base_quantity_lots -= (fees / I80F48::from_num(price_data)).to_num::<i64>();
             }
 
             let bookside = self.bookside_mut(side);
