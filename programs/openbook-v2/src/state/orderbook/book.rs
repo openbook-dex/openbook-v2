@@ -175,6 +175,9 @@ impl<'a> Orderbook<'a> {
             );
             event_queue.push_back(cast(fill)).unwrap();
             limit -= 1;
+            if let Some(open_orders_acc) = open_orders_acc.as_mut() {
+                open_orders_acc.execute_taker(market, &fill)?
+            }
         }
         let total_quote_lots_taken = max_quote_lots - remaining_quote_lots;
         let mut total_quote_taken_native =
@@ -187,12 +190,6 @@ impl<'a> Orderbook<'a> {
         // realized when the fill event gets executed
         if total_quote_lots_taken > 0 || total_base_lots_taken > 0 {
             if let Some(open_orders_acc) = &mut open_orders_acc {
-                open_orders_acc.fixed.position.add_taker_trade(
-                    side,
-                    total_base_lots_taken,
-                    total_quote_lots_taken,
-                );
-
                 release_funds_fees(
                     side,
                     market,

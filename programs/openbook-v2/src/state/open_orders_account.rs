@@ -131,7 +131,7 @@ const_assert_eq!(
         - size_of::<u64>() * 3
         - size_of::<[u8; 208]>()
 );
-const_assert_eq!(size_of::<OpenOrdersAccountFixed>(), 528);
+const_assert_eq!(size_of::<OpenOrdersAccountFixed>(), 512);
 const_assert_eq!(size_of::<OpenOrdersAccountFixed>() % 8, 0);
 
 impl OpenOrdersAccountFixed {
@@ -473,30 +473,17 @@ impl<
             Side::Bid => {
                 base_change = fill.quantity;
                 quote_change = -fill.price * fill.quantity;
-                // TODO Binye: remove Already done on matching
-                // pa.base_free_lots += base_change;
             }
             Side::Ask => {
                 // remove fee from quote_change
                 base_change = -fill.quantity;
                 quote_change = fill.price * fill.quantity * (1 - market.taker_fee.to_num::<i64>());
-                // TODO Binye remove: Already done on matching
-                // pa.quote_free_lots += quote_change;
             }
         };
 
-        pa.remove_taker_trade(base_change, quote_change);
-
         // fees are assessed at time of trade; no need to assess fees here
         let quote_change_native = I80F48::from(market.quote_lot_size) * I80F48::from(quote_change);
-        msg!(
-            " taker price {}, quantity {}, base_change {}, quote_change {}, quote {}",
-            fill.price,
-            fill.quantity,
-            base_change,
-            quote_change,
-            quote_change_native
-        );
+
         pa.update_trade_stats(base_change, quote_change_native);
 
         pa.taker_volume += quote_change_native.abs().to_num::<u64>();

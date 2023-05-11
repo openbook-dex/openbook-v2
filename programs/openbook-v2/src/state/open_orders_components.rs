@@ -21,11 +21,6 @@ pub struct Position {
     /// Base lots in open asks
     pub asks_base_lots: i64,
 
-    /// Amount of base lots on the EventQueue waiting to be processed
-    pub taker_base_lots: i64,
-    /// Amount of quote lots on the EventQueue waiting to be processed
-    pub taker_quote_lots: i64,
-
     pub base_free_native: I80F48,
     pub quote_free_native: I80F48,
 
@@ -50,9 +45,9 @@ pub struct Position {
 
 const_assert_eq!(
     size_of::<Position>(),
-    8 + 8 + 8 + 2 * size_of::<I80F48>() + 8 + 8 + 8 + 8 + 8 + 8 + 88
+    8 + 2 * size_of::<I80F48>() + 8 + 8 + 8 + 8 + 8 + 8 + 88
 );
-const_assert_eq!(size_of::<Position>(), 192);
+const_assert_eq!(size_of::<Position>(), 176);
 const_assert_eq!(size_of::<Position>() % 8, 0);
 
 impl Default for Position {
@@ -61,8 +56,6 @@ impl Default for Position {
             quote_running_native: 0,
             bids_base_lots: 0,
             asks_base_lots: 0,
-            taker_base_lots: 0,
-            taker_quote_lots: 0,
             base_free_native: I80F48::ZERO,
             quote_free_native: I80F48::ZERO,
             referrer_rebates_accrued: 0,
@@ -75,26 +68,6 @@ impl Default for Position {
 }
 
 impl Position {
-    /// Add taker trade after it has been matched but before it has been process on EventQueue
-    pub fn add_taker_trade(&mut self, side: Side, base_lots: i64, quote_lots: i64) {
-        match side {
-            Side::Bid => {
-                self.taker_base_lots += base_lots;
-                self.taker_quote_lots -= quote_lots;
-            }
-            Side::Ask => {
-                self.taker_base_lots -= base_lots;
-                self.taker_quote_lots += quote_lots;
-            }
-        }
-    }
-
-    /// Remove taker trade after it has been processed on EventQueue
-    pub fn remove_taker_trade(&mut self, base_change: i64, quote_change: i64) {
-        self.taker_base_lots -= base_change;
-        self.taker_quote_lots -= quote_change;
-    }
-
     /// Updates avg entry price, breakeven price, realized pnl, realized pnl limit
     pub fn update_trade_stats(&mut self, _base_change: i64, _quote_change_native: I80F48) {
         // TODO Binye. Replace this with another different event
@@ -157,16 +130,6 @@ impl Position {
     /// false when the fill event is processed or the orders are cancelled.
     pub fn has_open_orders(&self) -> bool {
         self.asks_base_lots != 0 || self.bids_base_lots != 0
-    }
-
-    // Did the user take orders and hasn't been filled yet?
-    pub fn has_open_taker_fills(&self) -> bool {
-        self.taker_base_lots != 0 || self.taker_quote_lots != 0
-    }
-
-    /// Are there any open orders or fills that haven't been processed yet?
-    pub fn has_open_orders_or_fills(&self) -> bool {
-        self.has_open_orders() || self.has_open_taker_fills()
     }
 
     /// Calculate the average entry price of the position, in native/native units

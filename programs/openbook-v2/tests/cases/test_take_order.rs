@@ -119,8 +119,6 @@ async fn test_take_ask_order() -> Result<(), TransportError> {
         assert_eq!(open_orders_account_1.position.bids_base_lots, 0);
         assert_eq!(open_orders_account_0.position.asks_base_lots, 0);
         assert_eq!(open_orders_account_1.position.asks_base_lots, 0);
-        assert_eq!(open_orders_account_0.position.taker_base_lots, 0);
-        assert_eq!(open_orders_account_1.position.taker_quote_lots, 0);
         assert_eq!(open_orders_account_0.position.base_free_native, 0);
         assert_eq!(open_orders_account_1.position.base_free_native, 0);
         assert_eq!(open_orders_account_0.position.quote_free_native, 0);
@@ -153,8 +151,6 @@ async fn test_take_ask_order() -> Result<(), TransportError> {
         assert_eq!(open_orders_account_1.position.bids_base_lots, 0);
         assert_eq!(open_orders_account_0.position.asks_base_lots, 0);
         assert_eq!(open_orders_account_1.position.asks_base_lots, 0);
-        assert_eq!(open_orders_account_0.position.taker_base_lots, 0);
-        assert_eq!(open_orders_account_1.position.taker_quote_lots, 0);
         assert_eq!(open_orders_account_0.position.base_free_native, 100);
         assert_eq!(open_orders_account_1.position.base_free_native, 0);
         assert_eq!(open_orders_account_0.position.quote_free_native.round(), 20);
@@ -313,8 +309,6 @@ async fn test_take_bid_order() -> Result<(), TransportError> {
         assert_eq!(open_orders_account_1.position.bids_base_lots, 0);
         assert_eq!(open_orders_account_0.position.asks_base_lots, 1);
         assert_eq!(open_orders_account_1.position.asks_base_lots, 0);
-        assert_eq!(open_orders_account_0.position.taker_base_lots, 0);
-        assert_eq!(open_orders_account_1.position.taker_quote_lots, 0);
         assert_eq!(open_orders_account_0.position.base_free_native, 0);
         assert_eq!(open_orders_account_1.position.base_free_native, 0);
         assert_eq!(open_orders_account_0.position.quote_free_native, 0);
@@ -351,8 +345,6 @@ async fn test_take_bid_order() -> Result<(), TransportError> {
         assert_eq!(open_orders_account_1.position.bids_base_lots, 0);
         assert_eq!(open_orders_account_0.position.asks_base_lots, 0);
         assert_eq!(open_orders_account_1.position.asks_base_lots, 0);
-        assert_eq!(open_orders_account_0.position.taker_base_lots, 0);
-        assert_eq!(open_orders_account_1.position.taker_quote_lots, 0);
         assert_eq!(open_orders_account_0.position.base_free_native, 0);
         assert_eq!(open_orders_account_1.position.base_free_native, 0);
         assert_eq!(
