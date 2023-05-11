@@ -172,24 +172,6 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
     .await
     .unwrap();
 
-    {
-        let open_orders_account_0 = solana.get_account::<OpenOrdersAccount>(account_0).await;
-        assert_eq!(open_orders_account_0.position.base_position_lots(), 2);
-        assert!(assert_equal(
-            open_orders_account_0.position.quote_position_native(),
-            -20000.0,
-            0.001
-        ));
-
-        let open_orders_account_1 = solana.get_account::<OpenOrdersAccount>(account_1).await;
-        assert_eq!(open_orders_account_1.position.base_position_lots(), -2);
-        assert!(assert_equal(
-            open_orders_account_1.position.quote_position_native(),
-            20000.0,
-            0.001
-        ));
-    }
-
     // TEST: Place a pegged order and check how it behaves with oracle changes
     send_tx(
         solana,

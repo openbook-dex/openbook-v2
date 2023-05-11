@@ -1,14 +1,6 @@
-use crate::state::{Market, MarketIndex, Position};
+use crate::state::MarketIndex;
 use anchor_lang::prelude::*;
 use borsh::BorshSerialize;
-
-pub fn emit_balances(open_orders_acc: Pubkey, p: &Position, _m: &Market) {
-    emit!(BalanceLog {
-        open_orders_acc,
-        base_position: p.base_position_lots(),
-        quote_position: p.quote_position_native().to_bits(),
-    });
-}
 
 #[event]
 pub struct BalanceLog {

@@ -131,7 +131,7 @@ const_assert_eq!(
         - size_of::<u64>() * 3
         - size_of::<[u8; 208]>()
 );
-const_assert_eq!(size_of::<OpenOrdersAccountFixed>(), 552);
+const_assert_eq!(size_of::<OpenOrdersAccountFixed>(), 528);
 const_assert_eq!(size_of::<OpenOrdersAccountFixed>() % 8, 0);
 
 impl OpenOrdersAccountFixed {
@@ -409,8 +409,7 @@ impl<
         };
 
         let pa = &mut self.fixed_mut().position;
-        pa.record_trading_fee(fees);
-        pa.record_trade(market, base_change, quote_native);
+        pa.update_trade_stats(base_change, quote_native);
         pa.maker_volume += quote_native.abs().to_num::<u64>();
 
         msg!(
@@ -498,7 +497,7 @@ impl<
             quote_change,
             quote_change_native
         );
-        pa.record_trade(market, base_change, quote_change_native);
+        pa.update_trade_stats(base_change, quote_change_native);
 
         pa.taker_volume += quote_change_native.abs().to_num::<u64>();
 

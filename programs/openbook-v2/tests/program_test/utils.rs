@@ -2,7 +2,6 @@
 
 use bytemuck::{bytes_of, Contiguous};
 use fixed::types::I80F48;
-use openbook_v2::state::{Market, Position};
 use solana_program::instruction::InstructionError;
 use solana_program::program_error::ProgramError;
 use solana_sdk::pubkey::Pubkey;
@@ -80,13 +79,6 @@ impl Into<Keypair> for &TestKeypair {
     fn into(self) -> Keypair {
         self.to_keypair()
     }
-}
-
-pub fn get_pnl_native(position: &Position, market: &Market, oracle_price: I80F48) -> I80F48 {
-    let contract_size = market.base_lot_size;
-    let new_quote_pos =
-        I80F48::from_num(-position.base_position_lots() * contract_size) * oracle_price;
-    position.quote_position_native() - new_quote_pos
 }
 
 pub fn assert_openbook_error<T>(
