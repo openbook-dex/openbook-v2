@@ -473,15 +473,11 @@ impl<
             Side::Bid => {
                 base_change = fill.quantity;
                 quote_change = -fill.price * fill.quantity;
-                // TODO Binye: remove Already done on matching
-                // pa.base_free_lots += base_change;
             }
             Side::Ask => {
                 // remove fee from quote_change
                 base_change = -fill.quantity;
                 quote_change = fill.price * fill.quantity * (1 - market.taker_fee.to_num::<i64>());
-                // TODO Binye remove: Already done on matching
-                // pa.quote_free_lots += quote_change;
             }
         };
 
