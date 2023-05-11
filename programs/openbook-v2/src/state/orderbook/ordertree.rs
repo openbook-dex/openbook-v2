@@ -133,7 +133,7 @@ impl OrderTreeNodes {
     // only for fixed-price ordertrees
     #[cfg(test)]
     #[allow(dead_code)]
-    fn as_price_quantity_vec(&self, root: &OrderTreeRoot, reverse: bool) -> Vec<(u64, u64)> {
+    fn as_price_quantity_vec(&self, root: &OrderTreeRoot, reverse: bool) -> Vec<(i64, i64)> {
         let mut pqs = vec![];
         let mut current: NodeHandle = match root.node() {
             None => return pqs,
@@ -153,7 +153,10 @@ impl OrderTreeNodes {
                 NodeRef::Leaf(leaf) => {
                     // if you hit leaf then pop stack and go right
                     // all inner nodes on stack have already been visited to the left
-                    pqs.push((fixed_price_lots(leaf.price_data()), leaf.quantity));
+                    pqs.push((
+                        fixed_price_lots(leaf.price_data()),
+                        i64::try_from(leaf.quantity).unwrap(),
+                    ));
                     match stack.pop() {
                         None => return pqs,
                         Some(inner) => {

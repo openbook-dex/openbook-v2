@@ -135,13 +135,13 @@ impl<'a> Orderbook<'a> {
                 break;
             }
 
-            let max_match_by_quote = remaining_quote_lots / best_opposing_price;
+            let max_match_by_quote = remaining_quote_lots / best_opposing_price as u64;
 
             let match_base_lots = remaining_base_lots
                 .min(best_opposing.node.quantity)
                 .min(max_match_by_quote);
 
-            let match_quote_lots = match_base_lots * best_opposing_price;
+            let match_quote_lots = match_base_lots * best_opposing_price as u64;
             remaining_base_lots -= match_base_lots;
             remaining_quote_lots -= match_quote_lots;
 

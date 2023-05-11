@@ -399,7 +399,7 @@ impl<
         //     }
         // }
         let base_change = fill.quantity;
-        let quote_change = fill.price * fill.quantity;
+        let quote_change = fill.price as u64 * fill.quantity;
         // let (base_change, quote_change) = fill.base_quote_change(side);
         let quote_native = I80F48::from(market.quote_lot_size) * I80F48::from(quote_change);
         let fees = quote_native.abs() * I80F48::from_num(market.maker_fee);
@@ -412,7 +412,7 @@ impl<
             let oo = self.order_by_raw_index(fill.maker_slot as usize);
             match oo.side_and_tree().order_tree() {
                 BookSideOrderTree::Fixed => fill.price,
-                BookSideOrderTree::OraclePegged => oo.peg_limit,
+                BookSideOrderTree::OraclePegged => i64::try_from(oo.peg_limit).unwrap(),
             }
         };
 
@@ -431,7 +431,7 @@ impl<
         // Update free_lots
         {
             let base_locked_change = fill.quantity;
-            let quote_locked_change = locked_price * fill.quantity;
+            let quote_locked_change = locked_price as u64 * fill.quantity;
 
             // let (base_locked_change, quote_locked_change): (i64, i64) = match side {
             //     Side::Bid => (fill.quantity, -locked_price * fill.quantity),

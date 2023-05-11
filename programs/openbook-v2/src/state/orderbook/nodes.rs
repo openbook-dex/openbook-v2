@@ -57,16 +57,17 @@ pub fn oracle_pegged_price_offset(price_data: u64) -> i64 {
 /// Creates price data for a fixed order's price
 ///
 /// Reverse of fixed_price_lots()
-pub fn fixed_price_data(price_lots: u64) -> Result<u64> {
+pub fn fixed_price_data(price_lots: i64) -> Result<u64> {
     require_gte!(price_lots, 1);
-    Ok(price_lots)
+    Ok(price_lots as u64)
 }
 
 /// Retrieves the price (in lots) from a fixed order's price data
 ///
 /// Reverse of fixed_price_data().
-pub fn fixed_price_lots(price_data: u64) -> u64 {
-    price_data
+pub fn fixed_price_lots(price_data: u64) -> i64 {
+    assert!(price_data <= i64::MAX as u64);
+    price_data as i64
 }
 
 /// InnerNodes and LeafNodes compose the binary tree of orders.

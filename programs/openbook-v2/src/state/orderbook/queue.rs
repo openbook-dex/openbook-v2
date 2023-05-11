@@ -194,7 +194,7 @@ pub struct FillEvent {
     pub taker_client_order_id: u64,
     pub padding4: [u8; 16],
 
-    pub price: u64,
+    pub price: i64,
     pub quantity: u64, // number of quote lots
     pub maker_client_order_id: u64,
     pub reserved: [u8; 8],
@@ -215,7 +215,7 @@ impl FillEvent {
         maker_timestamp: u64,
         taker: Pubkey,
         taker_client_order_id: u64,
-        price: u64,
+        price: i64,
         quantity: u64,
     ) -> FillEvent {
         Self {

@@ -155,7 +155,7 @@ impl Market {
             / I80F48::from_num(self.base_lot_size)
     }
 
-    pub fn native_price_to_lot(&self, price: I80F48) -> u64 {
+    pub fn native_price_to_lot(&self, price: I80F48) -> i64 {
         (price * I80F48::from_num(self.base_lot_size) / I80F48::from_num(self.quote_lot_size))
             .to_num()
     }

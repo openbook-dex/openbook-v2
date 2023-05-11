@@ -113,7 +113,7 @@ impl Side {
     }
 
     /// Is `lhs` is a better order for `side` than `rhs`?
-    pub fn is_price_better(self: &Side, lhs: u64, rhs: u64) -> bool {
+    pub fn is_price_better(self: &Side, lhs: i64, rhs: i64) -> bool {
         match self {
             Side::Bid => lhs > rhs,
             Side::Ask => lhs < rhs,
@@ -121,7 +121,7 @@ impl Side {
     }
 
     /// Is `price` acceptable for a `limit` order on `side`?
-    pub fn is_price_within_limit(self: &Side, price: u64, limit: u64) -> bool {
+    pub fn is_price_within_limit(self: &Side, price: i64, limit: i64) -> bool {
         match self {
             Side::Bid => price <= limit,
             Side::Ask => price >= limit,

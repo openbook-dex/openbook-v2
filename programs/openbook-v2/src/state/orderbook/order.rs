@@ -93,11 +93,11 @@ impl Order {
     fn price_for_order_type(
         &self,
         now_ts: u64,
-        oracle_price_lots: u64,
-        price_lots: u64,
+        oracle_price_lots: i64,
+        price_lots: i64,
         order_type: PostOrderType,
         order_book: &Orderbook,
-    ) -> u64 {
+    ) -> i64 {
         if order_type == PostOrderType::PostOnlySlide {
             if let Some(best_other_price) = order_book
                 .bookside(self.side.invert_side())
@@ -117,19 +117,19 @@ impl Order {
     pub fn price(
         &self,
         now_ts: u64,
-        oracle_price_lots: u64,
+        oracle_price_lots: i64,
         order_book: &Orderbook,
-    ) -> Result<(u64, u64)> {
+    ) -> Result<(i64, u64)> {
         let price_lots = match self.params {
             OrderParams::Market => market_order_limit_for_side(self.side),
-            OrderParams::ImmediateOrCancel { price_lots } => price_lots,
+            OrderParams::ImmediateOrCancel { price_lots } => i64::try_from(price_lots).unwrap(),
             OrderParams::Fixed {
                 price_lots,
                 order_type,
             } => self.price_for_order_type(
                 now_ts,
                 oracle_price_lots,
-                price_lots,
+                i64::try_from(price_lots).unwrap(),
                 order_type,
                 order_book,
             ),
@@ -138,7 +138,7 @@ impl Order {
                 order_type,
                 ..
             } => {
-                let price_lots = add_i64!(oracle_price_lots, price_offset_lots);
+                let price_lots = oracle_price_lots + price_offset_lots;
                 self.price_for_order_type(
                     now_ts,
                     oracle_price_lots,
@@ -149,9 +149,9 @@ impl Order {
             }
         };
         let price_data = match self.params {
-            OrderParams::OraclePegged { .. } => oracle_pegged_price_data(
-                i64::try_from(price_lots as i128 - oracle_price_lots as i128).unwrap(),
-            ),
+            OrderParams::OraclePegged { .. } => {
+                oracle_pegged_price_data(price_lots - oracle_price_lots)
+            }
             _ => fixed_price_data(price_lots)?,
         };
         require_gte!(price_lots, 1);
@@ -168,16 +168,16 @@ impl Order {
 }
 
 /// The implicit limit price to use for market orders
-fn market_order_limit_for_side(side: Side) -> u64 {
+fn market_order_limit_for_side(side: Side) -> i64 {
     match side {
-        Side::Bid => u64::MAX,
+        Side::Bid => i64::MAX,
         Side::Ask => 1,
     }
 }
 
 /// The limit to use for PostOnlySlide orders: the tinyest bit better than
 /// the best opposing order
-fn post_only_slide_limit(side: Side, best_other_side: u64, limit: u64) -> u64 {
+fn post_only_slide_limit(side: Side, best_other_side: i64, limit: i64) -> i64 {
     match side {
         Side::Bid => limit.min(best_other_side - 1),
         Side::Ask => limit.max(best_other_side + 1),

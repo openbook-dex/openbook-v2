@@ -3,7 +3,7 @@ use super::*;
 pub struct BookSideIterItem<'a> {
     pub handle: BookSideOrderHandle,
     pub node: &'a LeafNode,
-    pub price_lots: u64,
+    pub price_lots: i64,
     pub state: OrderState,
 }
 
@@ -25,11 +25,11 @@ pub struct BookSideIter<'a> {
     fixed_iter: OrderTreeIter<'a>,
     oracle_pegged_iter: OrderTreeIter<'a>,
     now_ts: u64,
-    oracle_price_lots: u64,
+    oracle_price_lots: i64,
 }
 
 impl<'a> BookSideIter<'a> {
-    pub fn new(book_side: &'a BookSide, now_ts: u64, oracle_price_lots: u64) -> Self {
+    pub fn new(book_side: &'a BookSide, now_ts: u64, oracle_price_lots: i64) -> Self {
         Self {
             fixed_iter: book_side
                 .nodes
@@ -56,12 +56,12 @@ pub enum OrderState {
 /// this function returns Skipped and clamps `price` to that range.
 ///
 /// Orders that exceed their peg_limit will have Invalid state.
-fn oracle_pegged_price(oracle_price_lots: u64, node: &LeafNode, side: Side) -> (OrderState, u64) {
+fn oracle_pegged_price(oracle_price_lots: i64, node: &LeafNode, side: Side) -> (OrderState, i64) {
     let price_data = node.price_data();
     let price_offset = oracle_pegged_price_offset(price_data);
-    let price = add_i64!(oracle_price_lots, price_offset);
-    if (1..u64::MAX).contains(&price) {
-        if side.is_price_better(price, node.peg_limit) {
+    let price = oracle_price_lots.saturating_add(price_offset);
+    if (1..i64::MAX).contains(&price) {
+        if side.is_price_better(price, i64::try_from(node.peg_limit).unwrap()) {
             return (OrderState::Invalid, price);
         } else {
             return (OrderState::Valid, price);
@@ -128,7 +128,7 @@ pub fn rank_orders<'a>(
     oracle_pegged: Option<(NodeHandle, &'a LeafNode)>,
     return_worse: bool,
     now_ts: u64,
-    oracle_price_lots: u64,
+    oracle_price_lots: i64,
 ) -> Option<BookSideIterItem<'a>> {
     // Enrich with data that'll always be needed
     let oracle_pegged = oracle_pegged.map(|(handle, node)| {
