@@ -409,7 +409,7 @@ impl<
         };
 
         let pa = &mut self.fixed_mut().position;
-        pa.record_trade(base_change, quote_native);
+        pa.update_trade_stats(base_change, quote_native);
         pa.maker_volume += quote_native.abs().to_num::<u64>();
 
         msg!(
@@ -497,7 +497,7 @@ impl<
             quote_change,
             quote_change_native
         );
-        pa.record_trade(base_change, quote_change_native);
+        pa.update_trade_stats(base_change, quote_change_native);
 
         pa.taker_volume += quote_change_native.abs().to_num::<u64>();
 

@@ -96,7 +96,7 @@ impl Position {
     }
 
     /// Updates avg entry price, breakeven price, realized pnl, realized pnl limit
-    fn update_trade_stats(&mut self, _base_change: i64, _quote_change_native: I80F48) {
+    pub fn update_trade_stats(&mut self, _base_change: i64, _quote_change_native: I80F48) {
         // TODO Binye. Replace this with another different event
         // if base_change == 0 {
         //     return;
@@ -149,10 +149,6 @@ impl Position {
         //         let _avg_entry = I80F48::from_num(self.avg_entry_price_per_base_lot);
         //     }
         // }
-    }
-
-    pub fn record_trade(&mut self, base_change: i64, quote_change_native: I80F48) {
-        self.update_trade_stats(base_change, quote_change_native);
     }
 
     /// Does the user have any orders on the book?
