@@ -13,12 +13,6 @@ pub const FREE_ORDER_SLOT: MarketIndex = MarketIndex::MAX;
 #[derive(AnchorSerialize, AnchorDeserialize, Derivative)]
 #[derivative(Debug)]
 pub struct Position {
-    // TODO Binye To be deleted?
-    /// Currenlty not being used
-    pub base_position_lots: i64,
-    /// Currenlty not being used
-    pub quote_position_native: I80F48,
-
     /// Tracks what the position is to calculate average entry & break even price
     pub quote_running_native: i64,
 
@@ -56,16 +50,14 @@ pub struct Position {
 
 const_assert_eq!(
     size_of::<Position>(),
-    8 + 16 + 8 + 8 + 8 + 2 * size_of::<I80F48>() + 8 + 8 + 8 + 8 + 8 + 8 + 88
+    8 + 8 + 8 + 2 * size_of::<I80F48>() + 8 + 8 + 8 + 8 + 8 + 8 + 88
 );
-const_assert_eq!(size_of::<Position>(), 216);
+const_assert_eq!(size_of::<Position>(), 192);
 const_assert_eq!(size_of::<Position>() % 8, 0);
 
 impl Default for Position {
     fn default() -> Self {
         Self {
-            base_position_lots: 0,
-            quote_position_native: I80F48::ZERO,
             quote_running_native: 0,
             bids_base_lots: 0,
             asks_base_lots: 0,
@@ -101,29 +93,6 @@ impl Position {
     pub fn remove_taker_trade(&mut self, base_change: i64, quote_change: i64) {
         self.taker_base_lots -= base_change;
         self.taker_quote_lots -= quote_change;
-    }
-
-    // Return base position in native units for a perp market
-    pub fn base_position_native(&self, market: &Market) -> I80F48 {
-        I80F48::from(self.base_position_lots * market.base_lot_size)
-    }
-
-    pub fn base_position_lots(&self) -> i64 {
-        self.base_position_lots
-    }
-
-    // This takes into account base lots from unprocessed events, but not anything from open orders
-    pub fn effective_base_position_lots(&self) -> i64 {
-        self.base_position_lots + self.taker_base_lots
-    }
-
-    pub fn quote_position_native(&self) -> I80F48 {
-        self.quote_position_native
-    }
-
-    /// This assumes settle_funding was already called
-    pub fn change_base_position(&mut self, base_change: i64) {
-        self.base_position_lots += base_change;
     }
 
     /// Updates avg entry price, breakeven price, realized pnl, realized pnl limit
