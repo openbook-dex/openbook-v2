@@ -23,7 +23,7 @@ use super::{BookSideOrderTree, Position};
 type BorshVecLength = u32;
 const BORSH_VEC_PADDING_BYTES: usize = 4;
 const BORSH_VEC_SIZE_BYTES: usize = 4;
-const DEFAULT_MANGO_ACCOUNT_VERSION: u8 = 1;
+const DEFAULT_OPEN_ORDERS_ACCOUNT_VERSION: u8 = 1;
 
 // OpenOrdersAccount
 // This struct definition is only for clients e.g. typescript, so that they can easily use out of the box
@@ -77,7 +77,7 @@ impl OpenOrdersAccount {
             buyback_fees_accrued_previous: 0,
             buyback_fees_expiry_timestamp: 0,
             reserved: [0; 208],
-            header_version: DEFAULT_MANGO_ACCOUNT_VERSION,
+            header_version: DEFAULT_OPEN_ORDERS_ACCOUNT_VERSION,
             padding3: Default::default(),
             padding4: Default::default(),
             position: Position::default(),
@@ -228,7 +228,7 @@ impl DynamicHeader for OpenOrdersAccountDynamicHeader {
 
     fn initialize(dynamic_data: &mut [u8]) -> Result<()> {
         let dst: &mut [u8] = &mut dynamic_data[0..1];
-        dst.copy_from_slice(&DEFAULT_MANGO_ACCOUNT_VERSION.to_le_bytes());
+        dst.copy_from_slice(&DEFAULT_OPEN_ORDERS_ACCOUNT_VERSION.to_le_bytes());
         Ok(())
     }
 }

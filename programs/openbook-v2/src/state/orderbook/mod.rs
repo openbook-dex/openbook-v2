@@ -560,8 +560,8 @@ mod queue;
 //                              max_base_lots: i64,
 //                              max_quote_lots: i64|
 //          -> u128 {
-//             let buffer = MangoAccount::default_for_tests().try_to_vec().unwrap();
-//             let mut account = MangoAccountValue::from_bytes(&buffer).unwrap();
+//             let buffer = OpenOrdersAccount::default_for_tests().try_to_vec().unwrap();
+//             let mut account = OpenOrdersAccountValue::from_bytes(&buffer).unwrap();
 //             account
 //                 .ensure_position(market.market_index, settle_token_index)
 //                 .unwrap();
