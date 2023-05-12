@@ -77,7 +77,7 @@ async fn test_inmediate_order() -> Result<(), TransportError> {
             price_lots,
             max_base_lots: 1,
             max_quote_lots_including_fees: 10000,
-            reduce_only: false,
+
             client_order_id: 0,
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
@@ -102,7 +102,7 @@ async fn test_inmediate_order() -> Result<(), TransportError> {
             price_lots,
             max_base_lots: 2,
             max_quote_lots_including_fees: 20000,
-            reduce_only: false,
+
             client_order_id: 0,
             expiry_timestamp: 0,
             order_type: PlaceOrderType::ImmediateOrCancel,
@@ -198,7 +198,7 @@ async fn test_inmediate_order() -> Result<(), TransportError> {
             price_lots,
             max_base_lots: 1,
             max_quote_lots_including_fees: 10000,
-            reduce_only: false,
+
             client_order_id: 0,
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
@@ -224,7 +224,7 @@ async fn test_inmediate_order() -> Result<(), TransportError> {
             price_lots,
             max_base_lots: 1,
             max_quote_lots_including_fees: 10000,
-            reduce_only: false,
+
             client_order_id: 0,
             expiry_timestamp: 0,
             order_type: PlaceOrderType::PostOnly,
@@ -269,7 +269,7 @@ async fn test_inmediate_order() -> Result<(), TransportError> {
     //         price_lots: price_lots_2,
     //         max_base_lots: 1,
     //         max_quote_lots_including_fees: 10000,
-    //         reduce_only: false,
+    //
     //         client_order_id: 0,
     //         expiry_timestamp: 0,
     //         order_type: PlaceOrderType::PostOnly,
@@ -313,7 +313,7 @@ async fn test_inmediate_order() -> Result<(), TransportError> {
             price_lots,
             max_base_lots: 1,
             max_quote_lots_including_fees: 10040,
-            reduce_only: false,
+
             client_order_id: 0,
             expiry_timestamp: 0,
             order_type: PlaceOrderType::PostOnlySlide,

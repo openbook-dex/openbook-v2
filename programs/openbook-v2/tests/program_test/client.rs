@@ -323,7 +323,6 @@ pub struct PlaceOrderInstruction {
     pub price_lots: i64,
     pub max_base_lots: i64,
     pub max_quote_lots_including_fees: i64,
-    pub reduce_only: bool,
     pub client_order_id: u64,
     pub expiry_timestamp: u64,
     pub order_type: PlaceOrderType,
@@ -344,7 +343,6 @@ impl ClientInstruction for PlaceOrderInstruction {
             max_quote_lots_including_fees: self.max_quote_lots_including_fees,
             client_order_id: self.client_order_id,
             order_type: self.order_type,
-            reduce_only: self.reduce_only,
             expiry_timestamp: self.expiry_timestamp,
             limit: 10,
         };
@@ -406,7 +404,7 @@ impl ClientInstruction for PlaceOrderPeggedInstruction {
             max_quote_lots_including_fees: self.max_quote_lots_including_fees,
             client_order_id: self.client_order_id,
             order_type: PlaceOrderType::Limit,
-            reduce_only: false,
+
             expiry_timestamp: 0,
             limit: 10,
             max_oracle_staleness_slots: -1,
@@ -449,7 +447,6 @@ pub struct PlaceTakeOrderInstruction {
     pub price_lots: i64,
     pub max_base_lots: i64,
     pub max_quote_lots_including_fees: i64,
-    pub reduce_only: bool,
     pub client_order_id: u64,
     pub expiry_timestamp: u64,
     pub referrer: Option<Pubkey>,
@@ -470,7 +467,6 @@ impl ClientInstruction for PlaceTakeOrderInstruction {
             max_quote_lots_including_fees: self.max_quote_lots_including_fees,
             client_order_id: self.client_order_id,
             order_type: PlaceOrderType::ImmediateOrCancel,
-            reduce_only: self.reduce_only,
             limit: 10,
         };
 

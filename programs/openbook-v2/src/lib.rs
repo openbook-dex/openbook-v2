@@ -94,7 +94,6 @@ pub mod openbook_v2 {
         max_quote_lots_including_fees: i64,
         client_order_id: u64,
         order_type: PlaceOrderType,
-        reduce_only: bool,
         expiry_timestamp: u64,
         limit: u8,
     ) -> Result<Option<u128>> {
@@ -113,7 +112,6 @@ pub mod openbook_v2 {
             max_base_lots,
             max_quote_lots_including_fees,
             client_order_id,
-            reduce_only,
             time_in_force,
             params: match order_type {
                 PlaceOrderType::Market => OrderParams::Market,
@@ -149,7 +147,6 @@ pub mod openbook_v2 {
         max_quote_lots_including_fees: i64,
         client_order_id: u64,
         order_type: PlaceOrderType,
-        reduce_only: bool,
 
         // Timestamp of when order expires
         //
@@ -185,7 +182,6 @@ pub mod openbook_v2 {
             max_base_lots,
             max_quote_lots_including_fees,
             client_order_id,
-            reduce_only,
             time_in_force,
             params: OrderParams::OraclePegged {
                 price_offset_lots,
@@ -214,7 +210,6 @@ pub mod openbook_v2 {
         max_quote_lots_including_fees: i64,
         client_order_id: u64,
         order_type: PlaceOrderType,
-        reduce_only: bool,
         limit: u8,
     ) -> Result<Option<u128>> {
         require_gte!(price_lots, 0);
@@ -229,7 +224,6 @@ pub mod openbook_v2 {
             max_base_lots,
             max_quote_lots_including_fees,
             client_order_id,
-            reduce_only,
             time_in_force: 0,
             params: match order_type {
                 PlaceOrderType::Market => OrderParams::Market,
