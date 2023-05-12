@@ -133,7 +133,6 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
             price_lots,
             max_base_lots: 1,
             max_quote_lots_including_fees: 100_000,
-            reduce_only: false,
             client_order_id: 6,
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
@@ -207,7 +206,7 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
             price_lots,
             max_base_lots: 1,
             max_quote_lots_including_fees: 100_000,
-            reduce_only: false,
+
             client_order_id: 60,
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
@@ -242,7 +241,7 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
             price_lots,
             max_base_lots: 2,
             max_quote_lots_including_fees: 100_000,
-            reduce_only: false,
+
             client_order_id: 61,
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
@@ -300,7 +299,7 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
             price_lots: price_lots + 2,
             max_base_lots: 1,
             max_quote_lots_including_fees: 100_000,
-            reduce_only: false,
+
             client_order_id: 62,
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
@@ -335,7 +334,7 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
             price_lots: price_lots + 3,
             max_base_lots: 1,
             max_quote_lots_including_fees: 100_000,
-            reduce_only: false,
+
             client_order_id: 63,
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,

@@ -77,7 +77,7 @@ async fn test_take_ask_order() -> Result<(), TransportError> {
             price_lots,
             max_base_lots: 1,
             max_quote_lots_including_fees: 10000,
-            reduce_only: false,
+
             client_order_id: 0,
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
@@ -102,7 +102,7 @@ async fn test_take_ask_order() -> Result<(), TransportError> {
             price_lots,
             max_base_lots: 1,
             max_quote_lots_including_fees: 10000,
-            reduce_only: false,
+
             client_order_id: 0,
             expiry_timestamp: 0,
             referrer: None,
@@ -262,7 +262,7 @@ async fn test_take_bid_order() -> Result<(), TransportError> {
             price_lots,
             max_base_lots: 1,
             max_quote_lots_including_fees: 10000,
-            reduce_only: false,
+
             client_order_id: 0,
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
@@ -292,7 +292,7 @@ async fn test_take_bid_order() -> Result<(), TransportError> {
             price_lots,
             max_base_lots: 1,
             max_quote_lots_including_fees: 10040,
-            reduce_only: false,
+
             client_order_id: 0,
             expiry_timestamp: 0,
             referrer: Some(admin_token_1),

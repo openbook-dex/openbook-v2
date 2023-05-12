@@ -16,9 +16,6 @@ pub struct Order {
     /// Arbitrary user-controlled order id.
     pub client_order_id: u64,
 
-    /// Reduce only
-    pub reduce_only: bool,
-
     /// Number of seconds the order shall live, 0 meaning forever
     pub time_in_force: u16,
 

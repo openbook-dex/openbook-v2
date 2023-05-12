@@ -109,7 +109,7 @@ async fn test_simple_settle() -> Result<(), TransportError> {
             price_lots,
             max_base_lots: 1,
             max_quote_lots_including_fees: 10000,
-            reduce_only: false,
+
             client_order_id: 0,
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
@@ -131,7 +131,7 @@ async fn test_simple_settle() -> Result<(), TransportError> {
             price_lots,
             max_base_lots: 1,
             max_quote_lots_including_fees: 10000,
-            reduce_only: false,
+
             client_order_id: 0,
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
@@ -327,7 +327,7 @@ async fn test_cancel_orders() -> Result<(), TransportError> {
             price_lots,
             max_base_lots: 1,
             max_quote_lots_including_fees: 10000,
-            reduce_only: false,
+
             client_order_id: 0,
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
@@ -349,7 +349,7 @@ async fn test_cancel_orders() -> Result<(), TransportError> {
             price_lots,
             max_base_lots: 1,
             max_quote_lots_including_fees: 10000,
-            reduce_only: false,
+
             client_order_id: 0,
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
@@ -441,7 +441,7 @@ async fn test_cancel_orders() -> Result<(), TransportError> {
             price_lots,
             max_base_lots: 1,
             max_quote_lots_including_fees: 10000,
-            reduce_only: false,
+
             client_order_id: 0,
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
@@ -537,7 +537,7 @@ async fn test_cancel_orders() -> Result<(), TransportError> {
             price_lots,
             max_base_lots: 1,
             max_quote_lots_including_fees: 10000,
-            reduce_only: false,
+
             client_order_id: 0,
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
@@ -661,7 +661,7 @@ async fn test_expired_orders() -> Result<(), TransportError> {
             price_lots,
             max_base_lots: 1,
             max_quote_lots_including_fees: 10000,
-            reduce_only: false,
+
             client_order_id: 0,
             expiry_timestamp: now_ts + 2,
             order_type: PlaceOrderType::Limit,
@@ -695,7 +695,7 @@ async fn test_expired_orders() -> Result<(), TransportError> {
             price_lots,
             max_base_lots: 1,
             max_quote_lots_including_fees: 10000,
-            reduce_only: false,
+
             client_order_id: 0,
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
