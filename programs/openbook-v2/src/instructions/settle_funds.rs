@@ -7,7 +7,7 @@ use crate::state::*;
 
 pub fn settle_funds<'info>(ctx: Context<'_, '_, '_, 'info, SettleFunds<'info>>) -> Result<()> {
     let mut open_orders_account = ctx.accounts.open_orders_account.load_full_mut()?;
-    let mut position = &mut open_orders_account.fixed_mut().position;
+    let position = &mut open_orders_account.fixed_mut().position;
     let mut market = ctx.accounts.market.load_mut()?;
 
     if ctx.remaining_accounts.is_empty() {

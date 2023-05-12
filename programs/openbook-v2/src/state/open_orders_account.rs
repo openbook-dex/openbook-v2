@@ -463,7 +463,7 @@ impl<
     }
 
     pub fn execute_taker(&mut self, market: &mut Market, fill: &FillEvent) -> Result<()> {
-        let mut pa = &mut self.fixed_mut().position;
+        let pa = &mut self.fixed_mut().position;
 
         // Replicate the base_quote_change function but substracting the fees for an Ask
         // let (base_change, quote_change) = fill.base_quote_change(fill.taker_side());
@@ -542,7 +542,7 @@ impl<
         client_order_id: u64,
         peg_limit: i64,
     ) -> Result<()> {
-        let mut position = &mut self.fixed_mut().position;
+        let position = &mut self.fixed_mut().position;
         match side {
             Side::Bid => {
                 position.bids_base_lots += order.quantity;
@@ -553,7 +553,7 @@ impl<
         };
         let slot = order.owner_slot as usize;
 
-        let mut oo = self.open_order_mut_by_raw_index(slot);
+        let oo = self.open_order_mut_by_raw_index(slot);
         oo.side_and_tree = SideAndOrderTree::new(side, order_tree).into();
         oo.id = order.key;
         oo.client_id = client_order_id;
@@ -567,7 +567,7 @@ impl<
             require_neq!(oo.id, 0);
 
             let order_side = oo.side_and_tree().side();
-            let mut position = &mut self.fixed_mut().position;
+            let position = &mut self.fixed_mut().position;
 
             // accounting
             match order_side {
