@@ -401,7 +401,13 @@ impl<
                     pa.quote_free_native += fees;
                 }
                 Side::Ask => {
-                    pa.quote_free_native += quote_to_free.abs() + fees;
+                    let maker_fees = if market.maker_fee.is_positive() {
+                        I80F48::from(quote_locked_change) * market.maker_fee
+                    } else {
+                        I80F48::ZERO
+                    };
+
+                    pa.quote_free_native += quote_to_free.abs() + fees - maker_fees;
                 }
             };
         }

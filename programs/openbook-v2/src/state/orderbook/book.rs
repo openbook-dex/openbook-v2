@@ -24,6 +24,7 @@ pub struct OrderWithAmounts {
     pub placed_quantity: i64,
     pub total_base_taken_native: I80F48,
     pub total_quote_taken_native: I80F48,
+    pub maker_fees: I80F48,
     pub referrer_amount: u64,
 }
 
@@ -234,39 +235,33 @@ impl<'a> Orderbook<'a> {
         //
 
         // If there are still quantity unmatched, place on the book
-        let mut book_base_quantity_lots =
-            remaining_base_lots.min(remaining_quote_lots / price_lots);
+        let book_base_quantity_lots = remaining_base_lots.min(remaining_quote_lots / price_lots);
 
         if book_base_quantity_lots <= 0 {
             post_target = None;
         }
 
+        let mut maker_fees = I80F48::ZERO;
+
         if let Some(order_tree_target) = post_target {
             let mut open_orders_acc = open_orders_acc.unwrap();
 
-            // Substract fees. Orders in book don't contain fees
+            // Substract maker fees in bid.
             if market.maker_fee.is_positive() {
-                let before_fees = remaining_quote_lots;
-                remaining_quote_lots = market.substract_maker_fees(remaining_quote_lots);
-
-                // let book_quote_quantity_lots =
-                //     I80F48::from_num(book_base_quantity_lots) * I80F48::from_num(price_data);
-                // let fees = book_quote_quantity_lots * market.maker_fee;
-                // book_base_quantity_lots -= (fees / I80F48::from_num(price_data)).to_num::<i64>();
-
-                // Update referrer rebates
-                // open_orders_acc.fixed.position.referrer_rebates_accrued +=
-                //     (fees * I80F48::from_num(market.quote_lot_size)).to_num::<u64>();
-                // market.referrer_rebates_accrued +=
-                //     (fees * I80F48::from_num(market.quote_lot_size)).to_num::<u64>();
-
-                open_orders_acc.fixed.position.referrer_rebates_accrued +=
-                    (before_fees - remaining_quote_lots) as u64;
-                market.referrer_rebates_accrued += (before_fees - remaining_quote_lots) as u64;
+                match side {
+                    Side::Bid => {
+                        let book_quote_quantity_lots = book_base_quantity_lots * price_lots;
+                        maker_fees = I80F48::from_num(book_quote_quantity_lots)
+                            * market.maker_fee
+                            * I80F48::from_num(market.quote_lot_size);
+                        // Apply rebates
+                        open_orders_acc.fixed.position.referrer_rebates_accrued +=
+                            maker_fees.to_num::<u64>();
+                        market.referrer_rebates_accrued += maker_fees.to_num::<u64>();
+                    }
+                    Side::Ask => {}
+                };
             }
-
-            let mut book_base_quantity_lots =
-                remaining_base_lots.min(remaining_quote_lots / price_lots);
 
             let bookside = self.bookside_mut(side);
             // Drop an expired order if possible
@@ -350,6 +345,7 @@ impl<'a> Orderbook<'a> {
                 total_base_taken_native: amount,
                 total_quote_taken_native,
                 referrer_amount,
+                maker_fees,
             })
         } else {
             Ok(OrderWithAmounts {
@@ -359,6 +355,7 @@ impl<'a> Orderbook<'a> {
                     * I80F48::from_num(market.base_lot_size),
                 total_quote_taken_native,
                 referrer_amount,
+                maker_fees,
             })
         }
     }

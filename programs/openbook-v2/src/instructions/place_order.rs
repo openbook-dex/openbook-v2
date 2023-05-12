@@ -50,6 +50,7 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<
         total_base_taken_native,
         total_quote_taken_native,
         placed_quantity,
+        maker_fees,
         ..
     } = book.new_order(
         &order,
@@ -81,6 +82,7 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<
                             + I80F48::from_num(placed_quantity)
                                 * I80F48::from_num(market.quote_lot_size)
                                 * price
+                            + maker_fees
                     }
                 }
                 OrderParams::OraclePegged {
