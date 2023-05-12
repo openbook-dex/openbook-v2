@@ -235,7 +235,13 @@ impl<'a> Orderbook<'a> {
         //
 
         // If there are still quantity unmatched, place on the book
-        let book_base_quantity_lots = remaining_base_lots.min(remaining_quote_lots / price_lots);
+        let book_base_quantity_lots = if market.maker_fee.is_positive() {
+            // Substract fees
+            remaining_quote_lots -= remaining_quote_lots * market.maker_fee.to_num::<i64>();
+            remaining_base_lots.min(remaining_quote_lots / price_lots)
+        } else {
+            remaining_base_lots.min(remaining_quote_lots / price_lots)
+        };
 
         if book_base_quantity_lots <= 0 {
             post_target = None;
