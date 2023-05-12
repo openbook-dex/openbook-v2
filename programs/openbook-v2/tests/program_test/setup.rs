@@ -64,7 +64,7 @@ pub async fn create_funded_account(
     account_num: u32,
     payer: &UserCookie,
 ) -> Pubkey {
-    let account = send_tx(
+    send_tx(
         solana,
         InitOpenOrdersInstruction {
             account_num,
@@ -76,6 +76,5 @@ pub async fn create_funded_account(
     )
     .await
     .unwrap()
-    .open_orders_account;
-    account
+    .open_orders_account
 }
