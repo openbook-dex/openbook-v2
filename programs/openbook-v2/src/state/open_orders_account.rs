@@ -559,20 +559,27 @@ impl<
                 BookSideOrderTree::OraclePegged => oo.peg_limit,
             };
 
-            let base_quantity_native = base_quantity * market.base_lot_size;
-            let quote_quantity_native =
-                base_quantity.checked_mul(price).unwrap() * market.quote_lot_size;
+            let mut base_quantity_native = I80F48::from_num(base_quantity * market.base_lot_size);
+            let mut quote_quantity_native =
+                I80F48::from_num(base_quantity.checked_mul(price).unwrap() * market.quote_lot_size);
             let order_side = oo.side_and_tree().side();
 
             let position = &mut self.fixed_mut().position;
 
+            // If maker fees, give back fees to user
+            if market.maker_fee.is_positive() {
+                let fees = I80F48::from_num(quote_quantity_native) * market.maker_fee;
+                quote_quantity_native += fees;
+                base_quantity_native += fees / I80F48::from_num(price);
+            }
+
             // accounting
             match order_side {
                 Side::Bid => {
-                    position.quote_free_native += I80F48::from_num(quote_quantity_native);
+                    position.quote_free_native += quote_quantity_native;
                 }
                 Side::Ask => {
-                    position.base_free_native += I80F48::from_num(base_quantity_native);
+                    position.base_free_native += base_quantity_native;
                 }
             }
         }
