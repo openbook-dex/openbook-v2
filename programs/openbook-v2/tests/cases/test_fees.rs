@@ -40,7 +40,7 @@ async fn test_fees_acrued() -> Result<(), TransportError> {
             market_index: 1,
             quote_lot_size: 10,
             base_lot_size: 100,
-            maker_fee: 0.0001,
+            maker_fee: -0.0001,
             taker_fee: 0.0002, // 2bps
             base_mint: mints[0].pubkey,
             quote_mint: mints[1].pubkey,
