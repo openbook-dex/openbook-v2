@@ -246,17 +246,27 @@ impl<'a> Orderbook<'a> {
 
             // Substract fees. Orders in book don't contain fees
             if market.maker_fee.is_positive() {
-                let book_quote_quantity_lots =
-                    I80F48::from_num(book_base_quantity_lots) * I80F48::from_num(price_data);
-                let fees = book_quote_quantity_lots * market.maker_fee;
-                book_base_quantity_lots -= (fees / I80F48::from_num(price_data)).to_num::<i64>();
+                let before_fees = remaining_quote_lots;
+                remaining_quote_lots = market.substract_maker_fees(remaining_quote_lots);
+
+                // let book_quote_quantity_lots =
+                //     I80F48::from_num(book_base_quantity_lots) * I80F48::from_num(price_data);
+                // let fees = book_quote_quantity_lots * market.maker_fee;
+                // book_base_quantity_lots -= (fees / I80F48::from_num(price_data)).to_num::<i64>();
 
                 // Update referrer rebates
+                // open_orders_acc.fixed.position.referrer_rebates_accrued +=
+                //     (fees * I80F48::from_num(market.quote_lot_size)).to_num::<u64>();
+                // market.referrer_rebates_accrued +=
+                //     (fees * I80F48::from_num(market.quote_lot_size)).to_num::<u64>();
+
                 open_orders_acc.fixed.position.referrer_rebates_accrued +=
-                    (fees * I80F48::from_num(market.quote_lot_size)).to_num::<u64>();
-                market.referrer_rebates_accrued +=
-                    (fees * I80F48::from_num(market.quote_lot_size)).to_num::<u64>();
+                    (before_fees - remaining_quote_lots) as u64;
+                market.referrer_rebates_accrued += (before_fees - remaining_quote_lots) as u64;
             }
+
+            let mut book_base_quantity_lots =
+                remaining_base_lots.min(remaining_quote_lots / price_lots);
 
             let bookside = self.bookside_mut(side);
             // Drop an expired order if possible
@@ -308,7 +318,7 @@ impl<'a> Orderbook<'a> {
 
             // TODO OPT remove if PlaceOrder needs more compute
             msg!(
-                "{} on book order_id={} quantity={} price={}",
+                "{} on book order_id={} quantity={} price_lots={}",
                 match side {
                     Side::Bid => "bid",
                     Side::Ask => "ask",
