@@ -181,7 +181,7 @@ impl<'a> Orderbook<'a> {
         assert!(total_quote_lots_taken >= 0);
         assert!(total_base_lots_taken >= 0);
 
-        let mut total_base_taken_native: Option<I80F48> = None;
+        let mut total_base_taken_native = I80F48::ZERO;
 
         // Record the taker trade in the account already, even though it will only be
         // realized when the fill event gets executed
@@ -204,12 +204,12 @@ impl<'a> Orderbook<'a> {
                 Side::Bid => total_quote_taken_native * (I80F48::ONE + market.taker_fee),
                 Side::Ask => total_quote_taken_native * (I80F48::ONE - market.taker_fee),
             };
-        } else {
-            // // IOC orders have a fee penalty applied if not match to avoid spam
-            if order.needs_penalty_fee() {
-                total_base_taken_native =
-                    Some(apply_penalty(market)? / I80F48::from_num(market.quote_lot_size));
-            }
+
+            total_base_taken_native =
+                I80F48::from_num(total_base_lots_taken) * I80F48::from_num(market.base_lot_size);
+        } else if order.needs_penalty_fee() {
+            // IOC orders have a fee penalty applied if not match to avoid spam
+            total_base_taken_native = apply_penalty(market);
         }
 
         // Update remaining based on quote_lots taken. If nothing taken, same as the beggining
@@ -340,26 +340,14 @@ impl<'a> Orderbook<'a> {
             None
         };
 
-        if let Some(amount) = total_base_taken_native {
-            Ok(OrderWithAmounts {
-                order_id: placed_order_id,
-                placed_quantity: book_base_quantity_lots,
-                total_base_taken_native: amount,
-                total_quote_taken_native,
-                referrer_amount,
-                maker_fees,
-            })
-        } else {
-            Ok(OrderWithAmounts {
-                order_id: placed_order_id,
-                placed_quantity: book_base_quantity_lots,
-                total_base_taken_native: I80F48::from_num(total_base_lots_taken)
-                    * I80F48::from_num(market.base_lot_size),
-                total_quote_taken_native,
-                referrer_amount,
-                maker_fees,
-            })
-        }
+        Ok(OrderWithAmounts {
+            order_id: placed_order_id,
+            placed_quantity: book_base_quantity_lots,
+            total_base_taken_native,
+            total_quote_taken_native,
+            referrer_amount,
+            maker_fees,
+        })
     }
 
     /// Cancels up to `limit` orders that are listed on the openorders account for the given market.
@@ -469,8 +457,8 @@ fn release_funds_fees(
 
 /// Applies a fixed penalty fee to the account, and update the market's fees_accrued
 /// TODO Binye the implementation isn't correct as this is not used for now
-fn apply_penalty(market: &mut Market) -> Result<I80F48> {
+fn apply_penalty(market: &mut Market) -> I80F48 {
     let fee_penalty = I80F48::from_num(market.fee_penalty);
     market.fees_accrued += fee_penalty;
-    Ok(fee_penalty)
+    fee_penalty
 }
