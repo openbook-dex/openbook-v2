@@ -410,6 +410,13 @@ impl<
                     pa.quote_free_native += quote_to_free.abs() + fees - maker_fees;
                 }
             };
+
+            if market.maker_fee.is_positive() {
+                // Apply rebates
+                let maker_fees = quote_to_free * market.maker_fee;
+                pa.referrer_rebates_accrued += maker_fees.to_num::<u64>();
+                market.referrer_rebates_accrued += maker_fees.to_num::<u64>();
+            }
         }
         if fill.maker_out() {
             self.remove_order(fill.maker_slot as usize, base_change.abs())?;

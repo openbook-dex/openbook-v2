@@ -263,10 +263,6 @@ impl<'a> Orderbook<'a> {
                 maker_fees = I80F48::from_num(book_quote_quantity_lots)
                     * market.maker_fee
                     * I80F48::from_num(market.quote_lot_size);
-                // Apply rebates
-                open_orders_acc.fixed.position.referrer_rebates_accrued +=
-                    maker_fees.to_num::<u64>();
-                market.referrer_rebates_accrued += maker_fees.to_num::<u64>();
             }
 
             let bookside = self.bookside_mut(side);
