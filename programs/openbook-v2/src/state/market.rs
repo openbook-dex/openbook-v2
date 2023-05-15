@@ -67,9 +67,11 @@ pub struct Market {
     pub registration_time: u64,
 
     /// Fees
-    /// Fee when matching maker orders. May be negative.
+    /// Fee when matching maker orders.
+    /// maker_fee < 0 it means some of the taker_fees goes to the maker
+    /// maker_fee > 0, it means no taker_fee to the maker, and maker fee goes to the referral
     pub maker_fee: I80F48,
-    /// Fee for taker orders, may not be negative.
+    /// Fee for taker orders, always >= 0.
     pub taker_fee: I80F48,
 
     /// Fees accrued in native quote currency
@@ -226,9 +228,26 @@ impl Market {
     pub fn substract_taker_fees(&self, quote: i64) -> i64 {
         (I80F48::from(quote) / (I80F48::ONE + self.taker_fee)).to_num()
     }
+    // Only for maker_fee > 0
+    pub fn substract_maker_fees(&self, quote: i64) -> i64 {
+        (I80F48::from(quote) / (I80F48::ONE + self.maker_fee)).to_num()
+    }
 
-    pub fn referrer_rebate(&self, quote: I80F48) -> i64 {
-        (quote * (self.taker_fee - self.maker_fee)).to_num()
+    pub fn referrer_taker_rebate(&self, quote: I80F48) -> i64 {
+        if self.maker_fee < 0 {
+            (quote * (self.taker_fee + self.maker_fee)).to_num()
+        } else {
+            // Nothing goes to maker, all to referrer
+            (quote * self.taker_fee).to_num()
+        }
+    }
+
+    pub fn referrer_maker_rebate(&self, quote: I80F48) -> i64 {
+        if self.maker_fee > 0 {
+            (quote * self.maker_fee).to_num()
+        } else {
+            0
+        }
     }
 }
 

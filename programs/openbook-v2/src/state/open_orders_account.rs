@@ -148,44 +148,6 @@ impl OpenOrdersAccountFixed {
     pub fn is_delegate(&self, ix_signer: Pubkey) -> bool {
         self.delegate == ix_signer
     }
-
-    // TODO Binye remove this code
-    /// Updates the buyback_fees_* fields for staggered expiry of available amounts.
-    pub fn expire_buyback_fees(&mut self, now_ts: u64, interval: u64) {
-        if interval == 0 || now_ts < self.buyback_fees_expiry_timestamp {
-            return;
-        } else if now_ts < self.buyback_fees_expiry_timestamp + interval {
-            self.buyback_fees_accrued_previous = self.buyback_fees_accrued_current;
-        } else {
-            self.buyback_fees_accrued_previous = 0;
-        }
-        self.buyback_fees_accrued_current = 0;
-        self.buyback_fees_expiry_timestamp = (now_ts / interval + 1) * interval;
-    }
-
-    /// The total buyback fees amount that the account can make use of.
-    pub fn buyback_fees_accrued(&self) -> u64 {
-        self.buyback_fees_accrued_current
-            .saturating_add(self.buyback_fees_accrued_previous)
-    }
-
-    /// Add new fees that are usable with the buyback fees feature.
-    pub fn accrue_buyback_fees(&mut self, amount: u64) {
-        self.buyback_fees_accrued_current =
-            self.buyback_fees_accrued_current.saturating_add(amount);
-    }
-
-    /// Reduce the available buyback fees amount because it was used up.
-    pub fn reduce_buyback_fees_accrued(&mut self, amount: u64) {
-        if amount > self.buyback_fees_accrued_previous {
-            self.buyback_fees_accrued_current = self
-                .buyback_fees_accrued_current
-                .saturating_sub(amount - self.buyback_fees_accrued_previous);
-            self.buyback_fees_accrued_previous = 0;
-        } else {
-            self.buyback_fees_accrued_previous -= amount;
-        }
-    }
 }
 
 impl Owner for OpenOrdersAccountFixed {
@@ -394,11 +356,12 @@ impl<
         let side = fill.taker_side().invert_side();
         let (base_change, quote_change) = fill.base_quote_change(side);
         let quote_native = I80F48::from(market.quote_lot_size) * I80F48::from(quote_change);
-        let fees = quote_native.abs() * I80F48::from_num(market.maker_fee);
-        if fees.is_positive() {
-            self.fixed_mut()
-                .accrue_buyback_fees(fees.floor().to_num::<u64>());
-        }
+        let fees = if market.maker_fee.is_positive() {
+            // Maker pays fee. Fees already substracted before sending to the book
+            I80F48::ZERO
+        } else {
+            (quote_native * market.maker_fee).abs()
+        };
 
         let locked_price = {
             let oo = self.order_by_raw_index(fill.maker_slot as usize);
@@ -428,20 +391,31 @@ impl<
             };
 
             let base_to_free =
-                I80F48::from(market.base_lot_size) * I80F48::from(base_locked_change);
+                I80F48::from(market.base_lot_size) * I80F48::from(base_locked_change).abs();
             let quote_to_free =
-                I80F48::from(market.quote_lot_size) * I80F48::from(quote_locked_change);
+                I80F48::from(market.quote_lot_size) * I80F48::from(quote_locked_change).abs();
 
             match side {
                 Side::Bid => {
-                    pa.base_free_native += base_to_free.abs();
+                    pa.base_free_native += base_to_free;
                     pa.quote_free_native += fees;
                 }
                 Side::Ask => {
-                    pa.quote_free_native +=
-                        quote_to_free.abs() + quote_native.abs() * market.maker_fee;
+                    let maker_fees = if market.maker_fee.is_positive() {
+                        I80F48::from(quote_locked_change) * market.maker_fee
+                    } else {
+                        I80F48::ZERO
+                    };
+                    pa.quote_free_native += quote_to_free + fees - maker_fees;
                 }
             };
+
+            if market.maker_fee.is_positive() {
+                // Apply rebates
+                let maker_fees = quote_to_free * market.maker_fee;
+                pa.referrer_rebates_accrued += maker_fees.to_num::<u64>();
+                market.referrer_rebates_accrued += maker_fees.to_num::<u64>();
+            }
         }
         if fill.maker_out() {
             self.remove_order(fill.maker_slot as usize, base_change.abs())?;
@@ -597,20 +571,27 @@ impl<
                 BookSideOrderTree::OraclePegged => oo.peg_limit,
             };
 
-            let base_quantity_native = base_quantity * market.base_lot_size;
-            let quote_quantity_native =
-                base_quantity.checked_mul(price).unwrap() * market.quote_lot_size;
+            let mut base_quantity_native = I80F48::from_num(base_quantity * market.base_lot_size);
+            let mut quote_quantity_native =
+                I80F48::from_num(base_quantity.checked_mul(price).unwrap() * market.quote_lot_size);
             let order_side = oo.side_and_tree().side();
 
             let position = &mut self.fixed_mut().position;
 
+            // If maker fees, give back fees to user
+            if market.maker_fee.is_positive() {
+                let fees = I80F48::from_num(quote_quantity_native) * market.maker_fee;
+                quote_quantity_native += fees;
+                base_quantity_native += fees / I80F48::from_num(price);
+            }
+
             // accounting
             match order_side {
                 Side::Bid => {
-                    position.quote_free_native += I80F48::from_num(quote_quantity_native);
+                    position.quote_free_native += quote_quantity_native;
                 }
                 Side::Ask => {
-                    position.base_free_native += I80F48::from_num(base_quantity_native);
+                    position.base_free_native += base_quantity_native;
                 }
             }
         }

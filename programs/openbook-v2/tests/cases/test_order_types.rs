@@ -40,7 +40,7 @@ async fn test_inmediate_order() -> Result<(), TransportError> {
             market_index: 1,
             quote_lot_size: 10,
             base_lot_size: 100,
-            maker_fee: 0.0002,
+            maker_fee: -0.0002,
             taker_fee: 0.0004,
             base_mint: mints[0].pubkey,
             quote_mint: mints[1].pubkey,

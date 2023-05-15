@@ -34,7 +34,7 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
             market_index: 1,
             base_lot_size: market_base_lot_size,
             quote_lot_size: market_quote_lot_size,
-            maker_fee: 0.0,
+            maker_fee: -0.0,
             taker_fee: 0.0,
             base_mint: mints[0].pubkey,
             quote_mint: mints[1].pubkey,
