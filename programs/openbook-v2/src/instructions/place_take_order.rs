@@ -16,16 +16,6 @@ pub fn place_take_order<'info>(
     require_gte!(order.max_base_lots, 0);
     require_gte!(order.max_quote_lots_including_fees, 0);
 
-    let _now_ts: u64 = Clock::get()?.unix_timestamp.try_into().unwrap();
-    let oracle_price;
-    {
-        let market = ctx.accounts.market.load_mut()?;
-        oracle_price = market.oracle_price(
-            &AccountInfoRef::borrow(ctx.accounts.oracle.as_ref())?,
-            Clock::get()?.slot,
-        )?;
-    }
-
     let mut market = ctx.accounts.market.load_mut()?;
     let mut book = Orderbook {
         bids: ctx.accounts.bids.load_mut()?,
@@ -35,6 +25,10 @@ pub fn place_take_order<'info>(
     let mut event_queue = ctx.accounts.event_queue.load_mut()?;
 
     let now_ts: u64 = Clock::get()?.unix_timestamp.try_into().unwrap();
+    let oracle_price = market.oracle_price(
+        &AccountInfoRef::borrow(ctx.accounts.oracle.as_ref())?,
+        Clock::get()?.slot,
+    )?;
 
     let side = order.side;
 

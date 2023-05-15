@@ -16,15 +16,6 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<
     require_gte!(order.max_base_lots, 0);
     require_gte!(order.max_quote_lots_including_fees, 0);
 
-    let _now_ts: u64 = Clock::get()?.unix_timestamp.try_into().unwrap();
-    let oracle_price;
-    {
-        let market = ctx.accounts.market.load_mut()?;
-        oracle_price = market.oracle_price(
-            &AccountInfoRef::borrow(ctx.accounts.oracle.as_ref())?,
-            Clock::get()?.slot,
-        )?;
-    }
     let mut open_orders_account = ctx.accounts.open_orders_account.load_full_mut()?;
     // account constraint #1
     require!(
@@ -40,10 +31,13 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<
         bids: ctx.accounts.bids.load_mut()?,
         asks: ctx.accounts.asks.load_mut()?,
     };
-
     let mut event_queue = ctx.accounts.event_queue.load_mut()?;
 
     let now_ts: u64 = Clock::get()?.unix_timestamp.try_into().unwrap();
+    let oracle_price = market.oracle_price(
+        &AccountInfoRef::borrow(ctx.accounts.oracle.as_ref())?,
+        Clock::get()?.slot,
+    )?;
 
     let OrderWithAmounts {
         order_id,
