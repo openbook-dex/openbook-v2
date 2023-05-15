@@ -19,6 +19,9 @@ pub struct Order {
     /// Number of seconds the order shall live, 0 meaning forever
     pub time_in_force: u16,
 
+    /// Configure how matches with order of the same owner are handled
+    pub self_trade_behavior: SelfTradeBehavior,
+
     /// Order type specific params
     pub params: OrderParams,
 }

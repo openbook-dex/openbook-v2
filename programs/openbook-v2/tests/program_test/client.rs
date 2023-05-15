@@ -343,6 +343,7 @@ impl ClientInstruction for PlaceOrderInstruction {
             max_quote_lots_including_fees: self.max_quote_lots_including_fees,
             client_order_id: self.client_order_id,
             order_type: self.order_type,
+            self_trade_behavior: SelfTradeBehavior::default(),
             expiry_timestamp: self.expiry_timestamp,
             limit: 10,
         };
@@ -404,7 +405,7 @@ impl ClientInstruction for PlaceOrderPeggedInstruction {
             max_quote_lots_including_fees: self.max_quote_lots_including_fees,
             client_order_id: self.client_order_id,
             order_type: PlaceOrderType::Limit,
-
+            self_trade_behavior: SelfTradeBehavior::default(),
             expiry_timestamp: 0,
             limit: 10,
             max_oracle_staleness_slots: -1,
@@ -467,6 +468,7 @@ impl ClientInstruction for PlaceTakeOrderInstruction {
             max_quote_lots_including_fees: self.max_quote_lots_including_fees,
             client_order_id: self.client_order_id,
             order_type: PlaceOrderType::ImmediateOrCancel,
+            self_trade_behavior: SelfTradeBehavior::default(),
             limit: 10,
         };
 

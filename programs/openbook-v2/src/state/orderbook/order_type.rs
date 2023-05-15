@@ -84,6 +84,35 @@ pub enum PostOrderType {
     PartialEq,
     Copy,
     Clone,
+    Default,
+    TryFromPrimitive,
+    IntoPrimitive,
+    Debug,
+    AnchorSerialize,
+    AnchorDeserialize,
+)]
+#[repr(u8)]
+/// Self trade behavior controls how taker orders interact with resting limit orders of the same account.
+/// This setting has no influence on placing a resting or oracle pegged limit order that does not match
+/// immediately, instead it's the responsibility of the user to correctly configure his taker orders.
+pub enum SelfTradeBehavior {
+    /// Both the maker and taker sides of the matched orders are decremented.
+    /// This is equivalent to a normal order match, except for the fact that no fees are applied.
+    #[default]
+    DecrementTake = 0,
+
+    /// Cancels the maker side of the trade, the taker side gets matched with other maker's orders.
+    CancelProvide = 1,
+
+    /// Cancels the whole transaction as soon as a self-matching scenario is encountered.
+    AbortTransaction = 2,
+}
+
+#[derive(
+    Eq,
+    PartialEq,
+    Copy,
+    Clone,
     TryFromPrimitive,
     IntoPrimitive,
     Debug,
