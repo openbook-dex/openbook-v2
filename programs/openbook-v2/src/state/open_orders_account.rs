@@ -391,13 +391,13 @@ impl<
             };
 
             let base_to_free =
-                I80F48::from(market.base_lot_size) * I80F48::from(base_locked_change);
+                I80F48::from(market.base_lot_size) * I80F48::from(base_locked_change).abs();
             let quote_to_free =
-                I80F48::from(market.quote_lot_size) * I80F48::from(quote_locked_change);
+                I80F48::from(market.quote_lot_size) * I80F48::from(quote_locked_change).abs();
 
             match side {
                 Side::Bid => {
-                    pa.base_free_native += base_to_free.abs();
+                    pa.base_free_native += base_to_free;
                     pa.quote_free_native += fees;
                 }
                 Side::Ask => {
@@ -406,8 +406,7 @@ impl<
                     } else {
                         I80F48::ZERO
                     };
-
-                    pa.quote_free_native += quote_to_free.abs() + fees - maker_fees;
+                    pa.quote_free_native += quote_to_free + fees - maker_fees;
                 }
             };
 

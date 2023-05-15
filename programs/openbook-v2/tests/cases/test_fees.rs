@@ -234,8 +234,8 @@ async fn test_maker_fees() -> Result<(), TransportError> {
             market_index: 1,
             quote_lot_size: 10,
             base_lot_size: 100,
-            maker_fee: 0.0001, // maker pays fees
-            taker_fee: 0.0002, // 2bps
+            maker_fee: 0.0002, // maker pays fees
+            taker_fee: 0.0004, // 2bps
             base_mint: mints[0].pubkey,
             quote_mint: mints[1].pubkey,
             base_vault,
@@ -269,7 +269,7 @@ async fn test_maker_fees() -> Result<(), TransportError> {
             side: Side::Bid,
             price_lots,
             max_base_lots: 1,
-            max_quote_lots_including_fees: 10001,
+            max_quote_lots_including_fees: 10002,
             reduce_only: false,
             client_order_id: 30,
             expiry_timestamp: 0,
@@ -299,7 +299,7 @@ async fn test_maker_fees() -> Result<(), TransportError> {
         assert_eq!(open_orders_account_0.position.base_free_native, 0);
         assert_eq!(
             open_orders_account_0.position.quote_free_native.round(),
-            100010
+            100020
         );
     }
 
@@ -315,7 +315,7 @@ async fn test_maker_fees() -> Result<(), TransportError> {
             side: Side::Bid,
             price_lots,
             max_base_lots: 1,
-            max_quote_lots_including_fees: 10001,
+            max_quote_lots_including_fees: 10002,
             reduce_only: false,
             client_order_id: 0,
             expiry_timestamp: 0,
@@ -369,7 +369,7 @@ async fn test_maker_fees() -> Result<(), TransportError> {
         assert_eq!(open_orders_account_0.position.quote_free_native, 0);
         assert_eq!(
             open_orders_account_1.position.quote_free_native.round(),
-            99980
+            99960
         );
     }
 
@@ -393,10 +393,10 @@ async fn test_maker_fees() -> Result<(), TransportError> {
         assert_eq!(open_orders_account_1.position.asks_base_lots, 0);
         assert_eq!(open_orders_account_0.position.base_free_native, 100);
         assert_eq!(open_orders_account_1.position.base_free_native, 0);
-        assert_eq!(open_orders_account_0.position.quote_free_native.round(), 10);
+        assert_eq!(open_orders_account_0.position.quote_free_native.round(), 0);
         assert_eq!(
             open_orders_account_1.position.quote_free_native.round(),
-            99980
+            99960
         );
     }
 
@@ -421,7 +421,7 @@ async fn test_maker_fees() -> Result<(), TransportError> {
 
     {
         let market = solana.get_account::<Market>(market).await;
-        assert_eq!(market.quote_fees_accrued, 9);
+        assert_eq!(market.quote_fees_accrued, 39);
     }
 
     send_tx(
