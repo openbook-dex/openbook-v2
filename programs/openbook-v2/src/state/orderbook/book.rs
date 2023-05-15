@@ -78,6 +78,8 @@ impl<'a> Orderbook<'a> {
         // matched_changes/matched_deletes and then applied after this loop.
         let mut remaining_base_lots = order.max_base_lots;
         let mut remaining_quote_lots = order.max_quote_lots_including_fees;
+        let mut decremented_quote_lots = 0_i64;
+
         let mut max_quote_lots = remaining_quote_lots;
         let mut matched_order_changes: Vec<(BookSideOrderHandle, i64)> = vec![];
         let mut matched_order_deletes: Vec<(BookSideOrderTree, u128)> = vec![];
@@ -139,8 +141,38 @@ impl<'a> Orderbook<'a> {
             let match_base_lots = remaining_base_lots
                 .min(best_opposing.node.quantity)
                 .min(max_match_by_quote);
-
             let match_quote_lots = match_base_lots * best_opposing_price;
+
+            if owner == &best_opposing.node.owner {
+                msg!("self trade {:?}", order.self_trade_behavior);
+                match order.self_trade_behavior {
+                    SelfTradeBehavior::DecrementTake => {
+                        // remember all decremented quote lots to only charge fees on not-self-trades
+                        decremented_quote_lots += match_quote_lots;
+                    }
+                    SelfTradeBehavior::CancelProvide => {
+                        let event = OutEvent::new(
+                            other_side,
+                            best_opposing.node.owner_slot,
+                            now_ts,
+                            event_queue.header.seq_num,
+                            best_opposing.node.owner,
+                            best_opposing.node.quantity,
+                        );
+                        event_queue.push_back(cast(event)).unwrap();
+                        matched_order_deletes
+                            .push((best_opposing.handle.order_tree, best_opposing.node.key));
+
+                        // skip actual matching
+                        continue;
+                    }
+                    SelfTradeBehavior::AbortTransaction => {
+                        return err!(OpenBookError::WouldSelfTrade)
+                    }
+                }
+                assert!(order.self_trade_behavior == SelfTradeBehavior::DecrementTake);
+            }
+
             remaining_base_lots -= match_base_lots;
             remaining_quote_lots -= match_quote_lots;
             assert!(remaining_quote_lots >= 0);
@@ -175,13 +207,18 @@ impl<'a> Orderbook<'a> {
             }
         }
         let total_quote_lots_taken = max_quote_lots - remaining_quote_lots;
-        let mut total_quote_taken_native =
-            I80F48::from_num(market.quote_lot_size * total_quote_lots_taken);
         let total_base_lots_taken = order.max_base_lots - remaining_base_lots;
         assert!(total_quote_lots_taken >= 0);
         assert!(total_base_lots_taken >= 0);
 
-        let mut total_base_taken_native = I80F48::ZERO;
+        let mut total_base_taken_native =
+            I80F48::from_num(market.base_lot_size * total_base_lots_taken);
+        let mut total_quote_taken_native =
+            I80F48::from_num(market.quote_lot_size * total_quote_lots_taken);
+
+        let total_quote_taken_lots_wo_self = total_quote_lots_taken - decremented_quote_lots;
+        let total_quote_taken_native_wo_self =
+            I80F48::from_num(total_quote_taken_lots_wo_self * market.quote_lot_size);
 
         // Record the taker trade in the account already, even though it will only be
         // realized when the fill event gets executed
@@ -192,21 +229,20 @@ impl<'a> Orderbook<'a> {
                     market,
                     open_orders_acc,
                     total_base_lots_taken,
-                    total_quote_taken_native,
+                    total_quote_taken_native_wo_self,
                 )?;
             } else {
                 // It's a taker order, transfer to referrer
-                referrer_amount += market.referrer_taker_rebate(total_quote_taken_native) as u64;
+                referrer_amount +=
+                    market.referrer_taker_rebate(total_quote_taken_native_wo_self) as u64;
             }
 
             // Apply fees
+            let taker_fee = total_quote_taken_native_wo_self * market.taker_fee;
             total_quote_taken_native = match side {
-                Side::Bid => total_quote_taken_native * (I80F48::ONE + market.taker_fee),
-                Side::Ask => total_quote_taken_native * (I80F48::ONE - market.taker_fee),
+                Side::Bid => total_quote_taken_native + taker_fee,
+                Side::Ask => total_quote_taken_native - taker_fee,
             };
-
-            total_base_taken_native =
-                I80F48::from_num(total_base_lots_taken) * I80F48::from_num(market.base_lot_size);
         } else if order.needs_penalty_fee() {
             // IOC orders have a fee penalty applied if not match to avoid spam
             total_base_taken_native = apply_penalty(market);
@@ -215,7 +251,7 @@ impl<'a> Orderbook<'a> {
         // Update remaining based on quote_lots taken. If nothing taken, same as the beggining
         remaining_quote_lots = order.max_quote_lots_including_fees
             - total_quote_lots_taken
-            - (market.taker_fee * I80F48::from_num(total_quote_lots_taken)).to_num::<i64>();
+            - (market.taker_fee * I80F48::from_num(total_quote_taken_lots_wo_self)).to_num::<i64>();
 
         // Apply changes to matched asks (handles invalidate on delete!)
         for (handle, new_quantity) in matched_order_changes {
