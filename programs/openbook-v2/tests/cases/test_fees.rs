@@ -426,6 +426,26 @@ async fn test_maker_fees() -> Result<(), TransportError> {
 
     send_tx(
         solana,
+        SettleFundsInstruction {
+            market,
+            open_orders_account: account_0,
+            base_vault,
+            quote_vault,
+            payer_base: owner_token_0,
+            payer_quote: owner_token_1,
+            referrer: None,
+        },
+    )
+    .await
+    .unwrap();
+
+    {
+        let market = solana.get_account::<Market>(market).await;
+        assert_eq!(market.quote_fees_accrued, 58);
+    }
+
+    send_tx(
+        solana,
         SweepFeesInstruction {
             market,
             quote_vault,
