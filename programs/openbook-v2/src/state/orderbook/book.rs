@@ -253,20 +253,20 @@ impl<'a> Orderbook<'a> {
             let mut open_orders_acc = open_orders_acc.unwrap();
 
             // Substract maker fees in bid.
-            if market.maker_fee.is_positive() {
-                match side {
-                    Side::Bid => {
-                        let book_quote_quantity_lots = book_base_quantity_lots * price_lots;
-                        maker_fees = I80F48::from_num(book_quote_quantity_lots)
-                            * market.maker_fee
-                            * I80F48::from_num(market.quote_lot_size);
-                        // Apply rebates
-                        open_orders_acc.fixed.position.referrer_rebates_accrued +=
-                            maker_fees.to_num::<u64>();
-                        market.referrer_rebates_accrued += maker_fees.to_num::<u64>();
-                    }
-                    Side::Ask => {}
+            if market.maker_fee.is_positive() && side == Side::Bid {
+                let book_price = match order_tree_target {
+                    BookSideOrderTree::Fixed => fixed_price_lots(price_data),
+                    BookSideOrderTree::OraclePegged => order.peg_limit(),
                 };
+
+                let book_quote_quantity_lots = book_base_quantity_lots * book_price;
+                maker_fees = I80F48::from_num(book_quote_quantity_lots)
+                    * market.maker_fee
+                    * I80F48::from_num(market.quote_lot_size);
+                // Apply rebates
+                open_orders_acc.fixed.position.referrer_rebates_accrued +=
+                    maker_fees.to_num::<u64>();
+                market.referrer_rebates_accrued += maker_fees.to_num::<u64>();
             }
 
             let bookside = self.bookside_mut(side);
