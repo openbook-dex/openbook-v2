@@ -17,6 +17,9 @@ async fn test_self_trade_decrement_take() -> Result<(), TransportError> {
     let base_mint = context.mints[0].pubkey;
     let quote_mint = context.mints[1].pubkey;
 
+    let owner_token_0 = context.users[0].token_accounts[0];
+    let owner_token_1 = context.users[0].token_accounts[1];
+
     // TEST: Create a market
     let market = get_market_address(admin.pubkey(), 1);
     let base_vault = solana
@@ -54,7 +57,7 @@ async fn test_self_trade_decrement_take() -> Result<(), TransportError> {
     let account_0 = create_open_orders_account(solana, owner, market, 0, payer).await;
     let account_1 = create_open_orders_account(solana, owner, market, 1, payer).await;
 
-    // taker limit order
+    // maker (which will be the taker) limit order
     send_tx(
         solana,
         PlaceOrderInstruction {
@@ -123,6 +126,45 @@ async fn test_self_trade_decrement_take() -> Result<(), TransportError> {
     .await
     .unwrap();
 
+    {
+        let open_orders_account_0 = solana.get_account::<OpenOrdersAccount>(account_0).await;
+        let open_orders_account_1 = solana.get_account::<OpenOrdersAccount>(account_1).await;
+
+        assert_eq!(open_orders_account_0.position.bids_base_lots, 0);
+        assert_eq!(open_orders_account_0.position.asks_base_lots, 2);
+        assert_eq!(open_orders_account_0.position.base_free_native, 100);
+        assert_eq!(open_orders_account_0.position.quote_free_native, 0);
+
+        assert_eq!(open_orders_account_1.position.bids_base_lots, 0);
+        assert_eq!(open_orders_account_1.position.asks_base_lots, 2);
+        assert_eq!(open_orders_account_1.position.base_free_native, 0);
+        assert_eq!(open_orders_account_1.position.quote_free_native, 0);
+    }
+
+    send_tx(
+        solana,
+        SettleFundsInstruction {
+            market,
+            open_orders_account: account_0,
+            base_vault,
+            quote_vault,
+            payer_base: owner_token_0,
+            payer_quote: owner_token_1,
+            referrer: None,
+        },
+    )
+    .await
+    .unwrap();
+
+    {
+        let open_orders_account_0 = solana.get_account::<OpenOrdersAccount>(account_0).await;
+
+        assert_eq!(open_orders_account_0.position.bids_base_lots, 0);
+        assert_eq!(open_orders_account_0.position.asks_base_lots, 2);
+        assert_eq!(open_orders_account_0.position.base_free_native, 0);
+        assert_eq!(open_orders_account_0.position.quote_free_native, 0);
+    }
+
     // taker partial self-trade limit
     send_tx(
         solana,
@@ -136,7 +178,7 @@ async fn test_self_trade_decrement_take() -> Result<(), TransportError> {
             side: Side::Bid,
             price_lots: 1000,
             max_base_lots: 2,
-            max_quote_lots_including_fees: 10000,
+            max_quote_lots_including_fees: 10002,
             client_order_id: 4,
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
@@ -146,51 +188,51 @@ async fn test_self_trade_decrement_take() -> Result<(), TransportError> {
     .await
     .unwrap();
 
-    //{
-    //    let open_orders_account_0 = solana.get_account::<OpenOrdersAccount>(account_0).await;
-    //    let open_orders_account_1 = solana.get_account::<OpenOrdersAccount>(account_1).await;
+    {
+        let open_orders_account_0 = solana.get_account::<OpenOrdersAccount>(account_0).await;
+        let open_orders_account_1 = solana.get_account::<OpenOrdersAccount>(account_1).await;
 
-    //    assert_eq!(open_orders_account_0.position.bids_base_lots, 0);
-    //    assert_eq!(open_orders_account_0.position.asks_base_lots, 2);
-    //    assert_eq!(open_orders_account_0.position.base_free_native, 300);
-    //    assert_eq!(open_orders_account_0.position.quote_free_native, 0);
+        assert_eq!(open_orders_account_0.position.bids_base_lots, 0);
+        assert_eq!(open_orders_account_0.position.asks_base_lots, 2);
+        assert_eq!(open_orders_account_0.position.base_free_native, 200);
+        assert_eq!(open_orders_account_0.position.quote_free_native, 0);
 
-    //    assert_eq!(open_orders_account_1.position.bids_base_lots, 0);
-    //    assert_eq!(open_orders_account_1.position.asks_base_lots, 2);
-    //    assert_eq!(open_orders_account_1.position.base_free_native, 0);
-    //    assert_eq!(open_orders_account_1.position.quote_free_native, 0);
-    //}
+        assert_eq!(open_orders_account_1.position.bids_base_lots, 0);
+        assert_eq!(open_orders_account_1.position.asks_base_lots, 2);
+        assert_eq!(open_orders_account_1.position.base_free_native, 0);
+        assert_eq!(open_orders_account_1.position.quote_free_native, 0);
+    }
 
-    //send_tx(
-    //    solana,
-    //    ConsumeEventsInstruction {
-    //        market,
-    //        open_orders_accounts: vec![account_0, account_1],
-    //    },
-    //)
-    //.await
-    //.unwrap();
+    send_tx(
+        solana,
+        ConsumeEventsInstruction {
+            market,
+            open_orders_accounts: vec![account_0, account_1],
+        },
+    )
+    .await
+    .unwrap();
 
-    //{
-    //    let open_orders_account_0 = solana.get_account::<OpenOrdersAccount>(account_0).await;
-    //    let open_orders_account_1 = solana.get_account::<OpenOrdersAccount>(account_1).await;
+    {
+        let open_orders_account_0 = solana.get_account::<OpenOrdersAccount>(account_0).await;
+        let open_orders_account_1 = solana.get_account::<OpenOrdersAccount>(account_1).await;
 
-    //    assert_eq!(open_orders_account_0.position.bids_base_lots, 0);
-    //    assert_eq!(open_orders_account_0.position.asks_base_lots, 0);
-    //    assert_eq!(open_orders_account_0.position.base_free_native, 300);
-    //    assert_eq!(
-    //        open_orders_account_0.position.quote_free_native.round(),
-    //        20004
-    //    );
+        assert_eq!(open_orders_account_0.position.bids_base_lots, 0);
+        assert_eq!(open_orders_account_0.position.asks_base_lots, 0);
+        assert_eq!(open_orders_account_0.position.base_free_native, 200);
+        assert_eq!(
+            open_orders_account_0.position.quote_free_native.round(),
+            20004
+        );
 
-    //    assert_eq!(open_orders_account_1.position.bids_base_lots, 0);
-    //    assert_eq!(open_orders_account_1.position.asks_base_lots, 1);
-    //    assert_eq!(open_orders_account_1.position.base_free_native, 0);
-    //    assert_eq!(
-    //        open_orders_account_1.position.quote_free_native.round(),
-    //        10002
-    //    );
-    //}
+        assert_eq!(open_orders_account_1.position.bids_base_lots, 0);
+        assert_eq!(open_orders_account_1.position.asks_base_lots, 1);
+        assert_eq!(open_orders_account_1.position.base_free_native, 0);
+        assert_eq!(
+            open_orders_account_1.position.quote_free_native.round(),
+            10002
+        );
+    }
 
     Ok(())
 }
@@ -249,7 +291,7 @@ async fn test_self_trade_cancel_provide() -> Result<(), TransportError> {
     let account_0 = create_open_orders_account(solana, owner, market, 0, payer).await;
     let account_1 = create_open_orders_account(solana, owner, market, 1, payer).await;
 
-    // taker limit order
+    // maker (which will be the taker) limit order
     send_tx(
         solana,
         PlaceOrderInstruction {
@@ -295,6 +337,21 @@ async fn test_self_trade_cancel_provide() -> Result<(), TransportError> {
     .await
     .unwrap();
 
+    {
+        let open_orders_account_0 = solana.get_account::<OpenOrdersAccount>(account_0).await;
+        let open_orders_account_1 = solana.get_account::<OpenOrdersAccount>(account_1).await;
+
+        assert_eq!(open_orders_account_0.position.bids_base_lots, 0);
+        assert_eq!(open_orders_account_0.position.asks_base_lots, 1);
+        assert_eq!(open_orders_account_0.position.base_free_native, 0);
+        assert_eq!(open_orders_account_0.position.quote_free_native, 0);
+
+        assert_eq!(open_orders_account_1.position.bids_base_lots, 0);
+        assert_eq!(open_orders_account_1.position.asks_base_lots, 2);
+        assert_eq!(open_orders_account_1.position.base_free_native, 0);
+        assert_eq!(open_orders_account_1.position.quote_free_native, 0);
+    }
+
     // taker partial self-trade
     send_tx(
         solana,
@@ -318,7 +375,22 @@ async fn test_self_trade_cancel_provide() -> Result<(), TransportError> {
     .await
     .unwrap();
 
-    // taker partial self-trade limit
+    {
+        let open_orders_account_0 = solana.get_account::<OpenOrdersAccount>(account_0).await;
+        let open_orders_account_1 = solana.get_account::<OpenOrdersAccount>(account_1).await;
+
+        assert_eq!(open_orders_account_0.position.bids_base_lots, 0);
+        assert_eq!(open_orders_account_0.position.asks_base_lots, 1);
+        assert_eq!(open_orders_account_0.position.base_free_native, 100);
+        assert_eq!(open_orders_account_0.position.quote_free_native, 0);
+
+        assert_eq!(open_orders_account_1.position.bids_base_lots, 0);
+        assert_eq!(open_orders_account_1.position.asks_base_lots, 2);
+        assert_eq!(open_orders_account_1.position.base_free_native, 0);
+        assert_eq!(open_orders_account_1.position.quote_free_native, 0);
+    }
+
+    // taker with another maker
     send_tx(
         solana,
         PlaceOrderInstruction {
@@ -330,8 +402,8 @@ async fn test_self_trade_cancel_provide() -> Result<(), TransportError> {
             quote_vault,
             side: Side::Bid,
             price_lots: 1000,
-            max_base_lots: 2,
-            max_quote_lots_including_fees: 10000,
+            max_base_lots: 1,
+            max_quote_lots_including_fees: 10004,
             client_order_id: 4,
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
@@ -341,51 +413,48 @@ async fn test_self_trade_cancel_provide() -> Result<(), TransportError> {
     .await
     .unwrap();
 
-    //{
-    //    let open_orders_account_0 = solana.get_account::<OpenOrdersAccount>(account_0).await;
-    //    let open_orders_account_1 = solana.get_account::<OpenOrdersAccount>(account_1).await;
+    {
+        let open_orders_account_0 = solana.get_account::<OpenOrdersAccount>(account_0).await;
+        let open_orders_account_1 = solana.get_account::<OpenOrdersAccount>(account_1).await;
 
-    //    assert_eq!(open_orders_account_0.position.bids_base_lots, 0);
-    //    assert_eq!(open_orders_account_0.position.asks_base_lots, 2);
-    //    assert_eq!(open_orders_account_0.position.base_free_native, 300);
-    //    assert_eq!(open_orders_account_0.position.quote_free_native, 0);
+        assert_eq!(open_orders_account_0.position.bids_base_lots, 0);
+        assert_eq!(open_orders_account_0.position.asks_base_lots, 1);
+        assert_eq!(open_orders_account_0.position.base_free_native, 200);
+        assert_eq!(open_orders_account_0.position.quote_free_native, 0);
 
-    //    assert_eq!(open_orders_account_1.position.bids_base_lots, 0);
-    //    assert_eq!(open_orders_account_1.position.asks_base_lots, 2);
-    //    assert_eq!(open_orders_account_1.position.base_free_native, 0);
-    //    assert_eq!(open_orders_account_1.position.quote_free_native, 0);
-    //}
+        assert_eq!(open_orders_account_1.position.bids_base_lots, 0);
+        assert_eq!(open_orders_account_1.position.asks_base_lots, 2);
+        assert_eq!(open_orders_account_1.position.base_free_native, 0);
+        assert_eq!(open_orders_account_1.position.quote_free_native, 0);
+    }
 
-    //send_tx(
-    //    solana,
-    //    ConsumeEventsInstruction {
-    //        market,
-    //        open_orders_accounts: vec![account_0, account_1],
-    //    },
-    //)
-    //.await
-    //.unwrap();
+    send_tx(
+        solana,
+        ConsumeEventsInstruction {
+            market,
+            open_orders_accounts: vec![account_0, account_1],
+        },
+    )
+    .await
+    .unwrap();
 
-    //{
-    //    let open_orders_account_0 = solana.get_account::<OpenOrdersAccount>(account_0).await;
-    //    let open_orders_account_1 = solana.get_account::<OpenOrdersAccount>(account_1).await;
+    {
+        let open_orders_account_0 = solana.get_account::<OpenOrdersAccount>(account_0).await;
+        let open_orders_account_1 = solana.get_account::<OpenOrdersAccount>(account_1).await;
 
-    //    assert_eq!(open_orders_account_0.position.bids_base_lots, 0);
-    //    assert_eq!(open_orders_account_0.position.asks_base_lots, 0);
-    //    assert_eq!(open_orders_account_0.position.base_free_native, 300);
-    //    assert_eq!(
-    //        open_orders_account_0.position.quote_free_native.round(),
-    //        20004
-    //    );
+        assert_eq!(open_orders_account_0.position.bids_base_lots, 0);
+        assert_eq!(open_orders_account_0.position.asks_base_lots, 0);
+        assert_eq!(open_orders_account_0.position.base_free_native, 300);
+        assert_eq!(open_orders_account_0.position.quote_free_native.round(), 0);
 
-    //    assert_eq!(open_orders_account_1.position.bids_base_lots, 0);
-    //    assert_eq!(open_orders_account_1.position.asks_base_lots, 1);
-    //    assert_eq!(open_orders_account_1.position.base_free_native, 0);
-    //    assert_eq!(
-    //        open_orders_account_1.position.quote_free_native.round(),
-    //        10002
-    //    );
-    //}
+        assert_eq!(open_orders_account_1.position.bids_base_lots, 0);
+        assert_eq!(open_orders_account_1.position.asks_base_lots, 0);
+        assert_eq!(open_orders_account_1.position.base_free_native, 0);
+        assert_eq!(
+            open_orders_account_1.position.quote_free_native.round(),
+            20004
+        );
+    }
 
     Ok(())
 }
