@@ -57,7 +57,7 @@ impl Token {
     }
 }
 
-pub async fn create_funded_account(
+pub async fn create_open_orders_account(
     solana: &SolanaCookie,
     owner: TestKeypair,
     market: Pubkey,

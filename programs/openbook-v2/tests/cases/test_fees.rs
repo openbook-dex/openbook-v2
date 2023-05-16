@@ -52,8 +52,8 @@ async fn test_fees_acrued() -> Result<(), TransportError> {
     .await
     .unwrap();
 
-    let account_0 = create_funded_account(solana, owner, market, 0, &context.users[1]).await;
-    let account_1 = create_funded_account(solana, owner, market, 1, &context.users[1]).await;
+    let account_0 = create_open_orders_account(solana, owner, market, 0, &context.users[1]).await;
+    let account_1 = create_open_orders_account(solana, owner, market, 1, &context.users[1]).await;
 
     let price_lots = {
         let market = solana.get_account::<Market>(market).await;
@@ -246,8 +246,8 @@ async fn test_maker_fees() -> Result<(), TransportError> {
     .await
     .unwrap();
 
-    let account_0 = create_funded_account(solana, owner, market, 0, &context.users[1]).await;
-    let account_1 = create_funded_account(solana, owner, market, 1, &context.users[1]).await;
+    let account_0 = create_open_orders_account(solana, owner, market, 0, &context.users[1]).await;
+    let account_1 = create_open_orders_account(solana, owner, market, 1, &context.users[1]).await;
 
     let price_lots = {
         let market = solana.get_account::<Market>(market).await;
