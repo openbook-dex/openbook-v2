@@ -65,8 +65,8 @@ pub fn consume_events(ctx: Context<ConsumeEvents>, limit: usize) -> Result<()> {
             EventType::Fill => {
                 let fill: &FillEvent = cast_ref(event);
 
-                load_open_orders_acc!(maker_taker, fill.maker, remaining_accs, event_queue);
-                maker_taker.execute_maker(&mut market, fill)?;
+                load_open_orders_acc!(maker, fill.maker, remaining_accs, event_queue);
+                maker.execute_maker(&mut market, fill)?;
 
                 emit!(FillLog {
                     taker_side: fill.taker_side,
