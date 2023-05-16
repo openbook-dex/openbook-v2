@@ -1,7 +1,8 @@
+use crate::logs::FillLog;
 use crate::state::OpenOrdersAccountRefMut;
 use crate::{
     error::*,
-    state::{orderbook::bookside::*, EventQueue, Market},
+    state::{orderbook::bookside::*, EventQueue, Market, OpenOrdersAccountFixed},
 };
 use anchor_lang::prelude::*;
 use bytemuck::cast;
@@ -51,6 +52,7 @@ impl<'a> Orderbook<'a> {
     #[allow(clippy::too_many_arguments)]
     pub fn new_order(
         &mut self,
+        remaining_accs: &[AccountInfo],
         order: &Order,
         open_book_market: &mut Market,
         event_queue: &mut EventQueue,
@@ -143,8 +145,8 @@ impl<'a> Orderbook<'a> {
                 .min(max_match_by_quote);
             let match_quote_lots = match_base_lots * best_opposing_price;
 
+            // Self-trade behaviour
             if owner == &best_opposing.node.owner {
-                msg!("self trade {:?}", order.self_trade_behavior);
                 match order.self_trade_behavior {
                     SelfTradeBehavior::DecrementTake => {
                         // remember all decremented quote lots to only charge fees on not-self-trades
@@ -200,8 +202,38 @@ impl<'a> Orderbook<'a> {
                 best_opposing_price,
                 match_base_lots,
             );
-            event_queue.push_back(cast(fill)).unwrap();
-            limit -= 1;
+
+            if remaining_accs.len() > 0 {
+                let loader = remaining_accs.iter().find(|ai| ai.key == &fill.maker);
+
+                if let Some(acc) = loader {
+                    let mal: AccountLoader<OpenOrdersAccountFixed> = AccountLoader::try_from(acc)?;
+
+                    let mut maker = acc.load_full_mut()?;
+
+                    maker.execute_maker(market, fill)?;
+                    emit!(FillLog {
+                        taker_side: fill.taker_side,
+                        maker_slot: fill.maker_slot,
+                        maker_out: fill.maker_out(),
+                        timestamp: fill.timestamp,
+                        seq_num: fill.seq_num,
+                        maker: fill.maker,
+                        maker_client_order_id: fill.maker_client_order_id,
+                        maker_fee: market.maker_fee.to_num(),
+                        maker_timestamp: fill.maker_timestamp,
+                        taker: fill.taker,
+                        taker_client_order_id: fill.taker_client_order_id,
+                        taker_fee: market.taker_fee.to_num(),
+                        price: fill.price,
+                        quantity: fill.quantity,
+                    });
+                } else {
+                    event_queue.push_back(cast(fill)).unwrap();
+                    limit -= 1;
+                }
+            }
+
             if let Some(open_orders_acc) = open_orders_acc.as_mut() {
                 open_orders_acc.execute_taker(market, &fill)?
             }

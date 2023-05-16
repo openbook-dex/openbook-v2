@@ -39,6 +39,7 @@ pub fn place_take_order<'info>(
         referrer_amount,
         ..
     } = book.new_order(
+        ctx.remaining_accounts,
         &order,
         &mut market,
         &mut event_queue,
