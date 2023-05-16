@@ -131,7 +131,7 @@ const_assert_eq!(
         - size_of::<u64>() * 3
         - size_of::<[u8; 208]>()
 );
-const_assert_eq!(size_of::<OpenOrdersAccountFixed>(), 512);
+const_assert_eq!(size_of::<OpenOrdersAccountFixed>(), 504);
 const_assert_eq!(size_of::<OpenOrdersAccountFixed>() % 8, 0);
 
 impl OpenOrdersAccountFixed {
@@ -372,7 +372,6 @@ impl<
         };
 
         let pa = &mut self.fixed_mut().position;
-        pa.update_trade_stats(base_change, quote_native);
         pa.maker_volume += quote_native.abs().to_num::<u64>();
 
         msg!(
@@ -441,25 +440,22 @@ impl<
 
         // Replicate the base_quote_change function but substracting the fees for an Ask
         // let (base_change, quote_change) = fill.base_quote_change(fill.taker_side());
-        let base_change: i64;
+        let _base_change: i64;
         let quote_change: i64;
         match fill.taker_side() {
             Side::Bid => {
-                base_change = fill.quantity;
+                _base_change = fill.quantity;
                 quote_change = -fill.price * fill.quantity;
             }
             Side::Ask => {
                 // remove fee from quote_change
-                base_change = -fill.quantity;
+                _base_change = -fill.quantity;
                 quote_change = fill.price * fill.quantity * (1 - market.taker_fee.to_num::<i64>());
             }
         };
 
         // fees are assessed at time of trade; no need to assess fees here
         let quote_change_native = I80F48::from(market.quote_lot_size) * I80F48::from(quote_change);
-
-        pa.update_trade_stats(base_change, quote_change_native);
-
         pa.taker_volume += quote_change_native.abs().to_num::<u64>();
 
         Ok(())
@@ -663,314 +659,3 @@ impl<'a, 'info: 'a> OpenOrdersLoader<'a> for &'a AccountLoader<'info, OpenOrders
         self.load_full_mut()
     }
 }
-
-// #[cfg(test)]
-// mod tests {
-//     use super::*;
-
-//     fn make_test_account() -> OpenOrdersAccountValue {
-//         let bytes = AnchorSerialize::try_to_vec(&OpenOrdersAccount::default_for_tests()).unwrap();
-//         OpenOrdersAccountValue::from_bytes(&bytes).unwrap()
-//     }
-
-//     #[test]
-//     fn test_serialization_match() {
-//         let mut account = OpenOrdersAccount::default_for_tests();
-//         account.group = Pubkey::new_unique();
-//         account.owner = Pubkey::new_unique();
-//         account.name = crate::util::fill_from_str("abcdef").unwrap();
-//         account.delegate = Pubkey::new_unique();
-//         account.account_num = 1;
-//         account.being_liquidated = 2;
-//         account.in_health_region = 3;
-//         account.bump = 4;
-//         account.net_deposits = 5;
-//         account.health_region_begin_init_health = 7;
-//         account.buyback_fees_accrued_current = 10;
-//         account.buyback_fees_accrued_previous = 11;
-//         account.buyback_fees_expiry_timestamp = 12;
-//         account.tokens.resize(8, TokenPosition::default());
-//         account.tokens[0].token_index = 8;
-//         account.serum3.resize(8, Serum3Orders::default());
-//         account.orderPosition.resize(8, Position::default());
-//         account.orderPosition.market_index = 9;
-//         account.open_orders.resize(8, OpenOrdersAccount::default());
-
-//         let account_bytes = AnchorSerialize::try_to_vec(&account).unwrap();
-//         assert_eq!(
-//             8 + account_bytes.len(),
-//             OpenOrdersAccount::space(8, 8, 8, 8).unwrap()
-//         );
-
-//         let account2 = OpenOrdersAccountValue::from_bytes(&account_bytes).unwrap();
-//         assert_eq!(account.group, account2.fixed.group);
-//         assert_eq!(account.owner, account2.fixed.owner);
-//         assert_eq!(account.name, account2.fixed.name);
-//         assert_eq!(account.delegate, account2.fixed.delegate);
-//         assert_eq!(account.account_num, account2.fixed.account_num);
-//         assert_eq!(account.being_liquidated, account2.fixed.being_liquidated);
-//         assert_eq!(account.in_health_region, account2.fixed.in_health_region);
-//         assert_eq!(account.bump, account2.fixed.bump);
-//         assert_eq!(account.net_deposits, account2.fixed.net_deposits);
-//         assert_eq!(
-//             account.spot_transfers,
-//             account2.fixed.spot_transfers
-//         );
-//         assert_eq!(
-//             account.health_region_begin_init_health,
-//             account2.fixed.health_region_begin_init_health
-//         );
-//         assert_eq!(
-//             account.buyback_fees_accrued_current,
-//             account2.fixed.buyback_fees_accrued_current
-//         );
-//         assert_eq!(
-//             account.buyback_fees_accrued_previous,
-//             account2.fixed.buyback_fees_accrued_previous
-//         );
-//         assert_eq!(
-//             account.buyback_fees_expiry_timestamp,
-//             account2.fixed.buyback_fees_expiry_timestamp
-//         );
-//         assert_eq!(
-//             account.tokens[0].token_index,
-//             account2.token_position_by_raw_index(0).token_index
-//         );
-//         assert_eq!(
-//             account.serum3[0].open_orders,
-//             account2.serum3_orders_by_raw_index(0).open_orders
-//         );
-//         assert_eq!(
-//             account.orderPosition[0].market_index,
-//             account2.position_by_raw_index(0).market_index
-//         );
-//     }
-
-//     #[test]
-//     fn test_token_positions() {
-//         let mut account = make_test_account();
-//         assert!(account.token_position(1).is_err());
-//         assert!(account.token_position_and_raw_index(2).is_err());
-//         assert!(account.token_position_mut(3).is_err());
-//         assert_eq!(
-//             account.token_position_by_raw_index(0).token_index,
-//             TokenIndex::MAX
-//         );
-
-//         {
-//             let (pos, raw, active) = account.ensure_token_position(1).unwrap();
-//             assert_eq!(raw, 0);
-//             assert_eq!(active, 0);
-//             assert_eq!(pos.token_index, 1);
-//         }
-//         {
-//             let (pos, raw, active) = account.ensure_token_position(7).unwrap();
-//             assert_eq!(raw, 1);
-//             assert_eq!(active, 1);
-//             assert_eq!(pos.token_index, 7);
-//         }
-//         {
-//             let (pos, raw, active) = account.ensure_token_position(42).unwrap();
-//             assert_eq!(raw, 2);
-//             assert_eq!(active, 2);
-//             assert_eq!(pos.token_index, 42);
-//         }
-
-//         {
-//             account.deactivate_token_position(1);
-
-//             let (pos, raw, active) = account.ensure_token_position(42).unwrap();
-//             assert_eq!(raw, 2);
-//             assert_eq!(active, 1);
-//             assert_eq!(pos.token_index, 42);
-
-//             let (pos, raw, active) = account.ensure_token_position(8).unwrap();
-//             assert_eq!(raw, 1);
-//             assert_eq!(active, 1);
-//             assert_eq!(pos.token_index, 8);
-//         }
-
-//         assert_eq!(account.active_token_positions().count(), 3);
-//         account.deactivate_token_position(0);
-//         assert_eq!(
-//             account.token_position_by_raw_index(0).token_index,
-//             TokenIndex::MAX
-//         );
-//         assert!(account.token_position(1).is_err());
-//         assert!(account.token_position_mut(1).is_err());
-//         assert!(account.token_position(8).is_ok());
-//         assert!(account.token_position(42).is_ok());
-//         assert_eq!(account.token_position_and_raw_index(42).unwrap().1, 2);
-//         assert_eq!(account.active_token_positions().count(), 2);
-
-//         {
-//             let (pos, raw) = account.token_position_mut(42).unwrap();
-//             assert_eq!(pos.token_index, 42);
-//             assert_eq!(raw, 2);
-//         }
-//         {
-//             let (pos, raw) = account.token_position_mut(8).unwrap();
-//             assert_eq!(pos.token_index, 8);
-//             assert_eq!(raw, 1);
-//         }
-//     }
-
-//     #[test]
-//     fn test_serum3_orders() {
-//         let mut account = make_test_account();
-//         assert!(account.serum3_orders(1).is_err());
-//         assert!(account.serum3_orders_mut(3).is_err());
-//         assert_eq!(
-//             account.serum3_orders_by_raw_index(0).market_index,
-//             Serum3MarketIndex::MAX
-//         );
-
-//         assert_eq!(account.create_serum3_orders(1).unwrap().market_index, 1);
-//         assert_eq!(account.create_serum3_orders(7).unwrap().market_index, 7);
-//         assert_eq!(account.create_serum3_orders(42).unwrap().market_index, 42);
-//         assert!(account.create_serum3_orders(7).is_err());
-//         assert_eq!(account.active_serum3_orders().count(), 3);
-
-//         assert!(account.deactivate_serum3_orders(7).is_ok());
-//         assert_eq!(
-//             account.serum3_orders_by_raw_index(1).market_index,
-//             Serum3MarketIndex::MAX
-//         );
-//         assert!(account.create_serum3_orders(8).is_ok());
-//         assert_eq!(account.serum3_orders_by_raw_index(1).market_index, 8);
-
-//         assert_eq!(account.active_serum3_orders().count(), 3);
-//         assert!(account.deactivate_serum3_orders(1).is_ok());
-//         assert!(account.serum3_orders(1).is_err());
-//         assert!(account.serum3_orders_mut(1).is_err());
-//         assert!(account.serum3_orders(8).is_ok());
-//         assert!(account.serum3_orders(42).is_ok());
-//         assert_eq!(account.active_serum3_orders().count(), 2);
-
-//         assert_eq!(account.serum3_orders_mut(42).unwrap().market_index, 42);
-//         assert_eq!(account.serum3_orders_mut(8).unwrap().market_index, 8);
-//         assert!(account.serum3_orders_mut(7).is_err());
-//     }
-
-//     #[test]
-//     fn test_positions() {
-//         let mut account = make_test_account();
-//         assert!(account.position(1).is_err());
-//         assert!(account.position_mut(3).is_err());
-//         assert_eq!(
-//             account.position_by_raw_index(0).market_index,
-//             MarketIndex::MAX
-//         );
-
-//         {
-//             let (pos, raw) = account.ensure_position(1, 0).unwrap();
-//             assert_eq!(raw, 0);
-//             assert_eq!(pos.market_index, 1);
-//             assert_eq!(account.token_position_mut(0).unwrap().0.in_use_count, 1);
-//         }
-//         {
-//             let (pos, raw) = account.ensure_position(7, 0).unwrap();
-//             assert_eq!(raw, 1);
-//             assert_eq!(pos.market_index, 7);
-//             assert_eq!(account.token_position_mut(0).unwrap().0.in_use_count, 2);
-//         }
-//         {
-//             let (pos, raw) = account.ensure_position(42, 0).unwrap();
-//             assert_eq!(raw, 2);
-//             assert_eq!(pos.market_index, 42);
-//             assert_eq!(account.token_position_mut(0).unwrap().0.in_use_count, 3);
-//         }
-
-//         {
-//             let pos_res = account.position_mut(1);
-//             assert!(pos_res.is_ok());
-//             assert_eq!(pos_res.unwrap().market_index, 1)
-//         }
-
-//         {
-//             let pos_res = account.position_mut(99);
-//             assert!(pos_res.is_err());
-//         }
-
-//         {
-//             assert!(account.deactivate_position(7, 0).is_ok());
-
-//             let (pos, raw) = account.ensure_position(42, 0).unwrap();
-//             assert_eq!(raw, 2);
-//             assert_eq!(pos.market_index, 42);
-//             assert_eq!(account.token_position_mut(0).unwrap().0.in_use_count, 2);
-
-//             let (pos, raw) = account.ensure_position(8, 0).unwrap();
-//             assert_eq!(raw, 1);
-//             assert_eq!(pos.market_index, 8);
-//             assert_eq!(account.token_position_mut(0).unwrap().0.in_use_count, 3);
-//         }
-
-//         assert_eq!(account.active_positions().count(), 3);
-//         assert!(account.deactivate_position(1, 0).is_ok());
-//         assert_eq!(
-//             account.position_by_raw_index(0).market_index,
-//             MarketIndex::MAX
-//         );
-//         assert!(account.position(1).is_err());
-//         assert!(account.position_mut(1).is_err());
-//         assert!(account.position(8).is_ok());
-//         assert!(account.position(42).is_ok());
-//         assert_eq!(account.active_positions().count(), 2);
-//     }
-
-//     #[test]
-//     fn test_buyback_fees() {
-//         let mut account = make_test_account();
-//         let fixed = account.fixed_mut();
-//         assert_eq!(fixed.buyback_fees_accrued(), 0);
-//         fixed.expire_buyback_fees(1000, 10);
-//         assert_eq!(fixed.buyback_fees_accrued(), 0);
-//         assert_eq!(fixed.buyback_fees_expiry_timestamp, 1010);
-
-//         fixed.accrue_buyback_fees(10);
-//         fixed.accrue_buyback_fees(5);
-//         assert_eq!(fixed.buyback_fees_accrued(), 15);
-//         fixed.reduce_buyback_fees_accrued(2);
-//         assert_eq!(fixed.buyback_fees_accrued(), 13);
-
-//         fixed.expire_buyback_fees(1009, 10);
-//         assert_eq!(fixed.buyback_fees_expiry_timestamp, 1010);
-//         assert_eq!(fixed.buyback_fees_accrued(), 13);
-//         assert_eq!(fixed.buyback_fees_accrued_current, 13);
-
-//         fixed.expire_buyback_fees(1010, 10);
-//         assert_eq!(fixed.buyback_fees_expiry_timestamp, 1020);
-//         assert_eq!(fixed.buyback_fees_accrued(), 13);
-//         assert_eq!(fixed.buyback_fees_accrued_previous, 13);
-//         assert_eq!(fixed.buyback_fees_accrued_current, 0);
-
-//         fixed.accrue_buyback_fees(5);
-//         assert_eq!(fixed.buyback_fees_accrued(), 18);
-
-//         fixed.reduce_buyback_fees_accrued(15);
-//         assert_eq!(fixed.buyback_fees_accrued(), 3);
-//         assert_eq!(fixed.buyback_fees_accrued_previous, 0);
-//         assert_eq!(fixed.buyback_fees_accrued_current, 3);
-
-//         fixed.expire_buyback_fees(1021, 10);
-//         fixed.accrue_buyback_fees(1);
-//         assert_eq!(fixed.buyback_fees_expiry_timestamp, 1030);
-//         assert_eq!(fixed.buyback_fees_accrued_previous, 3);
-//         assert_eq!(fixed.buyback_fees_accrued_current, 1);
-
-//         fixed.expire_buyback_fees(1051, 10);
-//         assert_eq!(fixed.buyback_fees_expiry_timestamp, 1060);
-//         assert_eq!(fixed.buyback_fees_accrued_previous, 0);
-//         assert_eq!(fixed.buyback_fees_accrued_current, 0);
-
-//         fixed.accrue_buyback_fees(7);
-//         fixed.expire_buyback_fees(1060, 10);
-//         fixed.accrue_buyback_fees(5);
-//         assert_eq!(fixed.buyback_fees_expiry_timestamp, 1070);
-//         assert_eq!(fixed.buyback_fees_accrued(), 12);
-
-//         fixed.reduce_buyback_fees_accrued(100);
-//         assert_eq!(fixed.buyback_fees_accrued(), 0);
-//     }
-// }
