@@ -112,6 +112,7 @@ async fn test_simple_settle() -> Result<(), TransportError> {
             client_order_id: 0,
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
+            self_trade_behavior: SelfTradeBehavior::default(),
         },
     )
     .await
@@ -134,6 +135,7 @@ async fn test_simple_settle() -> Result<(), TransportError> {
             client_order_id: 0,
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
+            self_trade_behavior: SelfTradeBehavior::default(),
         },
     )
     .await
@@ -329,6 +331,7 @@ async fn test_cancel_orders() -> Result<(), TransportError> {
             client_order_id: 0,
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
+            self_trade_behavior: SelfTradeBehavior::default(),
         },
     )
     .await
@@ -351,6 +354,7 @@ async fn test_cancel_orders() -> Result<(), TransportError> {
             client_order_id: 0,
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
+            self_trade_behavior: SelfTradeBehavior::default(),
         },
     )
     .await
@@ -443,6 +447,7 @@ async fn test_cancel_orders() -> Result<(), TransportError> {
             client_order_id: 0,
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
+            self_trade_behavior: SelfTradeBehavior::default(),
         },
     )
     .await
@@ -539,6 +544,7 @@ async fn test_cancel_orders() -> Result<(), TransportError> {
             client_order_id: 0,
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
+            self_trade_behavior: SelfTradeBehavior::default(),
         },
     )
     .await
@@ -662,6 +668,7 @@ async fn test_expired_orders() -> Result<(), TransportError> {
             client_order_id: 0,
             expiry_timestamp: now_ts + 2,
             order_type: PlaceOrderType::Limit,
+            self_trade_behavior: SelfTradeBehavior::default(),
         },
     )
     .await
@@ -696,6 +703,7 @@ async fn test_expired_orders() -> Result<(), TransportError> {
             client_order_id: 0,
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
+            self_trade_behavior: SelfTradeBehavior::default(),
         },
     )
     .await

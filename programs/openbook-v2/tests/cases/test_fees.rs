@@ -79,6 +79,7 @@ async fn test_fees_acrued() -> Result<(), TransportError> {
             client_order_id: 0,
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
+            self_trade_behavior: SelfTradeBehavior::default(),
         },
     )
     .await
@@ -100,6 +101,7 @@ async fn test_fees_acrued() -> Result<(), TransportError> {
             client_order_id: 0,
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
+            self_trade_behavior: SelfTradeBehavior::default(),
         },
     )
     .await
@@ -271,6 +273,7 @@ async fn test_maker_fees() -> Result<(), TransportError> {
             client_order_id: 30,
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
+            self_trade_behavior: SelfTradeBehavior::default(),
         },
     )
     .await
@@ -316,6 +319,7 @@ async fn test_maker_fees() -> Result<(), TransportError> {
             client_order_id: 0,
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
+            self_trade_behavior: SelfTradeBehavior::default(),
         },
     )
     .await
@@ -346,6 +350,7 @@ async fn test_maker_fees() -> Result<(), TransportError> {
             client_order_id: 0,
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
+            self_trade_behavior: SelfTradeBehavior::default(),
         },
     )
     .await

@@ -80,6 +80,7 @@ async fn test_take_ask_order() -> Result<(), TransportError> {
             client_order_id: 0,
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
+            self_trade_behavior: SelfTradeBehavior::default(),
         },
     )
     .await
@@ -264,6 +265,7 @@ async fn test_take_bid_order() -> Result<(), TransportError> {
             client_order_id: 0,
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
+            self_trade_behavior: SelfTradeBehavior::default(),
         },
     )
     .await

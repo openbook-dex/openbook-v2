@@ -19,7 +19,7 @@ pub mod types;
 
 use error::*;
 use fixed::types::I80F48;
-use state::{MarketIndex, OracleConfigParams, PlaceOrderType, Side};
+use state::{MarketIndex, OracleConfigParams, PlaceOrderType, SelfTradeBehavior, Side};
 
 #[cfg(feature = "enable-gpl")]
 pub mod instructions;
@@ -94,6 +94,7 @@ pub mod openbook_v2 {
         max_quote_lots_including_fees: i64,
         client_order_id: u64,
         order_type: PlaceOrderType,
+        self_trade_behavior: SelfTradeBehavior,
         expiry_timestamp: u64,
         limit: u8,
     ) -> Result<Option<u128>> {
@@ -113,6 +114,7 @@ pub mod openbook_v2 {
             max_quote_lots_including_fees,
             client_order_id,
             time_in_force,
+            self_trade_behavior,
             params: match order_type {
                 PlaceOrderType::Market => OrderParams::Market,
                 PlaceOrderType::ImmediateOrCancel => OrderParams::ImmediateOrCancel { price_lots },
@@ -147,6 +149,7 @@ pub mod openbook_v2 {
         max_quote_lots_including_fees: i64,
         client_order_id: u64,
         order_type: PlaceOrderType,
+        self_trade_behavior: SelfTradeBehavior,
 
         // Timestamp of when order expires
         //
@@ -183,6 +186,7 @@ pub mod openbook_v2 {
             max_quote_lots_including_fees,
             client_order_id,
             time_in_force,
+            self_trade_behavior,
             params: OrderParams::OraclePegged {
                 price_offset_lots,
                 order_type: order_type.to_post_order_type()?,
@@ -210,6 +214,7 @@ pub mod openbook_v2 {
         max_quote_lots_including_fees: i64,
         client_order_id: u64,
         order_type: PlaceOrderType,
+        self_trade_behavior: SelfTradeBehavior,
         limit: u8,
     ) -> Result<Option<u128>> {
         require_gte!(price_lots, 0);
@@ -225,6 +230,7 @@ pub mod openbook_v2 {
             max_quote_lots_including_fees,
             client_order_id,
             time_in_force: 0,
+            self_trade_behavior,
             params: match order_type {
                 PlaceOrderType::Market => OrderParams::Market,
                 PlaceOrderType::ImmediateOrCancel => OrderParams::ImmediateOrCancel { price_lots },

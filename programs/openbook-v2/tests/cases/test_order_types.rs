@@ -80,6 +80,7 @@ async fn test_inmediate_order() -> Result<(), TransportError> {
             client_order_id: 0,
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
+            self_trade_behavior: SelfTradeBehavior::default(),
         },
     )
     .await
@@ -105,6 +106,7 @@ async fn test_inmediate_order() -> Result<(), TransportError> {
             client_order_id: 0,
             expiry_timestamp: 0,
             order_type: PlaceOrderType::ImmediateOrCancel,
+            self_trade_behavior: SelfTradeBehavior::default(),
         },
     )
     .await
@@ -201,6 +203,7 @@ async fn test_inmediate_order() -> Result<(), TransportError> {
             client_order_id: 0,
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
+            self_trade_behavior: SelfTradeBehavior::default(),
         },
     )
     .await
@@ -227,6 +230,7 @@ async fn test_inmediate_order() -> Result<(), TransportError> {
             client_order_id: 0,
             expiry_timestamp: 0,
             order_type: PlaceOrderType::PostOnly,
+            self_trade_behavior: SelfTradeBehavior::default(),
         },
     )
     .await
@@ -316,6 +320,7 @@ async fn test_inmediate_order() -> Result<(), TransportError> {
             client_order_id: 0,
             expiry_timestamp: 0,
             order_type: PlaceOrderType::PostOnlySlide,
+            self_trade_behavior: SelfTradeBehavior::default(),
         },
     )
     .await

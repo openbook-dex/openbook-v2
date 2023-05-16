@@ -81,6 +81,8 @@ pub enum OpenBookError {
     InvalidOrderType,
     #[msg("The receiver is invalid. Makes sure the receiver's owner is the market admin")]
     InvalidFundsReceiver,
+    #[msg("would self trade")]
+    WouldSelfTrade,
 }
 
 impl OpenBookError {
