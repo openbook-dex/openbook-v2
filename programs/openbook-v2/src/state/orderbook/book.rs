@@ -370,15 +370,15 @@ impl<'a> Orderbook<'a> {
             )?;
         }
 
-        let placed_order_id = if post_target.is_some() {
-            Some(order_id)
+        let (placed_order_id, placed_quantity) = if post_target.is_some() {
+            (Some(order_id), book_base_quantity_lots)
         } else {
-            None
+            (None, 0)
         };
 
         Ok(OrderWithAmounts {
             order_id: placed_order_id,
-            placed_quantity: book_base_quantity_lots,
+            placed_quantity,
             total_base_taken_native,
             total_quote_taken_native,
             referrer_amount,
