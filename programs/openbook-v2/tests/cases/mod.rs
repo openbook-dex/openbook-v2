@@ -16,4 +16,5 @@ mod test;
 mod test_fees;
 mod test_oracle_peg;
 mod test_order_types;
+mod test_self_trade;
 mod test_take_order;
