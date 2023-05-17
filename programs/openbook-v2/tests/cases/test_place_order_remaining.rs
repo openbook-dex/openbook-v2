@@ -30,6 +30,7 @@ async fn test_place_cancel_order_remaining() -> Result<(), TransportError> {
         market,
         base_vault,
         quote_vault,
+        bids,
         ..
     } = send_tx(
         solana,
@@ -86,6 +87,11 @@ async fn test_place_cancel_order_remaining() -> Result<(), TransportError> {
     .await
     .unwrap();
 
+    {
+        let bids_data = solana.get_account_boxed::<BookSide>(bids).await;
+        assert_eq!(bids_data.roots[0].leaf_count, 1);
+    }
+
     // Add remainings, no event on event_queue
     send_tx(
         solana,
@@ -110,6 +116,11 @@ async fn test_place_cancel_order_remaining() -> Result<(), TransportError> {
     )
     .await
     .unwrap();
+
+    {
+        let bids_data = solana.get_account_boxed::<BookSide>(bids).await;
+        assert_eq!(bids_data.roots[0].leaf_count, 0);
+    }
 
     {
         let open_orders_account_0 = solana.get_account::<OpenOrdersAccount>(account_0).await;
@@ -138,7 +149,7 @@ async fn test_place_cancel_order_remaining() -> Result<(), TransportError> {
         assert_eq!(event_queue.header.count(), 0);
     }
 
-    // Order with expiry time of 2s
+    // Order with expiry time of 10s
     let now_ts: u64 = solana.get_clock().await.unix_timestamp as u64;
     send_tx(
         solana,
@@ -154,7 +165,7 @@ async fn test_place_cancel_order_remaining() -> Result<(), TransportError> {
             max_base_lots: 1,
             max_quote_lots_including_fees: 10000,
 
-            client_order_id: 34,
+            client_order_id: 35,
             expiry_timestamp: now_ts + 10,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
@@ -163,9 +174,13 @@ async fn test_place_cancel_order_remaining() -> Result<(), TransportError> {
     )
     .await
     .unwrap();
+    {
+        let bids_data = solana.get_account_boxed::<BookSide>(bids).await;
+        assert_eq!(bids_data.roots[0].leaf_count, 1);
+    }
 
     // Advance clock
-    solana.advance_clock(2).await;
+    solana.advance_clock(11).await;
 
     {
         let open_orders_account_0 = solana.get_account::<OpenOrdersAccount>(account_0).await;
@@ -185,9 +200,9 @@ async fn test_place_cancel_order_remaining() -> Result<(), TransportError> {
             side: Side::Ask,
             price_lots,
             max_base_lots: 1,
-            max_quote_lots_including_fees: 10004,
+            max_quote_lots_including_fees: 10000,
 
-            client_order_id: 0,
+            client_order_id: 36,
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
@@ -196,10 +211,10 @@ async fn test_place_cancel_order_remaining() -> Result<(), TransportError> {
     )
     .await
     .unwrap();
-
-    // bid is canceled
-
+    // bid has been canceled
     {
+        let bids_data = solana.get_account_boxed::<BookSide>(bids).await;
+        assert_eq!(bids_data.roots[0].leaf_count, 0);
         let open_orders_account_0 = solana.get_account::<OpenOrdersAccount>(account_0).await;
         assert_eq!(open_orders_account_0.position.bids_base_lots, 0);
     }

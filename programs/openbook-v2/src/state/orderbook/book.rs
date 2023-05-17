@@ -115,18 +115,21 @@ impl<'a> Orderbook<'a> {
                         best_opposing.node.owner,
                         best_opposing.node.quantity,
                     );
+
                     // Check if remaining is available so no event is pushed to event_queue
                     let loader = remaining_accs.iter().find(|ai| ai.key == &event.owner);
                     if let Some(acc) = loader {
+                        msg!("then");
+
                         let ooa: AccountLoader<OpenOrdersAccountFixed> =
                             AccountLoader::try_from(acc)?;
                         let mut owner = ooa.load_full_mut()?;
                         owner.cancel_order(event.owner_slot as usize, event.quantity, *market)?;
                     } else {
                         event_queue.push_back(cast(event)).unwrap();
-                        matched_order_deletes
-                            .push((best_opposing.handle.order_tree, best_opposing.node.key));
                     }
+                    matched_order_deletes
+                        .push((best_opposing.handle.order_tree, best_opposing.node.key));
                 }
                 continue;
             }
@@ -241,8 +244,8 @@ impl<'a> Orderbook<'a> {
                 });
             } else {
                 event_queue.push_back(cast(fill)).unwrap();
-                limit -= 1;
             }
+            limit -= 1;
 
             if let Some(open_orders_acc) = open_orders_acc.as_mut() {
                 open_orders_acc.execute_taker(market, &fill)?

@@ -79,11 +79,6 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<
             };
 
             let free_qty_to_lock = cmp::min(max_quote_including_fees, free_quote);
-            msg!(
-                "to deposit max_quote_including_fees {}, free_quote {}",
-                max_quote_including_fees,
-                free_quote
-            );
             position.quote_free_native -= free_qty_to_lock;
 
             // Update market deposit total
