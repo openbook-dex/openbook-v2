@@ -8,7 +8,6 @@ on:
 env:
   CARGO_TERM_COLOR: always
   SOLANA_VERSION: "1.14.14"
-  RUST_TOOLCHAIN: "1.65.0"
 
 jobs:
   format:
@@ -21,8 +20,13 @@ jobs:
       - name: Checkout submodules
         run: git submodule update --init
 
-      - name: Set Rust version
-        run: rustup toolchain install ${{ env.RUST_TOOLCHAIN }} --component rustfmt
+      - name: Install Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          profile: minimal
+          components: rustfmt
+          override: true
 
       - name: Run fmt
         run: cargo fmt -- --check
@@ -43,8 +47,13 @@ jobs:
       - name: Install just
         uses: extractions/setup-just@v1
 
-      - name: Set Rust version
-        run: rustup toolchain install ${{ env.RUST_TOOLCHAIN }}
+      - name: Install Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          profile: minimal
+          components: rustfmt
+          override: true
 
       - name: Install Solana
         run: |
