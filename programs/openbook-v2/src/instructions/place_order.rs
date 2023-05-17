@@ -47,7 +47,6 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<
         maker_fees,
         ..
     } = book.new_order(
-        ctx.remaining_accounts,
         &order,
         &mut market,
         &mut event_queue,
@@ -56,6 +55,7 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<
         &open_orders_account_pk,
         now_ts,
         limit,
+        ctx.remaining_accounts,
     )?;
 
     let position = &mut open_orders_account.fixed_mut().position;

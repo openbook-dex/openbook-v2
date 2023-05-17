@@ -387,8 +387,8 @@ async fn test_self_trade_cancel_provide() -> Result<(), TransportError> {
         let open_orders_account_1 = solana.get_account::<OpenOrdersAccount>(account_1).await;
 
         assert_eq!(open_orders_account_0.position.bids_base_lots, 0);
-        assert_eq!(open_orders_account_0.position.asks_base_lots, 1);
-        assert_eq!(open_orders_account_0.position.base_free_native, 100);
+        assert_eq!(open_orders_account_0.position.asks_base_lots, 0);
+        assert_eq!(open_orders_account_0.position.base_free_native, 200);
         assert_eq!(open_orders_account_0.position.quote_free_native, 0);
 
         assert_eq!(open_orders_account_1.position.bids_base_lots, 0);
@@ -426,8 +426,8 @@ async fn test_self_trade_cancel_provide() -> Result<(), TransportError> {
         let open_orders_account_1 = solana.get_account::<OpenOrdersAccount>(account_1).await;
 
         assert_eq!(open_orders_account_0.position.bids_base_lots, 0);
-        assert_eq!(open_orders_account_0.position.asks_base_lots, 1);
-        assert_eq!(open_orders_account_0.position.base_free_native, 200);
+        assert_eq!(open_orders_account_0.position.asks_base_lots, 0);
+        assert_eq!(open_orders_account_0.position.base_free_native, 300);
         assert_eq!(open_orders_account_0.position.quote_free_native, 0);
 
         assert_eq!(open_orders_account_1.position.bids_base_lots, 0);

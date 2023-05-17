@@ -53,7 +53,6 @@ impl<'a> Orderbook<'a> {
     #[allow(clippy::too_many_arguments)]
     pub fn new_order(
         &mut self,
-        remaining_accs: &[AccountInfo],
         order: &Order,
         open_book_market: &mut Market,
         event_queue: &mut EventQueue,
@@ -62,6 +61,7 @@ impl<'a> Orderbook<'a> {
         owner: &Pubkey,
         now_ts: u64,
         mut limit: u8,
+        remaining_accs: &[AccountInfo],
     ) -> std::result::Result<OrderWithAmounts, Error> {
         let side = order.side;
 
@@ -119,8 +119,6 @@ impl<'a> Orderbook<'a> {
                     // Check if remaining is available so no event is pushed to event_queue
                     let loader = remaining_accs.iter().find(|ai| ai.key == &event.owner);
                     if let Some(acc) = loader {
-                        msg!("then");
-
                         let ooa: AccountLoader<OpenOrdersAccountFixed> =
                             AccountLoader::try_from(acc)?;
                         let mut owner = ooa.load_full_mut()?;
@@ -166,21 +164,14 @@ impl<'a> Orderbook<'a> {
                         decremented_quote_lots += match_quote_lots;
                     }
                     SelfTradeBehavior::CancelProvide => {
-                        let event = OutEvent::new(
-                            other_side,
-                            best_opposing.node.owner_slot,
-                            now_ts,
-                            event_queue.header.seq_num,
-                            best_opposing.node.owner,
-                            best_opposing.node.quantity,
-                        );
-
                         // The open orders acc is always present in this case, no need event_queue
                         open_orders_acc.as_mut().unwrap().cancel_order(
-                            event.owner_slot as usize,
-                            event.quantity,
+                            best_opposing.node.owner_slot as usize,
+                            best_opposing.node.quantity,
                             *market,
                         )?;
+                        matched_order_deletes
+                            .push((best_opposing.handle.order_tree, best_opposing.node.key));
 
                         // skip actual matching
                         continue;
