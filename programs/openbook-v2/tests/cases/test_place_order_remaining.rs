@@ -1,7 +1,7 @@
 use super::*;
 
 #[tokio::test]
-async fn test_ioc() -> Result<(), TransportError> {
+async fn test_place_order_remaining() -> Result<(), TransportError> {
     let context = TestContext::new().await;
     let solana = &context.solana.clone();
 
@@ -15,7 +15,17 @@ async fn test_ioc() -> Result<(), TransportError> {
 
     let tokens = Token::create(mints.to_vec(), solana, admin, payer).await;
 
+    //
     // TEST: Create a market
+    //
+    let market = get_market_address(admin.pubkey(), 1);
+    let base_vault = solana
+        .create_associated_token_account(&market, mints[0].pubkey)
+        .await;
+    let quote_vault = solana
+        .create_associated_token_account(&market, mints[1].pubkey)
+        .await;
+
     let openbook_v2::accounts::CreateMarket {
         market,
         base_vault,
@@ -29,7 +39,7 @@ async fn test_ioc() -> Result<(), TransportError> {
             market_index: 1,
             quote_lot_size: 10,
             base_lot_size: 100,
-            maker_fee: 0.0002,
+            maker_fee: -0.0002,
             taker_fee: 0.0004,
             base_mint: mints[0].pubkey,
             quote_mint: mints[1].pubkey,
@@ -46,8 +56,11 @@ async fn test_ioc() -> Result<(), TransportError> {
 
     let price_lots = {
         let market = solana.get_account::<Market>(market).await;
-        market.native_price_to_lot(I80F48::ONE)
+        market.native_price_to_lot(I80F48::from(1000))
     };
+
+    // Set the initial oracle price
+    set_stub_oracle_price(solana, &tokens[1], admin, 1000.0).await;
 
     send_tx(
         solana,
@@ -62,16 +75,18 @@ async fn test_ioc() -> Result<(), TransportError> {
             price_lots,
             max_base_lots: 1,
             max_quote_lots_including_fees: 10000,
-            reduce_only: false,
+
             client_order_id: 0,
             expiry_timestamp: 0,
+            order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings:vec![],
+            remainings: vec![],
         },
     )
     .await
     .unwrap();
 
+    // Add remainings, no event on event_queue
     send_tx(
         solana,
         PlaceOrderInstruction {
@@ -84,12 +99,13 @@ async fn test_ioc() -> Result<(), TransportError> {
             side: Side::Ask,
             price_lots,
             max_base_lots: 1,
-            max_quote_lots_including_fees: 10000,
-            reduce_only: false,
+            max_quote_lots_including_fees: 10004,
+
             client_order_id: 0,
             expiry_timestamp: 0,
+            order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings:vec![],
+            remainings: vec![account_0],
         },
     )
     .await
@@ -99,29 +115,27 @@ async fn test_ioc() -> Result<(), TransportError> {
         let open_orders_account_0 = solana.get_account::<OpenOrdersAccount>(account_0).await;
         let open_orders_account_1 = solana.get_account::<OpenOrdersAccount>(account_1).await;
 
-        assert_eq!(open_orders_account_0.position.base_position_lots(), 0);
-        assert_eq!(open_orders_account_1.position.base_position_lots(), 0);
-        assert_eq!(
-            open_orders_account_0
-                .position
-                .quote_position_native()
-                .round(),
-            0
-        );
-        // assert_eq!(open_orders_account_1.position.quote_position_native(), 0);
-        assert_eq!(open_orders_account_0.position.bids_base_lots, 1);
+        assert_eq!(open_orders_account_0.position.bids_base_lots, 0);
         assert_eq!(open_orders_account_1.position.bids_base_lots, 0);
         assert_eq!(open_orders_account_0.position.asks_base_lots, 0);
         assert_eq!(open_orders_account_1.position.asks_base_lots, 0);
-        assert_eq!(open_orders_account_0.position.taker_base_lots, 0);
-        assert_eq!(open_orders_account_1.position.taker_quote_lots, 10000);
-        assert_eq!(open_orders_account_0.position.base_free_native, 0);
+        assert_eq!(open_orders_account_0.position.base_free_native, 100);
         assert_eq!(open_orders_account_1.position.base_free_native, 0);
-        assert_eq!(open_orders_account_0.position.quote_free_native, 0);
+        assert_eq!(open_orders_account_0.position.quote_free_native.round(), 20);
         assert_eq!(
             open_orders_account_1.position.quote_free_native.round(),
             99960
         );
+    }
+
+    // No events on event_queue
+    {
+        let market_acc = solana.get_account::<Market>(market).await;
+        let event_queue = solana
+            .get_account::<EventQueue>(market_acc.event_queue)
+            .await;
+
+        assert_eq!(event_queue.header.count(), 0);
     }
 
     Ok(())

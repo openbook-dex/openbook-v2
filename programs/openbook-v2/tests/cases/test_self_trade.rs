@@ -75,6 +75,7 @@ async fn test_self_trade_decrement_take() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
+            remainings: vec![],
         },
     )
     .await
@@ -98,6 +99,7 @@ async fn test_self_trade_decrement_take() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
+            remainings: vec![],
         },
     )
     .await
@@ -121,6 +123,7 @@ async fn test_self_trade_decrement_take() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::ImmediateOrCancel,
             self_trade_behavior: SelfTradeBehavior::DecrementTake,
+            remainings: vec![],
         },
     )
     .await
@@ -183,6 +186,7 @@ async fn test_self_trade_decrement_take() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::DecrementTake,
+            remainings: vec![],
         },
     )
     .await
@@ -309,6 +313,7 @@ async fn test_self_trade_cancel_provide() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
+            remainings: vec![],
         },
     )
     .await
@@ -332,6 +337,7 @@ async fn test_self_trade_cancel_provide() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
+            remainings: vec![],
         },
     )
     .await
@@ -370,6 +376,7 @@ async fn test_self_trade_cancel_provide() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::ImmediateOrCancel,
             self_trade_behavior: SelfTradeBehavior::CancelProvide,
+            remainings: vec![],
         },
     )
     .await
@@ -408,6 +415,7 @@ async fn test_self_trade_cancel_provide() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::DecrementTake,
+            remainings: vec![],
         },
     )
     .await
@@ -530,6 +538,7 @@ async fn test_self_abort_transaction() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
+            remainings: vec![],
         },
     )
     .await
@@ -553,6 +562,7 @@ async fn test_self_abort_transaction() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::AbortTransaction,
+            remainings: vec![],
         },
     )
     .await

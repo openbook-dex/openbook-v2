@@ -327,7 +327,9 @@ pub struct PlaceOrderInstruction {
     pub expiry_timestamp: u64,
     pub order_type: PlaceOrderType,
     pub self_trade_behavior: SelfTradeBehavior,
+    pub remainings: Vec<Pubkey>,
 }
+
 #[async_trait::async_trait(?Send)]
 impl ClientInstruction for PlaceOrderInstruction {
     type Accounts = openbook_v2::accounts::PlaceOrder;
@@ -365,8 +367,16 @@ impl ClientInstruction for PlaceOrderInstruction {
             token_program: Token::id(),
             system_program: System::id(),
         };
-        let instruction = make_instruction(program_id, &accounts, instruction);
-
+        let mut instruction = make_instruction(program_id, &accounts, instruction);
+        let mut vec_remainings: Vec<AccountMeta> = Vec::new();
+        for remaining in &self.remainings {
+            vec_remainings.push(AccountMeta {
+                pubkey: *remaining,
+                is_signer: false,
+                is_writable: true,
+            })
+        }
+        instruction.accounts.append(&mut vec_remainings);
         (accounts, instruction)
     }
 
