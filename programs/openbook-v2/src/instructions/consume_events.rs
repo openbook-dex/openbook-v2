@@ -5,7 +5,6 @@ use crate::error::OpenBookError;
 use crate::state::*;
 
 use crate::accounts_ix::*;
-use crate::logs::FillLog;
 
 // Max events to consume per ix.
 const MAX_EVENTS_CONSUME: usize = 8;
@@ -67,23 +66,6 @@ pub fn consume_events(ctx: Context<ConsumeEvents>, limit: usize) -> Result<()> {
 
                 load_open_orders_acc!(maker, fill.maker, remaining_accs, event_queue);
                 maker.execute_maker(&mut market, fill)?;
-
-                emit!(FillLog {
-                    taker_side: fill.taker_side,
-                    maker_slot: fill.maker_slot,
-                    maker_out: fill.maker_out(),
-                    timestamp: fill.timestamp,
-                    seq_num: fill.seq_num,
-                    maker: fill.maker,
-                    maker_client_order_id: fill.maker_client_order_id,
-                    maker_fee: market.maker_fee.to_num(),
-                    maker_timestamp: fill.maker_timestamp,
-                    taker: fill.taker,
-                    taker_client_order_id: fill.taker_client_order_id,
-                    taker_fee: market.taker_fee.to_num(),
-                    price: fill.price,
-                    quantity: fill.quantity,
-                });
             }
             EventType::Out => {
                 let out: &OutEvent = cast_ref(event);

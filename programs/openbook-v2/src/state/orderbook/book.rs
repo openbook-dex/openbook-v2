@@ -1,4 +1,3 @@
-use crate::logs::FillLog;
 use crate::state::open_orders_account::OpenOrdersLoader;
 use crate::state::OpenOrdersAccountRefMut;
 use crate::{
@@ -489,22 +488,6 @@ pub fn process_fill_event(
         let mut maker = ooa.load_full_mut()?;
 
         maker.execute_maker(market, &event)?;
-        emit!(FillLog {
-            taker_side: event.taker_side,
-            maker_slot: event.maker_slot,
-            maker_out: event.maker_out(),
-            timestamp: event.timestamp,
-            seq_num: event.seq_num,
-            maker: event.maker,
-            maker_client_order_id: event.maker_client_order_id,
-            maker_fee: market.maker_fee.to_num(),
-            maker_timestamp: event.maker_timestamp,
-            taker: event.taker,
-            taker_client_order_id: event.taker_client_order_id,
-            taker_fee: market.taker_fee.to_num(),
-            price: event.price,
-            quantity: event.quantity,
-        });
     } else {
         event_queue.push_back(cast(event)).unwrap();
     }
