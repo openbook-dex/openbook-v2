@@ -1,0 +1,59 @@
+name: Code Review - Rust
+on:
+  push:
+    paths: ["programs/**", "Cargo.lock"]
+  workflow_dispatch: # Pick branch manually
+
+env:
+  CARGO_TERM_COLOR: always
+  SOLANA_VERSION: "1.14.14"
+  RUST_TOOLCHAIN: "1.65.0"
+
+jobs:
+  format:
+    name: Format
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Checkout submodules
+        run: git submodule update --init
+
+      - name: Set Rust version
+        run: rustup toolchain install ${{ env.RUST_TOOLCHAIN }} --component rustfmt
+
+      - name: Run fmt
+        run: cargo fmt -- --check
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Checkout submodules
+        run: git submodule update --init
+
+      - name: Cache dependencies
+        uses: Swatinem/rust-cache@v2
+
+      - name: Install just
+      - uses: extractions/setup-just@v1
+
+      - name: Set Rust version
+        run: rustup toolchain install ${{ env.RUST_TOOLCHAIN }}
+
+      - name: Install Solana
+        run: |
+          sh -c "$(curl -sSfL https://release.solana.com/v${{ env.SOLANA_VERSION }}/install)"
+          echo "$HOME/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
+          export PATH="/home/runner/.local/share/solana/install/active_release/bin:$PATH"
+          solana --version
+          echo "Generating keypair..."
+          solana-keygen new -o "$HOME/.config/solana/id.json" --no-passphrase --silent
+
+      - name: Run tests all deps
+        run: just test-all
+        shell: bash
