@@ -115,9 +115,18 @@ impl<'a> Orderbook<'a> {
                         best_opposing.node.owner,
                         best_opposing.node.quantity,
                     );
-                    event_queue.push_back(cast(event)).unwrap();
-                    matched_order_deletes
-                        .push((best_opposing.handle.order_tree, best_opposing.node.key));
+                    // Check if remaining is available so no event is pushed to event_queue
+                    let loader = remaining_accs.iter().find(|ai| ai.key == &event.owner);
+                    if let Some(acc) = loader {
+                        let ooa: AccountLoader<OpenOrdersAccountFixed> =
+                            AccountLoader::try_from(acc)?;
+                        let mut owner = ooa.load_full_mut()?;
+                        owner.cancel_order(event.owner_slot as usize, event.quantity, *market)?;
+                    } else {
+                        event_queue.push_back(cast(event)).unwrap();
+                        matched_order_deletes
+                            .push((best_opposing.handle.order_tree, best_opposing.node.key));
+                    }
                 }
                 continue;
             }
@@ -162,9 +171,13 @@ impl<'a> Orderbook<'a> {
                             best_opposing.node.owner,
                             best_opposing.node.quantity,
                         );
-                        event_queue.push_back(cast(event)).unwrap();
-                        matched_order_deletes
-                            .push((best_opposing.handle.order_tree, best_opposing.node.key));
+
+                        // The open orders acc is always present in this case, no need event_queue
+                        open_orders_acc.as_mut().unwrap().cancel_order(
+                            event.owner_slot as usize,
+                            event.quantity,
+                            *market,
+                        )?;
 
                         // skip actual matching
                         continue;
@@ -206,8 +219,8 @@ impl<'a> Orderbook<'a> {
 
             let loader = remaining_accs.iter().find(|ai| ai.key == &fill.maker);
             if let Some(acc) = loader {
-                let mal: AccountLoader<OpenOrdersAccountFixed> = AccountLoader::try_from(acc)?;
-                let mut maker = mal.load_full_mut()?;
+                let ooa: AccountLoader<OpenOrdersAccountFixed> = AccountLoader::try_from(acc)?;
+                let mut maker = ooa.load_full_mut()?;
 
                 maker.execute_maker(market, &fill)?;
                 emit!(FillLog {
@@ -341,7 +354,15 @@ impl<'a> Orderbook<'a> {
                     expired_order.owner,
                     expired_order.quantity,
                 );
-                event_queue.push_back(cast(event)).unwrap();
+                // Check if remaining is available so no event is pushed to event_queue
+                let loader = remaining_accs.iter().find(|ai| ai.key == &event.owner);
+                if let Some(acc) = loader {
+                    let ooa: AccountLoader<OpenOrdersAccountFixed> = AccountLoader::try_from(acc)?;
+                    let mut owner = ooa.load_full_mut()?;
+                    owner.cancel_order(event.owner_slot as usize, event.quantity, *market)?;
+                } else {
+                    event_queue.push_back(cast(event)).unwrap();
+                }
             }
 
             if bookside.is_full() {
@@ -361,7 +382,15 @@ impl<'a> Orderbook<'a> {
                     worst_order.owner,
                     worst_order.quantity,
                 );
-                event_queue.push_back(cast(event)).unwrap();
+                // Check if remaining is available so no event is pushed to event_queue
+                let loader = remaining_accs.iter().find(|ai| ai.key == &event.owner);
+                if let Some(acc) = loader {
+                    let ooa: AccountLoader<OpenOrdersAccountFixed> = AccountLoader::try_from(acc)?;
+                    let mut owner = ooa.load_full_mut()?;
+                    owner.cancel_order(event.owner_slot as usize, event.quantity, *market)?;
+                } else {
+                    event_queue.push_back(cast(event)).unwrap();
+                }
             }
 
             let owner_slot = open_orders_acc.next_order_slot()?;

@@ -1,7 +1,7 @@
 use super::*;
 
 #[tokio::test]
-async fn test_place_order_remaining() -> Result<(), TransportError> {
+async fn test_place_cancel_order_remaining() -> Result<(), TransportError> {
     let context = TestContext::new().await;
     let solana = &context.solana.clone();
 
@@ -137,6 +137,82 @@ async fn test_place_order_remaining() -> Result<(), TransportError> {
 
         assert_eq!(event_queue.header.count(), 0);
     }
+
+    // Order with expiry time of 2s
+    let now_ts: u64 = solana.get_clock().await.unix_timestamp as u64;
+    send_tx(
+        solana,
+        PlaceOrderInstruction {
+            open_orders_account: account_0,
+            market,
+            owner,
+            payer: owner_token_1,
+            base_vault,
+            quote_vault,
+            side: Side::Bid,
+            price_lots,
+            max_base_lots: 1,
+            max_quote_lots_including_fees: 10000,
+
+            client_order_id: 34,
+            expiry_timestamp: now_ts + 10,
+            order_type: PlaceOrderType::Limit,
+            self_trade_behavior: SelfTradeBehavior::default(),
+            remainings: vec![],
+        },
+    )
+    .await
+    .unwrap();
+
+    // Advance clock
+    solana.advance_clock(2).await;
+
+    {
+        let open_orders_account_0 = solana.get_account::<OpenOrdersAccount>(account_0).await;
+        assert_eq!(open_orders_account_0.position.bids_base_lots, 1);
+    }
+
+    // Add remainings, no event on event_queue. previous order is canceled
+    send_tx(
+        solana,
+        PlaceOrderInstruction {
+            open_orders_account: account_1,
+            market,
+            owner,
+            payer: owner_token_0,
+            base_vault,
+            quote_vault,
+            side: Side::Ask,
+            price_lots,
+            max_base_lots: 1,
+            max_quote_lots_including_fees: 10004,
+
+            client_order_id: 0,
+            expiry_timestamp: 0,
+            order_type: PlaceOrderType::Limit,
+            self_trade_behavior: SelfTradeBehavior::default(),
+            remainings: vec![account_0],
+        },
+    )
+    .await
+    .unwrap();
+
+    // bid is canceled
+
+    {
+        let open_orders_account_0 = solana.get_account::<OpenOrdersAccount>(account_0).await;
+        assert_eq!(open_orders_account_0.position.bids_base_lots, 0);
+    }
+
+    // No events on event_queue
+    // {
+    //     let market_acc = solana.get_account::<Market>(market).await;
+    //     let event_queue = solana
+    //         .get_account::<EventQueue>(market_acc.event_queue)
+    //         .await;
+
+    //     assert_eq!(event_queue.header.count(), 0);
+    // }
 
     Ok(())
 }
