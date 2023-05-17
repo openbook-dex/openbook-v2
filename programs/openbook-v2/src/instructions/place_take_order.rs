@@ -47,6 +47,7 @@ pub fn place_take_order<'info>(
         &ctx.accounts.owner.key(),
         now_ts,
         limit,
+        ctx.remaining_accounts,
     )?;
 
     let (from_vault, to_vault, deposit_amount, withdraw_amount) = match side {

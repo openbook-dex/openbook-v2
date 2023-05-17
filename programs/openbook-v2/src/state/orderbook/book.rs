@@ -1,7 +1,8 @@
+use crate::state::open_orders_account::OpenOrdersLoader;
 use crate::state::OpenOrdersAccountRefMut;
 use crate::{
     error::*,
-    state::{orderbook::bookside::*, EventQueue, Market},
+    state::{orderbook::bookside::*, EventQueue, Market, OpenOrdersAccountFixed},
 };
 use anchor_lang::prelude::*;
 use bytemuck::cast;
@@ -59,6 +60,7 @@ impl<'a> Orderbook<'a> {
         owner: &Pubkey,
         now_ts: u64,
         mut limit: u8,
+        remaining_accs: &[AccountInfo],
     ) -> std::result::Result<OrderWithAmounts, Error> {
         let side = order.side;
 
@@ -112,7 +114,8 @@ impl<'a> Orderbook<'a> {
                         best_opposing.node.owner,
                         best_opposing.node.quantity,
                     );
-                    event_queue.push_back(cast(event)).unwrap();
+
+                    process_out_event(event, market, event_queue, remaining_accs)?;
                     matched_order_deletes
                         .push((best_opposing.handle.order_tree, best_opposing.node.key));
                 }
@@ -143,23 +146,20 @@ impl<'a> Orderbook<'a> {
                 .min(max_match_by_quote);
             let match_quote_lots = match_base_lots * best_opposing_price;
 
+            // Self-trade behaviour
             if owner == &best_opposing.node.owner {
-                msg!("self trade {:?}", order.self_trade_behavior);
                 match order.self_trade_behavior {
                     SelfTradeBehavior::DecrementTake => {
                         // remember all decremented quote lots to only charge fees on not-self-trades
                         decremented_quote_lots += match_quote_lots;
                     }
                     SelfTradeBehavior::CancelProvide => {
-                        let event = OutEvent::new(
-                            other_side,
-                            best_opposing.node.owner_slot,
-                            now_ts,
-                            event_queue.header.seq_num,
-                            best_opposing.node.owner,
+                        // The open orders acc is always present in this case, no need event_queue
+                        open_orders_acc.as_mut().unwrap().cancel_order(
+                            best_opposing.node.owner_slot as usize,
                             best_opposing.node.quantity,
-                        );
-                        event_queue.push_back(cast(event)).unwrap();
+                            *market,
+                        )?;
                         matched_order_deletes
                             .push((best_opposing.handle.order_tree, best_opposing.node.key));
 
@@ -200,8 +200,11 @@ impl<'a> Orderbook<'a> {
                 best_opposing_price,
                 match_base_lots,
             );
-            event_queue.push_back(cast(fill)).unwrap();
+
+            process_fill_event(fill, market, event_queue, remaining_accs)?;
+
             limit -= 1;
+
             if let Some(open_orders_acc) = open_orders_acc.as_mut() {
                 open_orders_acc.execute_taker(market, &fill)?
             }
@@ -312,7 +315,7 @@ impl<'a> Orderbook<'a> {
                     expired_order.owner,
                     expired_order.quantity,
                 );
-                event_queue.push_back(cast(event)).unwrap();
+                process_out_event(event, market, event_queue, remaining_accs)?;
             }
 
             if bookside.is_full() {
@@ -332,7 +335,7 @@ impl<'a> Orderbook<'a> {
                     worst_order.owner,
                     worst_order.quantity,
                 );
-                event_queue.push_back(cast(event)).unwrap();
+                process_out_event(event, market, event_queue, remaining_accs)?;
             }
 
             let owner_slot = open_orders_acc.next_order_slot()?;
@@ -453,6 +456,42 @@ impl<'a> Orderbook<'a> {
 
         Ok(leaf_node)
     }
+}
+
+pub fn process_out_event(
+    event: OutEvent,
+    market: &Market,
+    event_queue: &mut EventQueue,
+    remaining_accs: &[AccountInfo],
+) -> Result<()> {
+    // Check if remaining is available so no event is pushed to event_queue
+    let loader = remaining_accs.iter().find(|ai| ai.key == &event.owner);
+    if let Some(acc) = loader {
+        let ooa: AccountLoader<OpenOrdersAccountFixed> = AccountLoader::try_from(acc)?;
+        let mut owner = ooa.load_full_mut()?;
+        owner.cancel_order(event.owner_slot as usize, event.quantity, *market)?;
+    } else {
+        event_queue.push_back(cast(event)).unwrap();
+    }
+    Ok(())
+}
+
+pub fn process_fill_event(
+    event: FillEvent,
+    market: &mut Market,
+    event_queue: &mut EventQueue,
+    remaining_accs: &[AccountInfo],
+) -> Result<()> {
+    let loader = remaining_accs.iter().find(|ai| ai.key == &event.maker);
+    if let Some(acc) = loader {
+        let ooa: AccountLoader<OpenOrdersAccountFixed> = AccountLoader::try_from(acc)?;
+        let mut maker = ooa.load_full_mut()?;
+
+        maker.execute_maker(market, &event)?;
+    } else {
+        event_queue.push_back(cast(event)).unwrap();
+    }
+    Ok(())
 }
 
 /// Release funds and apply taker fees to the taker account. Account fees for referrer

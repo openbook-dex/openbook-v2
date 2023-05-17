@@ -66,6 +66,7 @@ async fn test_ioc() -> Result<(), TransportError> {
             client_order_id: 0,
             expiry_timestamp: 0,
             self_trade_behavior: SelfTradeBehavior::default(),
+            remainings:vec![],
         },
     )
     .await
@@ -88,6 +89,7 @@ async fn test_ioc() -> Result<(), TransportError> {
             client_order_id: 0,
             expiry_timestamp: 0,
             self_trade_behavior: SelfTradeBehavior::default(),
+            remainings:vec![],
         },
     )
     .await

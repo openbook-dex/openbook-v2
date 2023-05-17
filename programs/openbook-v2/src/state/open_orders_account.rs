@@ -11,6 +11,7 @@ use solana_program::program_memory::sol_memmove;
 use static_assertions::const_assert_eq;
 
 use crate::error::*;
+use crate::logs::FillLog;
 
 use super::FillEvent;
 use super::LeafNode;
@@ -432,6 +433,23 @@ impl<
         // Update market fees
         market.fees_accrued += market.maker_fee * quote_native.abs();
 
+        //Emit event
+        emit!(FillLog {
+            taker_side: fill.taker_side,
+            maker_slot: fill.maker_slot,
+            maker_out: fill.maker_out(),
+            timestamp: fill.timestamp,
+            seq_num: fill.seq_num,
+            maker: fill.maker,
+            maker_client_order_id: fill.maker_client_order_id,
+            maker_fee: market.maker_fee.to_num(),
+            maker_timestamp: fill.maker_timestamp,
+            taker: fill.taker,
+            taker_client_order_id: fill.taker_client_order_id,
+            taker_fee: market.taker_fee.to_num(),
+            price: fill.price,
+            quantity: fill.quantity,
+        });
         Ok(())
     }
 

@@ -137,6 +137,7 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
+            remainings: vec![],
         },
     )
     .await
@@ -212,6 +213,7 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
+            remainings: vec![],
         },
     )
     .await
@@ -248,6 +250,7 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
+            remainings: vec![],
         },
     )
     .await
@@ -307,6 +310,7 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
+            remainings: vec![],
         },
     )
     .await
@@ -343,6 +347,7 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
+            remainings: vec![],
         },
     )
     .await
