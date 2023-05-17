@@ -116,16 +116,7 @@ impl<'a> Orderbook<'a> {
                         best_opposing.node.quantity,
                     );
 
-                    // Check if remaining is available so no event is pushed to event_queue
-                    let loader = remaining_accs.iter().find(|ai| ai.key == &event.owner);
-                    if let Some(acc) = loader {
-                        let ooa: AccountLoader<OpenOrdersAccountFixed> =
-                            AccountLoader::try_from(acc)?;
-                        let mut owner = ooa.load_full_mut()?;
-                        owner.cancel_order(event.owner_slot as usize, event.quantity, *market)?;
-                    } else {
-                        event_queue.push_back(cast(event)).unwrap();
-                    }
+                    process_out_event(event, market, event_queue, remaining_accs)?;
                     matched_order_deletes
                         .push((best_opposing.handle.order_tree, best_opposing.node.key));
                 }
@@ -348,15 +339,7 @@ impl<'a> Orderbook<'a> {
                     expired_order.owner,
                     expired_order.quantity,
                 );
-                // Check if remaining is available so no event is pushed to event_queue
-                let loader = remaining_accs.iter().find(|ai| ai.key == &event.owner);
-                if let Some(acc) = loader {
-                    let ooa: AccountLoader<OpenOrdersAccountFixed> = AccountLoader::try_from(acc)?;
-                    let mut owner = ooa.load_full_mut()?;
-                    owner.cancel_order(event.owner_slot as usize, event.quantity, *market)?;
-                } else {
-                    event_queue.push_back(cast(event)).unwrap();
-                }
+                process_out_event(event, market, event_queue, remaining_accs)?;
             }
 
             if bookside.is_full() {
@@ -376,15 +359,7 @@ impl<'a> Orderbook<'a> {
                     worst_order.owner,
                     worst_order.quantity,
                 );
-                // Check if remaining is available so no event is pushed to event_queue
-                let loader = remaining_accs.iter().find(|ai| ai.key == &event.owner);
-                if let Some(acc) = loader {
-                    let ooa: AccountLoader<OpenOrdersAccountFixed> = AccountLoader::try_from(acc)?;
-                    let mut owner = ooa.load_full_mut()?;
-                    owner.cancel_order(event.owner_slot as usize, event.quantity, *market)?;
-                } else {
-                    event_queue.push_back(cast(event)).unwrap();
-                }
+                process_out_event(event, market, event_queue, remaining_accs)?;
             }
 
             let owner_slot = open_orders_acc.next_order_slot()?;
@@ -505,6 +480,24 @@ impl<'a> Orderbook<'a> {
 
         Ok(leaf_node)
     }
+}
+
+pub fn process_out_event(
+    event: OutEvent,
+    market: &Market,
+    event_queue: &mut EventQueue,
+    remaining_accs: &[AccountInfo],
+) -> Result<()> {
+    // Check if remaining is available so no event is pushed to event_queue
+    let loader = remaining_accs.iter().find(|ai| ai.key == &event.owner);
+    if let Some(acc) = loader {
+        let ooa: AccountLoader<OpenOrdersAccountFixed> = AccountLoader::try_from(acc)?;
+        let mut owner = ooa.load_full_mut()?;
+        owner.cancel_order(event.owner_slot as usize, event.quantity, *market)?;
+    } else {
+        event_queue.push_back(cast(event)).unwrap();
+    }
+    Ok(())
 }
 
 /// Release funds and apply taker fees to the taker account. Account fees for referrer
