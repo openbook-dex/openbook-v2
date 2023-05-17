@@ -202,31 +202,8 @@ impl<'a> Orderbook<'a> {
                 match_base_lots,
             );
 
-            let loader = remaining_accs.iter().find(|ai| ai.key == &fill.maker);
-            if let Some(acc) = loader {
-                let ooa: AccountLoader<OpenOrdersAccountFixed> = AccountLoader::try_from(acc)?;
-                let mut maker = ooa.load_full_mut()?;
+            process_fill_event(fill, market, event_queue, remaining_accs)?;
 
-                maker.execute_maker(market, &fill)?;
-                emit!(FillLog {
-                    taker_side: fill.taker_side,
-                    maker_slot: fill.maker_slot,
-                    maker_out: fill.maker_out(),
-                    timestamp: fill.timestamp,
-                    seq_num: fill.seq_num,
-                    maker: fill.maker,
-                    maker_client_order_id: fill.maker_client_order_id,
-                    maker_fee: market.maker_fee.to_num(),
-                    maker_timestamp: fill.maker_timestamp,
-                    taker: fill.taker,
-                    taker_client_order_id: fill.taker_client_order_id,
-                    taker_fee: market.taker_fee.to_num(),
-                    price: fill.price,
-                    quantity: fill.quantity,
-                });
-            } else {
-                event_queue.push_back(cast(fill)).unwrap();
-            }
             limit -= 1;
 
             if let Some(open_orders_acc) = open_orders_acc.as_mut() {
@@ -494,6 +471,40 @@ pub fn process_out_event(
         let ooa: AccountLoader<OpenOrdersAccountFixed> = AccountLoader::try_from(acc)?;
         let mut owner = ooa.load_full_mut()?;
         owner.cancel_order(event.owner_slot as usize, event.quantity, *market)?;
+    } else {
+        event_queue.push_back(cast(event)).unwrap();
+    }
+    Ok(())
+}
+
+pub fn process_fill_event(
+    event: FillEvent,
+    market: &mut Market,
+    event_queue: &mut EventQueue,
+    remaining_accs: &[AccountInfo],
+) -> Result<()> {
+    let loader = remaining_accs.iter().find(|ai| ai.key == &event.maker);
+    if let Some(acc) = loader {
+        let ooa: AccountLoader<OpenOrdersAccountFixed> = AccountLoader::try_from(acc)?;
+        let mut maker = ooa.load_full_mut()?;
+
+        maker.execute_maker(market, &event)?;
+        emit!(FillLog {
+            taker_side: event.taker_side,
+            maker_slot: event.maker_slot,
+            maker_out: event.maker_out(),
+            timestamp: event.timestamp,
+            seq_num: event.seq_num,
+            maker: event.maker,
+            maker_client_order_id: event.maker_client_order_id,
+            maker_fee: market.maker_fee.to_num(),
+            maker_timestamp: event.maker_timestamp,
+            taker: event.taker,
+            taker_client_order_id: event.taker_client_order_id,
+            taker_fee: market.taker_fee.to_num(),
+            price: event.price,
+            quantity: event.quantity,
+        });
     } else {
         event_queue.push_back(cast(event)).unwrap();
     }
