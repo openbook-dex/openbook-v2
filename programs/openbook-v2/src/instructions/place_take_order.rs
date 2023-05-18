@@ -43,7 +43,7 @@ pub fn place_take_order<'info>(
         &mut market,
         &mut event_queue,
         oracle_price,
-        None,
+        &mut None,
         &ctx.accounts.owner.key(),
         now_ts,
         limit,
