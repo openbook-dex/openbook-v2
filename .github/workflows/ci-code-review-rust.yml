@@ -51,9 +51,13 @@ jobs:
 
       - name: Cache dependencies
         uses: Swatinem/rust-cache@v2
+        with:
+          env-vars: "SOLANA_VERSION"
 
       - name: Install Solana
         uses: metadaoproject/setup-solana@v1.0
+        with:
+          solana-cli-version: $SOLANA_VERSION
 
       - name: Create keypair
         run: solana-keygen new --no-bip39-passphrase
