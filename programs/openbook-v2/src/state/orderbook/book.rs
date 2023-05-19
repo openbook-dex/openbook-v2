@@ -115,7 +115,14 @@ impl<'a> Orderbook<'a> {
                         best_opposing.node.quantity,
                     );
 
-                    process_out_event(event, market, event_queue, open_orders_acc, remaining_accs)?;
+                    process_out_event(
+                        event,
+                        market,
+                        event_queue,
+                        open_orders_acc,
+                        owner,
+                        remaining_accs,
+                    )?;
                     matched_order_deletes
                         .push((best_opposing.handle.order_tree, best_opposing.node.key));
                 }
@@ -313,7 +320,14 @@ impl<'a> Orderbook<'a> {
                     expired_order.owner,
                     expired_order.quantity,
                 );
-                process_out_event(event, market, event_queue, open_orders_acc, remaining_accs)?;
+                process_out_event(
+                    event,
+                    market,
+                    event_queue,
+                    open_orders_acc,
+                    owner,
+                    remaining_accs,
+                )?;
             }
 
             if bookside.is_full() {
@@ -333,7 +347,14 @@ impl<'a> Orderbook<'a> {
                     worst_order.owner,
                     worst_order.quantity,
                 );
-                process_out_event(event, market, event_queue, open_orders_acc, remaining_accs)?;
+                process_out_event(
+                    event,
+                    market,
+                    event_queue,
+                    open_orders_acc,
+                    owner,
+                    remaining_accs,
+                )?;
             }
 
             // Open orders always exists in this case, unwrap
@@ -463,19 +484,20 @@ pub fn process_out_event(
     market: &Market,
     event_queue: &mut EventQueue,
     mut open_orders_acc: &mut Option<OpenOrdersAccountRefMut>,
+    owner: &Pubkey,
     remaining_accs: &[AccountInfo],
 ) -> Result<()> {
-    if let Some(open_orders_acc) = &mut open_orders_acc {
-        if open_orders_acc.fixed().owner == event.owner {
-            open_orders_acc.cancel_order(event.owner_slot as usize, event.quantity, *market)?;
+    if let Some(acc) = &mut open_orders_acc {
+        if owner == &event.owner {
+            acc.cancel_order(event.owner_slot as usize, event.quantity, *market)?;
         }
     } else {
         // Check if remaining is available so no event is pushed to event_queue
         let loader = remaining_accs.iter().find(|ai| ai.key == &event.owner);
         if let Some(acc) = loader {
             let ooa: AccountLoader<OpenOrdersAccountFixed> = AccountLoader::try_from(acc)?;
-            let mut owner = ooa.load_full_mut()?;
-            owner.cancel_order(event.owner_slot as usize, event.quantity, *market)?;
+            let mut acc = ooa.load_full_mut()?;
+            acc.cancel_order(event.owner_slot as usize, event.quantity, *market)?;
         } else {
             event_queue.push_back(cast(event)).unwrap();
         }
