@@ -16,9 +16,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-
-      - name: Checkout submodules
-        run: git submodule update --init
+        with:
+          submodules: recursive
 
       - name: Install Rust toolchain
         uses: actions-rs/toolchain@v1
@@ -37,12 +36,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-
-      - name: Checkout submodules
-        run: git submodule update --init
-
-      - name: Cache dependencies
-        uses: Swatinem/rust-cache@v2
+        with:
+          submodules: recursive
 
       - name: Install just
         uses: extractions/setup-just@v1
@@ -52,17 +47,17 @@ jobs:
         with:
           toolchain: stable
           profile: minimal
-          components: rustfmt
-          override: true
+          components: rustc
+
+      - name: Cache dependencies
+        uses: Swatinem/rust-cache@v2
 
       - name: Install Solana
-        run: |
-          sh -c "$(curl -sSfL https://release.solana.com/v${{ env.SOLANA_VERSION }}/install)"
-          echo "$HOME/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
-          export PATH="/home/runner/.local/share/solana/install/active_release/bin:$PATH"
-          solana --version
-          echo "Generating keypair..."
-          solana-keygen new -o "$HOME/.config/solana/id.json" --no-passphrase --silent
+        uses: metadaoproject/setup-solana@v1.0
+
+      - name: Create keypair
+        run: solana-keygen new --no-bip39-passphrase
+        shell: bash
 
       - name: Run tests all deps
         run: just test-all
