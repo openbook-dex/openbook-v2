@@ -1,0 +1,68 @@
+name: Code Review - Rust
+on:
+  push:
+    paths:
+      ["programs/**", "Cargo.lock", ".github/workflows/ci-code-review-rust.yml"]
+  workflow_dispatch: # Pick branch manually
+
+env:
+  CARGO_TERM_COLOR: always
+  SOLANA_VERSION: "1.14.14"
+
+jobs:
+  format:
+    name: Format
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
+      - name: Install Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          profile: minimal
+          components: rustfmt
+          override: true
+
+      - name: Run fmt
+        run: cargo fmt -- --check
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
+      - name: Install just
+        uses: extractions/setup-just@v1
+
+      - name: Install Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          profile: minimal
+          components: rustc
+
+      - name: Cache dependencies
+        uses: Swatinem/rust-cache@v2
+        with:
+          env-vars: "SOLANA_VERSION"
+
+      - name: Install Solana
+        uses: metadaoproject/setup-solana@v1.0
+        with:
+          solana-cli-version: $SOLANA_VERSION
+
+      - name: Create keypair
+        run: solana-keygen new --no-bip39-passphrase
+        shell: bash
+
+      - name: Run tests all deps
+        run: just test-all
+        shell: bash
