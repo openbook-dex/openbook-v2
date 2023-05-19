@@ -490,17 +490,17 @@ pub fn process_out_event(
     if let Some(acc) = &mut open_orders_acc {
         if owner == &event.owner {
             acc.cancel_order(event.owner_slot as usize, event.quantity, *market)?;
+            // Already canceled, return
+            return Ok(());
         }
+    }
+    // Check if remaining is available so no event is pushed to event_queue
+    if let Some(acc) = remaining_accs.iter().find(|ai| ai.key == &event.owner) {
+        let ooa: AccountLoader<OpenOrdersAccountFixed> = AccountLoader::try_from(acc)?;
+        let mut acc = ooa.load_full_mut()?;
+        acc.cancel_order(event.owner_slot as usize, event.quantity, *market)?;
     } else {
-        // Check if remaining is available so no event is pushed to event_queue
-        let loader = remaining_accs.iter().find(|ai| ai.key == &event.owner);
-        if let Some(acc) = loader {
-            let ooa: AccountLoader<OpenOrdersAccountFixed> = AccountLoader::try_from(acc)?;
-            let mut acc = ooa.load_full_mut()?;
-            acc.cancel_order(event.owner_slot as usize, event.quantity, *market)?;
-        } else {
-            event_queue.push_back(cast(event)).unwrap();
-        }
+        event_queue.push_back(cast(event)).unwrap();
     }
     Ok(())
 }
