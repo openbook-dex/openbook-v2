@@ -5,11 +5,11 @@ lint:
     cargo clippy --no-deps --tests --features enable-gpl --features test-bpf -- --allow=clippy::result-large-err
 
 test TEST_NAME:
-    cargo test {{ TEST_NAME }} --features enable-gpl --features test-bpf -- --nocapture
+    cargo test-sbf --features enable-gpl --  {{ TEST_NAME }}
 
 test-all:
-    (cd ./programs/openbook-v2 && RUST_LOG=ERROR cargo test --features enable-gpl --features test-bpf)
+    (cd ./programs/openbook-v2 && RUST_LOG=ERROR cargo test-sbf --features enable-gpl)
 
 idl:
-    anchor build -- --features enable-gpl
+    anchor build --arch sbf -- --features enable-gpl
     bash {{ justfile_directory() }}/idl-fixup.sh

@@ -101,7 +101,7 @@ impl TestContextBuilder {
         }));
 
         let mut test = ProgramTest::new(
-            "openbook-v2",
+            "openbook_v2",
             openbook_v2::id(),
             processor!(openbook_v2::entry),
         );
