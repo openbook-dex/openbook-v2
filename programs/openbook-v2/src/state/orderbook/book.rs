@@ -255,7 +255,7 @@ impl<'a> Orderbook<'a> {
             };
         } else if order.needs_penalty_fee() {
             // IOC orders have a fee penalty applied if not match to avoid spam
-            total_base_taken_native = apply_penalty(market);
+            total_quote_taken_native = apply_penalty(market);
         }
 
         // Update remaining based on quote_lots taken. If nothing taken, same as the beggining
@@ -553,16 +553,12 @@ fn release_funds_fees(
     market.referrer_rebates_accrued += market.referrer_taker_rebate(quote_native) as u64;
 
     open_orders_acc.fixed.position.taker_volume += taker_fees.to_num::<u64>();
-    // Only apply taker fees now. Maker fees applied once processing the event
-    market.fees_accrued += taker_fees;
 
     Ok(())
 }
 
 /// Applies a fixed penalty fee to the account, and update the market's fees_accrued
-/// TODO Binye the implementation isn't correct as this is not used for now
 fn apply_penalty(market: &mut Market) -> I80F48 {
-    let fee_penalty = I80F48::from_num(market.fee_penalty);
-    market.fees_accrued += fee_penalty;
-    fee_penalty
+    market.quote_fees_accrued += market.fee_penalty;
+    I80F48::from_num(market.fee_penalty)
 }

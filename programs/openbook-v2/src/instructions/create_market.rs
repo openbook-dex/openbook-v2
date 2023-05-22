@@ -51,8 +51,6 @@ pub fn create_market(
 
         maker_fee: I80F48::from_num(maker_fee),
         taker_fee: I80F48::from_num(taker_fee),
-        fees_accrued: I80F48::ZERO,
-        fees_settled: I80F48::ZERO,
         fee_penalty,
 
         buyback_fees_expiry_interval: 10000,

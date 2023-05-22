@@ -1,7 +1,7 @@
 use super::*;
 
 #[tokio::test]
-async fn test_fees_acrued() -> Result<(), TransportError> {
+async fn test_fees_accrued() -> Result<(), TransportError> {
     let context = TestContext::new().await;
     let solana = &context.solana.clone();
 

@@ -73,12 +73,6 @@ pub struct Market {
     pub maker_fee: I80F48,
     /// Fee for taker orders, always >= 0.
     pub taker_fee: I80F48,
-
-    /// Fees accrued in native quote currency
-    pub fees_accrued: I80F48,
-    /// Fees settled in native quote currency
-    pub fees_settled: I80F48,
-
     /// Fee (in quote native) to charge for ioc orders that don't match to avoid spam
     pub fee_penalty: u64,
 
@@ -120,7 +114,6 @@ const_assert_eq!(
     8 + // size of seq_num
     8 + // size of registration_time
     2 * size_of::<I80F48>() + // size of maker_fee and taker_fee
-    2 * size_of::<I80F48>() + // size of fees_accrued and fees_settled
     8 + // size of fee_penalty
     8 + // size of buyback_fees_expiry_interval
     8 + // size of vault_signer_nonce
@@ -132,7 +125,7 @@ const_assert_eq!(
     8 + // size of referrer_rebates_accrued
     1888 // size of reserved
 );
-const_assert_eq!(size_of::<Market>(), 2744);
+const_assert_eq!(size_of::<Market>(), 2712);
 const_assert_eq!(size_of::<Market>() % 8, 0);
 
 impl Market {
@@ -201,8 +194,6 @@ impl Market {
             registration_time: 0,
             maker_fee: I80F48::ZERO,
             taker_fee: I80F48::ZERO,
-            fees_accrued: I80F48::ZERO,
-            fees_settled: I80F48::ZERO,
             fee_penalty: 0,
             buyback_fees_expiry_interval: 0,
             vault_signer_nonce: 0,

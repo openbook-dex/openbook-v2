@@ -430,9 +430,6 @@ impl<
             };
         }
 
-        // Update market fees
-        market.fees_accrued += market.maker_fee * quote_native.abs();
-
         //Emit event
         emit!(FillLog {
             taker_side: fill.taker_side,
