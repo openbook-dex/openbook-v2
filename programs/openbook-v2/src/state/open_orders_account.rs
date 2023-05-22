@@ -358,7 +358,7 @@ impl<
         let (base_change, quote_change) = fill.base_quote_change(side);
         let quote_native = I80F48::from(market.quote_lot_size) * I80F48::from(quote_change);
         let fees = if market.maker_fee.is_positive() {
-            // Maker pays fee. Fees already substracted before sending to the book
+            // Maker pays fee. Fees already subtracted before sending to the book
             I80F48::ZERO
         } else {
             (quote_native * market.maker_fee).abs()
@@ -453,7 +453,7 @@ impl<
     pub fn execute_taker(&mut self, market: &mut Market, fill: &FillEvent) -> Result<()> {
         let pa = &mut self.fixed_mut().position;
 
-        // Replicate the base_quote_change function but substracting the fees for an Ask
+        // Replicate the base_quote_change function but subtracting the fees for an Ask
         // let (base_change, quote_change) = fill.base_quote_change(fill.taker_side());
         let _base_change: i64;
         let quote_change: i64;

@@ -90,9 +90,9 @@ impl<'a> Orderbook<'a> {
         let mut referrer_amount: u64 = 0;
         let opposing_bookside = self.bookside_mut(other_side);
 
-        // Substract fees in case of bid
+        // Subtract fees in case of bid
         if side == Side::Bid {
-            max_quote_lots = market.substract_taker_fees(remaining_quote_lots);
+            max_quote_lots = market.subtract_taker_fees(remaining_quote_lots);
             remaining_quote_lots = max_quote_lots;
         }
 
@@ -282,7 +282,7 @@ impl<'a> Orderbook<'a> {
 
         // If there are still quantity unmatched, place on the book
         let book_base_quantity_lots = if market.maker_fee.is_positive() {
-            // Substract fees
+            // Subtract fees
             remaining_quote_lots -= remaining_quote_lots * market.maker_fee.to_num::<i64>();
             remaining_base_lots.min(remaining_quote_lots / price_lots)
         } else {
@@ -296,7 +296,7 @@ impl<'a> Orderbook<'a> {
         let mut maker_fees = I80F48::ZERO;
 
         if let Some(order_tree_target) = post_target {
-            // Substract maker fees in bid.
+            // Subtract maker fees in bid.
             if market.maker_fee.is_positive() && side == Side::Bid {
                 let book_price = match order_tree_target {
                     BookSideOrderTree::Fixed => fixed_price_lots(price_data),
