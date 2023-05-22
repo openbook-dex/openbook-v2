@@ -247,10 +247,6 @@ impl<'a> Orderbook<'a> {
                     market.referrer_taker_rebate(total_quote_taken_native_wo_self) as u64;
             }
             // Only account taker fees now. Maker fees accounted once processing the event
-            msg!(
-                "xxxx book {}",
-                (total_quote_taken_native_wo_self * market.taker_fee).to_num::<u64>()
-            );
             market.fees_accrued +=
                 (total_quote_taken_native_wo_self * market.taker_fee).to_num::<u64>();
 
