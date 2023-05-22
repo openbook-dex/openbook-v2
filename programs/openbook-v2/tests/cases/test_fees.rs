@@ -14,7 +14,7 @@ async fn test_fees_accrued() -> Result<(), TransportError> {
     let owner_token_1 = context.users[0].token_accounts[1];
 
     let tokens = Token::create(mints.to_vec(), solana, admin, payer).await;
-
+    let fee_penalty = 1000;
     //
     // TEST: Create a market
     //
@@ -46,6 +46,7 @@ async fn test_fees_accrued() -> Result<(), TransportError> {
             quote_mint: mints[1].pubkey,
             base_vault,
             quote_vault,
+            fee_penalty,
             ..CreateMarketInstruction::with_new_book_and_queue(solana, &tokens[1]).await
         },
     )
@@ -195,6 +196,43 @@ async fn test_fees_accrued() -> Result<(), TransportError> {
         assert_eq!(market.quote_fees_accrued, 0);
         assert_eq!(market.fees_accrued, 10);
         assert_eq!(market.fees_to_referrers, 0);
+    }
+
+    let balance_quote = solana.token_account_balance(owner_token_1).await;
+
+    // Order with penalty fees
+    send_tx(
+        solana,
+        PlaceOrderInstruction {
+            open_orders_account: account_1,
+            market,
+            owner,
+            payer: owner_token_1,
+            base_vault,
+            quote_vault,
+            side: Side::Bid,
+            price_lots: price_lots - 1000,
+            max_base_lots: 1,
+            max_quote_lots_including_fees: 10000,
+            client_order_id: 0,
+            expiry_timestamp: 0,
+            order_type: PlaceOrderType::ImmediateOrCancel,
+            self_trade_behavior: SelfTradeBehavior::default(),
+            remainings: vec![],
+        },
+    )
+    .await
+    .unwrap();
+
+    {
+        let market = solana.get_account::<Market>(market).await;
+        assert_eq!(market.quote_fees_accrued, 1000);
+        assert_eq!(market.fees_accrued, 10);
+        assert_eq!(market.fees_to_referrers, 0);
+        assert_eq!(
+            balance_quote - fee_penalty,
+            solana.token_account_balance(owner_token_1).await
+        );
     }
 
     Ok(())
