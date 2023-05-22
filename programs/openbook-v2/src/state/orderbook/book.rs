@@ -246,6 +246,13 @@ impl<'a> Orderbook<'a> {
                 referrer_amount +=
                     market.referrer_taker_rebate(total_quote_taken_native_wo_self) as u64;
             }
+            // Only account taker fees now. Maker fees accounted once processing the event
+            msg!(
+                "xxxx book {}",
+                (total_quote_taken_native_wo_self * market.taker_fee).to_num::<u64>()
+            );
+            market.fees_accrued +=
+                (total_quote_taken_native_wo_self * market.taker_fee).to_num::<u64>();
 
             // Apply fees
             let taker_fee = total_quote_taken_native_wo_self * market.taker_fee;
@@ -553,8 +560,6 @@ fn release_funds_fees(
     market.referrer_rebates_accrued += market.referrer_taker_rebate(quote_native) as u64;
 
     open_orders_acc.fixed.position.taker_volume += taker_fees.to_num::<u64>();
-    // Only account taker fees now. Maker fees accounted once processing the event
-    market.fees_accrued += taker_fees.to_num::<u64>();
 
     Ok(())
 }
