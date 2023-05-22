@@ -42,7 +42,7 @@ pub mod openbook_v2 {
         base_lot_size: i64,
         maker_fee: f32,
         taker_fee: f32,
-        fee_penalty: f32,
+        fee_penalty: u64,
     ) -> Result<()> {
         #[cfg(feature = "enable-gpl")]
         instructions::create_market(

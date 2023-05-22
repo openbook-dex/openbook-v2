@@ -79,10 +79,8 @@ pub struct Market {
     /// Fees settled in native quote currency
     pub fees_settled: I80F48,
 
-    /// Fee (in quote native) to charge for ioc orders
-    pub fee_penalty: f32,
-
-    pub padding2: [u8; 4],
+    /// Fee (in quote native) to charge for ioc orders that don't match to avoid spam
+    pub fee_penalty: u64,
 
     pub buyback_fees_expiry_interval: u64,
 
@@ -123,8 +121,7 @@ const_assert_eq!(
     8 + // size of registration_time
     2 * size_of::<I80F48>() + // size of maker_fee and taker_fee
     2 * size_of::<I80F48>() + // size of fees_accrued and fees_settled
-    size_of::<f32>() + // size of fee_penalty
-    4 + // size of padding2
+    8 + // size of fee_penalty
     8 + // size of buyback_fees_expiry_interval
     8 + // size of vault_signer_nonce
     4 * 32 + // size of base_mint, quote_mint, base_vault, and quote_vault
@@ -206,8 +203,7 @@ impl Market {
             taker_fee: I80F48::ZERO,
             fees_accrued: I80F48::ZERO,
             fees_settled: I80F48::ZERO,
-            fee_penalty: 0.0,
-            padding2: Default::default(),
+            fee_penalty: 0,
             buyback_fees_expiry_interval: 0,
             vault_signer_nonce: 0,
             base_mint: Pubkey::new_unique(),
