@@ -255,7 +255,7 @@ impl<'a> Orderbook<'a> {
             };
         } else if order.needs_penalty_fee() {
             // IOC orders have a fee penalty applied if not match to avoid spam
-            total_quote_taken_native = apply_penalty(market);
+            total_quote_taken_native += apply_penalty(market);
         }
 
         // Update remaining based on quote_lots taken. If nothing taken, same as the beggining
