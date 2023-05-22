@@ -553,11 +553,13 @@ fn release_funds_fees(
     market.referrer_rebates_accrued += market.referrer_taker_rebate(quote_native) as u64;
 
     open_orders_acc.fixed.position.taker_volume += taker_fees.to_num::<u64>();
+    // Only account taker fees now. Maker fees accounted once processing the event
+    market.fees_accrued += taker_fees.to_num::<u64>();
 
     Ok(())
 }
 
-/// Applies a fixed penalty fee to the account, and update the market's fees_accrued
+/// Applies a fixed penalty fee to the account, and update the market's quote fees_accrued
 fn apply_penalty(market: &mut Market) -> I80F48 {
     market.quote_fees_accrued += market.fee_penalty;
     I80F48::from_num(market.fee_penalty)

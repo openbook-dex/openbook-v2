@@ -53,7 +53,8 @@ pub fn create_market(
         taker_fee: I80F48::from_num(taker_fee),
         fee_penalty,
 
-        buyback_fees_expiry_interval: 10000,
+        fees_accrued: 0,
+        fees_to_referrers: 0,
         vault_signer_nonce: 0,
         base_mint: ctx.accounts.base_mint.key(),
         quote_mint: ctx.accounts.quote_mint.key(),

@@ -76,7 +76,10 @@ pub struct Market {
     /// Fee (in quote native) to charge for ioc orders that don't match to avoid spam
     pub fee_penalty: u64,
 
-    pub buyback_fees_expiry_interval: u64,
+    // Total (maker + taker) fees accrued in native quote
+    pub fees_accrued: u64,
+    // Total fees settled in native quote
+    pub fees_to_referrers: u64,
 
     // Fields related to MarketSate, related to the tokenAccounts
     pub vault_signer_nonce: u64,
@@ -115,7 +118,8 @@ const_assert_eq!(
     8 + // size of registration_time
     2 * size_of::<I80F48>() + // size of maker_fee and taker_fee
     8 + // size of fee_penalty
-    8 + // size of buyback_fees_expiry_interval
+    8 + // size of fees_accrued
+    8 + // size of fees_to_referrers
     8 + // size of vault_signer_nonce
     4 * 32 + // size of base_mint, quote_mint, base_vault, and quote_vault
     8 + // size of base_deposit_total
@@ -125,7 +129,7 @@ const_assert_eq!(
     8 + // size of referrer_rebates_accrued
     1888 // size of reserved
 );
-const_assert_eq!(size_of::<Market>(), 2712);
+const_assert_eq!(size_of::<Market>(), 2720);
 const_assert_eq!(size_of::<Market>() % 8, 0);
 
 impl Market {
@@ -195,7 +199,8 @@ impl Market {
             maker_fee: I80F48::ZERO,
             taker_fee: I80F48::ZERO,
             fee_penalty: 0,
-            buyback_fees_expiry_interval: 0,
+            fees_accrued: 0,
+            fees_to_referrers: 0,
             vault_signer_nonce: 0,
             base_mint: Pubkey::new_unique(),
             quote_mint: Pubkey::new_unique(),
