@@ -221,7 +221,7 @@ impl<'a> Orderbook<'a> {
         assert!(total_quote_lots_taken >= 0);
         assert!(total_base_lots_taken >= 0);
 
-        let mut total_base_taken_native =
+        let total_base_taken_native =
             I80F48::from_num(market.base_lot_size * total_base_lots_taken);
         let mut total_quote_taken_native =
             I80F48::from_num(market.quote_lot_size * total_quote_lots_taken);
