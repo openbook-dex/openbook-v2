@@ -49,3 +49,12 @@ pub struct MarketMetaDataLog {
     pub quote_lot_size: i64,
     pub oracle: Pubkey,
 }
+
+#[event]
+pub struct TotalOrderFillEvent {
+    pub side: u8,
+    pub taker: Pubkey,
+    pub total_quantity_paid: u64,
+    pub total_quantity_received: u64,
+    pub fees: u64,
+}
