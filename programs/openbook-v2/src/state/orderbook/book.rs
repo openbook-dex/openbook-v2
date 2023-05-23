@@ -233,23 +233,23 @@ impl<'a> Orderbook<'a> {
 
         // Record the taker trade in the account already, even though it will only be
         // realized when the fill event gets executed
-        if total_quote_lots_taken > 0 || total_base_taken_native > 0 {
+        if total_quote_lots_taken > 0 || total_base_lots_taken > 0 {
             // Calculations
             let total_quantity_paid: I80F48;
             let total_quantity_received: I80F48;
             let taker_fees = total_quote_taken_native_wo_self * market.taker_fee;
             // taker fees should never be negative
             require_gte!(taker_fees, 0);
-            total_quote_taken_native = match side {
+            match side {
                 Side::Bid => {
-                    total_quantity_paid = total_quote_taken_native + taker_fees;
+                    total_quote_taken_native += taker_fees;
+                    total_quantity_paid = total_quote_taken_native;
                     total_quantity_received = total_base_taken_native;
-                    total_quantity_paid
                 }
                 Side::Ask => {
+                    total_quote_taken_native -= taker_fees;
                     total_quantity_paid = total_base_taken_native;
-                    total_quantity_received = total_quote_taken_native - taker_fees;
-                    total_quantity_received
+                    total_quantity_received = total_quote_taken_native;
                 }
             };
 
