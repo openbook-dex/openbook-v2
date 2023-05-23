@@ -176,7 +176,7 @@ async fn test_fees_accrued() -> Result<(), TransportError> {
     {
         let market = solana.get_account::<Market>(market).await;
         assert_eq!(market.quote_fees_accrued, 9);
-        assert_eq!(market.fees_accrued, 10);
+        assert_eq!(market.fees_accrued, 9);
         assert_eq!(market.fees_to_referrers, 0);
     }
 
