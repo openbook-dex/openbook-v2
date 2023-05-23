@@ -225,7 +225,7 @@ pub struct CreateMarketInstruction {
     pub base_lot_size: i64,
     pub maker_fee: f32,
     pub taker_fee: f32,
-    pub fee_penalty: f32,
+    pub fee_penalty: u64,
     pub settle_fee_flat: f32,
     pub settle_fee_amount_threshold: f32,
 }

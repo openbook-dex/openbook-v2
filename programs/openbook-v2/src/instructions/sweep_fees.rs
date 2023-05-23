@@ -13,6 +13,7 @@ pub fn sweep_fees(ctx: Context<SweepFees>) -> Result<()> {
         OpenBookError::InvalidFundsReceiver
     );
 
+    // get/update all values from market and drop reference to it before cpi
     let amount = market.quote_fees_accrued;
     market.quote_fees_accrued = 0;
 

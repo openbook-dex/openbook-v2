@@ -12,6 +12,8 @@ pub fn settle_funds<'info>(ctx: Context<'_, '_, '_, 'info, SettleFunds<'info>>) 
 
     if ctx.remaining_accounts.is_empty() {
         market.quote_fees_accrued += position.referrer_rebates_accrued;
+    } else {
+        market.fees_to_referrers += position.referrer_rebates_accrued;
     }
     market.referrer_rebates_accrued -= position.referrer_rebates_accrued;
     market.base_deposit_total -= position.base_free_native.to_num::<u64>();

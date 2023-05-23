@@ -73,18 +73,14 @@ pub struct Market {
     pub maker_fee: I80F48,
     /// Fee for taker orders, always >= 0.
     pub taker_fee: I80F48,
+    /// Fee (in quote native) to charge for ioc orders that don't match to avoid spam
+    pub fee_penalty: u64,
 
-    /// Fees accrued in native quote currency
-    pub fees_accrued: I80F48,
-    /// Fees settled in native quote currency
-    pub fees_settled: I80F48,
-
-    /// Fee (in quote native) to charge for ioc orders
-    pub fee_penalty: f32,
-
-    pub padding2: [u8; 4],
-
-    pub buyback_fees_expiry_interval: u64,
+    // Total (maker + taker) fees accrued in native quote.
+    // i64 due there is a case where maker fees are subtracted (process_fill_event) before taker fees
+    pub fees_accrued: i64,
+    // Total fees settled in native quote
+    pub fees_to_referrers: u64,
 
     // Fields related to MarketSate, related to the tokenAccounts
     pub vault_signer_nonce: u64,
@@ -122,10 +118,9 @@ const_assert_eq!(
     8 + // size of seq_num
     8 + // size of registration_time
     2 * size_of::<I80F48>() + // size of maker_fee and taker_fee
-    2 * size_of::<I80F48>() + // size of fees_accrued and fees_settled
-    size_of::<f32>() + // size of fee_penalty
-    4 + // size of padding2
-    8 + // size of buyback_fees_expiry_interval
+    8 + // size of fee_penalty
+    8 + // size of fees_accrued
+    8 + // size of fees_to_referrers
     8 + // size of vault_signer_nonce
     4 * 32 + // size of base_mint, quote_mint, base_vault, and quote_vault
     8 + // size of base_deposit_total
@@ -135,7 +130,7 @@ const_assert_eq!(
     8 + // size of referrer_rebates_accrued
     1888 // size of reserved
 );
-const_assert_eq!(size_of::<Market>(), 2744);
+const_assert_eq!(size_of::<Market>(), 2720);
 const_assert_eq!(size_of::<Market>() % 8, 0);
 
 impl Market {
@@ -204,11 +199,9 @@ impl Market {
             registration_time: 0,
             maker_fee: I80F48::ZERO,
             taker_fee: I80F48::ZERO,
-            fees_accrued: I80F48::ZERO,
-            fees_settled: I80F48::ZERO,
-            fee_penalty: 0.0,
-            padding2: Default::default(),
-            buyback_fees_expiry_interval: 0,
+            fee_penalty: 0,
+            fees_accrued: 0,
+            fees_to_referrers: 0,
             vault_signer_nonce: 0,
             base_mint: Pubkey::new_unique(),
             quote_mint: Pubkey::new_unique(),
@@ -225,11 +218,11 @@ impl Market {
         }
     }
 
-    pub fn substract_taker_fees(&self, quote: i64) -> i64 {
+    pub fn subtract_taker_fees(&self, quote: i64) -> i64 {
         (I80F48::from(quote) / (I80F48::ONE + self.taker_fee)).to_num()
     }
     // Only for maker_fee > 0
-    pub fn substract_maker_fees(&self, quote: i64) -> i64 {
+    pub fn subtract_maker_fees(&self, quote: i64) -> i64 {
         (I80F48::from(quote) / (I80F48::ONE + self.maker_fee)).to_num()
     }
 
@@ -239,14 +232,6 @@ impl Market {
         } else {
             // Nothing goes to maker, all to referrer
             (quote * self.taker_fee).to_num()
-        }
-    }
-
-    pub fn referrer_maker_rebate(&self, quote: I80F48) -> i64 {
-        if self.maker_fee > 0 {
-            (quote * self.maker_fee).to_num()
-        } else {
-            0
         }
     }
 }
