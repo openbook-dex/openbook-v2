@@ -415,11 +415,6 @@ impl<
                 let maker_fees = quote_to_free * market.maker_fee;
                 pa.referrer_rebates_accrued += maker_fees.to_num::<u64>();
                 market.referrer_rebates_accrued += maker_fees.to_num::<u64>();
-                // Update market fees
-                market.fees_accrued += (market.maker_fee * quote_native.abs()).to_num::<u64>();
-            } else {
-                market.fees_accrued -=
-                    (market.maker_fee.abs() * quote_native.abs()).to_num::<u64>();
             }
         }
         if fill.maker_out() {
@@ -434,6 +429,9 @@ impl<
                 }
             };
         }
+
+        // Update market fees
+        market.fees_accrued += (market.maker_fee * quote_native.abs()).to_num::<i64>();
 
         //Emit event
         emit!(FillLog {

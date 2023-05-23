@@ -248,7 +248,7 @@ impl<'a> Orderbook<'a> {
             }
             // Only account taker fees now. Maker fees accounted once processing the event
             market.fees_accrued +=
-                (total_quote_taken_native_wo_self * market.taker_fee).to_num::<u64>();
+                (total_quote_taken_native_wo_self * market.taker_fee).to_num::<i64>();
 
             // Apply fees
             let taker_fee = total_quote_taken_native_wo_self * market.taker_fee;
