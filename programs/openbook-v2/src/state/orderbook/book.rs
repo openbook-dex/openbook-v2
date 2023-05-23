@@ -237,16 +237,18 @@ impl<'a> Orderbook<'a> {
             // Calculations
             let total_quantity_paid: I80F48;
             let total_quantity_received: I80F48;
-            let taker_fee = total_quote_taken_native_wo_self * market.taker_fee;
+            let taker_fees = total_quote_taken_native_wo_self * market.taker_fee;
+            // taker fees should never be negative
+            require_gte!(taker_fees, 0);
             total_quote_taken_native = match side {
                 Side::Bid => {
-                    total_quantity_paid = total_quote_taken_native + taker_fee;
+                    total_quantity_paid = total_quote_taken_native + taker_fees;
                     total_quantity_received = total_base_taken_native;
                     total_quantity_paid
                 }
                 Side::Ask => {
                     total_quantity_paid = total_base_taken_native;
-                    total_quantity_received = total_quote_taken_native - taker_fee;
+                    total_quantity_received = total_quote_taken_native - taker_fees;
                     total_quantity_received
                 }
             };
@@ -258,6 +260,7 @@ impl<'a> Orderbook<'a> {
                     open_orders_acc,
                     total_base_taken_native,
                     total_quote_taken_native_wo_self,
+                    taker_fees,
                 )?;
             } else {
                 // It's a taker order, transfer to referrer
@@ -273,7 +276,7 @@ impl<'a> Orderbook<'a> {
                 taker: *owner,
                 total_quantity_paid: total_quantity_paid.to_num::<u64>(),
                 total_quantity_received: total_quantity_received.to_num::<u64>(),
-                fees: taker_fee.to_num::<u64>(),
+                fees: taker_fees.to_num::<u64>(),
             });
         } else if order.needs_penalty_fee() {
             // IOC orders have a fee penalty applied if not match to avoid spam
@@ -552,12 +555,8 @@ fn release_funds_fees(
     open_orders_acc: &mut OpenOrdersAccountRefMut,
     base_native: I80F48,
     quote_native: I80F48,
+    taker_fees: I80F48,
 ) -> Result<()> {
-    let taker_fees = quote_native * market.taker_fee;
-
-    // taker fees should never be negative
-    require_gte!(taker_fees, 0);
-
     let pa = &mut open_orders_acc.fixed_mut().position;
     // Update free_lots
     match taker_side {
