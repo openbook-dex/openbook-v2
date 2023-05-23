@@ -75,7 +75,7 @@ pub enum OpenBookError {
     HealthRegionBadInnerInstruction,
     #[msg("Event queue contains elements and market can't be closed")]
     EventQueueContainsElements,
-    #[msg("Taker fees should be >= maker fees")]
+    #[msg("Taker fees should be positive and if maker fees are negative, greater or equal to their abs value")]
     InvalidFeesError,
     #[msg("The order type is invalid. A taker order must be Market or ImmediateOrCancel")]
     InvalidOrderType,
