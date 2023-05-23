@@ -234,14 +234,6 @@ impl Market {
             (quote * self.taker_fee).to_num()
         }
     }
-
-    pub fn referrer_maker_rebate(&self, quote: I80F48) -> i64 {
-        if self.maker_fee > 0 {
-            (quote * self.maker_fee).to_num()
-        } else {
-            0
-        }
-    }
 }
 
 /// Generate signed seeds for the market
