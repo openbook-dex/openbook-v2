@@ -18,7 +18,7 @@ pub fn create_market(
     base_lot_size: i64,
     maker_fee: f32,
     taker_fee: f32,
-    fee_penalty: f32,
+    fee_penalty: u64,
 ) -> Result<()> {
     let now_ts: u64 = Clock::get()?.unix_timestamp.try_into().unwrap();
 
@@ -51,12 +51,10 @@ pub fn create_market(
 
         maker_fee: I80F48::from_num(maker_fee),
         taker_fee: I80F48::from_num(taker_fee),
-        fees_accrued: I80F48::ZERO,
-        fees_settled: I80F48::ZERO,
         fee_penalty,
-        padding2: Default::default(),
 
-        buyback_fees_expiry_interval: 10000,
+        fees_accrued: 0,
+        fees_to_referrers: 0,
         vault_signer_nonce: 0,
         base_mint: ctx.accounts.base_mint.key(),
         quote_mint: ctx.accounts.quote_mint.key(),

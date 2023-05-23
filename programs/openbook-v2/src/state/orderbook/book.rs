@@ -91,9 +91,9 @@ impl<'a> Orderbook<'a> {
         let mut referrer_amount: u64 = 0;
         let opposing_bookside = self.bookside_mut(other_side);
 
-        // Substract fees in case of bid
+        // Subtract fees in case of bid
         if side == Side::Bid {
-            max_quote_lots = market.substract_taker_fees(remaining_quote_lots);
+            max_quote_lots = market.subtract_taker_fees(remaining_quote_lots);
             remaining_quote_lots = max_quote_lots;
         }
 
@@ -222,13 +222,10 @@ impl<'a> Orderbook<'a> {
         assert!(total_quote_lots_taken >= 0);
         assert!(total_base_lots_taken >= 0);
 
-        let mut total_base_taken_native =
+        let total_base_taken_native =
             I80F48::from_num(market.base_lot_size) * I80F48::from_num(total_base_lots_taken);
         let mut total_quote_taken_native =
             I80F48::from_num(market.quote_lot_size) * I80F48::from_num(total_quote_lots_taken);
-
-        assert!(total_quote_lots_taken >= 0);
-        assert!(total_base_taken_native >= 0);
 
         let total_quote_taken_lots_wo_self = total_quote_lots_taken - decremented_quote_lots;
         let total_quote_taken_native_wo_self =
@@ -267,6 +264,9 @@ impl<'a> Orderbook<'a> {
                 referrer_amount +=
                     market.referrer_taker_rebate(total_quote_taken_native_wo_self) as u64;
             }
+            // Only account taker fees now. Maker fees accounted once processing the event
+            market.fees_accrued +=
+                (total_quote_taken_native_wo_self * market.taker_fee).to_num::<i64>();
 
             emit!(TotalOrderFillEvent {
                 side: side.into(),
@@ -277,7 +277,7 @@ impl<'a> Orderbook<'a> {
             });
         } else if order.needs_penalty_fee() {
             // IOC orders have a fee penalty applied if not match to avoid spam
-            total_base_taken_native = apply_penalty(market);
+            total_quote_taken_native += apply_penalty(market);
         }
 
         // Update remaining based on quote_lots taken. If nothing taken, same as the beggining
@@ -304,7 +304,7 @@ impl<'a> Orderbook<'a> {
 
         // If there are still quantity unmatched, place on the book
         let book_base_quantity_lots = if market.maker_fee.is_positive() {
-            // Substract fees
+            // Subtract fees
             remaining_quote_lots -= remaining_quote_lots * market.maker_fee.to_num::<i64>();
             remaining_base_lots.min(remaining_quote_lots / price_lots)
         } else {
@@ -318,7 +318,7 @@ impl<'a> Orderbook<'a> {
         let mut maker_fees = I80F48::ZERO;
 
         if let Some(order_tree_target) = post_target {
-            // Substract maker fees in bid.
+            // Subtract maker fees in bid.
             if market.maker_fee.is_positive() && side == Side::Bid {
                 let book_price = match order_tree_target {
                     BookSideOrderTree::Fixed => fixed_price_lots(price_data),
@@ -574,16 +574,12 @@ fn release_funds_fees(
     market.referrer_rebates_accrued += market.referrer_taker_rebate(quote_native) as u64;
 
     open_orders_acc.fixed.position.taker_volume += taker_fees.to_num::<u64>();
-    // Only apply taker fees now. Maker fees applied once processing the event
-    market.fees_accrued += taker_fees;
 
     Ok(())
 }
 
-/// Applies a fixed penalty fee to the account, and update the market's fees_accrued
-/// TODO Binye the implementation isn't correct as this is not used for now
+/// Applies a fixed penalty fee to the account, and update the market's quote fees_accrued
 fn apply_penalty(market: &mut Market) -> I80F48 {
-    let fee_penalty = I80F48::from_num(market.fee_penalty);
-    market.fees_accrued += fee_penalty;
-    fee_penalty
+    market.quote_fees_accrued += market.fee_penalty;
+    I80F48::from_num(market.fee_penalty)
 }
