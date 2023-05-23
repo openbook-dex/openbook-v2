@@ -14,6 +14,7 @@ pub mod accounts_zerocopy;
 pub mod error;
 pub mod i80f48;
 pub mod logs;
+pub mod pod_option;
 pub mod state;
 pub mod types;
 
