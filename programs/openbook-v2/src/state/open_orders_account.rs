@@ -597,8 +597,9 @@ impl<
 
             // If maker fees, give back fees to user
             if market.maker_fee.is_positive() {
-                let fees =
-                    (I80F48::from_num(quote_quantity_native) * market.maker_fee).to_num::<u64>();
+                let fees = (I80F48::from_num(quote_quantity_native) * market.maker_fee)
+                    .ceil()
+                    .to_num::<u64>();
                 quote_quantity_native += fees;
                 base_quantity_native += fees / (price as u64);
             }

@@ -239,12 +239,6 @@ impl<'a> Orderbook<'a> {
                 * market.taker_fee)
                 .ceil()
                 .to_num::<u64>();
-            msg!(
-                "xxx total_quote_taken_native_wo_self {} market.taker_fee {} taker_fees  {}",
-                total_quote_taken_native_wo_self,
-                market.taker_fee,
-                taker_fees
-            );
 
             // taker fees should never be negative
             require_gte!(taker_fees, 0);
@@ -338,6 +332,7 @@ impl<'a> Orderbook<'a> {
 
                 let book_quote_quantity_lots = book_base_quantity_lots * book_price;
                 maker_fees = (I80F48::from_num(book_quote_quantity_lots) * market.maker_fee)
+                    .ceil()
                     .to_num::<u64>()
                     * (market.quote_lot_size as u64);
             }
