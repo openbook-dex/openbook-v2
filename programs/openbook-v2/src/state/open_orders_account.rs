@@ -132,7 +132,7 @@ const_assert_eq!(
         - size_of::<u64>() * 3
         - size_of::<[u8; 208]>()
 );
-const_assert_eq!(size_of::<OpenOrdersAccountFixed>(), 504);
+const_assert_eq!(size_of::<OpenOrdersAccountFixed>(), 488);
 const_assert_eq!(size_of::<OpenOrdersAccountFixed>() % 8, 0);
 
 impl OpenOrdersAccountFixed {
@@ -356,12 +356,14 @@ impl<
     pub fn execute_maker(&mut self, market: &mut Market, fill: &FillEvent) -> Result<()> {
         let side = fill.taker_side().invert_side();
         let (base_change, quote_change) = fill.base_quote_change(side);
-        let quote_native = I80F48::from(market.quote_lot_size) * I80F48::from(quote_change);
+        let quote_native_abs = (market.quote_lot_size * quote_change).unsigned_abs();
         let fees = if market.maker_fee.is_positive() {
             // Maker pays fee. Fees already subtracted before sending to the book
-            I80F48::ZERO
+            0
         } else {
-            (quote_native * market.maker_fee).abs()
+            (I80F48::from(quote_native_abs) * market.maker_fee)
+                .abs()
+                .to_num::<u64>()
         };
 
         let locked_price = {
@@ -373,7 +375,7 @@ impl<
         };
 
         let pa = &mut self.fixed_mut().position;
-        pa.maker_volume += quote_native.abs().to_num::<u64>();
+        pa.maker_volume += quote_native_abs;
 
         msg!(
             " maker price {}, quantity {}, base_change {}, quote_change {}",
@@ -390,10 +392,8 @@ impl<
                 Side::Ask => (-fill.quantity, locked_price * fill.quantity),
             };
 
-            let base_to_free =
-                I80F48::from(market.base_lot_size) * I80F48::from(base_locked_change).abs();
-            let quote_to_free =
-                I80F48::from(market.quote_lot_size) * I80F48::from(quote_locked_change).abs();
+            let base_to_free = (market.base_lot_size * base_locked_change.abs()) as u64;
+            let quote_to_free = (market.quote_lot_size * quote_locked_change.abs()) as u64;
 
             match side {
                 Side::Bid => {
@@ -402,9 +402,9 @@ impl<
                 }
                 Side::Ask => {
                     let maker_fees = if market.maker_fee.is_positive() {
-                        I80F48::from(quote_locked_change) * market.maker_fee
+                        (I80F48::from(quote_locked_change) * market.maker_fee).to_num::<u64>()
                     } else {
-                        I80F48::ZERO
+                        0
                     };
                     pa.quote_free_native += quote_to_free + fees - maker_fees;
                 }
@@ -412,9 +412,9 @@ impl<
 
             if market.maker_fee.is_positive() {
                 // Apply rebates
-                let maker_fees = quote_to_free * market.maker_fee;
-                pa.referrer_rebates_accrued += maker_fees.to_num::<u64>();
-                market.referrer_rebates_accrued += maker_fees.to_num::<u64>();
+                let maker_fees = (I80F48::from(quote_to_free) * market.maker_fee).to_num::<u64>();
+                pa.referrer_rebates_accrued += maker_fees;
+                market.referrer_rebates_accrued += maker_fees;
             }
         }
         if fill.maker_out() {
@@ -431,7 +431,7 @@ impl<
         }
 
         // Update market fees
-        market.fees_accrued += (market.maker_fee * quote_native.abs()).to_num::<i64>();
+        market.fees_accrued += (market.maker_fee * I80F48::from(quote_native_abs)).to_num::<i64>();
 
         //Emit event
         emit!(FillLog {
@@ -585,18 +585,19 @@ impl<
                 BookSideOrderTree::OraclePegged => oo.peg_limit,
             };
 
-            let mut base_quantity_native = I80F48::from_num(base_quantity * market.base_lot_size);
+            let mut base_quantity_native = (base_quantity * market.base_lot_size) as u64;
             let mut quote_quantity_native =
-                I80F48::from_num(base_quantity.checked_mul(price).unwrap() * market.quote_lot_size);
+                (base_quantity.checked_mul(price).unwrap() * market.quote_lot_size) as u64;
             let order_side = oo.side_and_tree().side();
 
             let position = &mut self.fixed_mut().position;
 
             // If maker fees, give back fees to user
             if market.maker_fee.is_positive() {
-                let fees = I80F48::from_num(quote_quantity_native) * market.maker_fee;
+                let fees =
+                    (I80F48::from_num(quote_quantity_native) * market.maker_fee).to_num::<u64>();
                 quote_quantity_native += fees;
-                base_quantity_native += fees / I80F48::from_num(price);
+                base_quantity_native += fees / (price as u64);
             }
 
             // accounting

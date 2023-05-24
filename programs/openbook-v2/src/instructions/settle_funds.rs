@@ -1,6 +1,5 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Transfer};
-use fixed::types::I80F48;
 
 use crate::accounts_ix::*;
 use crate::state::*;
@@ -16,8 +15,8 @@ pub fn settle_funds<'info>(ctx: Context<'_, '_, '_, 'info, SettleFunds<'info>>) 
         market.fees_to_referrers += position.referrer_rebates_accrued;
     }
     market.referrer_rebates_accrued -= position.referrer_rebates_accrued;
-    market.base_deposit_total -= position.base_free_native.to_num::<u64>();
-    market.quote_deposit_total -= position.quote_free_native.to_num::<u64>();
+    market.base_deposit_total -= position.base_free_native;
+    market.quote_deposit_total -= position.quote_free_native;
 
     let seeds = market_seeds!(market);
     let signer = &[&seeds[..]];
@@ -49,10 +48,7 @@ pub fn settle_funds<'info>(ctx: Context<'_, '_, '_, 'info, SettleFunds<'info>>) 
                 authority: ctx.accounts.market.to_account_info(),
             },
         );
-        token::transfer(
-            cpi_context.with_signer(signer),
-            position.base_free_native.to_num(),
-        )?;
+        token::transfer(cpi_context.with_signer(signer), position.base_free_native)?;
     }
 
     if position.quote_free_native > 0 {
@@ -64,15 +60,12 @@ pub fn settle_funds<'info>(ctx: Context<'_, '_, '_, 'info, SettleFunds<'info>>) 
                 authority: ctx.accounts.market.to_account_info(),
             },
         );
-        token::transfer(
-            cpi_context.with_signer(signer),
-            position.quote_free_native.to_num(),
-        )?;
+        token::transfer(cpi_context.with_signer(signer), position.quote_free_native)?;
     }
 
     // Set to 0 after transfer
-    position.base_free_native = I80F48::ZERO;
-    position.quote_free_native = I80F48::ZERO;
+    position.base_free_native = 0;
+    position.quote_free_native = 0;
     position.referrer_rebates_accrued = 0;
 
     Ok(())
