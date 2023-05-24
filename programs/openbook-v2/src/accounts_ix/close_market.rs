@@ -4,11 +4,10 @@ use anchor_spl::token::Token;
 
 #[derive(Accounts)]
 pub struct CloseMarket<'info> {
-    pub admin: Signer<'info>,
+    pub close_market_admin: Signer<'info>,
 
     #[account(
         mut,
-        has_one = admin,
         has_one = bids,
         has_one = asks,
         has_one = event_queue,

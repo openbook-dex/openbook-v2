@@ -83,6 +83,10 @@ pub enum OpenBookError {
     InvalidFundsReceiver,
     #[msg("would self trade")]
     WouldSelfTrade,
+    #[msg("This market does not have a `close_market_admin` and thus cannot be closed.")]
+    NoCloseMarketAdmin,
+    #[msg("The signer of this transaction is not this market's `close_market_admin`.")]
+    InvalidCloseMarketAdmin,
 }
 
 impl OpenBookError {

@@ -4,7 +4,9 @@ use anchor_spl::token::{Token, TokenAccount};
 
 #[derive(Accounts)]
 pub struct SweepFees<'info> {
-    #[account(mut)]
+    pub collect_fee_admin: Signer<'info>,
+
+    #[account(mut, has_one = collect_fee_admin)]
     pub market: AccountLoader<'info, Market>,
 
     #[account(mut)]

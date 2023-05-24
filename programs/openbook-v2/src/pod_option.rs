@@ -11,7 +11,7 @@ use std::convert::From;
 #[derive(Copy, Clone, Debug)]
 #[repr(C)]
 pub struct PodOption<T: Pod> {
-    flag: u8,
+    flag: u64,
     value: T,
 }
 
