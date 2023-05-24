@@ -224,18 +224,12 @@ async fn test_self_trade_decrement_take() -> Result<(), TransportError> {
         assert_eq!(open_orders_account_0.position.bids_base_lots, 0);
         assert_eq!(open_orders_account_0.position.asks_base_lots, 0);
         assert_eq!(open_orders_account_0.position.base_free_native, 200);
-        assert_eq!(
-            open_orders_account_0.position.quote_free_native.round(),
-            20004
-        );
+        assert_eq!(open_orders_account_0.position.quote_free_native, 20004);
 
         assert_eq!(open_orders_account_1.position.bids_base_lots, 0);
         assert_eq!(open_orders_account_1.position.asks_base_lots, 1);
         assert_eq!(open_orders_account_1.position.base_free_native, 0);
-        assert_eq!(
-            open_orders_account_1.position.quote_free_native.round(),
-            10002
-        );
+        assert_eq!(open_orders_account_1.position.quote_free_native, 10002);
     }
 
     Ok(())
@@ -453,15 +447,12 @@ async fn test_self_trade_cancel_provide() -> Result<(), TransportError> {
         assert_eq!(open_orders_account_0.position.bids_base_lots, 0);
         assert_eq!(open_orders_account_0.position.asks_base_lots, 0);
         assert_eq!(open_orders_account_0.position.base_free_native, 300);
-        assert_eq!(open_orders_account_0.position.quote_free_native.round(), 0);
+        assert_eq!(open_orders_account_0.position.quote_free_native, 0);
 
         assert_eq!(open_orders_account_1.position.bids_base_lots, 0);
         assert_eq!(open_orders_account_1.position.asks_base_lots, 0);
         assert_eq!(open_orders_account_1.position.base_free_native, 0);
-        assert_eq!(
-            open_orders_account_1.position.quote_free_native.round(),
-            20004
-        );
+        assert_eq!(open_orders_account_1.position.quote_free_native, 20004);
     }
 
     Ok(())
