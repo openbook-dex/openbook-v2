@@ -121,7 +121,7 @@ async fn test_fees_accrued() -> Result<(), TransportError> {
         assert_eq!(open_orders_account_0.position.base_free_native, 0);
         assert_eq!(open_orders_account_1.position.base_free_native, 0);
         assert_eq!(open_orders_account_0.position.quote_free_native, 0);
-        assert_eq!(open_orders_account_1.position.quote_free_native, 99981);
+        assert_eq!(open_orders_account_1.position.quote_free_native, 99980);
     }
 
     send_tx(
@@ -144,8 +144,8 @@ async fn test_fees_accrued() -> Result<(), TransportError> {
         assert_eq!(open_orders_account_1.position.asks_base_lots, 0);
         assert_eq!(open_orders_account_0.position.base_free_native, 100);
         assert_eq!(open_orders_account_1.position.base_free_native, 0);
-        assert_eq!(open_orders_account_0.position.quote_free_native, 9);
-        assert_eq!(open_orders_account_1.position.quote_free_native, 99981);
+        assert_eq!(open_orders_account_0.position.quote_free_native, 10);
+        assert_eq!(open_orders_account_1.position.quote_free_native, 99980);
     }
 
     let admin_token_1 = solana
@@ -336,7 +336,7 @@ async fn test_maker_fees() -> Result<(), TransportError> {
         assert_eq!(open_orders_account_0.position.bids_base_lots, 0);
         assert_eq!(open_orders_account_0.position.asks_base_lots, 0);
         assert_eq!(open_orders_account_0.position.base_free_native, 0);
-        assert_eq!(open_orders_account_0.position.quote_free_native, 100019);
+        assert_eq!(open_orders_account_0.position.quote_free_native, 100020);
     }
 
     send_tx(
@@ -368,7 +368,7 @@ async fn test_maker_fees() -> Result<(), TransportError> {
         assert_eq!(open_orders_account_0.position.bids_base_lots, 1);
         assert_eq!(open_orders_account_0.position.asks_base_lots, 0);
         assert_eq!(open_orders_account_0.position.base_free_native, 0);
-        assert_eq!(open_orders_account_0.position.quote_free_native, 9);
+        assert_eq!(open_orders_account_0.position.quote_free_native, 0);
     }
 
     send_tx(
@@ -404,8 +404,8 @@ async fn test_maker_fees() -> Result<(), TransportError> {
         assert_eq!(open_orders_account_1.position.asks_base_lots, 0);
         assert_eq!(open_orders_account_0.position.base_free_native, 0);
         assert_eq!(open_orders_account_1.position.base_free_native, 0);
-        assert_eq!(open_orders_account_0.position.quote_free_native, 9);
-        assert_eq!(open_orders_account_1.position.quote_free_native, 99961);
+        assert_eq!(open_orders_account_0.position.quote_free_native, 0);
+        assert_eq!(open_orders_account_1.position.quote_free_native, 99960);
     }
 
     send_tx(
@@ -428,8 +428,8 @@ async fn test_maker_fees() -> Result<(), TransportError> {
         assert_eq!(open_orders_account_1.position.asks_base_lots, 0);
         assert_eq!(open_orders_account_0.position.base_free_native, 100);
         assert_eq!(open_orders_account_1.position.base_free_native, 0);
-        assert_eq!(open_orders_account_0.position.quote_free_native, 9);
-        assert_eq!(open_orders_account_1.position.quote_free_native, 99961);
+        assert_eq!(open_orders_account_0.position.quote_free_native, 0);
+        assert_eq!(open_orders_account_1.position.quote_free_native, 99960);
     }
 
     let admin_token_1 = solana

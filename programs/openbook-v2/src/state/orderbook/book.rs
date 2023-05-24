@@ -237,7 +237,15 @@ impl<'a> Orderbook<'a> {
             let total_quantity_received: u64;
             let taker_fees = (I80F48::from_num(total_quote_taken_native_wo_self)
                 * market.taker_fee)
+                .ceil()
                 .to_num::<u64>();
+            msg!(
+                "xxx total_quote_taken_native_wo_self {} market.taker_fee {} taker_fees  {}",
+                total_quote_taken_native_wo_self,
+                market.taker_fee,
+                taker_fees
+            );
+
             // taker fees should never be negative
             require_gte!(taker_fees, 0);
             match side {

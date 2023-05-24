@@ -363,6 +363,7 @@ impl<
         } else {
             (I80F48::from(quote_native_abs) * market.maker_fee)
                 .abs()
+                .ceil()
                 .to_num::<u64>()
         };
 
@@ -402,7 +403,9 @@ impl<
                 }
                 Side::Ask => {
                     let maker_fees = if market.maker_fee.is_positive() {
-                        (I80F48::from(quote_locked_change) * market.maker_fee).to_num::<u64>()
+                        (I80F48::from(quote_locked_change) * market.maker_fee)
+                            .ceil()
+                            .to_num::<u64>()
                     } else {
                         0
                     };
