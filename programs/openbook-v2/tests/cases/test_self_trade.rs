@@ -218,6 +218,7 @@ async fn test_self_trade_decrement_take() -> Result<(), TransportError> {
     send_tx(
         solana,
         ConsumeEventsInstruction {
+            consume_events_admin: None,
             market,
             open_orders_accounts: vec![account_0, account_1],
         },
@@ -449,6 +450,7 @@ async fn test_self_trade_cancel_provide() -> Result<(), TransportError> {
     send_tx(
         solana,
         ConsumeEventsInstruction {
+            consume_events_admin: None,
             market,
             open_orders_accounts: vec![account_0, account_1],
         },

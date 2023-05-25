@@ -91,6 +91,14 @@ pub enum OpenBookError {
     MissingOpenOrdersAdmin,
     #[msg("The `open_orders_admin` passed does not match this market's `open_orders_admin`.")]
     InvalidOpenOrdersAdmin,
+    #[msg(
+        "This market requires `consume_events_admin` to sign all instructions that consume events."
+    )]
+    MissingConsumeEventsAdmin,
+    #[msg(
+        "The `consume_events_admin` passed does not match this market's `consume_events_admin`."
+    )]
+    InvalidConsumeEventsAdmin,
 }
 
 impl OpenBookError {

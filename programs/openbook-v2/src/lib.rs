@@ -47,6 +47,7 @@ pub mod openbook_v2 {
         collect_fee_admin: Pubkey,
         manage_oracle_admin: Option<Pubkey>,
         open_orders_admin: Option<Pubkey>,
+        consume_events_admin: Option<Pubkey>,
         close_market_admin: Option<Pubkey>,
     ) -> Result<()> {
         #[cfg(feature = "enable-gpl")]
@@ -63,6 +64,7 @@ pub mod openbook_v2 {
             collect_fee_admin,
             manage_oracle_admin,
             open_orders_admin,
+            consume_events_admin,
             close_market_admin,
         )?;
         Ok(())

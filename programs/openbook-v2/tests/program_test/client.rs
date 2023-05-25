@@ -208,6 +208,7 @@ pub struct CreateMarketInstruction {
     pub collect_fee_admin: Pubkey,
     pub manage_oracle_admin: Option<Pubkey>,
     pub open_orders_admin: Option<Pubkey>,
+    pub consume_events_admin: Option<Pubkey>,
     pub close_market_admin: Option<Pubkey>,
     pub oracle: Pubkey,
     pub base_mint: Pubkey,
@@ -262,6 +263,7 @@ impl ClientInstruction for CreateMarketInstruction {
             collect_fee_admin: self.collect_fee_admin,
             manage_oracle_admin: self.manage_oracle_admin,
             open_orders_admin: self.open_orders_admin,
+            consume_events_admin: self.consume_events_admin,
             close_market_admin: self.close_market_admin,
             name: "ONE-TWO".to_string(),
             market_index: self.market_index,
@@ -636,6 +638,7 @@ impl ClientInstruction for CancelAllOrdersInstruction {
 }
 
 pub struct ConsumeEventsInstruction {
+    pub consume_events_admin: Option<TestKeypair>,
     pub market: Pubkey,
     pub open_orders_accounts: Vec<Pubkey>,
 }
@@ -652,6 +655,7 @@ impl ClientInstruction for ConsumeEventsInstruction {
 
         let market: Market = account_loader.load(&self.market).await.unwrap();
         let accounts = Self::Accounts {
+            consume_events_admin: self.consume_events_admin.map(|kp| kp.pubkey()),
             market: self.market,
             event_queue: market.event_queue,
         };
@@ -668,7 +672,10 @@ impl ClientInstruction for ConsumeEventsInstruction {
     }
 
     fn signers(&self) -> Vec<TestKeypair> {
-        vec![]
+        match self.consume_events_admin {
+            Some(consume_events_admin) => vec![consume_events_admin],
+            None => vec![],
+        }
     }
 }
 

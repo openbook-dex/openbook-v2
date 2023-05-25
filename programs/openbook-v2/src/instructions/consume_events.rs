@@ -50,6 +50,19 @@ pub fn consume_events(ctx: Context<ConsumeEvents>, limit: usize) -> Result<()> {
     let limit = std::cmp::min(limit, MAX_EVENTS_CONSUME);
 
     let mut market = ctx.accounts.market.load_mut()?;
+
+    if let Some(consume_events_admin) = Option::<Pubkey>::from(market.consume_events_admin) {
+        let consume_events_admin_signer = ctx
+            .accounts
+            .consume_events_admin
+            .as_ref()
+            .ok_or(OpenBookError::MissingConsumeEventsAdmin)?;
+        require_eq!(
+            consume_events_admin,
+            consume_events_admin_signer.key(),
+            OpenBookError::InvalidConsumeEventsAdmin
+        );
+    }
     let mut event_queue = ctx.accounts.event_queue.load_mut()?;
     let remaining_accs = &ctx.remaining_accounts;
 

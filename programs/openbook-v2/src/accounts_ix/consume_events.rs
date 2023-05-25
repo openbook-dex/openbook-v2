@@ -3,6 +3,7 @@ use anchor_lang::prelude::*;
 
 #[derive(Accounts)]
 pub struct ConsumeEvents<'info> {
+    pub consume_events_admin: Option<Signer<'info>>,
     #[account(
         mut,
         has_one = event_queue,

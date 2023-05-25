@@ -170,6 +170,7 @@ async fn test_simple_settle() -> Result<(), TransportError> {
     send_tx(
         solana,
         ConsumeEventsInstruction {
+            consume_events_admin: None,
             market,
             open_orders_accounts: vec![account_0, account_1],
         },
@@ -388,6 +389,7 @@ async fn test_cancel_orders() -> Result<(), TransportError> {
     send_tx(
         solana,
         ConsumeEventsInstruction {
+            consume_events_admin: None,
             market,
             open_orders_accounts: vec![account_0, account_1],
         },
@@ -743,6 +745,7 @@ async fn test_expired_orders() -> Result<(), TransportError> {
     send_tx(
         solana,
         ConsumeEventsInstruction {
+            consume_events_admin: None,
             market,
             open_orders_accounts: vec![account_0, account_1],
         },

@@ -134,6 +134,7 @@ async fn test_fees_accrued() -> Result<(), TransportError> {
     send_tx(
         solana,
         ConsumeEventsInstruction {
+            consume_events_admin: None,
             market,
             open_orders_accounts: vec![account_0, account_1],
         },
@@ -207,6 +208,7 @@ async fn test_fees_accrued() -> Result<(), TransportError> {
         solana,
         PlaceOrderInstruction {
             open_orders_account: account_1,
+            open_orders_admin: None,
             market,
             owner,
             payer: owner_token_1,
@@ -426,6 +428,7 @@ async fn test_maker_fees() -> Result<(), TransportError> {
     send_tx(
         solana,
         ConsumeEventsInstruction {
+            consume_events_admin: None,
             market,
             open_orders_accounts: vec![account_0, account_1],
         },

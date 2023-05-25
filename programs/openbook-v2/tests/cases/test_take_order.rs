@@ -143,6 +143,7 @@ async fn test_take_ask_order() -> Result<(), TransportError> {
     send_tx(
         solana,
         ConsumeEventsInstruction {
+            consume_events_admin: None,
             market,
             open_orders_accounts: vec![account_0],
         },
@@ -339,6 +340,7 @@ async fn test_take_bid_order() -> Result<(), TransportError> {
     send_tx(
         solana,
         ConsumeEventsInstruction {
+            consume_events_admin: None,
             market,
             open_orders_accounts: vec![account_0],
         },
