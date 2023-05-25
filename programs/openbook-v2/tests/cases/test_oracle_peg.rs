@@ -99,6 +99,8 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
 
     assert_no_orders(solana, account_0).await;
 
+    let balance_quote = solana.token_account_balance(owner_token_1).await;
+
     // TEST: Place a pegged bid, take it with a direct and pegged ask, and consume events
     send_tx(
         solana,
@@ -119,6 +121,13 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
     )
     .await
     .unwrap();
+
+    {
+        assert_eq!(
+            balance_quote - 10_000,
+            solana.token_account_balance(owner_token_1).await
+        );
+    }
 
     send_tx(
         solana,
