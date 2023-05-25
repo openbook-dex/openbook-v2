@@ -66,6 +66,7 @@ async fn test_self_trade_decrement_take() -> Result<(), TransportError> {
         solana,
         PlaceOrderInstruction {
             open_orders_account: account_0,
+            open_orders_admin: None,
             market,
             owner,
             payer: owner_base_ata,
@@ -90,6 +91,7 @@ async fn test_self_trade_decrement_take() -> Result<(), TransportError> {
         solana,
         PlaceOrderInstruction {
             open_orders_account: account_1,
+            open_orders_admin: None,
             market,
             owner,
             payer: owner_base_ata,
@@ -114,6 +116,7 @@ async fn test_self_trade_decrement_take() -> Result<(), TransportError> {
         solana,
         PlaceOrderInstruction {
             open_orders_account: account_0,
+            open_orders_admin: None,
             market,
             owner,
             payer: owner_quote_ata,
@@ -177,6 +180,7 @@ async fn test_self_trade_decrement_take() -> Result<(), TransportError> {
         solana,
         PlaceOrderInstruction {
             open_orders_account: account_0,
+            open_orders_admin: None,
             market,
             owner,
             payer: owner_quote_ata,
@@ -302,6 +306,7 @@ async fn test_self_trade_cancel_provide() -> Result<(), TransportError> {
         solana,
         PlaceOrderInstruction {
             open_orders_account: account_0,
+            open_orders_admin: None,
             market,
             owner,
             payer: owner_base_ata,
@@ -326,6 +331,7 @@ async fn test_self_trade_cancel_provide() -> Result<(), TransportError> {
         solana,
         PlaceOrderInstruction {
             open_orders_account: account_1,
+            open_orders_admin: None,
             market,
             owner,
             payer: owner_base_ata,
@@ -365,6 +371,7 @@ async fn test_self_trade_cancel_provide() -> Result<(), TransportError> {
         solana,
         PlaceOrderInstruction {
             open_orders_account: account_0,
+            open_orders_admin: None,
             market,
             owner,
             payer: owner_quote_ata,
@@ -404,6 +411,7 @@ async fn test_self_trade_cancel_provide() -> Result<(), TransportError> {
         solana,
         PlaceOrderInstruction {
             open_orders_account: account_0,
+            open_orders_admin: None,
             market,
             owner,
             payer: owner_quote_ata,
@@ -528,6 +536,7 @@ async fn test_self_abort_transaction() -> Result<(), TransportError> {
         solana,
         PlaceOrderInstruction {
             open_orders_account: account_0,
+            open_orders_admin: None,
             market,
             owner,
             payer: owner_base_ata,
@@ -552,6 +561,7 @@ async fn test_self_abort_transaction() -> Result<(), TransportError> {
         solana,
         PlaceOrderInstruction {
             open_orders_account: account_0,
+            open_orders_admin: None,
             market,
             owner,
             payer: owner_quote_ata,

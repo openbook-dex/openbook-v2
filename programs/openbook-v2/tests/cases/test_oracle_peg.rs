@@ -128,6 +128,7 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
         solana,
         PlaceOrderInstruction {
             open_orders_account: account_1,
+            open_orders_admin: None,
             market,
             owner,
             payer: owner_token_0,
@@ -203,6 +204,7 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
         solana,
         PlaceOrderInstruction {
             open_orders_account: account_1,
+            open_orders_admin: None,
             market,
             owner,
             payer: owner_token_0,
@@ -240,6 +242,7 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
         solana,
         PlaceOrderInstruction {
             open_orders_account: account_1,
+            open_orders_admin: None,
             market,
             owner,
             payer: owner_token_0,
@@ -300,6 +303,7 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
         solana,
         PlaceOrderInstruction {
             open_orders_account: account_1,
+            open_orders_admin: None,
             market,
             owner,
             payer: owner_token_0,
@@ -337,6 +341,7 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
         solana,
         PlaceOrderInstruction {
             open_orders_account: account_1,
+            open_orders_admin: None,
             market,
             owner,
             payer: owner_token_0,

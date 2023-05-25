@@ -55,6 +55,10 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<
         &open_orders_account_pk,
         now_ts,
         limit,
+        ctx.accounts
+            .open_orders_admin
+            .as_ref()
+            .map(|signer| signer.key()),
         ctx.remaining_accounts,
     )?;
 

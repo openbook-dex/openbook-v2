@@ -22,6 +22,7 @@ pub struct Market {
     pub open_orders_admin: PodOption<Pubkey>,
     /// Admin who can close the market
     pub close_market_admin: PodOption<Pubkey>,
+    /// TODO: consume event admin
 
     /// Index of this market
     pub market_index: MarketIndex,

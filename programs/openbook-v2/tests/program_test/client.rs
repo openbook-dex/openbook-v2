@@ -312,6 +312,7 @@ impl ClientInstruction for CreateMarketInstruction {
 
 pub struct PlaceOrderInstruction {
     pub open_orders_account: Pubkey,
+    pub open_orders_admin: Option<TestKeypair>,
     pub market: Pubkey,
     pub owner: TestKeypair,
     pub base_vault: Pubkey,
@@ -353,6 +354,7 @@ impl ClientInstruction for PlaceOrderInstruction {
 
         let accounts = Self::Accounts {
             open_orders_account: self.open_orders_account,
+            open_orders_admin: self.open_orders_admin.map(|kp| kp.pubkey()),
             market: self.market,
             bids: market.bids,
             asks: market.asks,
@@ -379,7 +381,12 @@ impl ClientInstruction for PlaceOrderInstruction {
     }
 
     fn signers(&self) -> Vec<TestKeypair> {
-        vec![self.owner]
+        let mut signers = vec![self.owner];
+        if let Some(open_orders_admin) = self.open_orders_admin {
+            signers.push(open_orders_admin);
+        }
+
+        signers
     }
 }
 
@@ -424,6 +431,7 @@ impl ClientInstruction for PlaceOrderPeggedInstruction {
 
         let accounts = Self::Accounts {
             open_orders_account: self.open_orders_account,
+            open_orders_admin: None,
             market: self.market,
             bids: market.bids,
             asks: market.asks,
@@ -447,6 +455,7 @@ impl ClientInstruction for PlaceOrderPeggedInstruction {
 }
 
 pub struct PlaceTakeOrderInstruction {
+    pub open_orders_admin: Option<TestKeypair>,
     pub market: Pubkey,
     pub owner: TestKeypair,
     pub base_vault: Pubkey,
@@ -484,6 +493,7 @@ impl ClientInstruction for PlaceTakeOrderInstruction {
         let market: Market = account_loader.load(&self.market).await.unwrap();
 
         let accounts = Self::Accounts {
+            open_orders_admin: self.open_orders_admin.map(|kp| kp.pubkey()),
             market: self.market,
             bids: market.bids,
             asks: market.asks,
@@ -497,6 +507,7 @@ impl ClientInstruction for PlaceTakeOrderInstruction {
             token_program: Token::id(),
             system_program: System::id(),
         };
+
         let mut instruction = make_instruction(program_id, &accounts, instruction);
         if let Some(ref3) = self.referrer {
             let remaining = &mut vec![AccountMeta {
@@ -510,7 +521,12 @@ impl ClientInstruction for PlaceTakeOrderInstruction {
     }
 
     fn signers(&self) -> Vec<TestKeypair> {
-        vec![self.owner]
+        let mut signers = vec![self.owner];
+        if let Some(open_orders_admin) = self.open_orders_admin {
+            signers.push(open_orders_admin);
+        }
+
+        signers
     }
 }
 

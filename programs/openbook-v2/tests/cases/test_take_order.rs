@@ -71,6 +71,7 @@ async fn test_take_ask_order() -> Result<(), TransportError> {
         solana,
         PlaceOrderInstruction {
             open_orders_account: account_0,
+            open_orders_admin: None,
             market,
             owner,
             payer: owner_token_1,
@@ -111,6 +112,7 @@ async fn test_take_ask_order() -> Result<(), TransportError> {
             client_order_id: 0,
             expiry_timestamp: 0,
             referrer: None,
+            open_orders_admin: None,
         },
     )
     .await
@@ -256,6 +258,7 @@ async fn test_take_bid_order() -> Result<(), TransportError> {
         solana,
         PlaceOrderInstruction {
             open_orders_account: account_0,
+            open_orders_admin: None,
             market,
             owner,
             payer: owner_token_0,
@@ -287,6 +290,7 @@ async fn test_take_bid_order() -> Result<(), TransportError> {
     send_tx(
         solana,
         PlaceTakeOrderInstruction {
+            open_orders_admin: None,
             market,
             owner,
             payer: owner_token_1,

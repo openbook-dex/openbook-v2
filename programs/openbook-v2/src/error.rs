@@ -87,6 +87,10 @@ pub enum OpenBookError {
     NoCloseMarketAdmin,
     #[msg("The signer of this transaction is not this market's `close_market_admin`.")]
     InvalidCloseMarketAdmin,
+    #[msg("This market requires `open_orders_admin` to sign all instructions that create orders.")]
+    MissingOpenOrdersAdmin,
+    #[msg("The `open_orders_admin` passed does not match this market's `open_orders_admin`.")]
+    InvalidOpenOrdersAdmin,
 }
 
 impl OpenBookError {

@@ -71,6 +71,7 @@ async fn test_inmediate_order() -> Result<(), TransportError> {
         solana,
         PlaceOrderInstruction {
             open_orders_account: account_0,
+            open_orders_admin: None,
             market,
             owner,
             payer: owner_token_1,
@@ -98,6 +99,7 @@ async fn test_inmediate_order() -> Result<(), TransportError> {
         solana,
         PlaceOrderInstruction {
             open_orders_account: account_1,
+            open_orders_admin: None,
             market,
             owner,
             payer: owner_token_0,
@@ -190,6 +192,7 @@ async fn test_inmediate_order() -> Result<(), TransportError> {
         solana,
         PlaceOrderInstruction {
             open_orders_account: account_0,
+            open_orders_admin: None,
             market,
             owner,
             payer: owner_token_1,
@@ -218,6 +221,7 @@ async fn test_inmediate_order() -> Result<(), TransportError> {
         solana,
         PlaceOrderInstruction {
             open_orders_account: account_1,
+            open_orders_admin: None,
             market,
             owner,
             payer: owner_token_0,
@@ -310,6 +314,7 @@ async fn test_inmediate_order() -> Result<(), TransportError> {
         solana,
         PlaceOrderInstruction {
             open_orders_account: account_1,
+            open_orders_admin: None,
             market,
             owner,
             payer: owner_token_0,
