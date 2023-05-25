@@ -123,7 +123,7 @@ async fn test_take_ask_order() -> Result<(), TransportError> {
         assert_eq!(open_orders_account_0.position.base_free_native, 0);
         assert_eq!(open_orders_account_1.position.base_free_native, 0);
         assert_eq!(open_orders_account_0.position.quote_free_native, 0);
-        assert_eq!(open_orders_account_1.position.quote_free_native.round(), 0);
+        assert_eq!(open_orders_account_1.position.quote_free_native, 0);
         assert_eq!(
             balance_base - 100,
             solana.token_account_balance(owner_token_0).await
@@ -154,8 +154,8 @@ async fn test_take_ask_order() -> Result<(), TransportError> {
         assert_eq!(open_orders_account_1.position.asks_base_lots, 0);
         assert_eq!(open_orders_account_0.position.base_free_native, 100);
         assert_eq!(open_orders_account_1.position.base_free_native, 0);
-        assert_eq!(open_orders_account_0.position.quote_free_native.round(), 20);
-        assert_eq!(open_orders_account_1.position.quote_free_native.round(), 0);
+        assert_eq!(open_orders_account_0.position.quote_free_native, 20);
+        assert_eq!(open_orders_account_1.position.quote_free_native, 0);
     }
 
     send_tx(
@@ -180,7 +180,7 @@ async fn test_take_ask_order() -> Result<(), TransportError> {
         assert_eq!(open_orders_account_0.position.base_free_native, 0);
         assert_eq!(open_orders_account_1.position.base_free_native, 0);
         assert_eq!(open_orders_account_0.position.quote_free_native, 0);
-        assert_eq!(open_orders_account_1.position.quote_free_native.round(), 0);
+        assert_eq!(open_orders_account_1.position.quote_free_native, 0);
     }
 
     Ok(())
@@ -314,7 +314,7 @@ async fn test_take_bid_order() -> Result<(), TransportError> {
         assert_eq!(open_orders_account_0.position.base_free_native, 0);
         assert_eq!(open_orders_account_1.position.base_free_native, 0);
         assert_eq!(open_orders_account_0.position.quote_free_native, 0);
-        assert_eq!(open_orders_account_1.position.quote_free_native.round(), 0);
+        assert_eq!(open_orders_account_1.position.quote_free_native, 0);
         assert_eq!(
             balance_base + 100,
             solana.token_account_balance(owner_token_0).await
@@ -349,11 +349,8 @@ async fn test_take_bid_order() -> Result<(), TransportError> {
         assert_eq!(open_orders_account_1.position.asks_base_lots, 0);
         assert_eq!(open_orders_account_0.position.base_free_native, 0);
         assert_eq!(open_orders_account_1.position.base_free_native, 0);
-        assert_eq!(
-            open_orders_account_0.position.quote_free_native.round(),
-            100020
-        );
-        assert_eq!(open_orders_account_1.position.quote_free_native.round(), 0);
+        assert_eq!(open_orders_account_0.position.quote_free_native, 100020);
+        assert_eq!(open_orders_account_1.position.quote_free_native, 0);
     }
 
     send_tx(
@@ -378,7 +375,7 @@ async fn test_take_bid_order() -> Result<(), TransportError> {
         assert_eq!(open_orders_account_0.position.base_free_native, 0);
         assert_eq!(open_orders_account_1.position.base_free_native, 0);
         assert_eq!(open_orders_account_0.position.quote_free_native, 0);
-        assert_eq!(open_orders_account_1.position.quote_free_native.round(), 0);
+        assert_eq!(open_orders_account_1.position.quote_free_native, 0);
     }
 
     Ok(())

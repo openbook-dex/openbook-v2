@@ -65,14 +65,12 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<
 
             let max_quote_including_fees = if let Some(order_id) = order_id {
                 let price = match order.params {
-                    OrderParams::OraclePegged { peg_limit, .. } => I80F48::from(peg_limit),
-                    OrderParams::Fixed { .. } => I80F48::from((order_id >> 64) as u64),
+                    OrderParams::OraclePegged { peg_limit, .. } => peg_limit,
+                    OrderParams::Fixed { .. } => (order_id >> 64) as i64,
                     _ => unreachable!(),
                 };
                 total_quote_taken_native
-                    + I80F48::from_num(placed_quantity)
-                        * I80F48::from_num(market.quote_lot_size)
-                        * price
+                    + (placed_quantity * market.quote_lot_size * price) as u64
                     + maker_fees
             } else {
                 total_quote_taken_native
@@ -82,9 +80,9 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<
             position.quote_free_native -= free_qty_to_lock;
 
             // Update market deposit total
-            market.quote_deposit_total += ((max_quote_including_fees - free_qty_to_lock)
-                - (total_quote_taken_native * (market.taker_fee - market.maker_fee)))
-                .to_num::<u64>();
+            market.quote_deposit_total += (max_quote_including_fees - free_qty_to_lock)
+                - (I80F48::from(total_quote_taken_native) * (market.taker_fee - market.maker_fee))
+                    .to_num::<u64>();
 
             (
                 ctx.accounts.quote_vault.to_account_info(),
@@ -94,14 +92,14 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<
 
         Side::Ask => {
             let free_assets_native = position.base_free_native;
-            let max_base_native = total_base_taken_native
-                + I80F48::from_num(placed_quantity) * I80F48::from_num(market.base_lot_size);
+            let max_base_native =
+                total_base_taken_native + (placed_quantity * market.base_lot_size) as u64;
 
             let free_qty_to_lock = cmp::min(max_base_native, free_assets_native);
             position.base_free_native -= free_qty_to_lock;
 
             // Update market deposit total
-            market.base_deposit_total += (max_base_native - free_qty_to_lock).to_num::<u64>();
+            market.base_deposit_total += max_base_native - free_qty_to_lock;
 
             (
                 ctx.accounts.base_vault.to_account_info(),
@@ -120,8 +118,7 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<
                 authority: ctx.accounts.owner.to_account_info(),
             },
         );
-        // TODO Binye check if this is correct
-        token::transfer(cpi_context, deposit_amount.ceil().to_num())?;
+        token::transfer(cpi_context, deposit_amount)?;
     }
     Ok(order_id)
 }

@@ -1,7 +1,6 @@
 use anchor_lang::prelude::*;
 
 use derivative::Derivative;
-use fixed::types::I80F48;
 use static_assertions::const_assert_eq;
 use std::mem::size_of;
 
@@ -18,8 +17,8 @@ pub struct Position {
     /// Base lots in open asks
     pub asks_base_lots: i64,
 
-    pub base_free_native: I80F48,
-    pub quote_free_native: I80F48,
+    pub base_free_native: u64,
+    pub quote_free_native: u64,
 
     pub referrer_rebates_accrued: u64,
 
@@ -40,11 +39,8 @@ pub struct Position {
     pub reserved: [u8; 88],
 }
 
-const_assert_eq!(
-    size_of::<Position>(),
-    2 * size_of::<I80F48>() + 8 + 8 + 8 + 8 + 8 + 8 + 88
-);
-const_assert_eq!(size_of::<Position>(), 168);
+const_assert_eq!(size_of::<Position>(), 8 + 8 + 8 + 8 + 8 + 8 + 8 + 8 + 88);
+const_assert_eq!(size_of::<Position>(), 152);
 const_assert_eq!(size_of::<Position>() % 8, 0);
 
 impl Default for Position {
@@ -52,8 +48,8 @@ impl Default for Position {
         Self {
             bids_base_lots: 0,
             asks_base_lots: 0,
-            base_free_native: I80F48::ZERO,
-            quote_free_native: I80F48::ZERO,
+            base_free_native: 0,
+            quote_free_native: 0,
             referrer_rebates_accrued: 0,
             maker_volume: 0,
             taker_volume: 0,

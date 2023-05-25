@@ -53,7 +53,7 @@ pub fn place_take_order<'info>(
     let (from_vault, to_vault, deposit_amount, withdraw_amount) = match side {
         Side::Bid => {
             // Update market deposit total
-            market.quote_deposit_total += total_quote_taken_native.to_num::<u64>();
+            market.quote_deposit_total += total_quote_taken_native;
             (
                 ctx.accounts.base_vault.to_account_info(),
                 ctx.accounts.quote_vault.to_account_info(),
@@ -64,7 +64,7 @@ pub fn place_take_order<'info>(
 
         Side::Ask => {
             // Update market deposit total
-            market.base_deposit_total += (total_base_taken_native).to_num::<u64>();
+            market.base_deposit_total += total_base_taken_native;
             (
                 ctx.accounts.quote_vault.to_account_info(),
                 ctx.accounts.base_vault.to_account_info(),
@@ -84,8 +84,7 @@ pub fn place_take_order<'info>(
                 authority: ctx.accounts.owner.to_account_info(),
             },
         );
-        // TODO Binye check if this ceil is correct
-        token::transfer(cpi_context, deposit_amount.ceil().to_num())?;
+        token::transfer(cpi_context, deposit_amount)?;
     }
 
     let seeds = market_seeds!(market);
@@ -102,7 +101,7 @@ pub fn place_take_order<'info>(
                 authority: ctx.accounts.market.to_account_info(),
             },
         );
-        token::transfer(cpi_context.with_signer(signer), withdraw_amount.to_num())?;
+        token::transfer(cpi_context.with_signer(signer), withdraw_amount)?;
     }
 
     // Transfer to referrer

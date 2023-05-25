@@ -154,10 +154,7 @@ async fn test_simple_settle() -> Result<(), TransportError> {
         assert_eq!(open_orders_account_0.position.base_free_native, 0);
         assert_eq!(open_orders_account_1.position.base_free_native, 0);
         assert_eq!(open_orders_account_0.position.quote_free_native, 0);
-        assert_eq!(
-            open_orders_account_1.position.quote_free_native.round(),
-            99960
-        );
+        assert_eq!(open_orders_account_1.position.quote_free_native, 99960);
     }
 
     send_tx(
@@ -180,11 +177,8 @@ async fn test_simple_settle() -> Result<(), TransportError> {
         assert_eq!(open_orders_account_1.position.asks_base_lots, 0);
         assert_eq!(open_orders_account_0.position.base_free_native, 100);
         assert_eq!(open_orders_account_1.position.base_free_native, 0);
-        assert_eq!(open_orders_account_0.position.quote_free_native.round(), 20);
-        assert_eq!(
-            open_orders_account_1.position.quote_free_native.round(),
-            99960
-        );
+        assert_eq!(open_orders_account_0.position.quote_free_native, 20);
+        assert_eq!(open_orders_account_1.position.quote_free_native, 99960);
     }
 
     send_tx(
@@ -209,10 +203,7 @@ async fn test_simple_settle() -> Result<(), TransportError> {
         assert_eq!(open_orders_account_0.position.base_free_native, 0);
         assert_eq!(open_orders_account_1.position.base_free_native, 0);
         assert_eq!(open_orders_account_0.position.quote_free_native, 0);
-        assert_eq!(
-            open_orders_account_1.position.quote_free_native.round(),
-            99960
-        );
+        assert_eq!(open_orders_account_1.position.quote_free_native, 99960);
     }
 
     send_tx(
@@ -375,10 +366,7 @@ async fn test_cancel_orders() -> Result<(), TransportError> {
         assert_eq!(open_orders_account_0.position.base_free_native, 0);
         assert_eq!(open_orders_account_1.position.base_free_native, 0);
         assert_eq!(open_orders_account_0.position.quote_free_native, 0);
-        assert_eq!(
-            open_orders_account_1.position.quote_free_native.round(),
-            99960
-        );
+        assert_eq!(open_orders_account_1.position.quote_free_native, 99960);
     }
 
     send_tx(
@@ -401,11 +389,8 @@ async fn test_cancel_orders() -> Result<(), TransportError> {
         assert_eq!(open_orders_account_1.position.asks_base_lots, 0);
         assert_eq!(open_orders_account_0.position.base_free_native, 100);
         assert_eq!(open_orders_account_1.position.base_free_native, 0);
-        assert_eq!(open_orders_account_0.position.quote_free_native.round(), 10);
-        assert_eq!(
-            open_orders_account_1.position.quote_free_native.round(),
-            99960
-        );
+        assert_eq!(open_orders_account_0.position.quote_free_native, 10);
+        assert_eq!(open_orders_account_1.position.quote_free_native, 99960);
     }
 
     send_tx(
@@ -428,7 +413,7 @@ async fn test_cancel_orders() -> Result<(), TransportError> {
     {
         let open_orders_account_0 = solana.get_account::<OpenOrdersAccount>(account_0).await;
         assert_eq!(open_orders_account_0.position.base_free_native, 10100);
-        assert_eq!(open_orders_account_0.position.quote_free_native.round(), 10);
+        assert_eq!(open_orders_account_0.position.quote_free_native, 10);
     }
 
     let balance = solana.token_account_balance(owner_token_0).await;
@@ -469,11 +454,8 @@ async fn test_cancel_orders() -> Result<(), TransportError> {
         assert_eq!(open_orders_account_1.position.asks_base_lots, 0);
         assert_eq!(open_orders_account_0.position.base_free_native, 10000);
         assert_eq!(open_orders_account_1.position.base_free_native, 0);
-        assert_eq!(open_orders_account_0.position.quote_free_native.round(), 10);
-        assert_eq!(
-            open_orders_account_1.position.quote_free_native.round(),
-            99960
-        );
+        assert_eq!(open_orders_account_0.position.quote_free_native, 10);
+        assert_eq!(open_orders_account_1.position.quote_free_native, 99960);
     }
 
     send_tx(
@@ -499,10 +481,7 @@ async fn test_cancel_orders() -> Result<(), TransportError> {
         assert_eq!(open_orders_account_0.position.base_free_native, 0);
         assert_eq!(open_orders_account_1.position.base_free_native, 0);
         assert_eq!(open_orders_account_0.position.quote_free_native, 0);
-        assert_eq!(
-            open_orders_account_1.position.quote_free_native.round(),
-            99960
-        );
+        assert_eq!(open_orders_account_1.position.quote_free_native, 99960);
     }
 
     let order_id_to_cancel = solana

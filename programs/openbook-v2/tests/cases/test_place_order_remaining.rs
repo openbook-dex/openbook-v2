@@ -132,11 +132,8 @@ async fn test_place_cancel_order_remaining() -> Result<(), TransportError> {
         assert_eq!(open_orders_account_1.position.asks_base_lots, 0);
         assert_eq!(open_orders_account_0.position.base_free_native, 100);
         assert_eq!(open_orders_account_1.position.base_free_native, 0);
-        assert_eq!(open_orders_account_0.position.quote_free_native.round(), 20);
-        assert_eq!(
-            open_orders_account_1.position.quote_free_native.round(),
-            99960
-        );
+        assert_eq!(open_orders_account_0.position.quote_free_native, 20);
+        assert_eq!(open_orders_account_1.position.quote_free_native, 99960);
     }
 
     // No events on event_queue

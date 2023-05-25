@@ -226,12 +226,13 @@ impl Market {
         (I80F48::from(quote) / (I80F48::ONE + self.maker_fee)).to_num()
     }
 
-    pub fn referrer_taker_rebate(&self, quote: I80F48) -> i64 {
+    pub fn referrer_taker_rebate(&self, quote: u64) -> u64 {
+        let quo = I80F48::from_num(quote);
         if self.maker_fee < 0 {
-            (quote * (self.taker_fee + self.maker_fee)).to_num()
+            (quo * (self.taker_fee + self.maker_fee)).to_num()
         } else {
             // Nothing goes to maker, all to referrer
-            (quote * self.taker_fee).to_num()
+            (quo * self.taker_fee).to_num()
         }
     }
 }
