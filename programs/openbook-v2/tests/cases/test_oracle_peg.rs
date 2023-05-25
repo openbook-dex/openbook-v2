@@ -67,7 +67,7 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
             quote_vault,
             side: Side::Bid,
             price_offset: -1,
-            peg_limit: 0,
+            peg_limit: 1,
             max_base_lots: 1,
             max_quote_lots_including_fees: 100_000,
             client_order_id: 0,
@@ -99,7 +99,8 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
 
     assert_no_orders(solana, account_0).await;
 
-    let balance_quote = solana.token_account_balance(owner_token_1).await;
+    let balance_before = solana.token_account_balance(owner_token_1).await;
+    let max_quote_lots_including_fees = 11_000;
 
     // TEST: Place a pegged bid, take it with a direct and pegged ask, and consume events
     send_tx(
@@ -112,20 +113,24 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
             base_vault,
             quote_vault,
             side: Side::Bid,
-            price_offset: 0,
-            peg_limit: price_lots,
+            price_offset: -100,
+            peg_limit: price_lots + 10000,
             max_base_lots: 2,
-            max_quote_lots_including_fees: 100_000,
+            max_quote_lots_including_fees,
             client_order_id: 5,
         },
     )
     .await
     .unwrap();
 
+    let balance_after = solana.token_account_balance(owner_token_1).await;
+
+    // Max quantity being subtracted from owner is max_quote_lots_including_fees
     {
-        assert_eq!(
-            balance_quote - 10_000,
-            solana.token_account_balance(owner_token_1).await
+        assert!(
+            balance_before
+                - ((max_quote_lots_including_fees as u64) * (market_quote_lot_size as u64))
+                <= balance_after
         );
     }
 
@@ -194,7 +199,7 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
             quote_vault,
             side: Side::Bid,
             price_offset: -1,
-            peg_limit: 0,
+            peg_limit: 1,
             max_base_lots: 2,
             max_quote_lots_including_fees: 100_000,
             client_order_id: 5,

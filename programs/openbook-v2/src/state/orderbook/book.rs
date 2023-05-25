@@ -71,6 +71,12 @@ impl<'a> Orderbook<'a> {
         let post_only = order.is_post_only();
         let mut post_target = order.post_target();
         let (price_lots, price_data) = order.price(now_ts, oracle_price_lots, self)?;
+        msg!(
+            "price_lots {}  price_data{},oracle_price_lots {} ",
+            price_lots,
+            price_data,
+            oracle_price_lots
+        );
 
         // generate new order id
         let order_id = market.gen_order_id(side, price_data);
@@ -285,7 +291,7 @@ impl<'a> Orderbook<'a> {
             total_quote_taken_native += apply_penalty(market);
         }
 
-        // Update remaining based on quote_lots taken. If nothing taken, same as the beggining
+        // Update remaining based on quote_lots taken. If nothing taken, same as the beginning
         remaining_quote_lots = order.max_quote_lots_including_fees
             - total_quote_lots_taken
             - (market.taker_fee * I80F48::from_num(total_quote_taken_lots_wo_self)).to_num::<i64>();
@@ -313,8 +319,16 @@ impl<'a> Orderbook<'a> {
             remaining_quote_lots -= remaining_quote_lots * market.maker_fee.to_num::<i64>();
             remaining_base_lots.min(remaining_quote_lots / price_lots)
         } else {
-            remaining_base_lots.min(remaining_quote_lots / price_lots)
+            let price = if order.peg_limit() == -1 {
+                price_lots
+            } else {
+                order.peg_limit()
+            };
+            msg!("remaining_base_lots {}, remaining_quote_lots{}, order.peg_limit() {} , remaining_quote_lots / order.peg_limit() {}", remaining_base_lots, remaining_quote_lots, order.peg_limit(), remaining_quote_lots / order.peg_limit());
+
+            remaining_base_lots.min(remaining_quote_lots / price)
         };
+        msg!("book_base_quantity_lots {}", book_base_quantity_lots);
 
         if book_base_quantity_lots <= 0 {
             post_target = None;
