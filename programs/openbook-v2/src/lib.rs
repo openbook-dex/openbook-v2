@@ -169,7 +169,7 @@ pub mod openbook_v2 {
         // WARNING: Not currently implemented.
         max_oracle_staleness_slots: i32,
     ) -> Result<Option<u128>> {
-        require_gte!(peg_limit, 0);
+        require_gt!(peg_limit, 0);
         require_eq!(max_oracle_staleness_slots, -1); // unimplemented
 
         use crate::state::{Order, OrderParams};
