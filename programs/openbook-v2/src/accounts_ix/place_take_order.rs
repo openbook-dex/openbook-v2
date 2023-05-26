@@ -19,7 +19,7 @@ pub struct PlaceTakeOrder<'info> {
     #[account(mut)]
     pub asks: AccountLoader<'info, BookSide>,
     #[account(mut, constraint = payer.owner == owner.key())]
-    pub payer: Account<'info, TokenAccount>,
+    pub payer: Box<Account<'info, TokenAccount>>,
     #[account(mut)]
     pub receiver: Account<'info, TokenAccount>,
     #[account(mut)]
@@ -33,4 +33,5 @@ pub struct PlaceTakeOrder<'info> {
     pub oracle: UncheckedAccount<'info>,
     pub token_program: Program<'info, Token>,
     pub system_program: Program<'info, System>,
+    pub open_orders_admin: Option<Signer<'info>>,
 }

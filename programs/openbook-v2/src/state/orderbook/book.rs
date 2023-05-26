@@ -61,12 +61,23 @@ impl<'a> Orderbook<'a> {
         owner: &Pubkey,
         now_ts: u64,
         mut limit: u8,
+        open_orders_admin_signer: Option<Pubkey>,
         remaining_accs: &[AccountInfo],
     ) -> std::result::Result<OrderWithAmounts, Error> {
+        let market = open_book_market;
+        if let Some(open_orders_admin) = Option::<Pubkey>::from(market.open_orders_admin) {
+            let open_orders_admin_signer =
+                open_orders_admin_signer.ok_or(OpenBookError::MissingOpenOrdersAdmin)?;
+            require_eq!(
+                open_orders_admin,
+                open_orders_admin_signer,
+                OpenBookError::InvalidOpenOrdersAdmin
+            );
+        }
+
         let side = order.side;
 
         let other_side = side.invert_side();
-        let market = open_book_market;
         let oracle_price_lots = market.native_price_to_lot(oracle_price);
         let post_only = order.is_post_only();
         let mut post_target = order.post_target();

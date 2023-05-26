@@ -112,13 +112,9 @@ fn make_instruction(
     }
 }
 
-pub fn get_market_address(admin: Pubkey, market_index: MarketIndex) -> Pubkey {
+pub fn get_market_address(market_index: MarketIndex) -> Pubkey {
     Pubkey::find_program_address(
-        &[
-            b"Market".as_ref(),
-            admin.as_ref(),
-            &market_index.to_le_bytes(),
-        ],
+        &[b"Market".as_ref(), &market_index.to_le_bytes()],
         &openbook_v2::id(),
     )
     .0
@@ -209,7 +205,10 @@ impl ClientInstruction for InitOpenOrdersInstruction {
 
 #[derive(Default)]
 pub struct CreateMarketInstruction {
-    pub admin: TestKeypair,
+    pub collect_fee_admin: Pubkey,
+    pub open_orders_admin: Option<Pubkey>,
+    pub consume_events_admin: Option<Pubkey>,
+    pub close_market_admin: Option<Pubkey>,
     pub oracle: Pubkey,
     pub base_mint: Pubkey,
     pub quote_mint: Pubkey,
@@ -260,6 +259,10 @@ impl ClientInstruction for CreateMarketInstruction {
     ) -> (Self::Accounts, instruction::Instruction) {
         let program_id = openbook_v2::id();
         let instruction = Self::Instruction {
+            collect_fee_admin: self.collect_fee_admin,
+            open_orders_admin: self.open_orders_admin,
+            consume_events_admin: self.consume_events_admin,
+            close_market_admin: self.close_market_admin,
             name: "ONE-TWO".to_string(),
             market_index: self.market_index,
             oracle_config: OracleConfigParams {
@@ -274,11 +277,7 @@ impl ClientInstruction for CreateMarketInstruction {
         };
 
         let market = Pubkey::find_program_address(
-            &[
-                b"Market".as_ref(),
-                self.admin.pubkey().as_ref(),
-                self.market_index.to_le_bytes().as_ref(),
-            ],
+            &[b"Market".as_ref(), self.market_index.to_le_bytes().as_ref()],
             &program_id,
         )
         .0;
@@ -289,7 +288,6 @@ impl ClientInstruction for CreateMarketInstruction {
             spl_associated_token_account::get_associated_token_address(&market, &self.quote_mint);
 
         let accounts = Self::Accounts {
-            admin: self.admin.pubkey(),
             oracle: self.oracle,
             market,
             bids: self.bids,
@@ -308,12 +306,13 @@ impl ClientInstruction for CreateMarketInstruction {
     }
 
     fn signers(&self) -> Vec<TestKeypair> {
-        vec![self.admin, self.payer]
+        vec![self.payer]
     }
 }
 
 pub struct PlaceOrderInstruction {
     pub open_orders_account: Pubkey,
+    pub open_orders_admin: Option<TestKeypair>,
     pub market: Pubkey,
     pub owner: TestKeypair,
     pub base_vault: Pubkey,
@@ -355,6 +354,7 @@ impl ClientInstruction for PlaceOrderInstruction {
 
         let accounts = Self::Accounts {
             open_orders_account: self.open_orders_account,
+            open_orders_admin: self.open_orders_admin.map(|kp| kp.pubkey()),
             market: self.market,
             bids: market.bids,
             asks: market.asks,
@@ -381,7 +381,12 @@ impl ClientInstruction for PlaceOrderInstruction {
     }
 
     fn signers(&self) -> Vec<TestKeypair> {
-        vec![self.owner]
+        let mut signers = vec![self.owner];
+        if let Some(open_orders_admin) = self.open_orders_admin {
+            signers.push(open_orders_admin);
+        }
+
+        signers
     }
 }
 
@@ -426,6 +431,7 @@ impl ClientInstruction for PlaceOrderPeggedInstruction {
 
         let accounts = Self::Accounts {
             open_orders_account: self.open_orders_account,
+            open_orders_admin: None,
             market: self.market,
             bids: market.bids,
             asks: market.asks,
@@ -449,6 +455,7 @@ impl ClientInstruction for PlaceOrderPeggedInstruction {
 }
 
 pub struct PlaceTakeOrderInstruction {
+    pub open_orders_admin: Option<TestKeypair>,
     pub market: Pubkey,
     pub owner: TestKeypair,
     pub base_vault: Pubkey,
@@ -486,6 +493,7 @@ impl ClientInstruction for PlaceTakeOrderInstruction {
         let market: Market = account_loader.load(&self.market).await.unwrap();
 
         let accounts = Self::Accounts {
+            open_orders_admin: self.open_orders_admin.map(|kp| kp.pubkey()),
             market: self.market,
             bids: market.bids,
             asks: market.asks,
@@ -499,6 +507,7 @@ impl ClientInstruction for PlaceTakeOrderInstruction {
             token_program: Token::id(),
             system_program: System::id(),
         };
+
         let mut instruction = make_instruction(program_id, &accounts, instruction);
         if let Some(ref3) = self.referrer {
             let remaining = &mut vec![AccountMeta {
@@ -512,7 +521,12 @@ impl ClientInstruction for PlaceTakeOrderInstruction {
     }
 
     fn signers(&self) -> Vec<TestKeypair> {
-        vec![self.owner]
+        let mut signers = vec![self.owner];
+        if let Some(open_orders_admin) = self.open_orders_admin {
+            signers.push(open_orders_admin);
+        }
+
+        signers
     }
 }
 
@@ -622,6 +636,7 @@ impl ClientInstruction for CancelAllOrdersInstruction {
 }
 
 pub struct ConsumeEventsInstruction {
+    pub consume_events_admin: Option<TestKeypair>,
     pub market: Pubkey,
     pub open_orders_accounts: Vec<Pubkey>,
 }
@@ -638,6 +653,7 @@ impl ClientInstruction for ConsumeEventsInstruction {
 
         let market: Market = account_loader.load(&self.market).await.unwrap();
         let accounts = Self::Accounts {
+            consume_events_admin: self.consume_events_admin.map(|kp| kp.pubkey()),
             market: self.market,
             event_queue: market.event_queue,
         };
@@ -654,7 +670,10 @@ impl ClientInstruction for ConsumeEventsInstruction {
     }
 
     fn signers(&self) -> Vec<TestKeypair> {
-        vec![]
+        match self.consume_events_admin {
+            Some(consume_events_admin) => vec![consume_events_admin],
+            None => vec![],
+        }
     }
 }
 
@@ -707,6 +726,7 @@ impl ClientInstruction for SettleFundsInstruction {
 }
 
 pub struct SweepFeesInstruction {
+    pub collect_fee_admin: TestKeypair,
     pub market: Pubkey,
     pub quote_vault: Pubkey,
     pub receiver: Pubkey,
@@ -723,6 +743,7 @@ impl ClientInstruction for SweepFeesInstruction {
         let instruction = Self::Instruction {};
 
         let accounts = Self::Accounts {
+            collect_fee_admin: self.collect_fee_admin.pubkey(),
             market: self.market,
             quote_vault: self.quote_vault,
             receiver: self.receiver,
@@ -735,7 +756,7 @@ impl ClientInstruction for SweepFeesInstruction {
     }
 
     fn signers(&self) -> Vec<TestKeypair> {
-        vec![]
+        vec![self.collect_fee_admin]
     }
 }
 
@@ -906,7 +927,7 @@ impl ClientInstruction for StubOracleCloseInstruction {
 }
 
 pub struct CloseMarketInstruction {
-    pub admin: TestKeypair,
+    pub close_market_admin: TestKeypair,
     pub market: Pubkey,
     pub sol_destination: Pubkey,
 }
@@ -923,7 +944,7 @@ impl ClientInstruction for CloseMarketInstruction {
         let market: Market = account_loader.load(&self.market).await.unwrap();
 
         let accounts = Self::Accounts {
-            admin: self.admin.pubkey(),
+            close_market_admin: self.close_market_admin.pubkey(),
             market: self.market,
             bids: market.bids,
             asks: market.asks,
@@ -937,6 +958,6 @@ impl ClientInstruction for CloseMarketInstruction {
     }
 
     fn signers(&self) -> Vec<TestKeypair> {
-        vec![self.admin]
+        vec![self.close_market_admin]
     }
 }

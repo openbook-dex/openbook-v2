@@ -5,17 +5,17 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
     let context = TestContext::new().await;
     let solana = &context.solana.clone();
 
-    let admin = TestKeypair::new();
+    let collect_fee_admin = TestKeypair::new();
     let owner = context.users[0].key;
     let payer = context.users[1].key;
     let mints = &context.mints[0..2];
 
     let owner_token_0 = context.users[0].token_accounts[0];
     let owner_token_1 = context.users[0].token_accounts[1];
-    let tokens = Token::create(mints.to_vec(), solana, admin, payer).await;
+    let tokens = Token::create(mints.to_vec(), solana, collect_fee_admin, payer).await;
 
     // SETUP: Create a perp market
-    let market = get_market_address(admin.pubkey(), 1);
+    let market = get_market_address(1);
     let base_vault = solana
         .create_associated_token_account(&market, mints[0].pubkey)
         .await;
@@ -29,7 +29,9 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
     let openbook_v2::accounts::CreateMarket { bids, .. } = send_tx(
         solana,
         CreateMarketInstruction {
-            admin,
+            collect_fee_admin: collect_fee_admin.pubkey(),
+            open_orders_admin: None,
+            close_market_admin: None,
             payer,
             market_index: 1,
             base_lot_size: market_base_lot_size,
@@ -124,6 +126,7 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
         solana,
         PlaceOrderInstruction {
             open_orders_account: account_1,
+            open_orders_admin: None,
             market,
             owner,
             payer: owner_token_0,
@@ -166,6 +169,7 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
     send_tx(
         solana,
         ConsumeEventsInstruction {
+            consume_events_admin: None,
             market,
             open_orders_accounts: vec![account_0, account_1],
         },
@@ -199,6 +203,7 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
         solana,
         PlaceOrderInstruction {
             open_orders_account: account_1,
+            open_orders_admin: None,
             market,
             owner,
             payer: owner_token_0,
@@ -231,11 +236,12 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
     .unwrap();
 
     // TEST: Change the oracle, now the ask matches
-    set_stub_oracle_price(solana, &tokens[0], admin, 1.002).await;
+    set_stub_oracle_price(solana, &tokens[0], collect_fee_admin, 1.002).await;
     send_tx(
         solana,
         PlaceOrderInstruction {
             open_orders_account: account_1,
+            open_orders_admin: None,
             market,
             owner,
             payer: owner_token_0,
@@ -258,6 +264,7 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
     send_tx(
         solana,
         ConsumeEventsInstruction {
+            consume_events_admin: None,
             market,
             open_orders_accounts: vec![account_0, account_1],
         },
@@ -267,7 +274,7 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
     assert_no_orders(solana, account_0).await;
 
     // restore the oracle to default
-    set_stub_oracle_price(solana, &tokens[0], admin, 1.0).await;
+    set_stub_oracle_price(solana, &tokens[0], collect_fee_admin, 1.0).await;
 
     // TEST: order is cancelled when the price exceeds the peg limit
     send_tx(
@@ -291,11 +298,12 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
     .unwrap();
 
     // order is still matchable when exactly at the peg limit
-    set_stub_oracle_price(solana, &tokens[0], admin, 1.003).await;
+    set_stub_oracle_price(solana, &tokens[0], collect_fee_admin, 1.003).await;
     send_tx(
         solana,
         PlaceOrderInstruction {
             open_orders_account: account_1,
+            open_orders_admin: None,
             market,
             owner,
             payer: owner_token_0,
@@ -328,11 +336,12 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
     .is_err());
 
     // but once the adjusted price is > the peg limit, it's gone
-    set_stub_oracle_price(solana, &tokens[0], admin, 1.004).await;
+    set_stub_oracle_price(solana, &tokens[0], collect_fee_admin, 1.004).await;
     send_tx(
         solana,
         PlaceOrderInstruction {
             open_orders_account: account_1,
+            open_orders_admin: None,
             market,
             owner,
             payer: owner_token_0,
@@ -366,6 +375,7 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
     send_tx(
         solana,
         ConsumeEventsInstruction {
+            consume_events_admin: None,
             market,
             open_orders_accounts: vec![account_0, account_1],
         },

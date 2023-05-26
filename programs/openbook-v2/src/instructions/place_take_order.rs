@@ -47,6 +47,10 @@ pub fn place_take_order<'info>(
         &ctx.accounts.owner.key(),
         now_ts,
         limit,
+        ctx.accounts
+            .open_orders_admin
+            .as_ref()
+            .map(|signer| signer.key()),
         ctx.remaining_accounts,
     )?;
 

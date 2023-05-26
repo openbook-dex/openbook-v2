@@ -3,6 +3,7 @@ use fixed::types::I80F48;
 use static_assertions::const_assert_eq;
 use std::mem::size_of;
 
+use crate::pod_option::PodOption;
 use crate::state::oracle;
 use crate::{accounts_zerocopy::KeyedAccountReader, state::orderbook::Side};
 
@@ -13,8 +14,15 @@ pub type MarketIndex = u32;
 #[account(zero_copy)]
 #[derive(Debug)]
 pub struct Market {
-    /// Admin who can close this market
-    pub admin: Pubkey,
+    /// Admin who can collect fees from the market
+    pub collect_fee_admin: Pubkey,
+    /// Admin who must sign off on all order creations
+    pub open_orders_admin: PodOption<Pubkey>,
+    /// Admin who must sign off on all event consumptions
+    pub consume_events_admin: PodOption<Pubkey>,
+    /// Admin who can close the market
+    pub close_market_admin: PodOption<Pubkey>,
+
     /// Index of this market
     pub market_index: MarketIndex,
 
@@ -97,12 +105,15 @@ pub struct Market {
     pub quote_fees_accrued: u64,
     pub referrer_rebates_accrued: u64,
 
-    pub reserved: [u8; 1888],
+    pub reserved: [u8; 1768],
 }
 
 const_assert_eq!(
     size_of::<Market>(),
-    32 + // admin
+    32 + // size of collect_fee_admin
+    40 + // size of open_order_admin
+    40 + // size of consume_event_admin
+    40 + // size of close_market_admin
     size_of::<MarketIndex>() + // size of MarketIndex
     1 + // size of bump
     1 + // size of base_decimals
@@ -128,7 +139,7 @@ const_assert_eq!(
     8 + // size of quote_deposit_total
     8 + // size of quote_fees_accrued
     8 + // size of referrer_rebates_accrued
-    1888 // size of reserved
+    1768 // size of reserved
 );
 const_assert_eq!(size_of::<Market>(), 2720);
 const_assert_eq!(size_of::<Market>() % 8, 0);
@@ -175,7 +186,10 @@ impl Market {
     /// Creates default market for tests
     pub fn default_for_tests() -> Market {
         Market {
-            admin: Pubkey::new_unique(),
+            collect_fee_admin: Pubkey::new_unique(),
+            open_orders_admin: Some(Pubkey::new_unique()).into(),
+            consume_events_admin: Some(Pubkey::new_unique()).into(),
+            close_market_admin: Some(Pubkey::new_unique()).into(),
             market_index: 0,
             bump: 0,
             base_decimals: 0,
@@ -214,7 +228,7 @@ impl Market {
             quote_deposit_total: 0,
             quote_fees_accrued: 0,
             referrer_rebates_accrued: 0,
-            reserved: [0; 1888],
+            reserved: [0; 1768],
         }
     }
 
@@ -242,7 +256,6 @@ macro_rules! market_seeds {
     ($market:expr) => {
         &[
             b"Market".as_ref(),
-            &$market.admin.to_bytes(),
             &$market.market_index.to_le_bytes(),
             &[$market.bump],
         ]

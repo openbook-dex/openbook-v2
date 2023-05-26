@@ -5,14 +5,14 @@ async fn test_self_trade_decrement_take() -> Result<(), TransportError> {
     let context = TestContext::new().await;
     let solana = &context.solana.clone();
 
-    let admin = TestKeypair::new();
+    let collect_fee_admin = TestKeypair::new();
     let payer = &context.users[0];
     let owner = context.users[1].key;
     let owner_base_ata = context.users[1].token_accounts[0];
     let owner_quote_ata = context.users[1].token_accounts[1];
 
     let mints = &context.mints[0..2];
-    let tokens = Token::create(mints.to_vec(), solana, admin, payer.key).await;
+    let tokens = Token::create(mints.to_vec(), solana, collect_fee_admin, payer.key).await;
 
     let base_mint = context.mints[0].pubkey;
     let quote_mint = context.mints[1].pubkey;
@@ -21,7 +21,7 @@ async fn test_self_trade_decrement_take() -> Result<(), TransportError> {
     let owner_token_1 = context.users[0].token_accounts[1];
 
     // TEST: Create a market
-    let market = get_market_address(admin.pubkey(), 1);
+    let market = get_market_address(1);
     let base_vault = solana
         .create_associated_token_account(&market, base_mint)
         .await;
@@ -37,7 +37,9 @@ async fn test_self_trade_decrement_take() -> Result<(), TransportError> {
     } = send_tx(
         solana,
         CreateMarketInstruction {
-            admin,
+            collect_fee_admin: collect_fee_admin.pubkey(),
+            open_orders_admin: None,
+            close_market_admin: None,
             payer: payer.key,
             market_index: 1,
             quote_lot_size: 10,
@@ -62,6 +64,7 @@ async fn test_self_trade_decrement_take() -> Result<(), TransportError> {
         solana,
         PlaceOrderInstruction {
             open_orders_account: account_0,
+            open_orders_admin: None,
             market,
             owner,
             payer: owner_base_ata,
@@ -86,6 +89,7 @@ async fn test_self_trade_decrement_take() -> Result<(), TransportError> {
         solana,
         PlaceOrderInstruction {
             open_orders_account: account_1,
+            open_orders_admin: None,
             market,
             owner,
             payer: owner_base_ata,
@@ -110,6 +114,7 @@ async fn test_self_trade_decrement_take() -> Result<(), TransportError> {
         solana,
         PlaceOrderInstruction {
             open_orders_account: account_0,
+            open_orders_admin: None,
             market,
             owner,
             payer: owner_quote_ata,
@@ -173,6 +178,7 @@ async fn test_self_trade_decrement_take() -> Result<(), TransportError> {
         solana,
         PlaceOrderInstruction {
             open_orders_account: account_0,
+            open_orders_admin: None,
             market,
             owner,
             payer: owner_quote_ata,
@@ -210,6 +216,7 @@ async fn test_self_trade_decrement_take() -> Result<(), TransportError> {
     send_tx(
         solana,
         ConsumeEventsInstruction {
+            consume_events_admin: None,
             market,
             open_orders_accounts: vec![account_0, account_1],
         },
@@ -240,20 +247,20 @@ async fn test_self_trade_cancel_provide() -> Result<(), TransportError> {
     let context = TestContext::new().await;
     let solana = &context.solana.clone();
 
-    let admin = TestKeypair::new();
+    let collect_fee_admin = TestKeypair::new();
     let payer = &context.users[0];
     let owner = context.users[1].key;
     let owner_base_ata = context.users[1].token_accounts[0];
     let owner_quote_ata = context.users[1].token_accounts[1];
 
     let mints = &context.mints[0..2];
-    let tokens = Token::create(mints.to_vec(), solana, admin, payer.key).await;
+    let tokens = Token::create(mints.to_vec(), solana, collect_fee_admin, payer.key).await;
 
     let base_mint = context.mints[0].pubkey;
     let quote_mint = context.mints[1].pubkey;
 
     // TEST: Create a market
-    let market = get_market_address(admin.pubkey(), 1);
+    let market = get_market_address(1);
     let base_vault = solana
         .create_associated_token_account(&market, base_mint)
         .await;
@@ -269,7 +276,9 @@ async fn test_self_trade_cancel_provide() -> Result<(), TransportError> {
     } = send_tx(
         solana,
         CreateMarketInstruction {
-            admin,
+            collect_fee_admin: collect_fee_admin.pubkey(),
+            open_orders_admin: None,
+            close_market_admin: None,
             payer: payer.key,
             market_index: 1,
             quote_lot_size: 10,
@@ -294,6 +303,7 @@ async fn test_self_trade_cancel_provide() -> Result<(), TransportError> {
         solana,
         PlaceOrderInstruction {
             open_orders_account: account_0,
+            open_orders_admin: None,
             market,
             owner,
             payer: owner_base_ata,
@@ -318,6 +328,7 @@ async fn test_self_trade_cancel_provide() -> Result<(), TransportError> {
         solana,
         PlaceOrderInstruction {
             open_orders_account: account_1,
+            open_orders_admin: None,
             market,
             owner,
             payer: owner_base_ata,
@@ -357,6 +368,7 @@ async fn test_self_trade_cancel_provide() -> Result<(), TransportError> {
         solana,
         PlaceOrderInstruction {
             open_orders_account: account_0,
+            open_orders_admin: None,
             market,
             owner,
             payer: owner_quote_ata,
@@ -396,6 +408,7 @@ async fn test_self_trade_cancel_provide() -> Result<(), TransportError> {
         solana,
         PlaceOrderInstruction {
             open_orders_account: account_0,
+            open_orders_admin: None,
             market,
             owner,
             payer: owner_quote_ata,
@@ -433,6 +446,7 @@ async fn test_self_trade_cancel_provide() -> Result<(), TransportError> {
     send_tx(
         solana,
         ConsumeEventsInstruction {
+            consume_events_admin: None,
             market,
             open_orders_accounts: vec![account_0, account_1],
         },
@@ -463,20 +477,20 @@ async fn test_self_abort_transaction() -> Result<(), TransportError> {
     let context = TestContext::new().await;
     let solana = &context.solana.clone();
 
-    let admin = TestKeypair::new();
+    let collect_fee_admin = TestKeypair::new();
     let payer = &context.users[0];
     let owner = context.users[1].key;
     let owner_base_ata = context.users[1].token_accounts[0];
     let owner_quote_ata = context.users[1].token_accounts[1];
 
     let mints = &context.mints[0..2];
-    let tokens = Token::create(mints.to_vec(), solana, admin, payer.key).await;
+    let tokens = Token::create(mints.to_vec(), solana, collect_fee_admin, payer.key).await;
 
     let base_mint = context.mints[0].pubkey;
     let quote_mint = context.mints[1].pubkey;
 
     // TEST: Create a market
-    let market = get_market_address(admin.pubkey(), 1);
+    let market = get_market_address(1);
     let base_vault = solana
         .create_associated_token_account(&market, base_mint)
         .await;
@@ -492,7 +506,9 @@ async fn test_self_abort_transaction() -> Result<(), TransportError> {
     } = send_tx(
         solana,
         CreateMarketInstruction {
-            admin,
+            collect_fee_admin: collect_fee_admin.pubkey(),
+            open_orders_admin: None,
+            close_market_admin: None,
             payer: payer.key,
             market_index: 1,
             quote_lot_size: 10,
@@ -516,6 +532,7 @@ async fn test_self_abort_transaction() -> Result<(), TransportError> {
         solana,
         PlaceOrderInstruction {
             open_orders_account: account_0,
+            open_orders_admin: None,
             market,
             owner,
             payer: owner_base_ata,
@@ -540,6 +557,7 @@ async fn test_self_abort_transaction() -> Result<(), TransportError> {
         solana,
         PlaceOrderInstruction {
             open_orders_account: account_0,
+            open_orders_admin: None,
             market,
             owner,
             payer: owner_quote_ata,

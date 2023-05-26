@@ -7,6 +7,7 @@ pub struct PlaceOrder<'info> {
     #[account(mut)]
     pub open_orders_account: AccountLoader<'info, OpenOrdersAccountFixed>,
     pub owner: Signer<'info>,
+    pub open_orders_admin: Option<Signer<'info>>,
 
     #[account(
         mut,

@@ -1,4 +1,3 @@
-use crate::error::OpenBookError;
 use crate::state::market_seeds;
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Transfer};
@@ -7,11 +6,6 @@ use crate::accounts_ix::*;
 
 pub fn sweep_fees(ctx: Context<SweepFees>) -> Result<()> {
     let mut market = ctx.accounts.market.load_mut()?;
-    // Enforce only admin can withdraw fees
-    require!(
-        market.admin == ctx.accounts.receiver.owner,
-        OpenBookError::InvalidFundsReceiver
-    );
 
     // get/update all values from market and drop reference to it before cpi
     let amount = market.quote_fees_accrued;
