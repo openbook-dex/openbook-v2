@@ -2,61 +2,24 @@ use super::*;
 
 #[tokio::test]
 async fn test_simple_settle() -> Result<(), TransportError> {
-    let context = TestContext::new().await;
-    let solana = &context.solana.clone();
-
-    let collect_fee_admin = TestKeypair::new();
-    let close_market_admin = TestKeypair::new();
-    let owner = context.users[0].key;
-    let payer = context.users[1].key;
-    let mints = &context.mints[0..=2];
-
-    let owner_token_0 = context.users[0].token_accounts[0];
-    let owner_token_1 = context.users[0].token_accounts[1];
-
-    let tokens = Token::create(mints.to_vec(), solana, collect_fee_admin, payer).await;
-
-    //
-    // TEST: Create a market
-    //
-
-    let market = get_market_address(1);
-    let base_vault = solana
-        .create_associated_token_account(&market, mints[0].pubkey)
-        .await;
-    let quote_vault = solana
-        .create_associated_token_account(&market, mints[1].pubkey)
-        .await;
-
-    let openbook_v2::accounts::CreateMarket {
+    let TestInitialize {
+        context,
+        solana,
+        collect_fee_admin,
+        owner,
+        payer,
+        mints,
+        owner_token_0,
+        owner_token_1,
         market,
         base_vault,
         quote_vault,
+        tokens,
+        account_0,
+        account_1,
+        close_market_admin,
         ..
-    } = send_tx(
-        solana,
-        CreateMarketInstruction {
-            collect_fee_admin: collect_fee_admin.pubkey(),
-            open_orders_admin: None,
-            close_market_admin: Some(close_market_admin.pubkey()),
-            payer,
-            market_index: 1,
-            quote_lot_size: 10,
-            base_lot_size: 100,
-            maker_fee: -0.0002,
-            taker_fee: 0.0004,
-            base_mint: mints[0].pubkey,
-            quote_mint: mints[1].pubkey,
-            base_vault,
-            quote_vault,
-            ..CreateMarketInstruction::with_new_book_and_queue(solana, &tokens[1]).await
-        },
-    )
-    .await
-    .unwrap();
-
-    let account_0 = create_open_orders_account(solana, owner, market, 0, &context.users[1]).await;
-    let account_1 = create_open_orders_account(solana, owner, market, 1, &context.users[1]).await;
+    } = initialize_test_market(0, 10, 100, -0.0002, 0.0004, false, true).await?;
 
     //
     // TEST: Create another market
