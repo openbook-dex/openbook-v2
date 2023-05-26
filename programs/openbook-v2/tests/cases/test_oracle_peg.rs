@@ -511,10 +511,10 @@ async fn test_oracle_peg_limit() -> Result<(), TransportError> {
 
     // Max quantity being subtracted from owner is max_quote_lots_including_fees
     {
-        assert!(
+        assert_eq!(
             balance_before
-                - ((max_quote_lots_including_fees as u64) * (market_quote_lot_size as u64))
-                <= balance_after
+                - ((max_quote_lots_including_fees as u64) * (market_quote_lot_size as u64)),
+            balance_after
         );
     }
     Ok(())
