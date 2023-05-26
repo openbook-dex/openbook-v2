@@ -4,7 +4,6 @@ use super::*;
 async fn test_simple_settle() -> Result<(), TransportError> {
     let TestInitialize {
         context,
-        solana,
         collect_fee_admin,
         owner,
         payer,
@@ -19,7 +18,8 @@ async fn test_simple_settle() -> Result<(), TransportError> {
         account_1,
         close_market_admin,
         ..
-    } = initialize_test_market(0, 10, 100, -0.0002, 0.0004, false, true).await?;
+    } = TestContext::new_with_market(0, 10, 100, -0.0002, 0.0004, false, true).await?;
+    let solana = &context.solana.clone();
 
     //
     // TEST: Create another market
