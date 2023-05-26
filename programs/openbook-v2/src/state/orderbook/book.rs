@@ -296,7 +296,7 @@ impl<'a> Orderbook<'a> {
             total_quote_taken_native += apply_penalty(market);
         }
 
-        // Update remaining based on quote_lots taken. If nothing taken, same as the beggining
+        // Update remaining based on quote_lots taken. If nothing taken, same as the beginning
         remaining_quote_lots = order.max_quote_lots_including_fees
             - total_quote_lots_taken
             - (market.taker_fee * I80F48::from_num(total_quote_taken_lots_wo_self)).to_num::<i64>();
@@ -318,13 +318,19 @@ impl<'a> Orderbook<'a> {
         // Place remainder on the book if requested
         //
 
+        // To calculate max quantity to post, for oracle peg orders, take the peg_limit as it's the upper price limitation
+        let price = if order.peg_limit() != -1 {
+            order.peg_limit()
+        } else {
+            price_lots
+        };
         // If there are still quantity unmatched, place on the book
         let book_base_quantity_lots = if market.maker_fee.is_positive() {
             // Subtract fees
             remaining_quote_lots -= remaining_quote_lots * market.maker_fee.to_num::<i64>();
-            remaining_base_lots.min(remaining_quote_lots / price_lots)
+            remaining_base_lots.min(remaining_quote_lots / price)
         } else {
-            remaining_base_lots.min(remaining_quote_lots / price_lots)
+            remaining_base_lots.min(remaining_quote_lots / price)
         };
 
         if book_base_quantity_lots <= 0 {

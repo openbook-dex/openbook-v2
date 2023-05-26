@@ -73,6 +73,7 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<
                     OrderParams::Fixed { .. } => (order_id >> 64) as i64,
                     _ => unreachable!(),
                 };
+
                 total_quote_taken_native
                     + (placed_quantity * market.quote_lot_size * price) as u64
                     + maker_fees
