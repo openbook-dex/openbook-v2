@@ -13,6 +13,7 @@ async fn test_simple_settle() -> Result<(), TransportError> {
         market,
         base_vault,
         quote_vault,
+        price_lots,
         tokens,
         account_0,
         account_1,
@@ -54,11 +55,6 @@ async fn test_simple_settle() -> Result<(), TransportError> {
     )
     .await
     .unwrap();
-
-    let price_lots = {
-        let market = solana.get_account::<Market>(market).await;
-        market.native_price_to_lot(I80F48::from(1000))
-    };
 
     // Set the initial oracle price
     set_stub_oracle_price(solana, &tokens[1], collect_fee_admin, 1000.0).await;
@@ -218,67 +214,24 @@ async fn test_simple_settle() -> Result<(), TransportError> {
 
 #[tokio::test]
 async fn test_cancel_orders() -> Result<(), TransportError> {
-    let context = TestContext::new().await;
-    let solana = &context.solana.clone();
-
-    let collect_fee_admin = TestKeypair::new();
-    let owner = context.users[0].key;
-    let payer = context.users[1].key;
-    let mints = &context.mints[0..=2];
-
-    let owner_token_0 = context.users[0].token_accounts[0];
-    let owner_token_1 = context.users[0].token_accounts[1];
-
-    let tokens = Token::create(mints.to_vec(), solana, collect_fee_admin, payer).await;
-
-    //
-    // TEST: Create a market
-    //
-
-    let market = get_market_address(1);
-    let base_vault = solana
-        .create_associated_token_account(&market, mints[0].pubkey)
-        .await;
-    let quote_vault = solana
-        .create_associated_token_account(&market, mints[1].pubkey)
-        .await;
-
-    let openbook_v2::accounts::CreateMarket {
+    let TestInitialize {
+        context,
+        collect_fee_admin,
+        owner,
+        payer,
+        mints,
+        owner_token_0,
+        owner_token_1,
         market,
         base_vault,
         quote_vault,
+        price_lots,
+        tokens,
+        account_0,
+        account_1,
         ..
-    } = send_tx(
-        solana,
-        CreateMarketInstruction {
-            collect_fee_admin: collect_fee_admin.pubkey(),
-            open_orders_admin: None,
-            close_market_admin: None,
-            payer,
-            market_index: 1,
-            quote_lot_size: 10,
-            base_lot_size: 100,
-            maker_fee: -0.0001,
-            taker_fee: 0.0004,
-            base_mint: mints[0].pubkey,
-            quote_mint: mints[1].pubkey,
-            base_vault,
-            quote_vault,
-            ..CreateMarketInstruction::with_new_book_and_queue(solana, &tokens[1]).await
-        },
-    )
-    .await
-    .unwrap();
-
-    set_stub_oracle_price(solana, &tokens[1], collect_fee_admin, 1000.0).await;
-
-    let account_0 = create_open_orders_account(solana, owner, market, 0, &context.users[1]).await;
-    let account_1 = create_open_orders_account(solana, owner, market, 1, &context.users[1]).await;
-
-    let price_lots = {
-        let market = solana.get_account::<Market>(market).await;
-        market.native_price_to_lot(I80F48::from(1000))
-    };
+    } = TestContext::new_with_market(0, 10, 100, -0.0001, 0.0004, false, false).await?;
+    let solana = &context.solana.clone();
 
     send_tx(
         solana,
@@ -552,67 +505,26 @@ async fn test_cancel_orders() -> Result<(), TransportError> {
 
 #[tokio::test]
 async fn test_expired_orders() -> Result<(), TransportError> {
-    let context = TestContext::new().await;
-    let solana = &context.solana.clone();
-
-    let collect_fee_admin = TestKeypair::new();
-    let owner = context.users[0].key;
-    let payer = context.users[1].key;
-    let mints = &context.mints[0..=2];
-
-    let owner_token_0 = context.users[0].token_accounts[0];
-    let owner_token_1 = context.users[0].token_accounts[1];
-
-    let tokens = Token::create(mints.to_vec(), solana, collect_fee_admin, payer).await;
-
-    //
-    // TEST: Create a market
-    //
-
-    let market = get_market_address(1);
-    let base_vault = solana
-        .create_associated_token_account(&market, mints[0].pubkey)
-        .await;
-    let quote_vault = solana
-        .create_associated_token_account(&market, mints[1].pubkey)
-        .await;
-
-    let openbook_v2::accounts::CreateMarket {
+    let TestInitialize {
+        context,
+        collect_fee_admin,
+        owner,
+        payer,
+        mints,
+        owner_token_0,
+        owner_token_1,
         market,
         base_vault,
         quote_vault,
+        price_lots,
+        tokens,
+        account_0,
+        account_1,
+        close_market_admin,
         ..
-    } = send_tx(
-        solana,
-        CreateMarketInstruction {
-            collect_fee_admin: collect_fee_admin.pubkey(),
-            open_orders_admin: None,
-            close_market_admin: None,
-            payer,
-            market_index: 1,
-            quote_lot_size: 10,
-            base_lot_size: 100,
-            maker_fee: -0.0002,
-            taker_fee: 0.0004,
-            base_mint: mints[0].pubkey,
-            quote_mint: mints[1].pubkey,
-            base_vault,
-            quote_vault,
-            ..CreateMarketInstruction::with_new_book_and_queue(solana, &tokens[1]).await
-        },
-    )
-    .await
-    .unwrap();
+    } = TestContext::new_with_market(0, 10, 100, -0.0002, 0.0004, false, false).await?;
+    let solana = &context.solana.clone();
 
-    set_stub_oracle_price(solana, &tokens[1], collect_fee_admin, 1000.0).await;
-
-    let account_0 = create_open_orders_account(solana, owner, market, 0, &context.users[1]).await;
-    let account_1 = create_open_orders_account(solana, owner, market, 1, &context.users[1]).await;
-
-    let price_lots = {
-        let market = solana.get_account::<Market>(market).await;
-        market.native_price_to_lot(I80F48::from(1000))
-    };
 
     // Order with expiry time of 2s
     let now_ts: u64 = solana.get_clock().await.unix_timestamp as u64;

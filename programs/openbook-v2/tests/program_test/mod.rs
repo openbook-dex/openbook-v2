@@ -9,6 +9,8 @@ use solana_program_test::*;
 use solana_sdk::pubkey::Pubkey;
 pub use solana_sdk::transport::TransportError;
 use spl_token::{state::*, *};
+use openbook_v2::state::Market;
+use fixed::types::I80F48;
 
 use crate::program_test::setup::create_open_orders_account;
 use crate::program_test::setup::Token;
@@ -22,6 +24,27 @@ pub mod cookies;
 pub mod setup;
 pub mod solana;
 pub mod utils;
+
+
+
+pub struct TestInitialize {
+    pub context: TestContext,
+    pub collect_fee_admin: TestKeypair,
+    pub open_orders_admin: TestKeypair,
+    pub close_market_admin: TestKeypair,
+    pub owner: TestKeypair,
+    pub payer: TestKeypair,
+    pub mints: Vec<MintCookie>,
+    pub owner_token_0: Pubkey,
+    pub owner_token_1: Pubkey,
+    pub market: Pubkey,
+    pub base_vault: Pubkey,
+    pub quote_vault: Pubkey,
+    pub price_lots: i64,
+    pub tokens: Vec<Token>,
+    pub account_0: Pubkey,
+    pub account_1: Pubkey,
+}
 
 trait AddPacked {
     fn add_packable_account<T: Pack>(
@@ -329,7 +352,14 @@ impl TestContext {
             create_open_orders_account(solana, owner, market, 0, &context.users[1]).await;
         let account_1 =
             create_open_orders_account(solana, owner, market, 1, &context.users[1]).await;
-        let mints = mints.to_vec();
+
+
+    let price_lots = {
+        let market = solana.get_account::<Market>(market).await;
+        market.native_price_to_lot(I80F48::from(1000))
+    };
+
+    let mints = mints.to_vec();
 
         Ok(TestInitialize {
             context: context,
@@ -344,27 +374,10 @@ impl TestContext {
             market,
             base_vault,
             quote_vault,
+            price_lots,
             tokens,
             account_0,
             account_1,
         })
     }
-}
-
-pub struct TestInitialize {
-    pub context: TestContext,
-    pub collect_fee_admin: TestKeypair,
-    pub open_orders_admin: TestKeypair,
-    pub close_market_admin: TestKeypair,
-    pub owner: TestKeypair,
-    pub payer: TestKeypair,
-    pub mints: Vec<MintCookie>,
-    pub owner_token_0: Pubkey,
-    pub owner_token_1: Pubkey,
-    pub market: Pubkey,
-    pub base_vault: Pubkey,
-    pub quote_vault: Pubkey,
-    pub tokens: Vec<Token>,
-    pub account_0: Pubkey,
-    pub account_1: Pubkey,
 }
