@@ -180,7 +180,7 @@ pub mod openbook_v2 {
                 return Ok(None);
             }
         };
-        // let max_quote_lots_including_fees = max_quote_lots_including_fees * (peg_limit - order.);
+
         let order = Order {
             side,
             max_base_lots,

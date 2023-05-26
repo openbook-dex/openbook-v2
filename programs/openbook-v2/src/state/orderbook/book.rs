@@ -71,12 +71,6 @@ impl<'a> Orderbook<'a> {
         let post_only = order.is_post_only();
         let mut post_target = order.post_target();
         let (price_lots, price_data) = order.price(now_ts, oracle_price_lots, self)?;
-        msg!(
-            "price_lots {}  price_data{},oracle_price_lots {} ",
-            price_lots,
-            price_data,
-            oracle_price_lots
-        );
 
         // generate new order id
         let order_id = market.gen_order_id(side, price_data);
@@ -327,7 +321,6 @@ impl<'a> Orderbook<'a> {
         } else {
             remaining_base_lots.min(remaining_quote_lots / price)
         };
-        msg!("book_base_quantity_lots {}", book_base_quantity_lots);
 
         if book_base_quantity_lots <= 0 {
             post_target = None;
