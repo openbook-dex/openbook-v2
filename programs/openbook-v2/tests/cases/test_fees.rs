@@ -7,7 +7,6 @@ async fn test_fees_accrued() -> Result<(), TransportError> {
 
     let admin = TestKeypair::new();
     let collect_fee_admin = TestKeypair::new();
-    let manage_oracle_admin = TestKeypair::new();
     let owner = context.users[0].key;
     let payer = context.users[1].key;
     let mints = &context.mints[0..=2];
@@ -38,7 +37,6 @@ async fn test_fees_accrued() -> Result<(), TransportError> {
         solana,
         CreateMarketInstruction {
             collect_fee_admin: collect_fee_admin.pubkey(),
-            manage_oracle_admin: Some(manage_oracle_admin.pubkey()),
             open_orders_admin: None,
             close_market_admin: None,
             payer,
@@ -248,7 +246,6 @@ async fn test_maker_fees() -> Result<(), TransportError> {
     let solana = &context.solana.clone();
 
     let collect_fee_admin = TestKeypair::new();
-    let manage_oracle_admin = TestKeypair::new();
     let owner = context.users[0].key;
     let payer = context.users[1].key;
     let mints = &context.mints[0..=2];
@@ -279,7 +276,6 @@ async fn test_maker_fees() -> Result<(), TransportError> {
         solana,
         CreateMarketInstruction {
             collect_fee_admin: collect_fee_admin.pubkey(),
-            manage_oracle_admin: Some(manage_oracle_admin.pubkey()),
             open_orders_admin: None,
             close_market_admin: None,
             payer,

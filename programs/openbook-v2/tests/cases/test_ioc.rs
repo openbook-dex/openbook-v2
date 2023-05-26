@@ -7,7 +7,6 @@ async fn test_ioc() -> Result<(), TransportError> {
 
     let admin = TestKeypair::new();
     let collect_fee_admin = TestKeypair::new();
-    let manage_oracle_admin = TestKeypair::new();
     let close_market_admin = TestKeypair::new();
     let owner = context.users[0].key;
     let payer = context.users[1].key;
@@ -28,7 +27,6 @@ async fn test_ioc() -> Result<(), TransportError> {
         solana,
         CreateMarketInstruction {
             fee_admin: fee_admin.pubkey(),
-            oracle_admin: oracle_admin.pubkey(),
             open_orders_admin: None,
             close_market_admin: None,
             admin,

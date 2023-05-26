@@ -6,7 +6,6 @@ async fn test_simple_settle() -> Result<(), TransportError> {
     let solana = &context.solana.clone();
 
     let collect_fee_admin = TestKeypair::new();
-    let manage_oracle_admin = TestKeypair::new();
     let close_market_admin = TestKeypair::new();
     let owner = context.users[0].key;
     let payer = context.users[1].key;
@@ -38,7 +37,6 @@ async fn test_simple_settle() -> Result<(), TransportError> {
         solana,
         CreateMarketInstruction {
             collect_fee_admin: collect_fee_admin.pubkey(),
-            manage_oracle_admin: Some(manage_oracle_admin.pubkey()),
             open_orders_admin: None,
             close_market_admin: Some(close_market_admin.pubkey()),
             payer,
@@ -76,7 +74,6 @@ async fn test_simple_settle() -> Result<(), TransportError> {
         solana,
         CreateMarketInstruction {
             collect_fee_admin: collect_fee_admin.pubkey(),
-            manage_oracle_admin: Some(manage_oracle_admin.pubkey()),
             open_orders_admin: None,
             close_market_admin: None,
             payer,
@@ -101,7 +98,7 @@ async fn test_simple_settle() -> Result<(), TransportError> {
     };
 
     // Set the initial oracle price
-    set_stub_oracle_price(solana, &tokens[1], manage_oracle_admin, 1000.0).await;
+    set_stub_oracle_price(solana, &tokens[1], collect_fee_admin, 1000.0).await;
 
     send_tx(
         solana,
@@ -262,7 +259,6 @@ async fn test_cancel_orders() -> Result<(), TransportError> {
     let solana = &context.solana.clone();
 
     let collect_fee_admin = TestKeypair::new();
-    let manage_oracle_admin = TestKeypair::new();
     let owner = context.users[0].key;
     let payer = context.users[1].key;
     let mints = &context.mints[0..=2];
@@ -293,7 +289,6 @@ async fn test_cancel_orders() -> Result<(), TransportError> {
         solana,
         CreateMarketInstruction {
             collect_fee_admin: collect_fee_admin.pubkey(),
-            manage_oracle_admin: Some(manage_oracle_admin.pubkey()),
             open_orders_admin: None,
             close_market_admin: None,
             payer,
@@ -312,7 +307,7 @@ async fn test_cancel_orders() -> Result<(), TransportError> {
     .await
     .unwrap();
 
-    set_stub_oracle_price(solana, &tokens[1], manage_oracle_admin, 1000.0).await;
+    set_stub_oracle_price(solana, &tokens[1], collect_fee_admin, 1000.0).await;
 
     let account_0 = create_open_orders_account(solana, owner, market, 0, &context.users[1]).await;
     let account_1 = create_open_orders_account(solana, owner, market, 1, &context.users[1]).await;
@@ -598,7 +593,6 @@ async fn test_expired_orders() -> Result<(), TransportError> {
     let solana = &context.solana.clone();
 
     let collect_fee_admin = TestKeypair::new();
-    let manage_oracle_admin = TestKeypair::new();
     let owner = context.users[0].key;
     let payer = context.users[1].key;
     let mints = &context.mints[0..=2];
@@ -629,7 +623,6 @@ async fn test_expired_orders() -> Result<(), TransportError> {
         solana,
         CreateMarketInstruction {
             collect_fee_admin: collect_fee_admin.pubkey(),
-            manage_oracle_admin: Some(manage_oracle_admin.pubkey()),
             open_orders_admin: None,
             close_market_admin: None,
             payer,
@@ -648,7 +641,7 @@ async fn test_expired_orders() -> Result<(), TransportError> {
     .await
     .unwrap();
 
-    set_stub_oracle_price(solana, &tokens[1], manage_oracle_admin, 1000.0).await;
+    set_stub_oracle_price(solana, &tokens[1], collect_fee_admin, 1000.0).await;
 
     let account_0 = create_open_orders_account(solana, owner, market, 0, &context.users[1]).await;
     let account_1 = create_open_orders_account(solana, owner, market, 1, &context.users[1]).await;

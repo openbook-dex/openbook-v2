@@ -20,7 +20,6 @@ pub fn create_market(
     taker_fee: f32,
     fee_penalty: u64,
     collect_fee_admin: Pubkey,
-    manage_oracle_admin: Option<Pubkey>,
     open_orders_admin: Option<Pubkey>,
     consume_events_admin: Option<Pubkey>,
     close_market_admin: Option<Pubkey>,
@@ -36,7 +35,6 @@ pub fn create_market(
     let mut openbook_market = ctx.accounts.market.load_init()?;
     *openbook_market = Market {
         collect_fee_admin,
-        manage_oracle_admin: manage_oracle_admin.into(),
         open_orders_admin: open_orders_admin.into(),
         consume_events_admin: consume_events_admin.into(),
         close_market_admin: close_market_admin.into(),
@@ -74,7 +72,7 @@ pub fn create_market(
         quote_fees_accrued: 0,
         referrer_rebates_accrued: 0,
 
-        reserved: [0; 1728],
+        reserved: [0; 1768],
     };
 
     let mut orderbook = Orderbook {

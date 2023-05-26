@@ -6,7 +6,6 @@ async fn test_place_cancel_order_remaining() -> Result<(), TransportError> {
     let solana = &context.solana.clone();
 
     let collect_fee_admin = TestKeypair::new();
-    let manage_oracle_admin = TestKeypair::new();
     let owner = context.users[0].key;
     let payer = context.users[1].key;
     let mints = &context.mints[0..=2];
@@ -37,7 +36,6 @@ async fn test_place_cancel_order_remaining() -> Result<(), TransportError> {
         solana,
         CreateMarketInstruction {
             collect_fee_admin: collect_fee_admin.pubkey(),
-            manage_oracle_admin: Some(manage_oracle_admin.pubkey()),
             open_orders_admin: None,
             close_market_admin: None,
             payer,
@@ -243,7 +241,6 @@ async fn test_cancel_order_yourself() -> Result<(), TransportError> {
     let solana = &context.solana.clone();
 
     let collect_fee_admin = TestKeypair::new();
-    let manage_oracle_admin = TestKeypair::new();
     let owner = context.users[0].key;
     let payer = context.users[1].key;
     let mints = &context.mints[0..=2];
@@ -274,7 +271,6 @@ async fn test_cancel_order_yourself() -> Result<(), TransportError> {
         solana,
         CreateMarketInstruction {
             collect_fee_admin: collect_fee_admin.pubkey(),
-            manage_oracle_admin: Some(manage_oracle_admin.pubkey()),
             open_orders_admin: None,
             close_market_admin: None,
             payer,
@@ -302,7 +298,7 @@ async fn test_cancel_order_yourself() -> Result<(), TransportError> {
     };
 
     // Set the initial oracle price
-    set_stub_oracle_price(solana, &tokens[1], manage_oracle_admin, 1000.0).await;
+    set_stub_oracle_price(solana, &tokens[1], collect_fee_admin, 1000.0).await;
 
     // Order with expiry time of 10s
     let now_ts: u64 = solana.get_clock().await.unix_timestamp as u64;

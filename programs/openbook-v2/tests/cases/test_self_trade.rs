@@ -6,7 +6,6 @@ async fn test_self_trade_decrement_take() -> Result<(), TransportError> {
     let solana = &context.solana.clone();
 
     let collect_fee_admin = TestKeypair::new();
-    let manage_oracle_admin = TestKeypair::new();
     let payer = &context.users[0];
     let owner = context.users[1].key;
     let owner_base_ata = context.users[1].token_accounts[0];
@@ -39,7 +38,6 @@ async fn test_self_trade_decrement_take() -> Result<(), TransportError> {
         solana,
         CreateMarketInstruction {
             collect_fee_admin: collect_fee_admin.pubkey(),
-            manage_oracle_admin: Some(manage_oracle_admin.pubkey()),
             open_orders_admin: None,
             close_market_admin: None,
             payer: payer.key,
@@ -250,7 +248,6 @@ async fn test_self_trade_cancel_provide() -> Result<(), TransportError> {
     let solana = &context.solana.clone();
 
     let collect_fee_admin = TestKeypair::new();
-    let manage_oracle_admin = TestKeypair::new();
     let payer = &context.users[0];
     let owner = context.users[1].key;
     let owner_base_ata = context.users[1].token_accounts[0];
@@ -280,7 +277,6 @@ async fn test_self_trade_cancel_provide() -> Result<(), TransportError> {
         solana,
         CreateMarketInstruction {
             collect_fee_admin: collect_fee_admin.pubkey(),
-            manage_oracle_admin: Some(manage_oracle_admin.pubkey()),
             open_orders_admin: None,
             close_market_admin: None,
             payer: payer.key,
@@ -482,7 +478,6 @@ async fn test_self_abort_transaction() -> Result<(), TransportError> {
     let solana = &context.solana.clone();
 
     let collect_fee_admin = TestKeypair::new();
-    let manage_oracle_admin = TestKeypair::new();
     let payer = &context.users[0];
     let owner = context.users[1].key;
     let owner_base_ata = context.users[1].token_accounts[0];
@@ -512,7 +507,6 @@ async fn test_self_abort_transaction() -> Result<(), TransportError> {
         solana,
         CreateMarketInstruction {
             collect_fee_admin: collect_fee_admin.pubkey(),
-            manage_oracle_admin: Some(manage_oracle_admin.pubkey()),
             open_orders_admin: None,
             close_market_admin: None,
             payer: payer.key,

@@ -206,7 +206,6 @@ impl ClientInstruction for InitOpenOrdersInstruction {
 #[derive(Default)]
 pub struct CreateMarketInstruction {
     pub collect_fee_admin: Pubkey,
-    pub manage_oracle_admin: Option<Pubkey>,
     pub open_orders_admin: Option<Pubkey>,
     pub consume_events_admin: Option<Pubkey>,
     pub close_market_admin: Option<Pubkey>,
@@ -261,7 +260,6 @@ impl ClientInstruction for CreateMarketInstruction {
         let program_id = openbook_v2::id();
         let instruction = Self::Instruction {
             collect_fee_admin: self.collect_fee_admin,
-            manage_oracle_admin: self.manage_oracle_admin,
             open_orders_admin: self.open_orders_admin,
             consume_events_admin: self.consume_events_admin,
             close_market_admin: self.close_market_admin,

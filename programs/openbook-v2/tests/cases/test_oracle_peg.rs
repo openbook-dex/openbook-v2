@@ -6,7 +6,6 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
     let solana = &context.solana.clone();
 
     let collect_fee_admin = TestKeypair::new();
-    let manage_oracle_admin = TestKeypair::new();
     let owner = context.users[0].key;
     let payer = context.users[1].key;
     let mints = &context.mints[0..2];
@@ -31,7 +30,6 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
         solana,
         CreateMarketInstruction {
             collect_fee_admin: collect_fee_admin.pubkey(),
-            manage_oracle_admin: Some(manage_oracle_admin.pubkey()),
             open_orders_admin: None,
             close_market_admin: None,
             payer,
@@ -238,7 +236,7 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
     .unwrap();
 
     // TEST: Change the oracle, now the ask matches
-    set_stub_oracle_price(solana, &tokens[0], manage_oracle_admin, 1.002).await;
+    set_stub_oracle_price(solana, &tokens[0], collect_fee_admin, 1.002).await;
     send_tx(
         solana,
         PlaceOrderInstruction {
@@ -276,7 +274,7 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
     assert_no_orders(solana, account_0).await;
 
     // restore the oracle to default
-    set_stub_oracle_price(solana, &tokens[0], manage_oracle_admin, 1.0).await;
+    set_stub_oracle_price(solana, &tokens[0], collect_fee_admin, 1.0).await;
 
     // TEST: order is cancelled when the price exceeds the peg limit
     send_tx(
@@ -300,7 +298,7 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
     .unwrap();
 
     // order is still matchable when exactly at the peg limit
-    set_stub_oracle_price(solana, &tokens[0], manage_oracle_admin, 1.003).await;
+    set_stub_oracle_price(solana, &tokens[0], collect_fee_admin, 1.003).await;
     send_tx(
         solana,
         PlaceOrderInstruction {
@@ -338,7 +336,7 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
     .is_err());
 
     // but once the adjusted price is > the peg limit, it's gone
-    set_stub_oracle_price(solana, &tokens[0], manage_oracle_admin, 1.004).await;
+    set_stub_oracle_price(solana, &tokens[0], collect_fee_admin, 1.004).await;
     send_tx(
         solana,
         PlaceOrderInstruction {
