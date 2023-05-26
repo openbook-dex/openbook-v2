@@ -2,54 +2,35 @@ use super::*;
 
 #[tokio::test]
 async fn test_oracle_peg() -> Result<(), TransportError> {
-    let context = TestContext::new().await;
-    let solana = &context.solana.clone();
-
-    let collect_fee_admin = TestKeypair::new();
-    let owner = context.users[0].key;
-    let payer = context.users[1].key;
-    let mints = &context.mints[0..2];
-
-    let owner_token_0 = context.users[0].token_accounts[0];
-    let owner_token_1 = context.users[0].token_accounts[1];
-    let tokens = Token::create(mints.to_vec(), solana, collect_fee_admin, payer).await;
-
-    // SETUP: Create a perp market
-    let market = get_market_address(1);
-    let base_vault = solana
-        .create_associated_token_account(&market, mints[0].pubkey)
-        .await;
-    let quote_vault = solana
-        .create_associated_token_account(&market, mints[1].pubkey)
-        .await;
-
     let market_base_lot_size = 10000;
     let market_quote_lot_size = 10;
 
-    let openbook_v2::accounts::CreateMarket { bids, .. } = send_tx(
-        solana,
-        CreateMarketInstruction {
-            collect_fee_admin: collect_fee_admin.pubkey(),
-            open_orders_admin: None,
-            close_market_admin: None,
-            payer,
-            market_index: 1,
-            base_lot_size: market_base_lot_size,
-            quote_lot_size: market_quote_lot_size,
-            maker_fee: -0.0,
-            taker_fee: 0.0,
-            base_mint: mints[0].pubkey,
-            quote_mint: mints[1].pubkey,
-            base_vault,
-            quote_vault,
-            ..CreateMarketInstruction::with_new_book_and_queue(solana, &tokens[0]).await
-        },
+    let TestInitialize {
+        context,
+        collect_fee_admin,
+        owner,
+        owner_token_0,
+        owner_token_1,
+        market,
+        base_vault,
+        quote_vault,
+        tokens,
+        account_0,
+        account_1,
+        bids,
+        ..
+    } = TestContext::new_with_market(
+        0,
+        market_quote_lot_size,
+        market_base_lot_size,
+        -0.0,
+        0.0,
+        false,
+        false,
+        false,
     )
-    .await
-    .unwrap();
-
-    let account_0 = create_open_orders_account(solana, owner, market, 0, &context.users[1]).await;
-    let account_1 = create_open_orders_account(solana, owner, market, 1, &context.users[1]).await;
+    .await?;
+    let solana = &context.solana.clone();
 
     let price_lots = {
         let market = solana.get_account::<Market>(market).await;

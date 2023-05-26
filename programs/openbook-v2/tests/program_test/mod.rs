@@ -3,14 +3,14 @@
 use std::cell::RefCell;
 use std::{sync::Arc, sync::RwLock};
 
+use fixed::types::I80F48;
 use log::*;
+use openbook_v2::state::Market;
 use solana_program::{program_option::COption, program_pack::Pack};
 use solana_program_test::*;
 use solana_sdk::pubkey::Pubkey;
 pub use solana_sdk::transport::TransportError;
 use spl_token::{state::*, *};
-use openbook_v2::state::Market;
-use fixed::types::I80F48;
 
 use crate::program_test::setup::create_open_orders_account;
 use crate::program_test::setup::Token;
@@ -25,13 +25,12 @@ pub mod setup;
 pub mod solana;
 pub mod utils;
 
-
-
 pub struct TestInitialize {
     pub context: TestContext,
     pub collect_fee_admin: TestKeypair,
     pub open_orders_admin: TestKeypair,
     pub close_market_admin: TestKeypair,
+    pub consume_events_admin: TestKeypair,
     pub owner: TestKeypair,
     pub payer: TestKeypair,
     pub mints: Vec<MintCookie>,
@@ -44,6 +43,7 @@ pub struct TestInitialize {
     pub tokens: Vec<Token>,
     pub account_0: Pubkey,
     pub account_1: Pubkey,
+    pub bids: Pubkey,
 }
 
 trait AddPacked {
@@ -275,6 +275,7 @@ impl TestContext {
         TestContextBuilder::new().start_default().await
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub async fn new_with_market(
         fee_penalty: u64,
         quote_lot_size: i64,
@@ -283,6 +284,7 @@ impl TestContext {
         taker_fee: f32,
         open_orders_admin_bool: bool,
         close_market_admin_bool: bool,
+        consume_events_admin_bool: bool,
     ) -> Result<TestInitialize, TransportError> {
         let context = TestContextBuilder::new().start_default().await;
         let solana = &context.solana.clone();
@@ -297,6 +299,12 @@ impl TestContext {
         let close_market_admin_acc = TestKeypair::new();
         let close_market_admin = if close_market_admin_bool {
             Some(close_market_admin_acc.pubkey())
+        } else {
+            None
+        };
+        let consume_events_admin_acc = TestKeypair::new();
+        let consume_events_admin = if consume_events_admin_bool {
+            Some(consume_events_admin_acc.pubkey())
         } else {
             None
         };
@@ -324,6 +332,7 @@ impl TestContext {
             market,
             base_vault,
             quote_vault,
+            bids,
             ..
         } = send_tx(
             solana,
@@ -331,6 +340,7 @@ impl TestContext {
                 collect_fee_admin: collect_fee_admin_acc.pubkey(),
                 open_orders_admin,
                 close_market_admin,
+                consume_events_admin,
                 payer,
                 market_index: 1,
                 quote_lot_size,
@@ -353,19 +363,19 @@ impl TestContext {
         let account_1 =
             create_open_orders_account(solana, owner, market, 1, &context.users[1]).await;
 
+        let price_lots = {
+            let market = solana.get_account::<Market>(market).await;
+            market.native_price_to_lot(I80F48::from(1000))
+        };
 
-    let price_lots = {
-        let market = solana.get_account::<Market>(market).await;
-        market.native_price_to_lot(I80F48::from(1000))
-    };
-
-    let mints = mints.to_vec();
+        let mints = mints.to_vec();
 
         Ok(TestInitialize {
-            context: context,
+            context,
             collect_fee_admin: collect_fee_admin_acc,
             open_orders_admin: open_orders_admin_acc,
             close_market_admin: close_market_admin_acc,
+            consume_events_admin: consume_events_admin_acc,
             owner,
             payer,
             mints,
@@ -378,6 +388,7 @@ impl TestContext {
             tokens,
             account_0,
             account_1,
+            bids,
         })
     }
 }

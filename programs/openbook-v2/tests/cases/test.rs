@@ -19,7 +19,7 @@ async fn test_simple_settle() -> Result<(), TransportError> {
         account_1,
         close_market_admin,
         ..
-    } = TestContext::new_with_market(0, 10, 100, -0.0002, 0.0004, false, true).await?;
+    } = TestContext::new_with_market(0, 10, 100, -0.0002, 0.0004, false, true, false).await?;
     let solana = &context.solana.clone();
 
     //
@@ -216,21 +216,17 @@ async fn test_simple_settle() -> Result<(), TransportError> {
 async fn test_cancel_orders() -> Result<(), TransportError> {
     let TestInitialize {
         context,
-        collect_fee_admin,
         owner,
-        payer,
-        mints,
         owner_token_0,
         owner_token_1,
         market,
         base_vault,
         quote_vault,
         price_lots,
-        tokens,
         account_0,
         account_1,
         ..
-    } = TestContext::new_with_market(0, 10, 100, -0.0001, 0.0004, false, false).await?;
+    } = TestContext::new_with_market(0, 10, 100, -0.0001, 0.0004, false, false, false).await?;
     let solana = &context.solana.clone();
 
     send_tx(
@@ -507,24 +503,18 @@ async fn test_cancel_orders() -> Result<(), TransportError> {
 async fn test_expired_orders() -> Result<(), TransportError> {
     let TestInitialize {
         context,
-        collect_fee_admin,
         owner,
-        payer,
-        mints,
         owner_token_0,
         owner_token_1,
         market,
         base_vault,
         quote_vault,
         price_lots,
-        tokens,
         account_0,
         account_1,
-        close_market_admin,
         ..
-    } = TestContext::new_with_market(0, 10, 100, -0.0002, 0.0004, false, false).await?;
+    } = TestContext::new_with_market(0, 10, 100, -0.0002, 0.0004, false, false, false).await?;
     let solana = &context.solana.clone();
-
 
     // Order with expiry time of 2s
     let now_ts: u64 = solana.get_clock().await.unix_timestamp as u64;

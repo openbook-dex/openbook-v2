@@ -2,57 +2,24 @@ use super::*;
 
 #[tokio::test]
 async fn test_ioc() -> Result<(), TransportError> {
-    let context = TestContext::new().await;
-    let solana = &context.solana.clone();
-
-    let admin = TestKeypair::new();
-    let collect_fee_admin = TestKeypair::new();
-    let close_market_admin = TestKeypair::new();
-    let owner = context.users[0].key;
-    let payer = context.users[1].key;
-    let mints = &context.mints[0..=2];
-
-    let owner_token_0 = context.users[0].token_accounts[0];
-    let owner_token_1 = context.users[0].token_accounts[1];
-
-    let tokens = Token::create(mints.to_vec(), solana, admin, payer).await;
-
-    // TEST: Create a market
-    let openbook_v2::accounts::CreateMarket {
+    let TestInitialize {
+        context,
+        collect_fee_admin,
+        owner,
+        payer,
+        mints,
+        owner_token_0,
+        owner_token_1,
         market,
         base_vault,
         quote_vault,
+        price_lots,
+        tokens,
+        account_0,
+        account_1,
         ..
-    } = send_tx(
-        solana,
-        CreateMarketInstruction {
-            fee_admin: fee_admin.pubkey(),
-            open_orders_admin: None,
-            close_market_admin: None,
-            admin,
-            payer,
-            market_index: 1,
-            quote_lot_size: 10,
-            base_lot_size: 100,
-            maker_fee: 0.0002,
-            taker_fee: 0.0004,
-            base_mint: mints[0].pubkey,
-            quote_mint: mints[1].pubkey,
-            base_vault,
-            quote_vault,
-            ..CreateMarketInstruction::with_new_book_and_queue(solana, &tokens[1]).await
-        },
-    )
-    .await
-    .unwrap();
-
-    let account_0 = create_open_orders_account(solana, owner, market, 0, &context.users[1]).await;
-    let account_1 = create_open_orders_account(solana, owner, market, 1, &context.users[1]).await;
-
-    let price_lots = {
-        let market = solana.get_account::<Market>(market).await;
-        market.native_price_to_lot(I80F48::ONE)
-    };
+    } = TestContext::new_with_market(0, 10, 100, 0.0002, 0.0004, false, false, false).await?;
+    let solana = &context.solana.clone();
 
     send_tx(
         solana,
