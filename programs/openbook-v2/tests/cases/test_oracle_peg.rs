@@ -427,7 +427,7 @@ async fn test_oracle_peg_limit() -> Result<(), TransportError> {
     let tokens = Token::create(mints.to_vec(), solana, admin, payer).await;
 
     // SETUP: Create a perp market
-    let market = get_market_address(admin.pubkey(), 1);
+    let market = get_market_address(1);
     let base_vault = solana
         .create_associated_token_account(&market, mints[0].pubkey)
         .await;
@@ -441,7 +441,6 @@ async fn test_oracle_peg_limit() -> Result<(), TransportError> {
     let openbook_v2::accounts::CreateMarket { bids, .. } = send_tx(
         solana,
         CreateMarketInstruction {
-            admin,
             payer,
             market_index: 1,
             base_lot_size: market_base_lot_size,
