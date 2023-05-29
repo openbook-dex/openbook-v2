@@ -68,7 +68,7 @@ pub fn consume_events(ctx: Context<ConsumeEvents>, limit: usize) -> Result<()> {
 
     // Iterate over event_queue
     for _ in 0..limit {
-        let event = match event_queue.peek_front() {
+        let event = match event_queue.front() {
             None => break,
             Some(e) => e,
         };

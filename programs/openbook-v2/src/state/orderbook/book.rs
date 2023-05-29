@@ -545,7 +545,7 @@ pub fn process_out_event(
         let mut acc = ooa.load_full_mut()?;
         acc.cancel_order(event.owner_slot as usize, event.quantity, *market)?;
     } else {
-        event_queue.push_back(cast(event)).unwrap();
+        event_queue.push_back(cast(event));
     }
     Ok(())
 }
@@ -563,7 +563,7 @@ pub fn process_fill_event(
 
         maker.execute_maker(market, &event)?;
     } else {
-        event_queue.push_back(cast(event)).unwrap();
+        event_queue.push_back(cast(event));
     }
     Ok(())
 }
