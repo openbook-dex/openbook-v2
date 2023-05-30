@@ -677,6 +677,51 @@ impl ClientInstruction for ConsumeEventsInstruction {
     }
 }
 
+pub struct ConsumeGivenEventsInstruction {
+    pub consume_events_admin: Option<TestKeypair>,
+    pub market: Pubkey,
+    pub open_orders_accounts: Vec<Pubkey>,
+    pub slots: Vec<usize>,
+}
+#[async_trait::async_trait(?Send)]
+impl ClientInstruction for ConsumeGivenEventsInstruction {
+    type Accounts = openbook_v2::accounts::ConsumeEvents;
+    type Instruction = openbook_v2::instruction::ConsumeGivenEvents;
+    async fn to_instruction(
+        &self,
+        account_loader: impl ClientAccountLoader + 'async_trait,
+    ) -> (Self::Accounts, instruction::Instruction) {
+        let program_id = openbook_v2::id();
+        let instruction = Self::Instruction {
+            slots: self.slots.clone(),
+        };
+
+        let market: Market = account_loader.load(&self.market).await.unwrap();
+        let accounts = Self::Accounts {
+            consume_events_admin: self.consume_events_admin.map(|kp| kp.pubkey()),
+            market: self.market,
+            event_queue: market.event_queue,
+        };
+
+        let mut instruction = make_instruction(program_id, &accounts, instruction);
+        instruction
+            .accounts
+            .extend(self.open_orders_accounts.iter().map(|ma| AccountMeta {
+                pubkey: *ma,
+                is_signer: false,
+                is_writable: true,
+            }));
+        (accounts, instruction)
+    }
+
+    fn signers(&self) -> Vec<TestKeypair> {
+        match self.consume_events_admin {
+            Some(consume_events_admin) => vec![consume_events_admin],
+            None => vec![],
+        }
+    }
+}
+
 pub struct SettleFundsInstruction {
     pub open_orders_account: Pubkey,
     pub market: Pubkey,
