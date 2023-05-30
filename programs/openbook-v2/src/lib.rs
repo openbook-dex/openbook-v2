@@ -280,7 +280,14 @@ pub mod openbook_v2 {
     /// base token in an ask) back to the maker.
     pub fn consume_events(ctx: Context<ConsumeEvents>, limit: usize) -> Result<()> {
         #[cfg(feature = "enable-gpl")]
-        instructions::consume_events(ctx, limit)?;
+        instructions::consume_events(ctx, limit, None)?;
+        Ok(())
+    }
+
+    /// Process the [events](crate::state::AnyEvent) at the given positions.
+    pub fn consume_given_events(ctx: Context<ConsumeEvents>, slots: Vec<usize>) -> Result<()> {
+        #[cfg(feature = "enable-gpl")]
+        instructions::consume_events(ctx, slots.len(), Some(slots))?;
         Ok(())
     }
 

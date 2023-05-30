@@ -46,7 +46,11 @@ macro_rules! load_open_orders_acc {
     };
 }
 
-pub fn consume_events(ctx: Context<ConsumeEvents>, limit: usize) -> Result<()> {
+pub fn consume_events(
+    ctx: Context<ConsumeEvents>,
+    limit: usize,
+    slots: Option<Vec<usize>>,
+) -> Result<()> {
     let limit = std::cmp::min(limit, MAX_EVENTS_CONSUME);
 
     let mut market = ctx.accounts.market.load_mut()?;
@@ -66,14 +70,16 @@ pub fn consume_events(ctx: Context<ConsumeEvents>, limit: usize) -> Result<()> {
     let mut event_queue = ctx.accounts.event_queue.load_mut()?;
     let remaining_accs = &ctx.remaining_accounts;
 
-    // Iterate over event_queue
-    let slots: Vec<usize> = event_queue
-        .iter()
-        .take(limit)
-        .map(|(_event, slot)| slot)
-        .collect();
+    let slots_to_consume: Vec<usize> = match slots {
+        Some(slots) => slots.into_iter().take(limit).collect(),
+        None => event_queue
+            .iter()
+            .take(limit)
+            .map(|(_event, slot)| slot)
+            .collect(),
+    };
 
-    for slot in slots {
+    for slot in slots_to_consume {
         let event = match event_queue.at(slot) {
             None => break,
             Some(e) => e,
