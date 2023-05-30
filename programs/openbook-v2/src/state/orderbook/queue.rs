@@ -59,7 +59,7 @@ impl EventQueue {
     }
 
     pub fn at(&self, slot: usize) -> Option<&AnyEvent> {
-        if !self.nodes[slot].is_free() {
+        if self.nodes[slot].is_free() {
             None
         } else {
             Some(&self.nodes[slot].event)
@@ -520,6 +520,39 @@ mod tests {
         }
         eq.delete_slot(2).unwrap();
         eq.delete_slot(2).unwrap();
+    }
+
+    #[test]
+    fn read_front() {
+        let event_1 = {
+            let mut dummy_event = AnyEvent::zeroed();
+            dummy_event.event_type = 1;
+            dummy_event
+        };
+
+        let mut eq = EventQueue::zeroed();
+        eq.init();
+        eq.push_back(event_1);
+        eq.push_back(AnyEvent::zeroed());
+
+        assert_eq!(eq.front().unwrap().event_type, 1);
+    }
+
+    #[test]
+    fn read_at() {
+        let event_1 = {
+            let mut dummy_event = AnyEvent::zeroed();
+            dummy_event.event_type = 1;
+            dummy_event
+        };
+
+        let mut eq = EventQueue::zeroed();
+        eq.init();
+        eq.push_back(AnyEvent::zeroed());
+        eq.push_back(AnyEvent::zeroed());
+        eq.push_back(event_1);
+
+        assert_eq!(eq.at(2).unwrap().event_type, 1);
     }
 
     #[test]
