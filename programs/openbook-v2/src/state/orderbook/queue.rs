@@ -34,7 +34,6 @@ impl EventQueue {
         for i in 0..MAX_NUM_EVENTS {
             self.nodes[i].set_next(i + 1);
             self.nodes[i].set_prev(NULL as usize);
-            self.nodes[i].mark_as_free();
         }
         self.nodes[LAST_SLOT].set_next(NULL as usize);
     }
@@ -78,21 +77,20 @@ impl EventQueue {
             new_next = slot;
             new_prev = slot;
 
-            self.header.set_free_head(self.nodes[slot].next() as u16);
+            self.header.set_free_head(self.nodes[slot].next);
             self.header.set_used_head(slot as u16);
         } else {
             new_next = self.header.used_head();
-            new_prev = self.nodes[new_next].prev as usize;
+            new_prev = self.nodes[new_next].prev();
 
             self.nodes[new_prev].set_next(slot);
             self.nodes[new_next].set_prev(slot);
-            self.header.set_free_head(self.nodes[slot].next() as u16);
+            self.header.set_free_head(self.nodes[slot].next);
         }
 
         self.header.incr_count();
         self.header.incr_event_id();
         self.nodes[slot].event = value;
-        self.nodes[slot].mark_as_used();
         self.nodes[slot].set_next(new_next);
         self.nodes[slot].set_prev(new_prev);
     }
@@ -123,7 +121,7 @@ impl EventQueue {
 
         self.header.decr_count();
         self.nodes[slot].set_next(next_free);
-        self.nodes[slot].mark_as_free();
+        self.nodes[slot].set_prev(NULL as usize);
 
         Ok(self.nodes[slot].event)
     }
@@ -207,28 +205,15 @@ impl EventQueueHeader {
 pub struct EventNode {
     next: u16,
     prev: u16,
-    status: u8, // NodeStatus,
-    _pad: [u8; 3],
+    _pad: [u8; 4],
     pub event: AnyEvent,
 }
 const_assert_eq!(std::mem::size_of::<EventNode>(), 8 + 200);
 const_assert_eq!(std::mem::size_of::<EventNode>() % 8, 0);
 
 impl EventNode {
-    pub fn status(&self) -> EventNodeStatus {
-        EventNodeStatus::try_from(self.status).unwrap()
-    }
-
     pub fn is_free(&self) -> bool {
-        self.status == Into::<u8>::into(EventNodeStatus::Free)
-    }
-
-    fn mark_as_free(&mut self) {
-        self.status = EventNodeStatus::Free.into();
-    }
-
-    fn mark_as_used(&mut self) {
-        self.status = EventNodeStatus::InUse.into();
+        self.prev == NULL
     }
 
     pub fn next(&self) -> usize {
@@ -246,23 +231,6 @@ impl EventNode {
     fn set_prev(&mut self, prev: usize) {
         self.prev = prev as u16;
     }
-}
-
-#[derive(
-    Eq,
-    PartialEq,
-    Copy,
-    Clone,
-    Debug,
-    IntoPrimitive,
-    TryFromPrimitive,
-    AnchorSerialize,
-    AnchorDeserialize,
-)]
-#[repr(u8)]
-pub enum EventNodeStatus {
-    Free = 0,
-    InUse = 1,
 }
 
 const EVENT_SIZE: usize = 200;
