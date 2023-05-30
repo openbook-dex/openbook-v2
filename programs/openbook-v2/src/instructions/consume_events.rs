@@ -21,11 +21,11 @@ macro_rules! load_open_orders_acc {
         let loader = match $ais.iter().find(|ai| ai.key == &$key) {
             None => {
                 msg!(
-                    "Unable to find {} account {}",
+                    "Unable to find {} account {}, skipping",
                     stringify!($name),
                     $key.to_string()
                 );
-                return Ok(());
+                continue;
             }
 
             Some(ai) => {
@@ -67,8 +67,14 @@ pub fn consume_events(ctx: Context<ConsumeEvents>, limit: usize) -> Result<()> {
     let remaining_accs = &ctx.remaining_accounts;
 
     // Iterate over event_queue
-    for _ in 0..limit {
-        let event = match event_queue.front() {
+    let slots: Vec<usize> = event_queue
+        .iter()
+        .take(limit)
+        .map(|(_event, slot)| slot)
+        .collect();
+
+    for slot in slots {
+        let event = match event_queue.at(slot) {
             None => break,
             Some(e) => e,
         };
@@ -76,7 +82,6 @@ pub fn consume_events(ctx: Context<ConsumeEvents>, limit: usize) -> Result<()> {
         match EventType::try_from(event.event_type).map_err(|_| error!(OpenBookError::SomeError))? {
             EventType::Fill => {
                 let fill: &FillEvent = cast_ref(event);
-
                 load_open_orders_acc!(maker, fill.maker, remaining_accs, event_queue);
                 maker.execute_maker(&mut market, fill)?;
             }
@@ -88,7 +93,8 @@ pub fn consume_events(ctx: Context<ConsumeEvents>, limit: usize) -> Result<()> {
         }
 
         // consume this event
-        event_queue.pop_front()?;
+        event_queue.delete_slot(slot)?;
     }
+
     Ok(())
 }
