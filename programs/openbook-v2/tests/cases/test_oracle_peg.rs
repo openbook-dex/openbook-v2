@@ -47,7 +47,7 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
             quote_vault,
             side: Side::Bid,
             price_offset: -1,
-            peg_limit: 0,
+            peg_limit: 1,
             max_base_lots: 1,
             max_quote_lots_including_fees: 100_000,
             client_order_id: 0,
@@ -79,6 +79,9 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
 
     assert_no_orders(solana, account_0).await;
 
+    let balance_before = solana.token_account_balance(owner_token_1).await;
+    let max_quote_lots_including_fees = 100_000;
+
     // TEST: Place a pegged bid, take it with a direct and pegged ask, and consume events
     send_tx(
         solana,
@@ -93,12 +96,23 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
             price_offset: 0,
             peg_limit: price_lots,
             max_base_lots: 2,
-            max_quote_lots_including_fees: 100_000,
+            max_quote_lots_including_fees,
             client_order_id: 5,
         },
     )
     .await
     .unwrap();
+
+    let balance_after = solana.token_account_balance(owner_token_1).await;
+
+    // Max quantity being subtracted from owner is max_quote_lots_including_fees
+    {
+        assert!(
+            balance_before
+                - ((max_quote_lots_including_fees as u64) * (market_quote_lot_size as u64))
+                <= balance_after
+        );
+    }
 
     send_tx(
         solana,
@@ -155,6 +169,8 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
     .await
     .unwrap();
 
+    assert_no_orders(solana, account_0).await;
+
     // TEST: Place a pegged order and check how it behaves with oracle changes
     send_tx(
         solana,
@@ -167,7 +183,7 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
             quote_vault,
             side: Side::Bid,
             price_offset: -1,
-            peg_limit: 0,
+            peg_limit: 1,
             max_base_lots: 2,
             max_quote_lots_including_fees: 100_000,
             client_order_id: 5,
@@ -373,4 +389,120 @@ async fn assert_no_orders(solana: &SolanaCookie, account_0: Pubkey) {
         assert!(oo.side_and_tree() == SideAndOrderTree::BidFixed);
         assert!(oo.client_id == 0);
     }
+}
+
+#[tokio::test]
+async fn test_oracle_peg_limit() -> Result<(), TransportError> {
+    let context = TestContext::new().await;
+    let solana = &context.solana.clone();
+
+    let admin = TestKeypair::new();
+    let owner = context.users[0].key;
+    let payer = context.users[1].key;
+    let mints = &context.mints[0..2];
+
+    let owner_token_1 = context.users[0].token_accounts[1];
+    let tokens = Token::create(mints.to_vec(), solana, admin, payer).await;
+
+    // SETUP: Create a perp market
+    let market = get_market_address(1);
+    let base_vault = solana
+        .create_associated_token_account(&market, mints[0].pubkey)
+        .await;
+    let quote_vault = solana
+        .create_associated_token_account(&market, mints[1].pubkey)
+        .await;
+
+    let market_base_lot_size = 10000;
+    let market_quote_lot_size = 10;
+
+    let openbook_v2::accounts::CreateMarket { bids, .. } = send_tx(
+        solana,
+        CreateMarketInstruction {
+            payer,
+            market_index: 1,
+            base_lot_size: market_base_lot_size,
+            quote_lot_size: market_quote_lot_size,
+            maker_fee: -0.0,
+            taker_fee: 0.0,
+            base_mint: mints[0].pubkey,
+            quote_mint: mints[1].pubkey,
+            base_vault,
+            quote_vault,
+            ..CreateMarketInstruction::with_new_book_and_queue(solana, &tokens[0]).await
+        },
+    )
+    .await
+    .unwrap();
+
+    let account_0 = create_open_orders_account(solana, owner, market, 0, &context.users[1]).await;
+
+    let price_lots = {
+        let market = solana.get_account::<Market>(market).await;
+        market.native_price_to_lot(I80F48::ONE)
+    };
+    assert_eq!(price_lots, market_base_lot_size / market_quote_lot_size);
+
+    let balance_before = solana.token_account_balance(owner_token_1).await;
+    let max_quote_lots_including_fees = 100_000;
+
+    // TEST: Place a pegged bid, can't post in book due insufficient funds
+    send_tx(
+        solana,
+        PlaceOrderPeggedInstruction {
+            open_orders_account: account_0,
+            market,
+            owner,
+            payer: owner_token_1,
+            base_vault,
+            quote_vault,
+            side: Side::Bid,
+            price_offset: -100,
+            peg_limit: price_lots + 100_000,
+            max_base_lots: 2,
+            max_quote_lots_including_fees,
+            client_order_id: 5,
+        },
+    )
+    .await
+    .unwrap();
+    assert_no_orders(solana, account_0).await;
+
+    // Upgrade max quantity
+    let max_quote_lots_including_fees = 101_000;
+
+    send_tx(
+        solana,
+        PlaceOrderPeggedInstruction {
+            open_orders_account: account_0,
+            market,
+            owner,
+            payer: owner_token_1,
+            base_vault,
+            quote_vault,
+            side: Side::Bid,
+            price_offset: -100,
+            peg_limit: price_lots + 100_000,
+            max_base_lots: 2,
+            max_quote_lots_including_fees,
+            client_order_id: 5,
+        },
+    )
+    .await
+    .unwrap();
+
+    let bids_data = solana.get_account_boxed::<BookSide>(bids).await;
+    assert_eq!(bids_data.roots[1].leaf_count, 1);
+
+    let balance_after = solana.token_account_balance(owner_token_1).await;
+
+    // Max quantity being subtracted from owner is max_quote_lots_including_fees
+    {
+        assert_eq!(
+            balance_before
+                - ((max_quote_lots_including_fees as u64) * (market_quote_lot_size as u64)),
+            balance_after
+        );
+    }
+    Ok(())
 }
