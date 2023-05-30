@@ -222,7 +222,7 @@ async fn test_maker_fees() -> Result<(), TransportError> {
         ..
     } = TestContext::new_with_market(TestNewMarketInitialize {
         maker_fee: 0.0002,
-        taker_fee: 0.0002,
+        taker_fee: 0.0004,
         ..TestNewMarketInitialize::default()
     })
     .await?;
