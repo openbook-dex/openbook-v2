@@ -391,6 +391,12 @@ mod tests {
         event_queue.nodes.iter().filter(|n| n.is_free()).count()
     }
 
+    fn dummy_event_with_number(number: u8) -> AnyEvent {
+        let mut dummy_event = AnyEvent::zeroed();
+        dummy_event.event_type = number;
+        dummy_event
+    }
+
     #[test]
     fn init() {
         let mut eq = EventQueue::zeroed();
@@ -524,57 +530,25 @@ mod tests {
 
     #[test]
     fn read_front() {
-        let event_1 = {
-            let mut dummy_event = AnyEvent::zeroed();
-            dummy_event.event_type = 1;
-            dummy_event
-        };
-
         let mut eq = EventQueue::zeroed();
         eq.init();
-        eq.push_back(event_1);
+        eq.push_back(dummy_event_with_number(1));
         eq.push_back(AnyEvent::zeroed());
-
         assert_eq!(eq.front().unwrap().event_type, 1);
     }
 
     #[test]
     fn read_at() {
-        let event_1 = {
-            let mut dummy_event = AnyEvent::zeroed();
-            dummy_event.event_type = 1;
-            dummy_event
-        };
-
         let mut eq = EventQueue::zeroed();
         eq.init();
         eq.push_back(AnyEvent::zeroed());
         eq.push_back(AnyEvent::zeroed());
-        eq.push_back(event_1);
-
+        eq.push_back(dummy_event_with_number(1));
         assert_eq!(eq.at(2).unwrap().event_type, 1);
     }
 
     #[test]
     fn fifo_event_processing() {
-        let event_1 = {
-            let mut dummy_event = AnyEvent::zeroed();
-            dummy_event.event_type = 1;
-            dummy_event
-        };
-
-        let event_2 = {
-            let mut dummy_event = AnyEvent::zeroed();
-            dummy_event.event_type = 2;
-            dummy_event
-        };
-
-        let event_3 = {
-            let mut dummy_event = AnyEvent::zeroed();
-            dummy_event.event_type = 3;
-            dummy_event
-        };
-
         // [ | | | | ] init
         // [1| | | | ] push_back
         // [1|2| | | ] push_back
@@ -588,12 +562,12 @@ mod tests {
         assert!(eq.nodes[1].is_free());
         assert!(eq.nodes[2].is_free());
 
-        eq.push_back(event_1);
+        eq.push_back(dummy_event_with_number(1));
         assert_eq!(eq.nodes[0].event.event_type, 1);
         assert!(eq.nodes[1].is_free());
         assert!(eq.nodes[2].is_free());
 
-        eq.push_back(event_2);
+        eq.push_back(dummy_event_with_number(2));
         assert_eq!(eq.nodes[0].event.event_type, 1);
         assert_eq!(eq.nodes[1].event.event_type, 2);
         assert!(eq.nodes[2].is_free());
@@ -603,7 +577,7 @@ mod tests {
         assert_eq!(eq.nodes[1].event.event_type, 2);
         assert!(eq.nodes[2].is_free());
 
-        eq.push_back(event_3);
+        eq.push_back(dummy_event_with_number(3));
         assert_eq!(eq.nodes[0].event.event_type, 3);
         assert_eq!(eq.nodes[1].event.event_type, 2);
         assert!(eq.nodes[2].is_free());
