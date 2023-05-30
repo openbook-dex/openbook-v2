@@ -126,11 +126,11 @@ impl EventQueue {
         Ok(self.nodes[slot].event)
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = &AnyEvent> {
+    pub fn iter(&self) -> impl Iterator<Item = (&AnyEvent, usize)> {
         EventQueueIterator {
             queue: self,
             index: 0,
-            slot: self.header.free_head(),
+            slot: self.header.used_head(),
         }
     }
 }
@@ -142,15 +142,15 @@ struct EventQueueIterator<'a> {
 }
 
 impl<'a> Iterator for EventQueueIterator<'a> {
-    type Item = &'a AnyEvent;
+    type Item = (&'a AnyEvent, usize);
     fn next(&mut self) -> Option<Self::Item> {
         if self.index == self.queue.len() {
             None
         } else {
-            let item = &self.queue.nodes[self.slot].event;
-            self.slot = self.queue.nodes[self.slot].next();
+            let current_slot = self.slot;
+            self.slot = self.queue.nodes[current_slot].next();
             self.index += 1;
-            Some(item)
+            Some((&self.queue.nodes[current_slot].event, current_slot))
         }
     }
 }
