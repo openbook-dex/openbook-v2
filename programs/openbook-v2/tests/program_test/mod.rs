@@ -270,40 +270,57 @@ pub struct TestContext {
     pub users: Vec<UserCookie>,
 }
 
+pub struct TestNewMarketInitialize {
+    pub fee_penalty: u64,
+    pub quote_lot_size: i64,
+    pub base_lot_size: i64,
+    pub maker_fee: f32,
+    pub taker_fee: f32,
+    pub open_orders_admin_bool: bool,
+    pub close_market_admin_bool: bool,
+    pub consume_events_admin_bool: bool,
+}
+
+impl Default for TestNewMarketInitialize {
+    fn default() -> TestNewMarketInitialize {
+        TestNewMarketInitialize {
+            fee_penalty: 0,
+            quote_lot_size: 10,
+            base_lot_size: 100,
+            maker_fee: -0.0002,
+            taker_fee: 0.0004,
+            open_orders_admin_bool: false,
+            close_market_admin_bool: false,
+            consume_events_admin_bool: false,
+        }
+    }
+}
 impl TestContext {
     pub async fn new() -> Self {
         TestContextBuilder::new().start_default().await
     }
 
-    #[allow(clippy::too_many_arguments)]
     pub async fn new_with_market(
-        fee_penalty: u64,
-        quote_lot_size: i64,
-        base_lot_size: i64,
-        maker_fee: f32,
-        taker_fee: f32,
-        open_orders_admin_bool: bool,
-        close_market_admin_bool: bool,
-        consume_events_admin_bool: bool,
+        args: TestNewMarketInitialize,
     ) -> Result<TestInitialize, TransportError> {
         let context = TestContextBuilder::new().start_default().await;
         let solana = &context.solana.clone();
 
         let collect_fee_admin_acc = TestKeypair::new();
         let open_orders_admin_acc = TestKeypair::new();
-        let open_orders_admin = if open_orders_admin_bool {
+        let open_orders_admin = if args.open_orders_admin_bool {
             Some(open_orders_admin_acc.pubkey())
         } else {
             None
         };
         let close_market_admin_acc = TestKeypair::new();
-        let close_market_admin = if close_market_admin_bool {
+        let close_market_admin = if args.close_market_admin_bool {
             Some(close_market_admin_acc.pubkey())
         } else {
             None
         };
         let consume_events_admin_acc = TestKeypair::new();
-        let consume_events_admin = if consume_events_admin_bool {
+        let consume_events_admin = if args.consume_events_admin_bool {
             Some(consume_events_admin_acc.pubkey())
         } else {
             None
@@ -343,15 +360,15 @@ impl TestContext {
                 consume_events_admin,
                 payer,
                 market_index: 1,
-                quote_lot_size,
-                base_lot_size,
-                maker_fee,
-                taker_fee,
+                quote_lot_size: args.quote_lot_size,
+                base_lot_size: args.base_lot_size,
+                maker_fee: args.maker_fee,
+                taker_fee: args.taker_fee,
                 base_mint: mints[0].pubkey,
                 quote_mint: mints[1].pubkey,
                 base_vault,
                 quote_vault,
-                fee_penalty,
+                fee_penalty: args.fee_penalty,
                 ..CreateMarketInstruction::with_new_book_and_queue(solana, &tokens[1]).await
             },
         )

@@ -14,7 +14,11 @@ async fn test_permissioned_open_order() -> Result<(), TransportError> {
         account_0,
         open_orders_admin,
         ..
-    } = TestContext::new_with_market(0, 10, 100, -0.0002, 0.0004, true, false, false).await?;
+    } = TestContext::new_with_market(TestNewMarketInitialize {
+        open_orders_admin_bool: true,
+        ..TestNewMarketInitialize::default()
+    })
+    .await?;
     let solana = &context.solana.clone();
 
     let price_lots = {
@@ -94,7 +98,11 @@ async fn test_permissioned_open_take_order() -> Result<(), TransportError> {
         tokens,
         account_0,
         ..
-    } = TestContext::new_with_market(0, 10, 100, -0.0002, 0.0004, true, false, false).await?;
+    } = TestContext::new_with_market(TestNewMarketInitialize {
+        open_orders_admin_bool: true,
+        ..TestNewMarketInitialize::default()
+    })
+    .await?;
     let solana = &context.solana.clone();
 
     // Set the initial oracle price
@@ -171,7 +179,11 @@ async fn test_consume_events_admin() -> Result<(), TransportError> {
         account_0,
         account_1,
         ..
-    } = TestContext::new_with_market(0, 10, 100, -0.0002, 0.0004, false, false, true).await?;
+    } = TestContext::new_with_market(TestNewMarketInitialize {
+        consume_events_admin_bool: true,
+        ..TestNewMarketInitialize::default()
+    })
+    .await?;
     let solana = &context.solana.clone();
 
     // Set the initial oracle price

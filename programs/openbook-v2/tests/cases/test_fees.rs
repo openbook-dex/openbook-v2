@@ -18,8 +18,13 @@ async fn test_fees_accrued() -> Result<(), TransportError> {
         account_0,
         account_1,
         ..
-    } = TestContext::new_with_market(fee_penalty, 10, 100, -0.0001, 0.0002, false, false, false)
-        .await?;
+    } = TestContext::new_with_market(TestNewMarketInitialize {
+        fee_penalty,
+        maker_fee: -0.0001,
+        taker_fee: 0.0002,
+        ..TestNewMarketInitialize::default()
+    })
+    .await?;
     let solana = &context.solana.clone();
 
     // Set the initial oracle price
@@ -215,7 +220,12 @@ async fn test_maker_fees() -> Result<(), TransportError> {
         account_0,
         account_1,
         ..
-    } = TestContext::new_with_market(0, 10, 100, 0.0002, 0.0004, false, false, false).await?;
+    } = TestContext::new_with_market(TestNewMarketInitialize {
+        maker_fee: 0.0002,
+        taker_fee: 0.0002,
+        ..TestNewMarketInitialize::default()
+    })
+    .await?;
     let solana = &context.solana.clone();
 
     // Set the initial oracle price

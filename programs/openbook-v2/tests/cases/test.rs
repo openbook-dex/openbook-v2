@@ -19,7 +19,11 @@ async fn test_simple_settle() -> Result<(), TransportError> {
         account_1,
         close_market_admin,
         ..
-    } = TestContext::new_with_market(0, 10, 100, -0.0002, 0.0004, false, true, false).await?;
+    } = TestContext::new_with_market(TestNewMarketInitialize {
+        close_market_admin_bool: true,
+        ..TestNewMarketInitialize::default()
+    })
+    .await?;
     let solana = &context.solana.clone();
 
     //
@@ -226,7 +230,11 @@ async fn test_cancel_orders() -> Result<(), TransportError> {
         account_0,
         account_1,
         ..
-    } = TestContext::new_with_market(0, 10, 100, -0.0001, 0.0004, false, false, false).await?;
+    } = TestContext::new_with_market(TestNewMarketInitialize {
+        maker_fee: -0.0001,
+        ..TestNewMarketInitialize::default()
+    })
+    .await?;
     let solana = &context.solana.clone();
 
     send_tx(
@@ -513,7 +521,7 @@ async fn test_expired_orders() -> Result<(), TransportError> {
         account_0,
         account_1,
         ..
-    } = TestContext::new_with_market(0, 10, 100, -0.0002, 0.0004, false, false, false).await?;
+    } = TestContext::new_with_market(TestNewMarketInitialize::default()).await?;
     let solana = &context.solana.clone();
 
     // Order with expiry time of 2s

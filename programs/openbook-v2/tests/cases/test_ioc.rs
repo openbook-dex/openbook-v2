@@ -18,7 +18,8 @@ async fn test_ioc() -> Result<(), TransportError> {
         account_0,
         account_1,
         ..
-    } = TestContext::new_with_market(0, 10, 100, 0.0002, 0.0004, false, false, false).await?;
+    } = TestContext::new_with_market(TestNewMarketInitialize{fee_penalty, maker_fee: 0.0002, taker_fee:0.0002, ..TestNewMarketInitialize::default()})
+    .await?;
     let solana = &context.solana.clone();
 
     send_tx(

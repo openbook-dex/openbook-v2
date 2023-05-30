@@ -13,10 +13,10 @@ async fn test_self_trade_decrement_take() -> Result<(), TransportError> {
         account_0,
         account_1,
         ..
-    } = TestContext::new_with_market(0, 10, 100, -0.0002, 0.0004, false, false, false).await?;
+    } = TestContext::new_with_market(TestNewMarketInitialize::default()).await?;
     let solana = &context.solana.clone();
-    let owner_quote_ata = context.users[1].token_accounts[1];
-    let owner_base_ata = context.users[1].token_accounts[0];
+    let owner_quote_ata = context.users[0].token_accounts[1];
+    let owner_base_ata = context.users[0].token_accounts[0];
 
     // maker (which will be the taker) limit order
     send_tx(
@@ -212,10 +212,10 @@ async fn test_self_trade_cancel_provide() -> Result<(), TransportError> {
         account_0,
         account_1,
         ..
-    } = TestContext::new_with_market(0, 10, 100, -0.0002, 0.0004, false, false, false).await?;
+    } = TestContext::new_with_market(TestNewMarketInitialize::default()).await?;
     let solana = &context.solana.clone();
-    let owner_quote_ata = context.users[1].token_accounts[1];
-    let owner_base_ata = context.users[1].token_accounts[0];
+    let owner_quote_ata = context.users[0].token_accounts[1];
+    let owner_base_ata = context.users[0].token_accounts[0];
 
     // maker (which will be the taker) limit order
     send_tx(
@@ -401,10 +401,10 @@ async fn test_self_abort_transaction() -> Result<(), TransportError> {
         quote_vault,
         account_0,
         ..
-    } = TestContext::new_with_market(0, 10, 100, -0.0002, 0.0004, false, false, false).await?;
+    } = TestContext::new_with_market(TestNewMarketInitialize::default()).await?;
     let solana = &context.solana.clone();
-    let owner_quote_ata = context.users[1].token_accounts[1];
-    let owner_base_ata = context.users[1].token_accounts[0];
+    let owner_quote_ata = context.users[0].token_accounts[1];
+    let owner_base_ata = context.users[0].token_accounts[0];
 
     // taker limit order
     send_tx(

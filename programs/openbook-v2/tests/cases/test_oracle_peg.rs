@@ -19,16 +19,13 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
         account_1,
         bids,
         ..
-    } = TestContext::new_with_market(
-        0,
-        market_quote_lot_size,
-        market_base_lot_size,
-        -0.0,
-        0.0,
-        false,
-        false,
-        false,
-    )
+    } = TestContext::new_with_market(TestNewMarketInitialize {
+        quote_lot_size: market_quote_lot_size,
+        base_lot_size: market_base_lot_size,
+        maker_fee: -0.0,
+        taker_fee: 0.0,
+        ..TestNewMarketInitialize::default()
+    })
     .await?;
     let solana = &context.solana.clone();
 

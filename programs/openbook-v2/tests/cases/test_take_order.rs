@@ -16,7 +16,7 @@ async fn test_take_ask_order() -> Result<(), TransportError> {
         account_0,
         account_1,
         ..
-    } = TestContext::new_with_market(0, 10, 100, -0.0002, 0.0004, false, false, false).await?;
+    } = TestContext::new_with_market(TestNewMarketInitialize::default()).await?;
     let solana = &context.solana.clone();
 
     // Set the initial oracle price
@@ -165,7 +165,7 @@ async fn test_take_bid_order() -> Result<(), TransportError> {
         account_0,
         account_1,
         ..
-    } = TestContext::new_with_market(0, 10, 100, -0.0002, 0.0004, false, false, false).await?;
+    } = TestContext::new_with_market(TestNewMarketInitialize::default()).await?;
     let solana = &context.solana.clone();
 
     // Set the initial oracle price
