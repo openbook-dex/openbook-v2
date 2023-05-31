@@ -116,7 +116,6 @@ impl EventQueue {
         self.nodes[prev_slot].set_next(next_slot);
         self.nodes[next_slot].set_prev(prev_slot);
 
-
         if self.header.count() == 1 {
             self.header.set_used_head(NULL);
         } else if self.header.used_head() == slot {
