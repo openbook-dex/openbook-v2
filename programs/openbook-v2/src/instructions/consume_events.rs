@@ -81,8 +81,8 @@ pub fn consume_events(
 
     for slot in slots_to_consume {
         let event = match event_queue.at(slot) {
-            None => break,
             Some(e) => e,
+            None => continue,
         };
 
         match EventType::try_from(event.event_type).map_err(|_| error!(OpenBookError::SomeError))? {

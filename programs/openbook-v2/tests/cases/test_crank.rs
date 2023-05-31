@@ -358,7 +358,7 @@ async fn test_crank_given_events() -> Result<(), TransportError> {
         ConsumeGivenEventsInstruction {
             consume_events_admin: None,
             market,
-            slots: vec![2, 0],
+            slots: vec![2, 2, 0],
             open_orders_accounts: vec![maker_1, maker_3],
         },
     )
