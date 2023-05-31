@@ -70,6 +70,8 @@ impl EventQueue {
         assert!(!self.is_full());
 
         let slot = self.header.free_head();
+        self.header.set_free_head(self.nodes[slot].next);
+
         let new_next: usize;
         let new_prev: usize;
 
@@ -77,7 +79,6 @@ impl EventQueue {
             new_next = slot;
             new_prev = slot;
 
-            self.header.set_free_head(self.nodes[slot].next);
             self.header.set_used_head(slot as u16);
         } else {
             new_next = self.header.used_head();
@@ -85,7 +86,6 @@ impl EventQueue {
 
             self.nodes[new_prev].set_next(slot);
             self.nodes[new_next].set_prev(slot);
-            self.header.set_free_head(self.nodes[slot].next);
         }
 
         self.header.incr_count();
