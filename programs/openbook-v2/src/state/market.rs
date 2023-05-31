@@ -14,18 +14,8 @@ pub type MarketIndex = u32;
 #[account(zero_copy)]
 #[derive(Debug)]
 pub struct Market {
-    /// Admin who can collect fees from the market
-    pub collect_fee_admin: Pubkey,
-    /// Admin who must sign off on all order creations
-    pub open_orders_admin: PodOption<Pubkey>,
-    /// Admin who must sign off on all event consumptions
-    pub consume_events_admin: PodOption<Pubkey>,
-    /// Admin who can close the market
-    pub close_market_admin: PodOption<Pubkey>,
-
     /// Index of this market
     pub market_index: MarketIndex,
-
     /// PDA bump
     pub bump: u8,
 
@@ -36,6 +26,15 @@ pub struct Market {
     pub quote_decimals: u8,
 
     pub padding1: [u8; 1],
+
+    /// Admin who can collect fees from the market
+    pub collect_fee_admin: Pubkey,
+    /// Admin who must sign off on all order creations
+    pub open_orders_admin: PodOption<Pubkey>,
+    /// Admin who must sign off on all event consumptions
+    pub consume_events_admin: PodOption<Pubkey>,
+    /// Admin who can close the market
+    pub close_market_admin: PodOption<Pubkey>,
 
     /// Name. Trailing zero bytes are ignored.
     pub name: [u8; 16],

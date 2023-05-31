@@ -22,7 +22,6 @@ use crate::AnyhowWrap;
 
 pub fn is_openbook_account<'a>(
     account: &'a AccountSharedData,
-    group_id: &Pubkey,
 ) -> Option<OpenOrdersAccountLoadedRef<'a>> {
     // check owner, discriminator
     let fixed = account.load::<OpenOrdersAccountFixed>().ok()?;
@@ -78,7 +77,6 @@ impl AccountSnapshot {
 
 pub struct Config {
     pub rpc_http_url: String,
-    pub openbook_group: Pubkey,
     pub get_multiple_accounts_count: usize,
     pub parallel_rpc_requests: usize,
     pub snapshot_interval: Duration,
@@ -160,7 +158,7 @@ async fn feed_snapshots(
     let oo_account_pubkeys = snapshot
         .accounts
         .iter()
-        .filter_map(|update| is_openbook_account(&update.account, &config.openbook_group))
+        .filter_map(|update| is_openbook_account(&update.account))
         .collect::<Vec<Pubkey>>();
 
     // Retrieve all the open orders accounts

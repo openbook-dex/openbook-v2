@@ -45,12 +45,11 @@ pub async fn fetch_anchor_account<T: AccountDeserialize>(
 async fn fetch_anchor_accounts<T: AccountDeserialize + Discriminator>(
     rpc: &RpcClientAsync,
     program: Pubkey,
-    filters: Vec<RpcFilterType>,
 ) -> anyhow::Result<Vec<(Pubkey, T)>> {
     let account_type_filter =
         RpcFilterType::Memcmp(Memcmp::new_raw_bytes(0, T::discriminator().to_vec()));
     let config = RpcProgramAccountsConfig {
-        filters: Some([vec![account_type_filter], filters].concat()),
+        filters: Some([vec![account_type_filter]].concat()),
         account_config: RpcAccountInfoConfig {
             encoding: Some(UiAccountEncoding::Base64),
             ..RpcAccountInfoConfig::default()
@@ -67,15 +66,6 @@ async fn fetch_anchor_accounts<T: AccountDeserialize + Discriminator>(
 pub async fn fetch_markets(
     rpc: &RpcClientAsync,
     program: Pubkey,
-    group: Pubkey,
 ) -> anyhow::Result<Vec<(Pubkey, Market)>> {
-    fetch_anchor_accounts::<Market>(
-        rpc,
-        program,
-        vec![RpcFilterType::Memcmp(Memcmp::new_raw_bytes(
-            8,
-            group.to_bytes().to_vec(),
-        ))],
-    )
-    .await
+    fetch_anchor_accounts::<Market>(rpc, program).await
 }

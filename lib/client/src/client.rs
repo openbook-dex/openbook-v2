@@ -15,7 +15,9 @@ use fixed::types::I80F48;
 use futures::{stream, StreamExt, TryStreamExt};
 use itertools::Itertools;
 
-use openbook_v2::state::{MarketIndex, OpenOrdersAccountValue, PlaceOrderType, Side, TokenIndex};
+use openbook_v2::state::{
+    MarketIndex, OpenOrdersAccountValue, PlaceOrderType, SelfTradeBehavior, Side,
+};
 
 use solana_address_lookup_table_program::state::AddressLookupTable;
 use solana_client::nonblocking::rpc_client::RpcClient as RpcClientAsync;
@@ -27,9 +29,8 @@ use solana_sdk::signer::keypair;
 use solana_sdk::transaction::TransactionError;
 
 use crate::account_fetcher::*;
-use crate::context::{OpenBookContext, TokenContext};
+use crate::context::OpenBookContext;
 use crate::gpa::{fetch_anchor_account, fetch_openbook_accounts};
-use crate::jupiter;
 
 use anyhow::Context;
 use solana_sdk::account::ReadableAccount;
@@ -107,17 +108,9 @@ pub struct OpenBookClient {
 // TODO: add retry framework for sending tx and rpc calls
 // 1/ this works right now, but I think mid-term the OpenBookClient will want to interact with multiple openorders accounts
 // -- then we should probably specify accounts by owner+account_num / or pubkey
-// 2/ pubkey, can be both owned, but also delegated accouns
+// 2/ pubkey, can be both owned, but also delegated accounts
 
 impl OpenBookClient {
-    pub fn group_for_admin(admin: Pubkey, num: u32) -> Pubkey {
-        Pubkey::find_program_address(
-            &["Group".as_ref(), admin.as_ref(), num.to_le_bytes().as_ref()],
-            &openbook_v2::ID,
-        )
-        .0
-    }
-
     pub async fn find_accounts(
         client: &Client,
         owner: &Keypair,
@@ -187,6 +180,7 @@ impl OpenBookClient {
                 &openbook_v2::accounts::InitOpenOrders {
                     owner: owner.pubkey(),
                     open_orders_account: account,
+                    payer: payer.pubkey(),
                     market,
                     system_program: System::id(),
                 },
@@ -265,53 +259,6 @@ impl OpenBookClient {
             .await
     }
 
-    // TODO Token withdraw
-    // pub async fn token_withdraw(
-    //     &self,
-    //     mint: Pubkey,
-    //     amount: u64,
-    //     allow_borrow: bool,
-    // ) -> anyhow::Result<Signature> {
-    //     let token = self.context.token_by_mint(&mint)?;
-    //     let token_index = token.token_index;
-    //     let mint_info = token.mint_info;
-
-    //     let ixs = vec![
-    //         spl_associated_token_account::instruction::create_associated_token_account_idempotent(
-    //             &self.owner(),
-    //             &self.owner(),
-    //             &mint,
-    //             &Token::id(),
-    //         ),
-    //         Instruction {
-    //             program_id: openbook_v2::id(),
-    //             accounts: {
-    //                 let mut ams = anchor_lang::ToAccountMetas::to_account_metas(
-    //                     &openbook_v2::accounts::TokenWithdraw {
-    //                         account: self.open_orders_account,
-    //                         owner: self.owner(),
-    //                         vault: mint_info.first_vault(),
-    //                         oracle: mint_info.oracle,
-    //                         token_account: get_associated_token_address(
-    //                             &self.owner(),
-    //                             &mint_info.mint,
-    //                         ),
-    //                         token_program: Token::id(),
-    //                     },
-    //                     None,
-    //                 );
-    //                 // ams.extend(health_check_metas.into_iter());
-    //                 ams
-    //             },
-    //             data: anchor_lang::InstructionData::data(&openbook_v2::instruction::TokenWithdraw {
-    //                 amount,
-    //                 allow_borrow,
-    //             }),
-    //         },
-    //     ];
-    //     self.send_and_confirm_owner_tx(ixs).await
-    // }
-
     pub async fn get_oracle_price(
         &self,
         token_name: &str,
@@ -331,15 +278,16 @@ impl OpenBookClient {
         side: Side,
         price_lots: i64,
         max_base_lots: i64,
-        max_quote_lots: i64,
+        max_quote_lots_including_fees: i64,
         client_order_id: u64,
         order_type: PlaceOrderType,
         reduce_only: bool,
         expiry_timestamp: u64,
         limit: u8,
-        payer_acc: Pubkey,
+        payer: Pubkey,
         base_vault: Pubkey,
         quote_vault: Pubkey,
+        self_trade_behavior: SelfTradeBehavior,
     ) -> anyhow::Result<Signature> {
         let perp = self.context.context(market_index);
 
@@ -348,17 +296,19 @@ impl OpenBookClient {
             accounts: {
                 let ams = anchor_lang::ToAccountMetas::to_account_metas(
                     &openbook_v2::accounts::PlaceOrder {
-                        open_orders_acc: self.open_orders_account,
+                        open_orders_account: self.open_orders_account,
+                        open_orders_admin: None,
                         owner: self.owner(),
                         market: perp.address,
                         bids: perp.market.bids,
                         asks: perp.market.asks,
                         event_queue: perp.market.event_queue,
                         oracle: perp.market.oracle,
-                        payer_acc,
+                        payer,
                         base_vault,
                         quote_vault,
                         system_program: System::id(),
+                        token_program: Token::id(),
                     },
                     None,
                 );
@@ -368,268 +318,16 @@ impl OpenBookClient {
                 side,
                 price_lots,
                 max_base_lots,
-                max_quote_lots,
+                max_quote_lots_including_fees,
                 client_order_id,
                 order_type,
-                reduce_only,
+                self_trade_behavior,
                 expiry_timestamp,
                 limit,
             }),
         };
         self.send_and_confirm_owner_tx(vec![ix]).await
     }
-
-    // pub async fn deactivate_position(
-    //     &self,
-    //     market_index: MarketIndex,
-    // ) -> anyhow::Result<Signature> {
-    //     let perp = self.context.context(market_index);
-
-    //     let ix = Instruction {
-    //         program_id: openbook_v2::id(),
-    //         accounts: {
-    //             let mut ams = anchor_lang::ToAccountMetas::to_account_metas(
-    //                 &openbook_v2::accounts::DeactivatePosition {
-    //                     account: self.open_orders_account,
-    //                     owner: self.owner(),
-    //                     market: perp.address,
-    //                 },
-    //                 None,
-    //             );
-    //             ams
-    //         },
-    //         data: anchor_lang::InstructionData::data(
-    //             &openbook_v2::instruction::DeactivatePosition {},
-    //         ),
-    //     };
-    //     self.send_and_confirm_owner_tx(vec![ix]).await
-    // }
-
-    pub async fn jupiter_route(
-        &self,
-        input_mint: Pubkey,
-        output_mint: Pubkey,
-        amount: u64,
-        slippage: u64,
-        swap_mode: JupiterSwapMode,
-    ) -> anyhow::Result<jupiter::QueryRoute> {
-        let quote = self
-            .http_client
-            .get("https://quote-api.jup.ag/v4/quote")
-            .query(&[
-                ("inputMint", input_mint.to_string()),
-                ("outputMint", output_mint.to_string()),
-                ("amount", format!("{}", amount)),
-                ("onlyDirectRoutes", "true".into()),
-                ("enforceSingleTx", "true".into()),
-                ("filterTopNResult", "10".into()),
-                ("slippageBps", format!("{}", slippage)),
-                (
-                    "swapMode",
-                    match swap_mode {
-                        JupiterSwapMode::ExactIn => "ExactIn",
-                        JupiterSwapMode::ExactOut => "ExactOut",
-                    }
-                    .into(),
-                ),
-            ])
-            .send()
-            .await
-            .context("quote request to jupiter")?
-            .json::<jupiter::QueryResult>()
-            .await
-            .context("receiving json response from jupiter quote request")?;
-
-        // Find the top route that doesn't involve Raydium (that has too many accounts)
-        let route = quote
-            .data
-            .iter()
-            .find(|route| {
-                !route
-                    .market_infos
-                    .iter()
-                    .any(|mi| mi.label.contains("Raydium"))
-            })
-            .ok_or_else(|| {
-                anyhow::anyhow!(
-                    "no route for swap. found {} routes, but none were usable",
-                    quote.data.len()
-                )
-            })?;
-
-        Ok(route.clone())
-    }
-
-    // TODO Binye. This isn't needed cause it's a flash loan?
-    // pub async fn jupiter_swap(
-    //     &self,
-    //     input_mint: Pubkey,
-    //     output_mint: Pubkey,
-    //     amount: u64,
-    //     slippage: u64,
-    //     swap_mode: JupiterSwapMode,
-    // ) -> anyhow::Result<Signature> {
-    //     let source_token = self.context.token_by_mint(&input_mint)?;
-    //     let target_token = self.context.token_by_mint(&output_mint)?;
-    //     let route = self
-    //         .jupiter_route(input_mint, output_mint, amount, slippage, swap_mode)
-    //         .await?;
-
-    //     let swap = self
-    //         .http_client
-    //         .post("https://quote-api.jup.ag/v4/swap")
-    //         .json(&jupiter::SwapRequest {
-    //             route: route.clone(),
-    //             user_public_key: self.owner.pubkey().to_string(),
-    //             wrap_unwrap_sol: false,
-    //         })
-    //         .send()
-    //         .await
-    //         .context("swap transaction request to jupiter")?
-    //         .json::<jupiter::SwapResponse>()
-    //         .await
-    //         .context("receiving json response from jupiter swap transaction request")?;
-
-    //     if swap.setup_transaction.is_some() || swap.cleanup_transaction.is_some() {
-    //         anyhow::bail!(
-    //             "chosen jupiter route requires setup or cleanup transactions, can't execute"
-    //         );
-    //     }
-
-    //     let jup_tx = bincode::options()
-    //         .with_fixint_encoding()
-    //         .reject_trailing_bytes()
-    //         .deserialize::<solana_sdk::transaction::VersionedTransaction>(
-    //             &base64::decode(&swap.swap_transaction)
-    //                 .context("base64 decoding jupiter transaction")?,
-    //         )
-    //         .context("parsing jupiter transaction")?;
-    //     let ata_program = anchor_spl::associated_token::ID;
-    //     let token_program = anchor_spl::token::ID;
-    //     let is_setup_ix = |k: Pubkey| -> bool { k == ata_program || k == token_program };
-    //     let (jup_ixs, jup_alts) = self
-    //         .deserialize_instructions_and_alts(&jup_tx.message)
-    //         .await?;
-    //     let filtered_jup_ix = jup_ixs
-    //         .into_iter()
-    //         .filter(|ix| !is_setup_ix(ix.program_id))
-    //         .collect::<Vec<_>>();
-
-    //     let bank_ams = [
-    //         source_token.mint_info.first_bank(),
-    //         target_token.mint_info.first_bank(),
-    //     ]
-    //     .into_iter()
-    //     .map(to_writable_account_meta)
-    //     .collect::<Vec<_>>();
-
-    //     let vault_ams = [
-    //         source_token.mint_info.first_vault(),
-    //         target_token.mint_info.first_vault(),
-    //     ]
-    //     .into_iter()
-    //     .map(to_writable_account_meta)
-    //     .collect::<Vec<_>>();
-
-    //     let token_ams = [source_token.mint_info.mint, target_token.mint_info.mint]
-    //         .into_iter()
-    //         .map(|mint| {
-    //             to_writable_account_meta(
-    //                 anchor_spl::associated_token::get_associated_token_address(
-    //                     &self.owner(),
-    //                     &mint,
-    //                 ),
-    //             )
-    //         })
-    //         .collect::<Vec<_>>();
-
-    //     let loan_amounts = vec![
-    //         match swap_mode {
-    //             JupiterSwapMode::ExactIn => amount,
-    //             // in amount + slippage
-    //             JupiterSwapMode::ExactOut => u64::from_str(&route.other_amount_threshold).unwrap(),
-    //         },
-    //         0u64,
-    //     ];
-
-    //     let mut instructions = Vec::new();
-
-    //     instructions.push(
-    //         spl_associated_token_account::instruction::create_associated_token_account_idempotent(
-    //             &self.owner.pubkey(),
-    //             &self.owner.pubkey(),
-    //             &source_token.mint_info.mint,
-    //             &Token::id(),
-    //         ),
-    //     );
-    //     instructions.push(
-    //         spl_associated_token_account::instruction::create_associated_token_account_idempotent(
-    //             &self.owner.pubkey(),
-    //             &self.owner.pubkey(),
-    //             &target_token.mint_info.mint,
-    //             &Token::id(),
-    //         ),
-    //     );
-    //     instructions.push(Instruction {
-    //         program_id: openbook_v2::id(),
-    //         accounts: {
-    //             let mut ams = anchor_lang::ToAccountMetas::to_account_metas(
-    //                 &openbook_v2::accounts::FlashLoanBegin {
-    //                     account: self.open_orders_account,
-    //                     owner: self.owner(),
-    //                     token_program: Token::id(),
-    //                     instructions: solana_sdk::sysvar::instructions::id(),
-    //                 },
-    //                 None,
-    //             );
-    //             ams.extend(bank_ams);
-    //             ams.extend(vault_ams.clone());
-    //             ams.extend(token_ams.clone());
-    //             ams.push(to_readonly_account_meta(self.group()));
-    //             ams
-    //         },
-    //         data: anchor_lang::InstructionData::data(&openbook_v2::instruction::FlashLoanBegin {
-    //             loan_amounts,
-    //         }),
-    //     });
-    //     for ix in filtered_jup_ix {
-    //         instructions.push(ix.clone());
-    //     }
-    //     instructions.push(Instruction {
-    //         program_id: openbook_v2::id(),
-    //         accounts: {
-    //             let mut ams = anchor_lang::ToAccountMetas::to_account_metas(
-    //                 &openbook_v2::accounts::FlashLoanEnd {
-    //                     account: self.open_orders_account,
-    //                     owner: self.owner(),
-    //                     token_program: Token::id(),
-    //                 },
-    //                 None,
-    //             );
-    //             ams.extend(vault_ams);
-    //             ams.extend(token_ams);
-    //             ams.push(to_readonly_account_meta(self.group()));
-    //             ams
-    //         },
-    //         data: anchor_lang::InstructionData::data(&openbook_v2::instruction::FlashLoanEnd {
-    //             flash_loan_type: openbook_v2::accounts_ix::FlashLoanType::Swap,
-    //         }),
-    //     });
-
-    //     let payer = self.owner.pubkey(); // maybe use fee_payer? but usually it's the same
-    //     let mut address_lookup_tables = self.openbook_address_lookup_tables().await?;
-    //     address_lookup_tables.extend(jup_alts.into_iter());
-
-    //     TransactionBuilder {
-    //         instructions,
-    //         address_lookup_tables,
-    //         payer,
-    //         signers: vec![&*self.owner],
-    //         config: self.client.transaction_builder_config,
-    //     }
-    //     .send_and_confirm(&self.client)
-    //     .await
-    // }
 
     async fn fetch_address_lookup_table(
         &self,

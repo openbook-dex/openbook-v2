@@ -1,7 +1,7 @@
 [workspace]
 members = [
     # "bin/*",
-    # "lib/*",
+    "lib/client",
     "programs/*"
 ]
 
