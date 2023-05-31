@@ -71,11 +71,15 @@ pub fn consume_events(
     let remaining_accs = &ctx.remaining_accounts;
 
     let slots_to_consume: Vec<usize> = match slots {
-        Some(slots) => slots.into_iter().take(limit).collect(),
+        Some(slots) => slots
+            .into_iter()
+            .filter(|slot| !event_queue.nodes[*slot].is_free())
+            .take(limit)
+            .collect(),
         None => event_queue
             .iter()
-            .take(limit)
             .map(|(_event, slot)| slot)
+            .take(limit)
             .collect(),
     };
 
