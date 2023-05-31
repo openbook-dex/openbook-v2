@@ -116,7 +116,6 @@ impl EventQueue {
         self.nodes[prev_slot].set_next(next_slot);
         self.nodes[next_slot].set_prev(prev_slot);
 
-        self.header.set_free_head(slot as u16);
 
         if self.header.count() == 1 {
             self.header.set_used_head(NULL);
@@ -125,6 +124,7 @@ impl EventQueue {
         };
 
         self.header.decr_count();
+        self.header.set_free_head(slot as u16);
         self.nodes[slot].set_next(next_free);
         self.nodes[slot].set_prev(NULL as usize);
 
