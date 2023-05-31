@@ -80,7 +80,7 @@ pub fn consume_events(
     };
 
     for slot in slots_to_consume {
-        let event = match event_queue.at(slot) {
+        let event = match event_queue.at_slot(slot) {
             Some(e) => e,
             None => continue,
         };

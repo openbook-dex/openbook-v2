@@ -162,9 +162,9 @@ async fn test_skip_missing_accounts() -> Result<(), TransportError> {
     {
         let event_queue = solana.get_account_boxed::<EventQueue>(event_queue).await;
         assert_eq!(event_queue.header.count(), 3);
-        assert_eq!(fill_maker(event_queue.at(0).unwrap()), maker_1);
-        assert_eq!(fill_maker(event_queue.at(1).unwrap()), maker_2);
-        assert_eq!(fill_maker(event_queue.at(2).unwrap()), maker_3);
+        assert_eq!(fill_maker(event_queue.at_slot(0).unwrap()), maker_1);
+        assert_eq!(fill_maker(event_queue.at_slot(1).unwrap()), maker_2);
+        assert_eq!(fill_maker(event_queue.at_slot(2).unwrap()), maker_3);
     }
 
     send_tx(
@@ -348,9 +348,9 @@ async fn test_crank_given_events() -> Result<(), TransportError> {
     {
         let event_queue = solana.get_account_boxed::<EventQueue>(event_queue).await;
         assert_eq!(event_queue.header.count(), 3);
-        assert_eq!(fill_maker(event_queue.at(0).unwrap()), maker_1);
-        assert_eq!(fill_maker(event_queue.at(1).unwrap()), maker_2);
-        assert_eq!(fill_maker(event_queue.at(2).unwrap()), maker_3);
+        assert_eq!(fill_maker(event_queue.at_slot(0).unwrap()), maker_1);
+        assert_eq!(fill_maker(event_queue.at_slot(1).unwrap()), maker_2);
+        assert_eq!(fill_maker(event_queue.at_slot(2).unwrap()), maker_3);
     }
 
     send_tx(

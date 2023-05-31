@@ -58,7 +58,7 @@ impl EventQueue {
         }
     }
 
-    pub fn at(&self, slot: usize) -> Option<&AnyEvent> {
+    pub fn at_slot(&self, slot: usize) -> Option<&AnyEvent> {
         if self.nodes[slot].is_free() {
             None
         } else {
@@ -538,13 +538,13 @@ mod tests {
     }
 
     #[test]
-    fn read_at() {
+    fn read_at_slot() {
         let mut eq = EventQueue::zeroed();
         eq.init();
         eq.push_back(AnyEvent::zeroed());
         eq.push_back(AnyEvent::zeroed());
         eq.push_back(dummy_event_with_number(1));
-        assert_eq!(eq.at(2).unwrap().event_type, 1);
+        assert_eq!(eq.at_slot(2).unwrap().event_type, 1);
     }
 
     #[test]
