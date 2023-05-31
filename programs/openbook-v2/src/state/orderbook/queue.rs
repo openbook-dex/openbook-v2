@@ -11,6 +11,11 @@ pub const MAX_NUM_EVENTS: usize = 488;
 pub const NULL: u16 = u16::MAX;
 pub const LAST_SLOT: usize = MAX_NUM_EVENTS - 1;
 
+/// Container for the different EventTypes.
+///
+/// Events are stored in a fixed-array of nodes. Free nodes are connected by a single-linked list
+/// starting at free_head while used nodes form a circular doubly-linked list starting at
+/// used_head.
 #[account(zero_copy)]
 pub struct EventQueue {
     pub header: EventQueueHeader,
