@@ -316,6 +316,66 @@ impl OpenBookClient {
         self.send_and_confirm_owner_tx(vec![ix]).await
     }
 
+    #[allow(clippy::too_many_arguments)]
+    pub async fn place_order_pegged(
+        &self,
+        market_index: MarketIndex,
+        side: Side,
+        price_offset_lots: i64,
+        peg_limit: i64,
+        max_base_lots: i64,
+        max_quote_lots_including_fees: i64,
+        client_order_id: u64,
+        order_type: PlaceOrderType,
+        expiry_timestamp: u64,
+        limit: u8,
+        payer: Pubkey,
+        base_vault: Pubkey,
+        quote_vault: Pubkey,
+        self_trade_behavior: SelfTradeBehavior,
+        max_oracle_staleness_slots: i32,
+    ) -> anyhow::Result<Signature> {
+        let perp = self.context.context(market_index);
+
+        let ix = Instruction {
+            program_id: openbook_v2::id(),
+            accounts: {
+                anchor_lang::ToAccountMetas::to_account_metas(
+                    &openbook_v2::accounts::PlaceOrder {
+                        open_orders_account: self.open_orders_account,
+                        open_orders_admin: None,
+                        owner: self.owner(),
+                        market: perp.address,
+                        bids: perp.market.bids,
+                        asks: perp.market.asks,
+                        event_queue: perp.market.event_queue,
+                        oracle: perp.market.oracle,
+                        payer,
+                        base_vault,
+                        quote_vault,
+                        system_program: System::id(),
+                        token_program: Token::id(),
+                    },
+                    None,
+                )
+            },
+            data: anchor_lang::InstructionData::data(&openbook_v2::instruction::PlaceOrderPegged {
+                side,
+                price_offset_lots,
+                peg_limit,
+                max_oracle_staleness_slots,
+                max_base_lots,
+                max_quote_lots_including_fees,
+                client_order_id,
+                order_type,
+                self_trade_behavior,
+                expiry_timestamp,
+                limit,
+            }),
+        };
+        self.send_and_confirm_owner_tx(vec![ix]).await
+    }
+
     pub async fn send_and_confirm_owner_tx(
         &self,
         instructions: Vec<Instruction>,
@@ -447,18 +507,19 @@ pub fn prettify_solana_client_error(
 ) -> anyhow::Error {
     use solana_client::client_error::ClientErrorKind;
     use solana_client::rpc_request::{RpcError, RpcResponseErrorData};
-    if let ClientErrorKind::RpcError(RpcError::RpcResponseError { data, .. }) = err.kind() {
-        match data {
-            RpcResponseErrorData::SendTransactionPreflightFailure(s) => {
-                return OpenBookClientError::SendTransactionPreflightFailure {
-                    err: s.err.clone(),
-                    logs: s.logs.clone().unwrap_or_default(),
-                }
-                .into();
-            }
-            _ => {}
+
+    if let ClientErrorKind::RpcError(RpcError::RpcResponseError {
+        data: RpcResponseErrorData::SendTransactionPreflightFailure(s),
+        ..
+    }) = err.kind()
+    {
+        return OpenBookClientError::SendTransactionPreflightFailure {
+            err: s.err.clone(),
+            logs: s.logs.clone().unwrap_or_default(),
         }
-    };
+        .into();
+    }
+
     err.into()
 }
 
@@ -473,7 +534,7 @@ pub fn keypair_from_cli(keypair: &str) -> Keypair {
     match maybe_keypair {
         Ok(keypair) => keypair,
         Err(_) => {
-            let path = std::path::PathBuf::from_str(&*shellexpand::tilde(keypair)).unwrap();
+            let path = std::path::PathBuf::from_str(&shellexpand::tilde(keypair)).unwrap();
             keypair::read_keypair_file(path)
                 .unwrap_or_else(|_| panic!("Failed to read keypair from {}", keypair))
         }

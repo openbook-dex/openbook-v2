@@ -133,6 +133,7 @@ impl<Key: std::cmp::Eq + std::hash::Hash, Output: 'static> CoalescedAsyncJob<Key
 }
 
 #[derive(Default)]
+#[allow(clippy::type_complexity)]
 struct AccountCache {
     accounts: HashMap<Pubkey, AccountSharedData>,
     keys_for_program_and_discriminator: HashMap<(Pubkey, [u8; 8]), Vec<Pubkey>>,
@@ -179,6 +180,7 @@ impl<T: AccountFetcher> CachedAccountFetcher<T> {
 
 #[async_trait::async_trait]
 impl<T: AccountFetcher + 'static> AccountFetcher for CachedAccountFetcher<T> {
+    #[allow(clippy::clone_on_copy)]
     async fn fetch_raw_account(&self, address: &Pubkey) -> anyhow::Result<AccountSharedData> {
         let fetch_job = {
             let mut cache = self.cache.lock().unwrap();
@@ -214,6 +216,7 @@ impl<T: AccountFetcher + 'static> AccountFetcher for CachedAccountFetcher<T> {
         }
     }
 
+    #[allow(clippy::clone_on_copy)]
     async fn fetch_program_accounts(
         &self,
         program: &Pubkey,
@@ -233,7 +236,7 @@ impl<T: AccountFetcher + 'static> AccountFetcher for CachedAccountFetcher<T> {
             let program_copy = program.clone();
             cache
                 .program_accounts_jobs
-                .run_coalesced(cache_key.clone(), async move {
+                .run_coalesced(cache_key, async move {
                     let result = self_copy
                         .fetcher
                         .fetch_program_accounts(&program_copy, discriminator)

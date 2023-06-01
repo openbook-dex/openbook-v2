@@ -71,6 +71,7 @@ pub struct Config {
     pub min_slot: u64,
 }
 
+#[allow(clippy::type_complexity)]
 async fn feed_snapshots(
     config: &Config,
     openbook_oracles: Vec<Pubkey>,

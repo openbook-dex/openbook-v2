@@ -230,7 +230,7 @@ impl ChainData {
             .ok_or_else(|| anyhow::anyhow!("account {} has no live data", pubkey))
     }
 
-    pub fn iter_accounts<'a>(&'a self) -> impl Iterator<Item = (&'a Pubkey, &'a AccountAndSlot)> {
+    pub fn iter_accounts(&self) -> impl Iterator<Item = (&Pubkey, &AccountAndSlot)> {
         self.accounts.iter().filter_map(|(pk, writes)| {
             writes
                 .iter()
