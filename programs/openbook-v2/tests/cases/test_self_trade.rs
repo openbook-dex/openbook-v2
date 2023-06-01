@@ -2,62 +2,21 @@ use super::*;
 
 #[tokio::test]
 async fn test_self_trade_decrement_take() -> Result<(), TransportError> {
-    let context = TestContext::new().await;
-    let solana = &context.solana.clone();
-
-    let collect_fee_admin = TestKeypair::new();
-    let payer = &context.users[0];
-    let owner = context.users[1].key;
-    let owner_base_ata = context.users[1].token_accounts[0];
-    let owner_quote_ata = context.users[1].token_accounts[1];
-
-    let mints = &context.mints[0..2];
-    let tokens = Token::create(mints.to_vec(), solana, collect_fee_admin, payer.key).await;
-
-    let base_mint = context.mints[0].pubkey;
-    let quote_mint = context.mints[1].pubkey;
-
-    let owner_token_0 = context.users[0].token_accounts[0];
-    let owner_token_1 = context.users[0].token_accounts[1];
-
-    // TEST: Create a market
-    let market = get_market_address(1);
-    let base_vault = solana
-        .create_associated_token_account(&market, base_mint)
-        .await;
-    let quote_vault = solana
-        .create_associated_token_account(&market, quote_mint)
-        .await;
-
-    let openbook_v2::accounts::CreateMarket {
+    let TestInitialize {
+        context,
+        owner,
+        owner_token_0,
+        owner_token_1,
         market,
         base_vault,
         quote_vault,
+        account_0,
+        account_1,
         ..
-    } = send_tx(
-        solana,
-        CreateMarketInstruction {
-            collect_fee_admin: collect_fee_admin.pubkey(),
-            open_orders_admin: None,
-            close_market_admin: None,
-            payer: payer.key,
-            market_index: 1,
-            quote_lot_size: 10,
-            base_lot_size: 100,
-            maker_fee: -0.0002,
-            taker_fee: 0.0004,
-            base_mint,
-            quote_mint,
-            base_vault,
-            quote_vault,
-            ..CreateMarketInstruction::with_new_book_and_queue(solana, &tokens[1]).await
-        },
-    )
-    .await
-    .unwrap();
-
-    let account_0 = create_open_orders_account(solana, owner, market, 0, payer).await;
-    let account_1 = create_open_orders_account(solana, owner, market, 1, payer).await;
+    } = TestContext::new_with_market(TestNewMarketInitialize::default()).await?;
+    let solana = &context.solana.clone();
+    let owner_quote_ata = context.users[0].token_accounts[1];
+    let owner_base_ata = context.users[0].token_accounts[0];
 
     // maker (which will be the taker) limit order
     send_tx(
@@ -244,59 +203,19 @@ async fn test_self_trade_decrement_take() -> Result<(), TransportError> {
 
 #[tokio::test]
 async fn test_self_trade_cancel_provide() -> Result<(), TransportError> {
-    let context = TestContext::new().await;
-    let solana = &context.solana.clone();
-
-    let collect_fee_admin = TestKeypair::new();
-    let payer = &context.users[0];
-    let owner = context.users[1].key;
-    let owner_base_ata = context.users[1].token_accounts[0];
-    let owner_quote_ata = context.users[1].token_accounts[1];
-
-    let mints = &context.mints[0..2];
-    let tokens = Token::create(mints.to_vec(), solana, collect_fee_admin, payer.key).await;
-
-    let base_mint = context.mints[0].pubkey;
-    let quote_mint = context.mints[1].pubkey;
-
-    // TEST: Create a market
-    let market = get_market_address(1);
-    let base_vault = solana
-        .create_associated_token_account(&market, base_mint)
-        .await;
-    let quote_vault = solana
-        .create_associated_token_account(&market, quote_mint)
-        .await;
-
-    let openbook_v2::accounts::CreateMarket {
+    let TestInitialize {
+        context,
+        owner,
         market,
         base_vault,
         quote_vault,
+        account_0,
+        account_1,
         ..
-    } = send_tx(
-        solana,
-        CreateMarketInstruction {
-            collect_fee_admin: collect_fee_admin.pubkey(),
-            open_orders_admin: None,
-            close_market_admin: None,
-            payer: payer.key,
-            market_index: 1,
-            quote_lot_size: 10,
-            base_lot_size: 100,
-            maker_fee: -0.0002,
-            taker_fee: 0.0004,
-            base_mint,
-            quote_mint,
-            base_vault,
-            quote_vault,
-            ..CreateMarketInstruction::with_new_book_and_queue(solana, &tokens[1]).await
-        },
-    )
-    .await
-    .unwrap();
-
-    let account_0 = create_open_orders_account(solana, owner, market, 0, payer).await;
-    let account_1 = create_open_orders_account(solana, owner, market, 1, payer).await;
+    } = TestContext::new_with_market(TestNewMarketInitialize::default()).await?;
+    let solana = &context.solana.clone();
+    let owner_quote_ata = context.users[0].token_accounts[1];
+    let owner_base_ata = context.users[0].token_accounts[0];
 
     // maker (which will be the taker) limit order
     send_tx(
@@ -474,58 +393,18 @@ async fn test_self_trade_cancel_provide() -> Result<(), TransportError> {
 
 #[tokio::test]
 async fn test_self_abort_transaction() -> Result<(), TransportError> {
-    let context = TestContext::new().await;
-    let solana = &context.solana.clone();
-
-    let collect_fee_admin = TestKeypair::new();
-    let payer = &context.users[0];
-    let owner = context.users[1].key;
-    let owner_base_ata = context.users[1].token_accounts[0];
-    let owner_quote_ata = context.users[1].token_accounts[1];
-
-    let mints = &context.mints[0..2];
-    let tokens = Token::create(mints.to_vec(), solana, collect_fee_admin, payer.key).await;
-
-    let base_mint = context.mints[0].pubkey;
-    let quote_mint = context.mints[1].pubkey;
-
-    // TEST: Create a market
-    let market = get_market_address(1);
-    let base_vault = solana
-        .create_associated_token_account(&market, base_mint)
-        .await;
-    let quote_vault = solana
-        .create_associated_token_account(&market, quote_mint)
-        .await;
-
-    let openbook_v2::accounts::CreateMarket {
+    let TestInitialize {
+        context,
+        owner,
         market,
         base_vault,
         quote_vault,
+        account_0,
         ..
-    } = send_tx(
-        solana,
-        CreateMarketInstruction {
-            collect_fee_admin: collect_fee_admin.pubkey(),
-            open_orders_admin: None,
-            close_market_admin: None,
-            payer: payer.key,
-            market_index: 1,
-            quote_lot_size: 10,
-            base_lot_size: 100,
-            maker_fee: -0.0002,
-            taker_fee: 0.0004,
-            base_mint,
-            quote_mint,
-            base_vault,
-            quote_vault,
-            ..CreateMarketInstruction::with_new_book_and_queue(solana, &tokens[1]).await
-        },
-    )
-    .await
-    .unwrap();
-
-    let account_0 = create_open_orders_account(solana, owner, market, 0, payer).await;
+    } = TestContext::new_with_market(TestNewMarketInitialize::default()).await?;
+    let solana = &context.solana.clone();
+    let owner_quote_ata = context.users[0].token_accounts[1];
+    let owner_base_ata = context.users[0].token_accounts[0];
 
     // taker limit order
     send_tx(
