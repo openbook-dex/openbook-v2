@@ -348,10 +348,11 @@ impl<'a> Orderbook<'a> {
                 };
 
                 let book_quote_quantity_lots = book_base_quantity_lots * book_price;
-                maker_fees = (I80F48::from_num(book_quote_quantity_lots) * market.maker_fee)
-                    .ceil()
-                    .to_num::<u64>()
-                    * (market.quote_lot_size as u64);
+                maker_fees = (I80F48::from_num(book_quote_quantity_lots)
+                    * market.maker_fee
+                    * I80F48::from_num(market.quote_lot_size))
+                .ceil()
+                .to_num::<u64>();
             }
 
             let bookside = self.bookside_mut(side);
