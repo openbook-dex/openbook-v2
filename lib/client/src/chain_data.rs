@@ -39,6 +39,12 @@ pub struct ChainData {
     best_chain_slot: u64,
 }
 
+impl Default for ChainData {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ChainData {
     pub fn new() -> Self {
         Self {

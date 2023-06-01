@@ -192,7 +192,7 @@ impl OpenBookClient {
             signers: vec![owner, payer],
             config: client.transaction_builder_config,
         }
-        .send_and_confirm(&client)
+        .send_and_confirm(client)
         .await?;
 
         Ok((account, txsig))
@@ -257,9 +257,10 @@ impl OpenBookClient {
         oracle: &Pubkey,
     ) -> Result<pyth_sdk_solana::Price, anyhow::Error> {
         let oracle_account = self.account_fetcher.fetch_raw_account(oracle).await?;
-        Ok(pyth_sdk_solana::load_price(&oracle_account.data()).unwrap())
+        Ok(pyth_sdk_solana::load_price(oracle_account.data()).unwrap())
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub async fn place_order(
         &self,
         market_index: MarketIndex,
@@ -281,7 +282,7 @@ impl OpenBookClient {
         let ix = Instruction {
             program_id: openbook_v2::id(),
             accounts: {
-                let ams = anchor_lang::ToAccountMetas::to_account_metas(
+                anchor_lang::ToAccountMetas::to_account_metas(
                     &openbook_v2::accounts::PlaceOrder {
                         open_orders_account: self.open_orders_account,
                         open_orders_admin: None,
@@ -298,8 +299,7 @@ impl OpenBookClient {
                         token_program: Token::id(),
                     },
                     None,
-                );
-                ams
+                )
             },
             data: anchor_lang::InstructionData::data(&openbook_v2::instruction::PlaceOrder {
                 side,
@@ -447,8 +447,8 @@ pub fn prettify_solana_client_error(
 ) -> anyhow::Error {
     use solana_client::client_error::ClientErrorKind;
     use solana_client::rpc_request::{RpcError, RpcResponseErrorData};
-    match err.kind() {
-        ClientErrorKind::RpcError(RpcError::RpcResponseError { data, .. }) => match data {
+    if let ClientErrorKind::RpcError(RpcError::RpcResponseError { data, .. }) = err.kind() {
+        match data {
             RpcResponseErrorData::SendTransactionPreflightFailure(s) => {
                 return OpenBookClientError::SendTransactionPreflightFailure {
                     err: s.err.clone(),
@@ -457,8 +457,7 @@ pub fn prettify_solana_client_error(
                 .into();
             }
             _ => {}
-        },
-        _ => {}
+        }
     };
     err.into()
 }
