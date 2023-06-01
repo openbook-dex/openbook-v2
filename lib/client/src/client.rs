@@ -2,24 +2,18 @@ use std::str::FromStr;
 use std::sync::Arc;
 use std::time::Duration;
 
-use anchor_client::{ClientError, Cluster};
+use anchor_client::Cluster;
 
-use anchor_lang::__private::bytemuck;
 use anchor_lang::prelude::System;
 use anchor_lang::{AccountDeserialize, Id};
-use anchor_spl::associated_token::get_associated_token_address;
 use anchor_spl::token::Token;
 
-use bincode::Options;
-use fixed::types::I80F48;
-use futures::{stream, StreamExt, TryStreamExt};
 use itertools::Itertools;
 
 use openbook_v2::state::{
     MarketIndex, OpenOrdersAccountValue, PlaceOrderType, SelfTradeBehavior, Side,
 };
 
-use solana_address_lookup_table_program::state::AddressLookupTable;
 use solana_client::nonblocking::rpc_client::RpcClient as RpcClientAsync;
 use solana_client::rpc_config::RpcSendTransactionConfig;
 use solana_sdk::address_lookup_table_account::AddressLookupTableAccount;
@@ -34,9 +28,8 @@ use crate::gpa::{fetch_anchor_account, fetch_openbook_accounts};
 
 use anyhow::Context;
 use solana_sdk::account::ReadableAccount;
-use solana_sdk::instruction::{AccountMeta, Instruction};
+use solana_sdk::instruction::Instruction;
 use solana_sdk::signature::{Keypair, Signature};
-use solana_sdk::sysvar;
 use solana_sdk::{commitment_config::CommitmentConfig, pubkey::Pubkey, signer::Signer};
 
 // very close to anchor_client::Client, which unfortunately has no accessors or Clone
@@ -261,14 +254,9 @@ impl OpenBookClient {
 
     pub async fn get_oracle_price(
         &self,
-        token_name: &str,
+        oracle: &Pubkey,
     ) -> Result<pyth_sdk_solana::Price, anyhow::Error> {
-        let token_index = *self.context.token_indexes_by_name.get(token_name).unwrap();
-        let mint_info = self.context.mint_info(token_index);
-        let oracle_account = self
-            .account_fetcher
-            .fetch_raw_account(&mint_info.oracle)
-            .await?;
+        let oracle_account = self.account_fetcher.fetch_raw_account(oracle).await?;
         Ok(pyth_sdk_solana::load_price(&oracle_account.data()).unwrap())
     }
 
@@ -281,7 +269,6 @@ impl OpenBookClient {
         max_quote_lots_including_fees: i64,
         client_order_id: u64,
         order_type: PlaceOrderType,
-        reduce_only: bool,
         expiry_timestamp: u64,
         limit: u8,
         payer: Pubkey,
@@ -327,79 +314,6 @@ impl OpenBookClient {
             }),
         };
         self.send_and_confirm_owner_tx(vec![ix]).await
-    }
-
-    async fn fetch_address_lookup_table(
-        &self,
-        address: Pubkey,
-    ) -> anyhow::Result<AddressLookupTableAccount> {
-        let raw = self
-            .account_fetcher
-            .fetch_raw_account_lookup_table(&address)
-            .await?;
-        let data = AddressLookupTable::deserialize(&raw.data())?;
-        Ok(AddressLookupTableAccount {
-            key: address,
-            addresses: data.addresses.to_vec(),
-        })
-    }
-
-    pub async fn openbook_address_lookup_tables(
-        &self,
-    ) -> anyhow::Result<Vec<AddressLookupTableAccount>> {
-        stream::iter(self.context.address_lookup_tables.iter())
-            .then(|&k| self.fetch_address_lookup_table(k))
-            .try_collect::<Vec<_>>()
-            .await
-    }
-
-    async fn deserialize_instructions_and_alts(
-        &self,
-        message: &solana_sdk::message::VersionedMessage,
-    ) -> anyhow::Result<(Vec<Instruction>, Vec<AddressLookupTableAccount>)> {
-        let lookups = message.address_table_lookups().unwrap_or_default();
-        let address_lookup_tables = stream::iter(lookups)
-            .then(|a| self.fetch_address_lookup_table(a.account_key))
-            .try_collect::<Vec<_>>()
-            .await?;
-
-        let mut account_keys = message.static_account_keys().to_vec();
-        for (lookups, table) in lookups.iter().zip(address_lookup_tables.iter()) {
-            account_keys.extend(
-                lookups
-                    .writable_indexes
-                    .iter()
-                    .map(|&index| table.addresses[index as usize]),
-            );
-        }
-        for (lookups, table) in lookups.iter().zip(address_lookup_tables.iter()) {
-            account_keys.extend(
-                lookups
-                    .readonly_indexes
-                    .iter()
-                    .map(|&index| table.addresses[index as usize]),
-            );
-        }
-
-        let compiled_ix = message
-            .instructions()
-            .iter()
-            .map(|ci| solana_sdk::instruction::Instruction {
-                program_id: *ci.program_id(&account_keys),
-                accounts: ci
-                    .accounts
-                    .iter()
-                    .map(|&index| AccountMeta {
-                        pubkey: account_keys[index as usize],
-                        is_signer: message.is_signer(index.into()),
-                        is_writable: message.is_maybe_writable(index.into()),
-                    })
-                    .collect(),
-                data: ci.data.clone(),
-            })
-            .collect();
-
-        Ok((compiled_ix, address_lookup_tables))
     }
 
     pub async fn send_and_confirm_owner_tx(
@@ -571,21 +485,5 @@ pub fn pubkey_from_cli(pubkey: &str) -> Pubkey {
     match Pubkey::from_str(pubkey) {
         Ok(p) => p,
         Err(_) => keypair_from_cli(pubkey).pubkey(),
-    }
-}
-
-fn to_readonly_account_meta(pubkey: Pubkey) -> AccountMeta {
-    AccountMeta {
-        pubkey,
-        is_writable: false,
-        is_signer: false,
-    }
-}
-
-fn to_writable_account_meta(pubkey: Pubkey) -> AccountMeta {
-    AccountMeta {
-        pubkey,
-        is_writable: true,
-        is_signer: false,
     }
 }

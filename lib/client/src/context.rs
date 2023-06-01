@@ -1,20 +1,9 @@
+use openbook_v2::state::{Market, MarketIndex};
 use std::collections::HashMap;
-
-use anchor_client::ClientError;
-
-use anchor_lang::__private::bytemuck;
-
-use openbook_v2::state::{Market, MarketIndex, OpenOrdersAccountValue, TokenIndex};
-
-use fixed::types::I80F48;
-use futures::{stream, StreamExt, TryStreamExt};
-use itertools::Itertools;
 
 use crate::gpa::*;
 
 use solana_client::nonblocking::rpc_client::RpcClient as RpcClientAsync;
-use solana_sdk::account::Account;
-use solana_sdk::instruction::AccountMeta;
 use solana_sdk::pubkey::Pubkey;
 
 pub struct MarketContext {
@@ -70,11 +59,4 @@ impl OpenBookContext {
         let new_markets = fetch_markets(rpc, openbook_v2::id()).await?;
         Ok(new_markets.len() > self.markets.len())
     }
-}
-
-async fn fetch_raw_account(rpc: &RpcClientAsync, address: Pubkey) -> Result<Account, ClientError> {
-    rpc.get_account_with_commitment(&address, rpc.commitment())
-        .await?
-        .value
-        .ok_or(ClientError::AccountNotFound)
 }
