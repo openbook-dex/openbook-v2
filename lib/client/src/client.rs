@@ -277,7 +277,7 @@ impl OpenBookClient {
         quote_vault: Pubkey,
         self_trade_behavior: SelfTradeBehavior,
     ) -> anyhow::Result<Signature> {
-        let perp = self.context.context(market_index);
+        let market = self.context.context(market_index);
 
         let ix = Instruction {
             program_id: openbook_v2::id(),
@@ -287,11 +287,11 @@ impl OpenBookClient {
                         open_orders_account: self.open_orders_account,
                         open_orders_admin: None,
                         owner: self.owner(),
-                        market: perp.address,
-                        bids: perp.market.bids,
-                        asks: perp.market.asks,
-                        event_queue: perp.market.event_queue,
-                        oracle: perp.market.oracle,
+                        market: market.address,
+                        bids: market.market.bids,
+                        asks: market.market.asks,
+                        event_queue: market.market.event_queue,
+                        oracle: market.market.oracle,
                         payer,
                         base_vault,
                         quote_vault,
@@ -335,7 +335,7 @@ impl OpenBookClient {
         self_trade_behavior: SelfTradeBehavior,
         max_oracle_staleness_slots: i32,
     ) -> anyhow::Result<Signature> {
-        let perp = self.context.context(market_index);
+        let market = self.context.context(market_index);
 
         let ix = Instruction {
             program_id: openbook_v2::id(),
@@ -345,11 +345,11 @@ impl OpenBookClient {
                         open_orders_account: self.open_orders_account,
                         open_orders_admin: None,
                         owner: self.owner(),
-                        market: perp.address,
-                        bids: perp.market.bids,
-                        asks: perp.market.asks,
-                        event_queue: perp.market.event_queue,
-                        oracle: perp.market.oracle,
+                        market: market.address,
+                        bids: market.market.bids,
+                        asks: market.market.asks,
+                        event_queue: market.market.event_queue,
+                        oracle: market.market.oracle,
                         payer,
                         base_vault,
                         quote_vault,
@@ -372,6 +372,78 @@ impl OpenBookClient {
                 expiry_timestamp,
                 limit,
             }),
+        };
+        self.send_and_confirm_owner_tx(vec![ix]).await
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    pub async fn deposit(
+        &self,
+        market_index: MarketIndex,
+        base_amount_lots: u64,
+        quote_amount_lots: u64,
+        payer_base: Pubkey,
+        payer_quote: Pubkey,
+        base_vault: Pubkey,
+        quote_vault: Pubkey,
+    ) -> anyhow::Result<Signature> {
+        let market = self.context.context(market_index);
+
+        let ix = Instruction {
+            program_id: openbook_v2::id(),
+            accounts: {
+                anchor_lang::ToAccountMetas::to_account_metas(
+                    &openbook_v2::accounts::Deposit {
+                        open_orders_account: self.open_orders_account,
+                        owner: self.owner(),
+                        market: market.address,
+                        payer_base,
+                        payer_quote,
+                        base_vault,
+                        quote_vault,
+                        system_program: System::id(),
+                        token_program: Token::id(),
+                    },
+                    None,
+                )
+            },
+            data: anchor_lang::InstructionData::data(&openbook_v2::instruction::Deposit {
+                base_amount_lots,
+                quote_amount_lots,
+            }),
+        };
+        self.send_and_confirm_owner_tx(vec![ix]).await
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    pub async fn settle_funds(
+        &self,
+        market_index: MarketIndex,
+        payer_base: Pubkey,
+        payer_quote: Pubkey,
+        base_vault: Pubkey,
+        quote_vault: Pubkey,
+    ) -> anyhow::Result<Signature> {
+        let market = self.context.context(market_index);
+
+        let ix = Instruction {
+            program_id: openbook_v2::id(),
+            accounts: {
+                anchor_lang::ToAccountMetas::to_account_metas(
+                    &openbook_v2::accounts::SettleFunds {
+                        open_orders_account: self.open_orders_account,
+                        market: market.address,
+                        payer_base,
+                        payer_quote,
+                        base_vault,
+                        quote_vault,
+                        system_program: System::id(),
+                        token_program: Token::id(),
+                    },
+                    None,
+                )
+            },
+            data: anchor_lang::InstructionData::data(&openbook_v2::instruction::SettleFunds {}),
         };
         self.send_and_confirm_owner_tx(vec![ix]).await
     }
