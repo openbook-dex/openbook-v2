@@ -369,7 +369,7 @@ impl TestContext {
                 base_vault,
                 quote_vault,
                 fee_penalty: args.fee_penalty,
-                ..CreateMarketInstruction::with_new_book_and_queue(solana, &tokens[1]).await
+                ..CreateMarketInstruction::with_new_book_and_queue(solana, &tokens[0]).await
             },
         )
         .await
