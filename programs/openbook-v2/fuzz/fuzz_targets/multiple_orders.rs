@@ -1,7 +1,25 @@
 #![no_main]
 
+use arbitrary::Arbitrary;
 use libfuzzer_sys::fuzz_target;
+use openbook_v2_fuzz::FuzzContext;
 
-fuzz_target!(|data: &[u8]| {
-    // fuzzed code goes here
-});
+#[derive(Debug, Arbitrary, Clone)]
+struct FuzzData {
+    instructions: Vec<FuzzInstruction>,
+}
+
+#[derive(Debug, Arbitrary, Clone)]
+enum FuzzInstruction {
+    Foo,
+    Bar,
+}
+
+fuzz_target!(|fuzz_data: FuzzData| { run_fuzz(fuzz_data) });
+
+fn run_fuzz(fuzz_data: FuzzData) {
+    println!("{:?}", fuzz_data);
+
+    FuzzContext::new();
+    panic!();
+}
