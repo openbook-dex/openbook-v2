@@ -1,3 +1,5 @@
+fuzz-toolchain := if `arch` == "arm64" { "+nightly-x86_64-apple-darwin" } else { "+nightly" }
+
 build:
     cargo build-sbf --features enable-gpl
 
@@ -13,3 +15,6 @@ test-all:
 idl:
     anchor build --arch sbf -- --features enable-gpl
     bash {{ justfile_directory() }}/idl-fixup.sh
+
+fuzz:
+  cd ./programs/openbook-v2/fuzz && cargo {{ fuzz-toolchain }} fuzz run multiple_orders
