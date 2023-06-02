@@ -1,6 +1,6 @@
 use solana_program::{
-    account_info::AccountInfo, entrypoint::ProgramResult, instruction::Instruction,
-    program_error::ProgramError, program_stubs, pubkey::Pubkey,
+    account_info::AccountInfo, clock::Clock, entrypoint::ProgramResult, instruction::Instruction,
+    program_error::ProgramError, program_stubs, pubkey::Pubkey, rent::Rent,
 };
 
 struct TestSyscallStubs {}
@@ -39,6 +39,20 @@ impl program_stubs::SyscallStubs for TestSyscallStubs {
             &new_account_infos,
             &instruction.data,
         )
+    }
+
+    fn sol_get_clock_sysvar(&self, var_addr: *mut u8) -> u64 {
+        unsafe {
+            *(var_addr as *mut _ as *mut Clock) = Clock::default();
+        }
+        solana_program::entrypoint::SUCCESS
+    }
+
+    fn sol_get_rent_sysvar(&self, var_addr: *mut u8) -> u64 {
+        unsafe {
+            *(var_addr as *mut _ as *mut Rent) = Rent::default();
+        }
+        solana_program::entrypoint::SUCCESS
     }
 }
 
