@@ -19,7 +19,7 @@ futures = "0.3.25"
 itertools = "0.10.3"
 jsonrpc-core = "18.0.0"
 jsonrpc-core-client = { version = "18.0.0", features = ["ws", "http", "tls"] }
-openbook-v2 = { path = "../../programs/openbook-v2", features = ["client", "enable-gpl"] }
+openbook-v2 = { path = "../../programs/openbook-v2", features = ["client"] }
 pyth-sdk-solana = "0.1.0"
 shellexpand = "2.1.0"
 solana-account-decoder = "~1.14.9"
