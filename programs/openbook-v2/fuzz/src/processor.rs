@@ -2,6 +2,7 @@ use solana_program::{
     account_info::AccountInfo, clock::Clock, entrypoint::ProgramResult, instruction::Instruction,
     program_error::ProgramError, program_stubs, pubkey::Pubkey, rent::Rent, system_program,
 };
+use std::cell::Ref;
 
 struct TestSyscallStubs {}
 impl program_stubs::SyscallStubs for TestSyscallStubs {
@@ -70,36 +71,24 @@ pub fn do_process_instruction(instruction: Instruction, accounts: &[AccountInfo]
 
     // approximate the logic in the actual runtime which runs the instruction
     // and only updates accounts if the instruction is successful
-    let account_infos = accounts.clone();
+    let datas = accounts.iter().map(|acc| acc.data.borrow().to_owned());
 
     let res = if instruction.program_id == openbook_v2::id() {
-        openbook_v2::entry(&instruction.program_id, &account_infos, &instruction.data)
+        openbook_v2::entry(&instruction.program_id, &accounts, &instruction.data)
     } else {
         spl_token::processor::Processor::process(
             &instruction.program_id,
-            &account_infos,
+            &accounts,
             &instruction.data,
         )
     };
 
-    if res.is_ok() {
-        let mut account_metas = instruction
-            .accounts
+    if res.is_err() {
+        accounts
             .iter()
-            .zip(accounts)
-            .map(|(account_meta, account)| (&account_meta.pubkey, account))
-            .collect::<Vec<_>>();
-        for account_info in account_infos.iter() {
-            for account_meta in account_metas.iter_mut() {
-                if account_info.key == account_meta.0 {
-                    let account = &mut account_meta.1;
-                    let mut lamports = account.lamports.borrow_mut();
-                    **lamports = **account_info.lamports.borrow();
-                    let mut data = account.data.borrow_mut();
-                    data.clone_from_slice(*account_info.data.borrow());
-                }
-            }
-        }
+            .zip(datas)
+            .for_each(|(acc, data)| acc.data.borrow_mut().copy_from_slice(&data));
     }
+
     res
 }
