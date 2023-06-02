@@ -1180,8 +1180,10 @@ name = "openbook-v2-fuzz"
 version = "0.0.0"
 dependencies = [
  "arbitrary",
+ "bumpalo",
  "libfuzzer-sys",
  "openbook-v2",
+ "solana-program",
 ]
 
 [[package]]
