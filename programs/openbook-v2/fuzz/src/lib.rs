@@ -1,6 +1,9 @@
 pub mod account_allocator;
+pub mod processor;
+
 use account_allocator::*;
 use fixed::types::I80F48;
+use processor::*;
 use solana_program::{instruction::Instruction, system_program};
 
 pub struct FuzzContext {}
@@ -17,15 +20,17 @@ impl FuzzContext {
 
         let instruction = {
             let accounts = openbook_v2::accounts::StubOracleCreate {
-                admin: *admin.key,
                 oracle: *oracle.key,
-                payer: *payer.key,
+                admin: *admin.key,
                 mint: *mint.key,
+                payer: *payer.key,
                 system_program: *system_program.key,
             };
             let data = openbook_v2::instruction::StubOracleCreate { price: I80F48::ONE };
             make_instruction(&accounts, data)
         };
+        let accounts = vec![oracle, admin, mint, payer, system_program];
+        do_process_instruction(instruction, &accounts);
 
         Self {}
     }
