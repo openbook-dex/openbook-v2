@@ -1,6 +1,6 @@
 use solana_program::{
     account_info::AccountInfo, clock::Clock, entrypoint::ProgramResult, instruction::Instruction,
-    program_error::ProgramError, program_stubs, pubkey::Pubkey, rent::Rent,
+    program_error::ProgramError, program_stubs, pubkey::Pubkey, rent::Rent, system_program,
 };
 
 struct TestSyscallStubs {}
@@ -12,11 +12,6 @@ impl program_stubs::SyscallStubs for TestSyscallStubs {
         signers_seeds: &[&[&[u8]]],
     ) -> ProgramResult {
         let mut new_account_infos = vec![];
-
-        // mimic check for token program in accounts
-        if !account_infos.iter().any(|x| *x.key == spl_token::id()) {
-            return Err(ProgramError::InvalidAccountData);
-        }
 
         for meta in instruction.accounts.iter() {
             for account_info in account_infos.iter() {
@@ -34,11 +29,16 @@ impl program_stubs::SyscallStubs for TestSyscallStubs {
             }
         }
 
-        spl_token::processor::Processor::process(
-            &instruction.program_id,
-            &new_account_infos,
-            &instruction.data,
-        )
+        match instruction.program_id {
+            // accounts should already be created
+            id if id == system_program::ID => Ok(()),
+            id if id == spl_token::ID => spl_token::processor::Processor::process(
+                &instruction.program_id,
+                &new_account_infos,
+                &instruction.data,
+            ),
+            _ => Err(ProgramError::IncorrectProgramId),
+        }
     }
 
     fn sol_get_clock_sysvar(&self, var_addr: *mut u8) -> u64 {
