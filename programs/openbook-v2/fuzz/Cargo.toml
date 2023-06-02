@@ -8,10 +8,14 @@ edition = "2021"
 cargo-fuzz = true
 
 [dependencies]
+anchor-lang = "0.27.0"
 arbitrary = { version = "1.3.0", features = ["derive"] }
 bumpalo = "3.13.0"
+fixed = {path = "../../../3rdparty/fixed", version = "1.11.0", features = ["serde", "borsh", "debug-assert-in-release"]}
 libfuzzer-sys = "0.4"
 solana-program = "~1.14.16"
+solana-runtime = "~1.14.16"
+spl-token = "3.5.0"
 
 [dependencies.openbook-v2]
 path = ".."
