@@ -15,9 +15,9 @@ pub struct SettleFunds<'info> {
     pub quote_vault: Account<'info, TokenAccount>,
 
     #[account(mut)]
-    pub payer_base: Account<'info, TokenAccount>,
+    pub token_base_account: Account<'info, TokenAccount>,
     #[account(mut)]
-    pub payer_quote: Account<'info, TokenAccount>,
+    pub token_quote_account: Account<'info, TokenAccount>,
 
     pub token_program: Program<'info, Token>,
     pub system_program: Program<'info, System>,

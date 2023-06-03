@@ -118,7 +118,7 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<
         let cpi_context = CpiContext::new(
             ctx.accounts.token_program.to_account_info(),
             Transfer {
-                from: ctx.accounts.payer.to_account_info(),
+                from: ctx.accounts.token_deposit_account.to_account_info(),
                 to: to_vault,
                 authority: ctx.accounts.owner.to_account_info(),
             },
