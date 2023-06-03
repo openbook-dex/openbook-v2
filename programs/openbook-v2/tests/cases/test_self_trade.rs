@@ -111,6 +111,7 @@ async fn test_self_trade_decrement_take() -> Result<(), TransportError> {
     send_tx(
         solana,
         SettleFundsInstruction {
+            owner,
             market,
             open_orders_account: account_0,
             base_vault,

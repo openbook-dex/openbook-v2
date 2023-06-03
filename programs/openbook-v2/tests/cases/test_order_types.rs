@@ -125,6 +125,7 @@ async fn test_inmediate_order() -> Result<(), TransportError> {
     send_tx(
         solana,
         SettleFundsInstruction {
+            owner,
             market,
             open_orders_account: account_0,
             base_vault,

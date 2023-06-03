@@ -123,6 +123,7 @@ async fn test_take_ask_order() -> Result<(), TransportError> {
     send_tx(
         solana,
         SettleFundsInstruction {
+            owner,
             market,
             open_orders_account: account_0,
             base_vault,
@@ -281,6 +282,7 @@ async fn test_take_bid_order() -> Result<(), TransportError> {
     send_tx(
         solana,
         SettleFundsInstruction {
+            owner,
             market,
             open_orders_account: account_0,
             base_vault,

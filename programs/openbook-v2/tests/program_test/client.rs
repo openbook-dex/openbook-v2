@@ -678,6 +678,7 @@ impl ClientInstruction for ConsumeEventsInstruction {
 }
 
 pub struct SettleFundsInstruction {
+    pub owner: TestKeypair,
     pub open_orders_account: Pubkey,
     pub market: Pubkey,
     pub base_vault: Pubkey,
@@ -698,6 +699,7 @@ impl ClientInstruction for SettleFundsInstruction {
         let instruction = Self::Instruction {};
 
         let accounts = Self::Accounts {
+            owner: self.owner.pubkey(),
             open_orders_account: self.open_orders_account,
             market: self.market,
             base_vault: self.base_vault,
@@ -721,7 +723,7 @@ impl ClientInstruction for SettleFundsInstruction {
     }
 
     fn signers(&self) -> Vec<TestKeypair> {
-        vec![]
+        vec![self.owner]
     }
 }
 

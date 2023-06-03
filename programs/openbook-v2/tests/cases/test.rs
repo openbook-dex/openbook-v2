@@ -155,6 +155,7 @@ async fn test_simple_settle() -> Result<(), TransportError> {
     send_tx(
         solana,
         SettleFundsInstruction {
+            owner,
             market,
             open_orders_account: account_0,
             base_vault,
@@ -180,6 +181,7 @@ async fn test_simple_settle() -> Result<(), TransportError> {
     send_tx(
         solana,
         SettleFundsInstruction {
+            owner,
             market,
             open_orders_account: account_1,
             base_vault,
@@ -395,6 +397,7 @@ async fn test_cancel_orders() -> Result<(), TransportError> {
     send_tx(
         solana,
         SettleFundsInstruction {
+            owner,
             market,
             open_orders_account: account_0,
             base_vault,
