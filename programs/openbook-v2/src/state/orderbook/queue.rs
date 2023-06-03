@@ -149,7 +149,7 @@ impl<'a> Iterator for EventQueueIterator<'a> {
         if self.index == self.queue.len() {
             None
         } else {
-            let current_slot = self.slot as usize;
+            let current_slot = self.slot;
             self.slot = self.queue.nodes[current_slot].next as usize;
             self.index += 1;
             Some((&self.queue.nodes[current_slot].event, current_slot))
