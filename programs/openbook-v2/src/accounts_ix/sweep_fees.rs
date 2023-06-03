@@ -9,7 +9,7 @@ pub struct SweepFees<'info> {
     #[account(mut, has_one = collect_fee_admin)]
     pub market: AccountLoader<'info, Market>,
 
-    #[account(mut, constraint = token_receiver_account.owner == collect_fee_admin.key())]
+    #[account(mut)]
     pub token_receiver_account: Account<'info, TokenAccount>,
 
     #[account(mut)]
