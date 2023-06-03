@@ -15,6 +15,7 @@ fixed = {path = "../../../3rdparty/fixed", version = "1.11.0", features = ["serd
 libfuzzer-sys = "0.4"
 solana-program = "~1.14.16"
 solana-runtime = "~1.14.16"
+spl-associated-token-account = { version = "^1.0.3", features = ["no-entrypoint"] }
 spl-token = "3.5.0"
 
 [dependencies.openbook-v2]
