@@ -13,7 +13,7 @@ pub fn deposit(ctx: Context<Deposit>, base_amount_lots: u64, quote_amount_lots: 
         let cpi_context = CpiContext::new(
             ctx.accounts.token_program.to_account_info(),
             Transfer {
-                from: ctx.accounts.payer_base.to_account_info(),
+                from: ctx.accounts.token_base_account.to_account_info(),
                 to: ctx.accounts.base_vault.to_account_info(),
                 authority: ctx.accounts.owner.to_account_info(),
             },
@@ -34,7 +34,7 @@ pub fn deposit(ctx: Context<Deposit>, base_amount_lots: u64, quote_amount_lots: 
         let cpi_context = CpiContext::new(
             ctx.accounts.token_program.to_account_info(),
             Transfer {
-                from: ctx.accounts.payer_quote.to_account_info(),
+                from: ctx.accounts.token_quote_account.to_account_info(),
                 to: ctx.accounts.quote_vault.to_account_info(),
                 authority: ctx.accounts.owner.to_account_info(),
             },

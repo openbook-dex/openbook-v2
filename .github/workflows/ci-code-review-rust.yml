@@ -2,7 +2,7 @@ name: Code Review - Rust
 on:
   push:
     paths:
-      ["programs/**", "Cargo.lock", ".github/workflows/ci-code-review-rust.yml"]
+      ["programs/**", "lib/client/**", "Cargo.lock", ".github/workflows/ci-code-review-rust.yml"]
   workflow_dispatch: # Pick branch manually
 
 env:

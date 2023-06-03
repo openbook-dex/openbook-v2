@@ -1,14 +1,12 @@
 use jsonrpc_core_client::transports::http;
 
-use openbook_v2::accounts_zerocopy::*;
-use openbook_v2::state::{OpenOrdersAccountFixed, OpenOrdersAccountLoadedRef};
 use solana_account_decoder::{UiAccount, UiAccountEncoding};
 use solana_client::{
     rpc_config::{RpcAccountInfoConfig, RpcContextConfig, RpcProgramAccountsConfig},
     rpc_response::{OptionalContext, Response, RpcKeyedAccount},
 };
 use solana_rpc::rpc::{rpc_accounts::AccountsDataClient, rpc_minimal::MinimalClient};
-use solana_sdk::{account::AccountSharedData, commitment_config::CommitmentConfig, pubkey::Pubkey};
+use solana_sdk::{commitment_config::CommitmentConfig, pubkey::Pubkey};
 
 use anyhow::Context;
 use futures::{stream, StreamExt};
@@ -19,17 +17,6 @@ use tokio::time;
 
 use crate::account_update_stream::{AccountUpdate, Message};
 use crate::AnyhowWrap;
-
-pub fn is_openbook_account<'a>(
-    account: &'a AccountSharedData,
-    group_id: &Pubkey,
-) -> Option<OpenOrdersAccountLoadedRef<'a>> {
-    // check owner, discriminator
-    let fixed = account.load::<OpenOrdersAccountFixed>().ok()?;
-
-    let data = account.data();
-    OpenOrdersAccountLoadedRef::from_bytes(&data[8..]).ok()
-}
 
 #[derive(Default)]
 struct AccountSnapshot {
@@ -78,19 +65,19 @@ impl AccountSnapshot {
 
 pub struct Config {
     pub rpc_http_url: String,
-    pub openbook_group: Pubkey,
     pub get_multiple_accounts_count: usize,
     pub parallel_rpc_requests: usize,
     pub snapshot_interval: Duration,
     pub min_slot: u64,
 }
 
+#[allow(clippy::type_complexity)]
 async fn feed_snapshots(
     config: &Config,
     openbook_oracles: Vec<Pubkey>,
     sender: &async_channel::Sender<Message>,
 ) -> anyhow::Result<()> {
-    let rpc_client = http::connect_with_options::<AccountsDataClient>(&config.rpc_http_url, true)
+    let rpc_client = http::connect::<AccountsDataClient>(&config.rpc_http_url)
         .await
         .map_err_anyhow()?;
 
@@ -156,44 +143,6 @@ async fn feed_snapshots(
         )?;
     }
 
-    // Get all the active open orders account keys
-    let oo_account_pubkeys = snapshot
-        .accounts
-        .iter()
-        .filter_map(|update| is_openbook_account(&update.account, &config.openbook_group))
-        .collect::<Vec<Pubkey>>();
-
-    // Retrieve all the open orders accounts
-    let results: Vec<(
-        Vec<Pubkey>,
-        Result<Response<Vec<Option<UiAccount>>>, jsonrpc_core_client::RpcError>,
-    )> = stream::iter(oo_account_pubkeys)
-        .chunks(config.get_multiple_accounts_count)
-        .map(|keys| {
-            let rpc_client = &rpc_client;
-            let account_info_config = account_info_config.clone();
-            async move {
-                let string_keys = keys.iter().map(|k| k.to_string()).collect::<Vec<_>>();
-                (
-                    keys,
-                    rpc_client
-                        .get_multiple_accounts(string_keys, Some(account_info_config))
-                        .await,
-                )
-            }
-        })
-        .buffer_unordered(config.parallel_rpc_requests)
-        .collect::<Vec<_>>()
-        .await;
-    for (keys, result) in results {
-        snapshot.extend_from_gma_rpc(
-            &keys,
-            result
-                .map_err_anyhow()
-                .context("error during getMultipleAccounts for OpenOrders accounts")?,
-        )?;
-    }
-
     sender
         .send(Message::Snapshot(snapshot.accounts))
         .await
@@ -210,7 +159,7 @@ pub fn start(
     let mut interval_between_snapshots = time::interval(config.snapshot_interval);
 
     tokio::spawn(async move {
-        let rpc_client = http::connect_with_options::<MinimalClient>(&config.rpc_http_url, true)
+        let rpc_client = http::connect::<MinimalClient>(&config.rpc_http_url)
             .await
             .expect("always Ok");
 

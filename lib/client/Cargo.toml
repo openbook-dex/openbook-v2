@@ -21,13 +21,12 @@ jsonrpc-core = "18.0.0"
 jsonrpc-core-client = { version = "18.0.0", features = ["ws", "http", "tls"] }
 openbook-v2 = { path = "../../programs/openbook-v2", features = ["client"] }
 pyth-sdk-solana = "0.1.0"
-serum_dex = { git = "https://github.com/openbook-dex/program.git", default-features=false,features = ["no-entrypoint", "program"] }
 shellexpand = "2.1.0"
 solana-account-decoder = "~1.14.9"
-solana-client = "~1.14.9"
-solana-rpc = "~1.14.9"
-solana-sdk = "~1.14.9"
-solana-address-lookup-table-program = "~1.14.9"
+solana-client = "1.14.17"
+solana-rpc = "1.14.17"
+solana-sdk = "1.14.17"
+solana-address-lookup-table-program = "1.14.17"
 spl-associated-token-account = "1.0.3"
 thiserror = "1.0.31"
 log = "0.4"

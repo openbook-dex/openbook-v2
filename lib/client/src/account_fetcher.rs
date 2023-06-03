@@ -37,7 +37,7 @@ pub async fn account_fetcher_fetch_anchor_account<T: AccountDeserialize>(
     address: &Pubkey,
 ) -> anyhow::Result<T> {
     let account = fetcher.fetch_raw_account(address).await?;
-    let mut data: &[u8] = &account.data();
+    let mut data: &[u8] = account.data();
     T::try_deserialize(&mut data)
         .with_context(|| format!("deserializing anchor account {}", address))
 }
@@ -48,7 +48,7 @@ pub async fn account_fetcher_fetch_openbook_account(
     address: &Pubkey,
 ) -> anyhow::Result<OpenOrdersAccountValue> {
     let account = fetcher.fetch_raw_account(address).await?;
-    let data: &[u8] = &account.data();
+    let data: &[u8] = account.data();
     OpenOrdersAccountValue::from_bytes(&data[8..])
         .with_context(|| format!("deserializing openorders account {}", address))
 }
@@ -133,6 +133,7 @@ impl<Key: std::cmp::Eq + std::hash::Hash, Output: 'static> CoalescedAsyncJob<Key
 }
 
 #[derive(Default)]
+#[allow(clippy::type_complexity)]
 struct AccountCache {
     accounts: HashMap<Pubkey, AccountSharedData>,
     keys_for_program_and_discriminator: HashMap<(Pubkey, [u8; 8]), Vec<Pubkey>>,
@@ -179,6 +180,7 @@ impl<T: AccountFetcher> CachedAccountFetcher<T> {
 
 #[async_trait::async_trait]
 impl<T: AccountFetcher + 'static> AccountFetcher for CachedAccountFetcher<T> {
+    #[allow(clippy::clone_on_copy)]
     async fn fetch_raw_account(&self, address: &Pubkey) -> anyhow::Result<AccountSharedData> {
         let fetch_job = {
             let mut cache = self.cache.lock().unwrap();
@@ -214,6 +216,7 @@ impl<T: AccountFetcher + 'static> AccountFetcher for CachedAccountFetcher<T> {
         }
     }
 
+    #[allow(clippy::clone_on_copy)]
     async fn fetch_program_accounts(
         &self,
         program: &Pubkey,
@@ -225,7 +228,7 @@ impl<T: AccountFetcher + 'static> AccountFetcher for CachedAccountFetcher<T> {
             if let Some(accounts) = cache.keys_for_program_and_discriminator.get(&cache_key) {
                 return Ok(accounts
                     .iter()
-                    .map(|pk| (*pk, cache.accounts.get(&pk).unwrap().clone()))
+                    .map(|pk| (*pk, cache.accounts.get(pk).unwrap().clone()))
                     .collect::<Vec<_>>());
             }
 
@@ -233,7 +236,7 @@ impl<T: AccountFetcher + 'static> AccountFetcher for CachedAccountFetcher<T> {
             let program_copy = program.clone();
             cache
                 .program_accounts_jobs
-                .run_coalesced(cache_key.clone(), async move {
+                .run_coalesced(cache_key, async move {
                     let result = self_copy
                         .fetcher
                         .fetch_program_accounts(&program_copy, discriminator)

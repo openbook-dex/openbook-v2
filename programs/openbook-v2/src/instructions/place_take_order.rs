@@ -78,12 +78,12 @@ pub fn place_take_order<'info>(
         }
     };
 
-    // Transfer funds from payer to vault
+    // Transfer funds from token_deposit_account to vault
     if deposit_amount > 0 {
         let cpi_context = CpiContext::new(
             ctx.accounts.token_program.to_account_info(),
             Transfer {
-                from: ctx.accounts.payer.to_account_info(),
+                from: ctx.accounts.token_deposit_account.to_account_info(),
                 to: to_vault,
                 authority: ctx.accounts.owner.to_account_info(),
             },
@@ -101,7 +101,7 @@ pub fn place_take_order<'info>(
             ctx.accounts.token_program.to_account_info(),
             Transfer {
                 from: from_vault,
-                to: ctx.accounts.receiver.to_account_info(),
+                to: ctx.accounts.token_receiver_account.to_account_info(),
                 authority: ctx.accounts.market.to_account_info(),
             },
         );

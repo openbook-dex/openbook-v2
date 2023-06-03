@@ -2,65 +2,22 @@ use super::*;
 
 #[tokio::test]
 async fn test_take_ask_order() -> Result<(), TransportError> {
-    let context = TestContext::new().await;
-    let solana = &context.solana.clone();
-
-    let collect_fee_admin = TestKeypair::new();
-    let owner = context.users[0].key;
-    let payer = context.users[1].key;
-    let mints = &context.mints[0..=2];
-
-    let owner_token_0 = context.users[0].token_accounts[0];
-    let owner_token_1 = context.users[0].token_accounts[1];
-
-    let tokens = Token::create(mints.to_vec(), solana, collect_fee_admin, payer).await;
-
-    //
-    // TEST: Create a market
-    //
-
-    let market = get_market_address(1);
-    let base_vault = solana
-        .create_associated_token_account(&market, mints[0].pubkey)
-        .await;
-    let quote_vault = solana
-        .create_associated_token_account(&market, mints[1].pubkey)
-        .await;
-
-    let openbook_v2::accounts::CreateMarket {
+    let TestInitialize {
+        context,
+        collect_fee_admin,
+        owner,
+        owner_token_0,
+        owner_token_1,
         market,
         base_vault,
         quote_vault,
+        price_lots,
+        tokens,
+        account_0,
+        account_1,
         ..
-    } = send_tx(
-        solana,
-        CreateMarketInstruction {
-            collect_fee_admin: collect_fee_admin.pubkey(),
-            open_orders_admin: None,
-            close_market_admin: None,
-            payer,
-            market_index: 1,
-            quote_lot_size: 10,
-            base_lot_size: 100,
-            maker_fee: -0.0002,
-            taker_fee: 0.0004,
-            base_mint: mints[0].pubkey,
-            quote_mint: mints[1].pubkey,
-            base_vault,
-            quote_vault,
-            ..CreateMarketInstruction::with_new_book_and_queue(solana, &tokens[1]).await
-        },
-    )
-    .await
-    .unwrap();
-
-    let account_0 = create_open_orders_account(solana, owner, market, 0, &context.users[1]).await;
-    let account_1 = create_open_orders_account(solana, owner, market, 1, &context.users[1]).await;
-
-    let price_lots = {
-        let market = solana.get_account::<Market>(market).await;
-        market.native_price_to_lot(I80F48::from(1000))
-    };
+    } = TestContext::new_with_market(TestNewMarketInitialize::default()).await?;
+    let solana = &context.solana.clone();
 
     // Set the initial oracle price
     set_stub_oracle_price(solana, &tokens[1], collect_fee_admin, 1000.0).await;
@@ -72,7 +29,7 @@ async fn test_take_ask_order() -> Result<(), TransportError> {
             open_orders_admin: None,
             market,
             owner,
-            payer: owner_token_1,
+            token_deposit_account: owner_token_1,
             base_vault,
             quote_vault,
             side: Side::Bid,
@@ -98,8 +55,8 @@ async fn test_take_ask_order() -> Result<(), TransportError> {
         PlaceTakeOrderInstruction {
             market,
             owner,
-            payer: owner_token_0,
-            receiver: owner_token_1,
+            token_deposit_account: owner_token_0,
+            token_receiver_account: owner_token_1,
             base_vault,
             quote_vault,
             side: Side::Ask,
@@ -166,12 +123,13 @@ async fn test_take_ask_order() -> Result<(), TransportError> {
     send_tx(
         solana,
         SettleFundsInstruction {
+            owner,
             market,
             open_orders_account: account_0,
             base_vault,
             quote_vault,
-            payer_base: owner_token_0,
-            payer_quote: owner_token_1,
+            token_base_account: owner_token_0,
+            token_quote_account: owner_token_1,
             referrer: None,
         },
     )
@@ -193,65 +151,26 @@ async fn test_take_ask_order() -> Result<(), TransportError> {
 
 #[tokio::test]
 async fn test_take_bid_order() -> Result<(), TransportError> {
-    let context = TestContext::new().await;
-    let solana = &context.solana.clone();
-
-    let admin = TestKeypair::new();
-    let owner = context.users[0].key;
-    let payer = context.users[1].key;
-    let mints = &context.mints[0..=2];
-
-    let owner_token_0 = context.users[0].token_accounts[0];
-    let owner_token_1 = context.users[0].token_accounts[1];
-
-    let tokens = Token::create(mints.to_vec(), solana, admin, payer).await;
-
-    //
-    // TEST: Create a market
-    //
-
-    let market = get_market_address(1);
-    let base_vault = solana
-        .create_associated_token_account(&market, mints[0].pubkey)
-        .await;
-    let quote_vault = solana
-        .create_associated_token_account(&market, mints[1].pubkey)
-        .await;
-
-    let openbook_v2::accounts::CreateMarket {
+    let TestInitialize {
+        context,
+        collect_fee_admin,
+        owner,
+        mints,
+        owner_token_0,
+        owner_token_1,
         market,
         base_vault,
         quote_vault,
+        price_lots,
+        tokens,
+        account_0,
+        account_1,
         ..
-    } = send_tx(
-        solana,
-        CreateMarketInstruction {
-            payer,
-            market_index: 1,
-            quote_lot_size: 10,
-            base_lot_size: 100,
-            maker_fee: -0.0002,
-            taker_fee: 0.0004,
-            base_mint: mints[0].pubkey,
-            quote_mint: mints[1].pubkey,
-            base_vault,
-            quote_vault,
-            ..CreateMarketInstruction::with_new_book_and_queue(solana, &tokens[1]).await
-        },
-    )
-    .await
-    .unwrap();
-
-    let account_0 = create_open_orders_account(solana, owner, market, 0, &context.users[1]).await;
-    let account_1 = create_open_orders_account(solana, owner, market, 1, &context.users[1]).await;
-
-    let price_lots = {
-        let market = solana.get_account::<Market>(market).await;
-        market.native_price_to_lot(I80F48::from(1000))
-    };
+    } = TestContext::new_with_market(TestNewMarketInitialize::default()).await?;
+    let solana = &context.solana.clone();
 
     // Set the initial oracle price
-    set_stub_oracle_price(solana, &tokens[1], admin, 1000.0).await;
+    set_stub_oracle_price(solana, &tokens[1], collect_fee_admin, 1000.0).await;
 
     send_tx(
         solana,
@@ -260,7 +179,7 @@ async fn test_take_bid_order() -> Result<(), TransportError> {
             open_orders_admin: None,
             market,
             owner,
-            payer: owner_token_0,
+            token_deposit_account: owner_token_0,
             base_vault,
             quote_vault,
             side: Side::Ask,
@@ -282,7 +201,7 @@ async fn test_take_bid_order() -> Result<(), TransportError> {
     let balance_quote = solana.token_account_balance(owner_token_1).await;
 
     let admin_token_1 = solana
-        .create_associated_token_account(&admin.pubkey(), mints[1].pubkey)
+        .create_associated_token_account(&collect_fee_admin.pubkey(), mints[1].pubkey)
         .await;
     let balance_referral = solana.token_account_balance(admin_token_1).await;
 
@@ -292,8 +211,8 @@ async fn test_take_bid_order() -> Result<(), TransportError> {
             open_orders_admin: None,
             market,
             owner,
-            payer: owner_token_1,
-            receiver: owner_token_0,
+            token_deposit_account: owner_token_1,
+            token_receiver_account: owner_token_0,
             base_vault,
             quote_vault,
             side: Side::Bid,
@@ -363,12 +282,13 @@ async fn test_take_bid_order() -> Result<(), TransportError> {
     send_tx(
         solana,
         SettleFundsInstruction {
+            owner,
             market,
             open_orders_account: account_0,
             base_vault,
             quote_vault,
-            payer_base: owner_token_0,
-            payer_quote: owner_token_1,
+            token_base_account: owner_token_0,
+            token_quote_account: owner_token_1,
             referrer: None,
         },
     )

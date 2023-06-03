@@ -3,12 +3,17 @@
 use std::cell::RefCell;
 use std::{sync::Arc, sync::RwLock};
 
+use fixed::types::I80F48;
 use log::*;
+use openbook_v2::state::Market;
 use solana_program::{program_option::COption, program_pack::Pack};
 use solana_program_test::*;
 use solana_sdk::pubkey::Pubkey;
+pub use solana_sdk::transport::TransportError;
 use spl_token::{state::*, *};
 
+use crate::program_test::setup::create_open_orders_account;
+use crate::program_test::setup::Token;
 pub use client::*;
 pub use cookies::*;
 pub use solana::*;
@@ -19,6 +24,27 @@ pub mod cookies;
 pub mod setup;
 pub mod solana;
 pub mod utils;
+
+pub struct TestInitialize {
+    pub context: TestContext,
+    pub collect_fee_admin: TestKeypair,
+    pub open_orders_admin: TestKeypair,
+    pub close_market_admin: TestKeypair,
+    pub consume_events_admin: TestKeypair,
+    pub owner: TestKeypair,
+    pub payer: TestKeypair,
+    pub mints: Vec<MintCookie>,
+    pub owner_token_0: Pubkey,
+    pub owner_token_1: Pubkey,
+    pub market: Pubkey,
+    pub base_vault: Pubkey,
+    pub quote_vault: Pubkey,
+    pub price_lots: i64,
+    pub tokens: Vec<Token>,
+    pub account_0: Pubkey,
+    pub account_1: Pubkey,
+    pub bids: Pubkey,
+}
 
 trait AddPacked {
     fn add_packable_account<T: Pack>(
@@ -244,8 +270,142 @@ pub struct TestContext {
     pub users: Vec<UserCookie>,
 }
 
+pub struct TestNewMarketInitialize {
+    pub fee_penalty: u64,
+    pub quote_lot_size: i64,
+    pub base_lot_size: i64,
+    pub maker_fee: f32,
+    pub taker_fee: f32,
+    pub open_orders_admin_bool: bool,
+    pub close_market_admin_bool: bool,
+    pub consume_events_admin_bool: bool,
+}
+
+impl Default for TestNewMarketInitialize {
+    fn default() -> TestNewMarketInitialize {
+        TestNewMarketInitialize {
+            fee_penalty: 0,
+            quote_lot_size: 10,
+            base_lot_size: 100,
+            maker_fee: -0.0002,
+            taker_fee: 0.0004,
+            open_orders_admin_bool: false,
+            close_market_admin_bool: false,
+            consume_events_admin_bool: false,
+        }
+    }
+}
 impl TestContext {
     pub async fn new() -> Self {
         TestContextBuilder::new().start_default().await
+    }
+
+    pub async fn new_with_market(
+        args: TestNewMarketInitialize,
+    ) -> Result<TestInitialize, TransportError> {
+        let context = TestContextBuilder::new().start_default().await;
+        let solana = &context.solana.clone();
+
+        let collect_fee_admin_acc = TestKeypair::new();
+        let open_orders_admin_acc = TestKeypair::new();
+        let open_orders_admin = if args.open_orders_admin_bool {
+            Some(open_orders_admin_acc.pubkey())
+        } else {
+            None
+        };
+        let close_market_admin_acc = TestKeypair::new();
+        let close_market_admin = if args.close_market_admin_bool {
+            Some(close_market_admin_acc.pubkey())
+        } else {
+            None
+        };
+        let consume_events_admin_acc = TestKeypair::new();
+        let consume_events_admin = if args.consume_events_admin_bool {
+            Some(consume_events_admin_acc.pubkey())
+        } else {
+            None
+        };
+
+        let owner = context.users[0].key;
+        let payer = context.users[1].key;
+        let mints = &context.mints[0..=2];
+
+        let owner_token_0 = context.users[0].token_accounts[0];
+        let owner_token_1 = context.users[0].token_accounts[1];
+
+        let tokens = Token::create(mints.to_vec(), solana, collect_fee_admin_acc, payer).await;
+
+        // Create a market
+
+        let market = get_market_address(1);
+        let base_vault = solana
+            .create_associated_token_account(&market, mints[0].pubkey)
+            .await;
+        let quote_vault = solana
+            .create_associated_token_account(&market, mints[1].pubkey)
+            .await;
+
+        let openbook_v2::accounts::CreateMarket {
+            market,
+            base_vault,
+            quote_vault,
+            bids,
+            ..
+        } = send_tx(
+            solana,
+            CreateMarketInstruction {
+                collect_fee_admin: collect_fee_admin_acc.pubkey(),
+                open_orders_admin,
+                close_market_admin,
+                consume_events_admin,
+                payer,
+                market_index: 1,
+                quote_lot_size: args.quote_lot_size,
+                base_lot_size: args.base_lot_size,
+                maker_fee: args.maker_fee,
+                taker_fee: args.taker_fee,
+                base_mint: mints[0].pubkey,
+                quote_mint: mints[1].pubkey,
+                base_vault,
+                quote_vault,
+                fee_penalty: args.fee_penalty,
+                ..CreateMarketInstruction::with_new_book_and_queue(solana, &tokens[0]).await
+            },
+        )
+        .await
+        .unwrap();
+
+        let account_0 =
+            create_open_orders_account(solana, owner, market, 0, &context.users[1]).await;
+        let account_1 =
+            create_open_orders_account(solana, owner, market, 1, &context.users[1]).await;
+
+        let price_lots = {
+            let market = solana.get_account::<Market>(market).await;
+            market.native_price_to_lot(I80F48::from(1000))
+        };
+
+        let mints = mints.to_vec();
+
+        Ok(TestInitialize {
+            context,
+            collect_fee_admin: collect_fee_admin_acc,
+            open_orders_admin: open_orders_admin_acc,
+            close_market_admin: close_market_admin_acc,
+            consume_events_admin: consume_events_admin_acc,
+            owner,
+            payer,
+            mints,
+            owner_token_0,
+            owner_token_1,
+            market,
+            base_vault,
+            quote_vault,
+            price_lots,
+            tokens,
+            account_0,
+            account_1,
+            bids,
+        })
     }
 }
