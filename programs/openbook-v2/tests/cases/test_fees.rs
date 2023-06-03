@@ -37,7 +37,7 @@ async fn test_fees_accrued() -> Result<(), TransportError> {
             open_orders_admin: None,
             market,
             owner,
-            payer: owner_token_1,
+            token_deposit_account: owner_token_1,
             base_vault,
             quote_vault,
             side: Side::Bid,
@@ -61,7 +61,7 @@ async fn test_fees_accrued() -> Result<(), TransportError> {
             open_orders_admin: None,
             market,
             owner,
-            payer: owner_token_0,
+            token_deposit_account: owner_token_0,
             base_vault,
             quote_vault,
             side: Side::Ask,
@@ -124,12 +124,13 @@ async fn test_fees_accrued() -> Result<(), TransportError> {
     send_tx(
         solana,
         SettleFundsInstruction {
+            owner,
             market,
             open_orders_account: account_1,
             base_vault,
             quote_vault,
-            payer_base: owner_token_0,
-            payer_quote: owner_token_1,
+            token_base_account: owner_token_0,
+            token_quote_account: owner_token_1,
             referrer: None,
         },
     )
@@ -149,7 +150,7 @@ async fn test_fees_accrued() -> Result<(), TransportError> {
             collect_fee_admin,
             market,
             quote_vault,
-            receiver: admin_token_1,
+            token_receiver_account: admin_token_1,
         },
     )
     .await
@@ -172,7 +173,7 @@ async fn test_fees_accrued() -> Result<(), TransportError> {
             open_orders_admin: None,
             market,
             owner,
-            payer: owner_token_1,
+            token_deposit_account: owner_token_1,
             base_vault,
             quote_vault,
             side: Side::Bid,
@@ -238,7 +239,7 @@ async fn test_maker_fees() -> Result<(), TransportError> {
             open_orders_admin: None,
             market,
             owner,
-            payer: owner_token_1,
+            token_deposit_account: owner_token_1,
             base_vault,
             quote_vault,
             side: Side::Bid,
@@ -283,7 +284,7 @@ async fn test_maker_fees() -> Result<(), TransportError> {
             open_orders_admin: None,
             market,
             owner,
-            payer: owner_token_1,
+            token_deposit_account: owner_token_1,
             base_vault,
             quote_vault,
             side: Side::Bid,
@@ -316,7 +317,7 @@ async fn test_maker_fees() -> Result<(), TransportError> {
             open_orders_admin: None,
             market,
             owner,
-            payer: owner_token_0,
+            token_deposit_account: owner_token_0,
             base_vault,
             quote_vault,
             side: Side::Ask,
@@ -379,12 +380,13 @@ async fn test_maker_fees() -> Result<(), TransportError> {
     send_tx(
         solana,
         SettleFundsInstruction {
+            owner,
             market,
             open_orders_account: account_1,
             base_vault,
             quote_vault,
-            payer_base: owner_token_0,
-            payer_quote: owner_token_1,
+            token_base_account: owner_token_0,
+            token_quote_account: owner_token_1,
             referrer: None,
         },
     )
@@ -401,12 +403,13 @@ async fn test_maker_fees() -> Result<(), TransportError> {
     send_tx(
         solana,
         SettleFundsInstruction {
+            owner,
             market,
             open_orders_account: account_0,
             base_vault,
             quote_vault,
-            payer_base: owner_token_0,
-            payer_quote: owner_token_1,
+            token_base_account: owner_token_0,
+            token_quote_account: owner_token_1,
             referrer: Some(owner_token_1),
         },
     )
@@ -426,7 +429,7 @@ async fn test_maker_fees() -> Result<(), TransportError> {
             collect_fee_admin,
             market,
             quote_vault,
-            receiver: admin_token_1,
+            token_receiver_account: admin_token_1,
         },
     )
     .await

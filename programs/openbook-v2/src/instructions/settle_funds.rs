@@ -44,7 +44,7 @@ pub fn settle_funds<'info>(ctx: Context<'_, '_, '_, 'info, SettleFunds<'info>>) 
             ctx.accounts.token_program.to_account_info(),
             Transfer {
                 from: ctx.accounts.base_vault.to_account_info(),
-                to: ctx.accounts.payer_base.to_account_info(),
+                to: ctx.accounts.token_base_account.to_account_info(),
                 authority: ctx.accounts.market.to_account_info(),
             },
         );
@@ -56,7 +56,7 @@ pub fn settle_funds<'info>(ctx: Context<'_, '_, '_, 'info, SettleFunds<'info>>) 
             ctx.accounts.token_program.to_account_info(),
             Transfer {
                 from: ctx.accounts.quote_vault.to_account_info(),
-                to: ctx.accounts.payer_quote.to_account_info(),
+                to: ctx.accounts.token_quote_account.to_account_info(),
                 authority: ctx.accounts.market.to_account_info(),
             },
         );

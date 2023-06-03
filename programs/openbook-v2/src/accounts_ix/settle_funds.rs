@@ -4,7 +4,8 @@ use anchor_spl::token::{Token, TokenAccount};
 
 #[derive(Accounts)]
 pub struct SettleFunds<'info> {
-    #[account(mut)]
+    pub owner: Signer<'info>,
+    #[account(mut, has_one = owner)]
     pub open_orders_account: AccountLoader<'info, OpenOrdersAccountFixed>,
     #[account(mut)]
     pub market: AccountLoader<'info, Market>,
@@ -15,9 +16,9 @@ pub struct SettleFunds<'info> {
     pub quote_vault: Account<'info, TokenAccount>,
 
     #[account(mut)]
-    pub payer_base: Account<'info, TokenAccount>,
+    pub token_base_account: Account<'info, TokenAccount>,
     #[account(mut)]
-    pub payer_quote: Account<'info, TokenAccount>,
+    pub token_quote_account: Account<'info, TokenAccount>,
 
     pub token_program: Program<'info, Token>,
     pub system_program: Program<'info, System>,

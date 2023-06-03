@@ -20,7 +20,7 @@ pub fn sweep_fees(ctx: Context<SweepFees>) -> Result<()> {
         ctx.accounts.token_program.to_account_info(),
         Transfer {
             from: ctx.accounts.quote_vault.to_account_info(),
-            to: ctx.accounts.receiver.to_account_info(),
+            to: ctx.accounts.token_receiver_account.to_account_info(),
             authority: ctx.accounts.market.to_account_info(),
         },
     );

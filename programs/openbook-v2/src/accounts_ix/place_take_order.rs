@@ -18,10 +18,10 @@ pub struct PlaceTakeOrder<'info> {
     pub bids: AccountLoader<'info, BookSide>,
     #[account(mut)]
     pub asks: AccountLoader<'info, BookSide>,
-    #[account(mut, constraint = payer.owner == owner.key())]
-    pub payer: Box<Account<'info, TokenAccount>>,
+    #[account(mut, constraint = token_deposit_account.owner == owner.key())]
+    pub token_deposit_account: Box<Account<'info, TokenAccount>>,
     #[account(mut)]
-    pub receiver: Account<'info, TokenAccount>,
+    pub token_receiver_account: Box<Account<'info, TokenAccount>>,
     #[account(mut)]
     pub base_vault: Account<'info, TokenAccount>,
     #[account(mut)]

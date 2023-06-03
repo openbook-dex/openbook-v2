@@ -317,7 +317,7 @@ pub struct PlaceOrderInstruction {
     pub owner: TestKeypair,
     pub base_vault: Pubkey,
     pub quote_vault: Pubkey,
-    pub payer: Pubkey,
+    pub token_deposit_account: Pubkey,
     pub side: Side,
     pub price_lots: i64,
     pub max_base_lots: i64,
@@ -361,7 +361,7 @@ impl ClientInstruction for PlaceOrderInstruction {
             event_queue: market.event_queue,
             oracle: market.oracle,
             owner: self.owner.pubkey(),
-            payer: self.payer,
+            token_deposit_account: self.token_deposit_account,
             base_vault: self.base_vault,
             quote_vault: self.quote_vault,
             token_program: Token::id(),
@@ -394,7 +394,7 @@ pub struct PlaceOrderPeggedInstruction {
     pub open_orders_account: Pubkey,
     pub market: Pubkey,
     pub owner: TestKeypair,
-    pub payer: Pubkey,
+    pub token_deposit_account: Pubkey,
     pub base_vault: Pubkey,
     pub quote_vault: Pubkey,
     pub side: Side,
@@ -438,7 +438,7 @@ impl ClientInstruction for PlaceOrderPeggedInstruction {
             event_queue: market.event_queue,
             oracle: market.oracle,
             owner: self.owner.pubkey(),
-            payer: self.payer,
+            token_deposit_account: self.token_deposit_account,
             base_vault: self.base_vault,
             quote_vault: self.quote_vault,
             token_program: Token::id(),
@@ -460,8 +460,8 @@ pub struct PlaceTakeOrderInstruction {
     pub owner: TestKeypair,
     pub base_vault: Pubkey,
     pub quote_vault: Pubkey,
-    pub payer: Pubkey,
-    pub receiver: Pubkey,
+    pub token_deposit_account: Pubkey,
+    pub token_receiver_account: Pubkey,
     pub side: Side,
     pub price_lots: i64,
     pub max_base_lots: i64,
@@ -500,8 +500,8 @@ impl ClientInstruction for PlaceTakeOrderInstruction {
             event_queue: market.event_queue,
             oracle: market.oracle,
             owner: self.owner.pubkey(),
-            payer: self.payer,
-            receiver: self.receiver,
+            token_deposit_account: self.token_deposit_account,
+            token_receiver_account: self.token_receiver_account,
             base_vault: self.base_vault,
             quote_vault: self.quote_vault,
             token_program: Token::id(),
@@ -678,12 +678,13 @@ impl ClientInstruction for ConsumeEventsInstruction {
 }
 
 pub struct SettleFundsInstruction {
+    pub owner: TestKeypair,
     pub open_orders_account: Pubkey,
     pub market: Pubkey,
     pub base_vault: Pubkey,
     pub quote_vault: Pubkey,
-    pub payer_base: Pubkey,
-    pub payer_quote: Pubkey,
+    pub token_base_account: Pubkey,
+    pub token_quote_account: Pubkey,
     pub referrer: Option<Pubkey>,
 }
 #[async_trait::async_trait(?Send)]
@@ -698,12 +699,13 @@ impl ClientInstruction for SettleFundsInstruction {
         let instruction = Self::Instruction {};
 
         let accounts = Self::Accounts {
+            owner: self.owner.pubkey(),
             open_orders_account: self.open_orders_account,
             market: self.market,
             base_vault: self.base_vault,
             quote_vault: self.quote_vault,
-            payer_base: self.payer_base,
-            payer_quote: self.payer_quote,
+            token_base_account: self.token_base_account,
+            token_quote_account: self.token_quote_account,
             token_program: Token::id(),
             system_program: System::id(),
         };
@@ -721,7 +723,7 @@ impl ClientInstruction for SettleFundsInstruction {
     }
 
     fn signers(&self) -> Vec<TestKeypair> {
-        vec![]
+        vec![self.owner]
     }
 }
 
@@ -729,7 +731,7 @@ pub struct SweepFeesInstruction {
     pub collect_fee_admin: TestKeypair,
     pub market: Pubkey,
     pub quote_vault: Pubkey,
-    pub receiver: Pubkey,
+    pub token_receiver_account: Pubkey,
 }
 #[async_trait::async_trait(?Send)]
 impl ClientInstruction for SweepFeesInstruction {
@@ -746,7 +748,7 @@ impl ClientInstruction for SweepFeesInstruction {
             collect_fee_admin: self.collect_fee_admin.pubkey(),
             market: self.market,
             quote_vault: self.quote_vault,
-            receiver: self.receiver,
+            token_receiver_account: self.token_receiver_account,
             token_program: Token::id(),
             system_program: System::id(),
         };
@@ -765,8 +767,8 @@ pub struct DepositInstruction {
     pub market: Pubkey,
     pub base_vault: Pubkey,
     pub quote_vault: Pubkey,
-    pub payer_base: Pubkey,
-    pub payer_quote: Pubkey,
+    pub token_base_account: Pubkey,
+    pub token_quote_account: Pubkey,
     pub owner: TestKeypair,
     pub base_amount_lots: u64,
     pub quote_amount_lots: u64,
@@ -791,8 +793,8 @@ impl ClientInstruction for DepositInstruction {
             market: self.market,
             base_vault: self.base_vault,
             quote_vault: self.quote_vault,
-            payer_base: self.payer_base,
-            payer_quote: self.payer_quote,
+            token_base_account: self.token_base_account,
+            token_quote_account: self.token_quote_account,
             token_program: Token::id(),
             system_program: System::id(),
         };

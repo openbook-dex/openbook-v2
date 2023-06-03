@@ -10,8 +10,7 @@ pub struct SweepFees<'info> {
     pub market: AccountLoader<'info, Market>,
 
     #[account(mut)]
-    // Check in fn that market.admin == receiver.owner
-    pub receiver: Account<'info, TokenAccount>,
+    pub token_receiver_account: Account<'info, TokenAccount>,
 
     #[account(mut)]
     pub quote_vault: Account<'info, TokenAccount>,

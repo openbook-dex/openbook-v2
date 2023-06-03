@@ -6,9 +6,9 @@ use anchor_spl::token::{Token, TokenAccount};
 pub struct Deposit<'info> {
     pub owner: Signer<'info>,
     #[account(mut)]
-    pub payer_base: Account<'info, TokenAccount>,
+    pub token_base_account: Account<'info, TokenAccount>,
     #[account(mut)]
-    pub payer_quote: Account<'info, TokenAccount>,
+    pub token_quote_account: Account<'info, TokenAccount>,
     #[account(mut)]
     pub open_orders_account: AccountLoader<'info, OpenOrdersAccountFixed>,
     #[account(mut)]
