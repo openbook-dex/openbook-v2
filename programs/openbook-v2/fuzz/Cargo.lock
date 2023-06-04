@@ -1751,6 +1751,7 @@ dependencies = [
  "openbook-v2",
  "solana-program",
  "solana-runtime",
+ "solana-sdk",
  "spl-associated-token-account",
  "spl-token",
 ]

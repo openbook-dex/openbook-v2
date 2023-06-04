@@ -1,8 +1,12 @@
+use crate::accounts_state::AccountsState;
+use bumpalo::Bump;
 use solana_program::{
     account_info::AccountInfo, clock::Clock, entrypoint::ProgramResult, instruction::Instruction,
     program_error::ProgramError, program_stubs, pubkey::Pubkey, rent::Rent, system_program,
 };
+use solana_sdk::account::Account;
 use std::cell::Ref;
+use std::collections::HashMap;
 
 struct TestSyscallStubs {}
 impl program_stubs::SyscallStubs for TestSyscallStubs {
@@ -66,28 +70,25 @@ fn test_syscall_stubs() {
     });
 }
 
-pub fn do_process_instruction(instruction: Instruction, accounts: &[AccountInfo]) -> ProgramResult {
+pub fn process_instruction(
+    state: &mut AccountsState,
+    accounts: &impl anchor_lang::ToAccountMetas,
+    data: &impl anchor_lang::InstructionData,
+) -> ProgramResult {
     test_syscall_stubs();
 
-    // approximate the logic in the actual runtime which runs the instruction
-    // and only updates accounts if the instruction is successful
-    let datas = accounts.iter().map(|acc| acc.data.borrow().to_owned());
+    let bump = Bump::new();
+    let metas = anchor_lang::ToAccountMetas::to_account_metas(accounts, None);
+    let account_infos = state.account_infos(&bump, metas);
 
-    let res = if instruction.program_id == openbook_v2::id() {
-        openbook_v2::entry(&instruction.program_id, &accounts, &instruction.data)
-    } else {
-        spl_token::processor::Processor::process(
-            &instruction.program_id,
-            &accounts,
-            &instruction.data,
-        )
-    };
+    let res = openbook_v2::entry(
+        &openbook_v2::ID,
+        &account_infos,
+        &anchor_lang::InstructionData::data(data),
+    );
 
-    if res.is_err() {
-        accounts
-            .iter()
-            .zip(datas)
-            .for_each(|(acc, data)| acc.data.borrow_mut().copy_from_slice(&data));
+    if res.is_ok() {
+        state.update(account_infos);
     }
 
     res
