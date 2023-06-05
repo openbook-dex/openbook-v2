@@ -7,7 +7,7 @@ use std::mem::size_of;
 use super::Side;
 
 pub const MAX_NUM_EVENTS: u16 = 488;
-pub const NULL: u16 = u16::MAX;
+pub const NO_NODE: u16 = u16::MAX;
 
 /// Container for the different EventTypes.
 ///
@@ -28,7 +28,7 @@ impl EventQueue {
     pub fn init(&mut self) {
         self.header = EventQueueHeader {
             free_head: 0,
-            used_head: NULL,
+            used_head: NO_NODE,
             count: 0,
             seq_num: 0,
             _padd: Default::default(),
@@ -36,9 +36,9 @@ impl EventQueue {
 
         for i in 0..MAX_NUM_EVENTS {
             self.nodes[i as usize].next = i + 1;
-            self.nodes[i as usize].prev = NULL;
+            self.nodes[i as usize].prev = NO_NODE;
         }
-        self.nodes[MAX_NUM_EVENTS as usize - 1].next = NULL;
+        self.nodes[MAX_NUM_EVENTS as usize - 1].next = NO_NODE;
     }
 
     pub fn len(&self) -> usize {
@@ -115,7 +115,7 @@ impl EventQueue {
         self.nodes[next_slot as usize].prev = prev_slot;
 
         if self.header.count() == 1 {
-            self.header.used_head = NULL;
+            self.header.used_head = NO_NODE;
         } else if self.header.used_head() == slot {
             self.header.used_head = next_slot;
         };
@@ -123,7 +123,7 @@ impl EventQueue {
         self.header.decr_count();
         self.header.free_head = slot.try_into().unwrap();
         self.nodes[slot].next = next_free;
-        self.nodes[slot].prev = NULL;
+        self.nodes[slot].prev = NO_NODE;
 
         Ok(self.nodes[slot].event)
     }
@@ -207,7 +207,7 @@ const_assert_eq!(std::mem::size_of::<EventNode>() % 8, 0);
 
 impl EventNode {
     pub fn is_free(&self) -> bool {
-        self.prev == NULL
+        self.prev == NO_NODE
     }
 }
 
@@ -382,7 +382,7 @@ mod tests {
 
         assert_eq!(eq.header.count(), 0);
         assert_eq!(eq.header.free_head(), 0);
-        assert_eq!(eq.header.used_head(), NULL as usize);
+        assert_eq!(eq.header.used_head(), NO_NODE as usize);
         assert_eq!(count_free_nodes(&eq), MAX_NUM_EVENTS as usize);
     }
 
@@ -432,12 +432,12 @@ mod tests {
         assert_eq!(eq.header.free_head, LAST_SLOT);
         assert_eq!(eq.nodes[0].prev, LAST_SLOT - 1);
         assert_eq!(eq.nodes[0].next, 1);
-        assert_eq!(eq.nodes[LAST_SLOT as usize].next, NULL);
+        assert_eq!(eq.nodes[LAST_SLOT as usize].next, NO_NODE);
 
         // insert last available event
         eq.push_back(AnyEvent::zeroed());
         assert_eq!(eq.header.used_head, 0);
-        assert_eq!(eq.header.free_head, NULL);
+        assert_eq!(eq.header.free_head, NO_NODE);
         assert_eq!(eq.nodes[0].prev, LAST_SLOT);
         assert_eq!(eq.nodes[0].next, 1);
     }
@@ -453,7 +453,7 @@ mod tests {
         eq.pop_front().unwrap();
         assert_eq!(eq.header.free_head, 0);
         assert_eq!(eq.header.used_head, 1);
-        assert_eq!(eq.nodes[0].next, NULL);
+        assert_eq!(eq.nodes[0].next, NO_NODE);
         assert_eq!(eq.nodes[1].prev, LAST_SLOT);
         assert_eq!(eq.nodes[1].next, 2);
 
@@ -474,7 +474,7 @@ mod tests {
         assert_eq!(eq.nodes[LAST_SLOT as usize].next, LAST_SLOT);
 
         eq.pop_front().unwrap();
-        assert_eq!(eq.header.used_head, NULL);
+        assert_eq!(eq.header.used_head, NO_NODE);
         assert_eq!(eq.header.free_head, LAST_SLOT);
         assert_eq!(eq.nodes[LAST_SLOT as usize].next, LAST_SLOT - 1);
 
