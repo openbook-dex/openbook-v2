@@ -140,31 +140,25 @@ impl AccountsState {
 
     pub fn add_openbook_account<T>(&mut self, pubkey: Pubkey) -> &mut Self {
         let len = 8 + std::mem::size_of::<T>();
-        self.insert(
-            pubkey,
-            Account::create(
-                Rent::default().minimum_balance(len),
-                vec![0; len],
-                openbook_v2::ID,
-                false,
-                Epoch::default(),
-            ),
-        );
+        self.insert(pubkey, zero_account(len));
         self
     }
 
     pub fn add_open_orders_account(&mut self, pubkey: Pubkey, n_open_orders: u8) -> &mut Self {
-        let len = OpenOrdersAccount::space(n_open_orders).unwrap();
         self.insert(
             pubkey,
-            Account::create(
-                Rent::default().minimum_balance(len),
-                vec![0; len],
-                openbook_v2::ID,
-                false,
-                Epoch::default(),
-            ),
+            zero_account(OpenOrdersAccount::space(n_open_orders).unwrap()),
         );
         self
     }
+}
+
+fn zero_account(len: usize) -> Account {
+    Account::create(
+        Rent::default().minimum_balance(len),
+        vec![0; len],
+        openbook_v2::ID,
+        false,
+        Epoch::default(),
+    )
 }
