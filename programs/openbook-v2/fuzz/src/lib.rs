@@ -121,7 +121,9 @@ impl FuzzContext {
 
         self.stub_oracle_create().unwrap();
         self.create_market().unwrap();
-        self.init_open_orders().unwrap();
+        for i in 0..self.users.len() {
+            self.init_open_orders(i).unwrap();
+        }
     }
 
     fn stub_oracle_create(&mut self) -> ProgramResult {
@@ -170,20 +172,19 @@ impl FuzzContext {
         process_instruction(&mut self.state, &accounts, &data)
     }
 
-    fn init_open_orders(&mut self) -> ProgramResult {
-        self.users.iter().try_for_each(|user| {
-            let accounts = openbook_v2::accounts::InitOpenOrders {
-                open_orders_account: user.open_orders,
-                owner: user.owner,
-                payer: self.payer,
-                market: self.market,
-                system_program: system_program::ID,
-            };
-            let data = openbook_v2::instruction::InitOpenOrders {
-                account_num: 0,
-                open_orders_count: 8,
-            };
-            process_instruction(&mut self.state, &accounts, &data)
-        })
+    fn init_open_orders(&mut self, user: usize) -> ProgramResult {
+        let user = &self.users[user];
+        let accounts = openbook_v2::accounts::InitOpenOrders {
+            open_orders_account: user.open_orders,
+            owner: user.owner,
+            payer: self.payer,
+            market: self.market,
+            system_program: system_program::ID,
+        };
+        let data = openbook_v2::instruction::InitOpenOrders {
+            account_num: 0,
+            open_orders_count: 8,
+        };
+        process_instruction(&mut self.state, &accounts, &data)
     }
 }
