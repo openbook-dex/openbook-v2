@@ -99,7 +99,7 @@ impl FuzzContext {
                 .add_account_with_lamports(u.owner, 1_000_000)
                 .add_token_account_with_lamports(u.base_vault, u.owner, base_mint, 1_000_000)
                 .add_token_account_with_lamports(u.quote_vault, u.owner, quote_mint, 1_000_000)
-                .add_openbook_account::<OpenOrdersAccount>(u.open_orders);
+                .add_open_orders_account(u.open_orders, 8);
         });
 
         Self {
@@ -118,6 +118,23 @@ impl FuzzContext {
             state,
         }
     }
+
+    //pub fn init_open_orders(&mut self) -> ProgramResult {
+    //    let results: Vec<ProgramResult> = self.users.iter().map(|user| {
+    //        let accounts = openbook_v2::accounts::InitOpenOrders {
+    //            open_orders_account: user.open_orders,
+    //            owner: user.owner,
+    //            payer: self.payer,
+    //            market: self.market,
+    //            system_program: system_program::ID,
+    //        };
+    //        let data = openbook_v2::instruction::init_open_orders {
+    //            account_num: 0,
+    //            open_orders_count: 8,
+    //        };
+    //        process_instruction(&mut self.state, &accounts, &data)
+    //    });
+    //}
 
     pub fn stub_oracle_create(&mut self) -> ProgramResult {
         let accounts = openbook_v2::accounts::StubOracleCreate {

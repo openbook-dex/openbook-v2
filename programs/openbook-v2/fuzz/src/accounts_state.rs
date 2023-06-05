@@ -1,5 +1,5 @@
 use bumpalo::Bump;
-
+use openbook_v2::state::OpenOrdersAccount;
 use solana_program::{
     account_info::AccountInfo, bpf_loader, clock::Epoch, instruction::AccountMeta,
     program_pack::Pack, pubkey::Pubkey, rent::Rent, system_program,
@@ -140,6 +140,21 @@ impl AccountsState {
 
     pub fn add_openbook_account<T>(&mut self, pubkey: Pubkey) -> &mut Self {
         let len = 8 + std::mem::size_of::<T>();
+        self.insert(
+            pubkey,
+            Account::create(
+                Rent::default().minimum_balance(len),
+                vec![0; len],
+                openbook_v2::ID,
+                false,
+                Epoch::default(),
+            ),
+        );
+        self
+    }
+
+    pub fn add_open_orders_account(&mut self, pubkey: Pubkey, n_open_orders: u8) -> &mut Self {
+        let len = OpenOrdersAccount::space(n_open_orders).unwrap();
         self.insert(
             pubkey,
             Account::create(
