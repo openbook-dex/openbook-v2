@@ -6,10 +6,16 @@ use fixed::types::I80F48;
 use openbook_v2::state::OracleConfigParams;
 use openbook_v2::state::*;
 use processor::*;
-use solana_program::{instruction::Instruction, pubkey::Pubkey, system_program};
+use solana_program::{pubkey::Pubkey, system_program};
 use spl_associated_token_account::get_associated_token_address;
 
 pub struct FuzzContext {}
+
+impl Default for FuzzContext {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 impl FuzzContext {
     pub fn new() -> Self {

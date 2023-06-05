@@ -1,5 +1,5 @@
 use bumpalo::Bump;
-use openbook_v2::state::*;
+
 use solana_program::{
     account_info::AccountInfo, bpf_loader, clock::Epoch, instruction::AccountMeta,
     program_pack::Pack, pubkey::Pubkey, rent::Rent, system_program,
@@ -10,13 +10,15 @@ use std::collections::HashMap;
 
 pub struct AccountsState(HashMap<Pubkey, Account>);
 
+impl Default for AccountsState {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl AccountsState {
     pub fn new() -> Self {
         Self(HashMap::new())
-    }
-
-    pub fn default() -> Self {
-        Self::new()
     }
 
     pub fn insert(&mut self, pubkey: Pubkey, account: Account) {
@@ -82,10 +84,12 @@ impl AccountsState {
 
     pub fn add_token_account(&mut self, pubkey: Pubkey, owner: Pubkey, mint: Pubkey) -> &mut Self {
         let mut data = vec![0_u8; TokenAccount::LEN];
-        let mut account = TokenAccount::default();
-        account.state = spl_token::state::AccountState::Initialized;
-        account.mint = mint;
-        account.owner = owner;
+        let account = TokenAccount {
+            state: spl_token::state::AccountState::Initialized,
+            mint,
+            owner,
+            ..TokenAccount::default()
+        };
         TokenAccount::pack(account, &mut data).unwrap();
         self.insert(
             pubkey,
@@ -102,8 +106,10 @@ impl AccountsState {
 
     pub fn add_mint(&mut self, pubkey: Pubkey) -> &mut Self {
         let mut data = vec![0_u8; Mint::LEN];
-        let mut mint = Mint::default();
-        mint.is_initialized = true;
+        let mint = Mint {
+            is_initialized: true,
+            ..Mint::default()
+        };
         Mint::pack(mint, &mut data).unwrap();
         self.insert(
             pubkey,
