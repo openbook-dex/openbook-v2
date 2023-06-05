@@ -3203,7 +3203,6 @@ dependencies = [
  "serde_json",
  "shellexpand",
  "solana-account-decoder",
- "solana-address-lookup-table-program",
  "solana-client",
  "solana-rpc",
  "solana-sdk",

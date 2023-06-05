@@ -1,15 +1,30 @@
 [workspace]
 members = [
-    # "bin/*",
-    "lib/client",
-    "programs/*"
+  # "bin/*",
+  "lib/client",
+  "programs/*",
 ]
 
+[workspace.dependencies]
+anchor-client = "0.27.0"
+anchor-lang = "0.27.0"
+anchor-spl = "0.27.0"
+fixed = {path = "./3rdparty/fixed", version = "1.11.0"}
+pyth-sdk-solana = "0.1.0"
+solana-account-decoder = "~1.14.17"
+solana-client = "~1.14.17"
+solana-logger = "~1.14.17"
+solana-program = "~1.14.17"
+solana-program-test = "~1.14.17"
+solana-rpc = "~1.14.17"
+solana-sdk = "~1.14.17"
+spl-associated-token-account = "1.0.3"
+
 [profile.release]
-overflow-checks = true
+codegen-units = 1
 lto = "fat"
-codegen-units = 1
+overflow-checks = true
 [profile.release.build-override]
-opt-level = 3
-incremental = false
 codegen-units = 1
+incremental = false
+opt-level = 3
