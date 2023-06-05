@@ -6,15 +6,22 @@ use fixed::types::I80F48;
 use openbook_v2::state::OracleConfigParams;
 use openbook_v2::state::*;
 use processor::*;
-use solana_program::{pubkey::Pubkey, system_program};
+use solana_program::{entrypoint::ProgramResult, pubkey::Pubkey, system_program};
 use spl_associated_token_account::get_associated_token_address;
 
-pub struct FuzzContext {}
-
-impl Default for FuzzContext {
-    fn default() -> Self {
-        Self::new()
-    }
+pub struct FuzzContext {
+    payer: Pubkey,
+    admin: Pubkey,
+    base_mint: Pubkey,
+    quote_mint: Pubkey,
+    market: Pubkey,
+    oracle: Pubkey,
+    bids: Pubkey,
+    asks: Pubkey,
+    event_queue: Pubkey,
+    base_vault: Pubkey,
+    quote_vault: Pubkey,
+    state: AccountsState,
 }
 
 impl FuzzContext {
@@ -59,28 +66,47 @@ impl FuzzContext {
             .add_token_account(base_vault, market, base_mint)
             .add_token_account(quote_vault, market, quote_mint);
 
-        let accounts = openbook_v2::accounts::StubOracleCreate {
-            oracle,
-            admin,
-            mint: base_mint,
+        Self {
             payer,
-            system_program: system_program::ID,
-        };
-        let data = openbook_v2::instruction::StubOracleCreate { price: I80F48::ONE };
-        process_instruction(&mut state, &accounts, &data).unwrap();
-
-        let accounts = openbook_v2::accounts::CreateMarket {
+            admin,
+            base_mint,
+            quote_mint,
             market,
+            oracle,
             bids,
             asks,
             event_queue,
-            payer,
             base_vault,
             quote_vault,
-            base_mint,
-            quote_mint,
+            state,
+        }
+    }
+
+    pub fn stub_oracle_create(&mut self) -> ProgramResult {
+        let accounts = openbook_v2::accounts::StubOracleCreate {
+            oracle: self.oracle,
+            admin: self.admin,
+            mint: self.base_mint,
+            payer: self.payer,
             system_program: system_program::ID,
-            oracle,
+        };
+        let data = openbook_v2::instruction::StubOracleCreate { price: I80F48::ONE };
+        process_instruction(&mut self.state, &accounts, &data)
+    }
+
+    pub fn create_market(&mut self) -> ProgramResult {
+        let accounts = openbook_v2::accounts::CreateMarket {
+            market: self.market,
+            bids: self.bids,
+            asks: self.asks,
+            event_queue: self.event_queue,
+            payer: self.payer,
+            base_vault: self.base_vault,
+            quote_vault: self.quote_vault,
+            base_mint: self.base_mint,
+            quote_mint: self.quote_mint,
+            oracle: self.oracle,
+            system_program: system_program::ID,
         };
         let data = openbook_v2::instruction::CreateMarket {
             market_index: 0,
@@ -99,8 +125,6 @@ impl FuzzContext {
             consume_events_admin: None,
             close_market_admin: None,
         };
-        process_instruction(&mut state, &accounts, &data).unwrap();
-
-        Self {}
+        process_instruction(&mut self.state, &accounts, &data)
     }
 }

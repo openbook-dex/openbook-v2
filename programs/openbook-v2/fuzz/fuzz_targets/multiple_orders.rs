@@ -20,6 +20,9 @@ fuzz_target!(|fuzz_data: FuzzData| { run_fuzz(fuzz_data) });
 fn run_fuzz(fuzz_data: FuzzData) {
     println!("{:?}", fuzz_data);
 
-    FuzzContext::new();
+    let mut ctx = FuzzContext::new();
+    ctx.stub_oracle_create().unwrap();
+    ctx.create_market().unwrap();
+
     panic!();
 }

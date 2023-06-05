@@ -5,9 +5,6 @@ use solana_program::{
     program_error::ProgramError, program_stubs, pubkey::Pubkey, rent::Rent, system_program,
 };
 
-
-
-
 struct TestSyscallStubs {}
 impl program_stubs::SyscallStubs for TestSyscallStubs {
     fn sol_invoke_signed(
