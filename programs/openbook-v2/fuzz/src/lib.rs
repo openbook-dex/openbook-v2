@@ -9,6 +9,8 @@ use processor::*;
 use solana_program::{entrypoint::ProgramResult, pubkey::Pubkey, system_program};
 use spl_associated_token_account::get_associated_token_address;
 
+pub const MAX_NUM_USERS: usize = 8;
+
 pub struct FuzzContext {
     payer: Pubkey,
     admin: Pubkey,
@@ -21,11 +23,12 @@ pub struct FuzzContext {
     event_queue: Pubkey,
     base_vault: Pubkey,
     quote_vault: Pubkey,
+    users: Vec<UserAccounts>,
     state: AccountsState,
 }
 
 impl FuzzContext {
-    pub fn new() -> Self {
+    pub fn new(n_users: u8) -> Self {
         let payer = Pubkey::new_unique();
         let admin = Pubkey::new_unique();
         let base_mint = Pubkey::new_unique();
@@ -63,8 +66,41 @@ impl FuzzContext {
             .add_openbook_account::<Market>(market)
             .add_openbook_account::<StubOracle>(oracle)
             .add_program(system_program::ID)
-            .add_token_account(base_vault, market, base_mint)
-            .add_token_account(quote_vault, market, quote_mint);
+            .add_token_account_with_lamports(base_vault, market, base_mint, 0)
+            .add_token_account_with_lamports(quote_vault, market, quote_mint, 0);
+
+        let users: Vec<UserAccounts> = (0..n_users)
+            .map(|_| {
+                let account_num = 0_u32;
+                let owner = Pubkey::new_unique();
+                let open_orders = Pubkey::find_program_address(
+                    &[
+                        b"OpenOrders".as_ref(),
+                        owner.as_ref(),
+                        market.as_ref(),
+                        &account_num.to_le_bytes(),
+                    ],
+                    &openbook_v2::ID,
+                )
+                .0;
+
+                UserAccounts {
+                    owner,
+                    open_orders,
+                    base_vault: Pubkey::new_unique(),
+                    quote_vault: Pubkey::new_unique(),
+                }
+            })
+            .collect();
+
+        users.iter().for_each(|u| {
+            state
+                .add_account_with_lamports(u.owner, 1_000_000)
+                .add_account_with_lamports(u.owner, 1_000_000)
+                .add_token_account_with_lamports(u.base_vault, u.owner, base_mint, 1_000_000)
+                .add_token_account_with_lamports(u.quote_vault, u.owner, quote_mint, 1_000_000)
+                .add_openbook_account::<OpenOrdersAccount>(u.open_orders);
+        });
 
         Self {
             payer,
@@ -78,6 +114,7 @@ impl FuzzContext {
             event_queue,
             base_vault,
             quote_vault,
+            users,
             state,
         }
     }

@@ -8,6 +8,13 @@ use solana_sdk::account::{Account, WritableAccount};
 use spl_token::state::{Account as TokenAccount, Mint};
 use std::collections::HashMap;
 
+pub struct UserAccounts {
+    pub owner: Pubkey,
+    pub base_vault: Pubkey,
+    pub quote_vault: Pubkey,
+    pub open_orders: Pubkey,
+}
+
 pub struct AccountsState(HashMap<Pubkey, Account>);
 
 impl Default for AccountsState {
@@ -82,12 +89,19 @@ impl AccountsState {
         self
     }
 
-    pub fn add_token_account(&mut self, pubkey: Pubkey, owner: Pubkey, mint: Pubkey) -> &mut Self {
+    pub fn add_token_account_with_lamports(
+        &mut self,
+        pubkey: Pubkey,
+        owner: Pubkey,
+        mint: Pubkey,
+        amount: u64,
+    ) -> &mut Self {
         let mut data = vec![0_u8; TokenAccount::LEN];
         let account = TokenAccount {
             state: spl_token::state::AccountState::Initialized,
             mint,
             owner,
+            amount,
             ..TokenAccount::default()
         };
         TokenAccount::pack(account, &mut data).unwrap();
