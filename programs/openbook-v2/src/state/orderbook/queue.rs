@@ -62,7 +62,7 @@ impl EventQueue {
     }
 
     pub fn at_slot(&self, slot: usize) -> Option<&AnyEvent> {
-        if self.nodes[slot].is_free() {
+        if slot >= self.nodes.len() || self.nodes[slot].is_free() {
             None
         } else {
             Some(&self.nodes[slot].event)
@@ -103,7 +103,7 @@ impl EventQueue {
     }
 
     pub fn delete_slot(&mut self, slot: usize) -> Result<AnyEvent> {
-        if self.is_empty() || self.nodes[slot].is_free() {
+        if slot >= self.nodes.len() || self.is_empty() || self.nodes[slot].is_free() {
             return Err(OpenBookError::SomeError.into());
         }
 
