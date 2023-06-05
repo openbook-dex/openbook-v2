@@ -54,21 +54,6 @@ impl FuzzContext {
         let base_vault = get_associated_token_address(&market, &base_mint);
         let quote_vault = get_associated_token_address(&market, &quote_mint);
 
-        let mut state = AccountsState::new();
-        state
-            .add_account_with_lamports(admin, 1_000_000)
-            .add_account_with_lamports(payer, 1_000_000)
-            .add_mint(base_mint)
-            .add_mint(quote_mint)
-            .add_openbook_account::<BookSide>(asks)
-            .add_openbook_account::<BookSide>(bids)
-            .add_openbook_account::<EventQueue>(event_queue)
-            .add_openbook_account::<Market>(market)
-            .add_openbook_account::<StubOracle>(oracle)
-            .add_program(system_program::ID)
-            .add_token_account_with_lamports(base_vault, market, base_mint, 0)
-            .add_token_account_with_lamports(quote_vault, market, quote_mint, 0);
-
         let users: Vec<UserAccounts> = (0..n_users)
             .map(|_| {
                 let account_num = 0_u32;
@@ -93,15 +78,6 @@ impl FuzzContext {
             })
             .collect();
 
-        users.iter().for_each(|u| {
-            state
-                .add_account_with_lamports(u.owner, 1_000_000)
-                .add_account_with_lamports(u.owner, 1_000_000)
-                .add_token_account_with_lamports(u.base_vault, u.owner, base_mint, 1_000_000)
-                .add_token_account_with_lamports(u.quote_vault, u.owner, quote_mint, 1_000_000)
-                .add_open_orders_account(u.open_orders, 8);
-        });
-
         Self {
             payer,
             admin,
@@ -115,17 +91,40 @@ impl FuzzContext {
             base_vault,
             quote_vault,
             users,
-            state,
+            state: AccountsState::new(),
         }
     }
 
     pub fn initialize(&mut self) {
+        self.state
+            .add_account_with_lamports(self.admin, 1_000_000)
+            .add_account_with_lamports(self.payer, 1_000_000)
+            .add_mint(self.base_mint)
+            .add_mint(self.quote_mint)
+            .add_openbook_account::<BookSide>(self.asks)
+            .add_openbook_account::<BookSide>(self.bids)
+            .add_openbook_account::<EventQueue>(self.event_queue)
+            .add_openbook_account::<Market>(self.market)
+            .add_openbook_account::<StubOracle>(self.oracle)
+            .add_program(system_program::ID)
+            .add_token_account_with_lamports(self.base_vault, self.market, self.base_mint, 0)
+            .add_token_account_with_lamports(self.quote_vault, self.market, self.quote_mint, 0);
+
+        self.users.iter().for_each(|u| {
+            self.state
+                .add_account_with_lamports(u.owner, 1_000_000)
+                .add_account_with_lamports(u.owner, 1_000_000)
+                .add_token_account_with_lamports(u.base_vault, u.owner, self.base_mint, 1_000_000)
+                .add_token_account_with_lamports(u.quote_vault, u.owner, self.quote_mint, 1_000_000)
+                .add_open_orders_account(u.open_orders, 8);
+        });
+
         self.stub_oracle_create().unwrap();
         self.create_market().unwrap();
         self.init_open_orders().unwrap();
     }
 
-    pub fn stub_oracle_create(&mut self) -> ProgramResult {
+    fn stub_oracle_create(&mut self) -> ProgramResult {
         let accounts = openbook_v2::accounts::StubOracleCreate {
             oracle: self.oracle,
             admin: self.admin,
@@ -137,7 +136,7 @@ impl FuzzContext {
         process_instruction(&mut self.state, &accounts, &data)
     }
 
-    pub fn create_market(&mut self) -> ProgramResult {
+    fn create_market(&mut self) -> ProgramResult {
         let accounts = openbook_v2::accounts::CreateMarket {
             market: self.market,
             bids: self.bids,
@@ -171,7 +170,7 @@ impl FuzzContext {
         process_instruction(&mut self.state, &accounts, &data)
     }
 
-    pub fn init_open_orders(&mut self) -> ProgramResult {
+    fn init_open_orders(&mut self) -> ProgramResult {
         self.users.iter().try_for_each(|user| {
             let accounts = openbook_v2::accounts::InitOpenOrders {
                 open_orders_account: user.open_orders,
