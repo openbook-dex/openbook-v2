@@ -259,10 +259,6 @@ impl ClientInstruction for CreateMarketInstruction {
     ) -> (Self::Accounts, instruction::Instruction) {
         let program_id = openbook_v2::id();
         let instruction = Self::Instruction {
-            collect_fee_admin: self.collect_fee_admin,
-            open_orders_admin: self.open_orders_admin,
-            consume_events_admin: self.consume_events_admin,
-            close_market_admin: self.close_market_admin,
             name: "ONE-TWO".to_string(),
             market_index: self.market_index,
             oracle_config: OracleConfigParams {
@@ -299,6 +295,10 @@ impl ClientInstruction for CreateMarketInstruction {
             quote_mint: self.quote_mint,
             base_mint: self.base_mint,
             system_program: System::id(),
+            collect_fee_admin: self.collect_fee_admin,
+            open_orders_admin: self.open_orders_admin,
+            consume_events_admin: self.consume_events_admin,
+            close_market_admin: self.close_market_admin,
         };
 
         let instruction = make_instruction(program_id, &accounts, instruction);
