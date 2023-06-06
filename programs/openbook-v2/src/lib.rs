@@ -44,10 +44,6 @@ pub mod openbook_v2 {
         maker_fee: f32,
         taker_fee: f32,
         fee_penalty: u64,
-        collect_fee_admin: Pubkey,
-        open_orders_admin: Option<Pubkey>,
-        consume_events_admin: Option<Pubkey>,
-        close_market_admin: Option<Pubkey>,
     ) -> Result<()> {
         #[cfg(feature = "enable-gpl")]
         instructions::create_market(
@@ -60,10 +56,6 @@ pub mod openbook_v2 {
             maker_fee,
             taker_fee,
             fee_penalty,
-            collect_fee_admin,
-            open_orders_admin,
-            consume_events_admin,
-            close_market_admin,
         )?;
         Ok(())
     }
