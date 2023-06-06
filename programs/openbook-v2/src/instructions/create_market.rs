@@ -81,6 +81,9 @@ pub fn create_market(
     };
     orderbook.init();
 
+    let mut event_queue = ctx.accounts.event_queue.load_init()?;
+    event_queue.init();
+
     emit!(MarketMetaDataLog {
         market: ctx.accounts.market.key(),
         market_index,
