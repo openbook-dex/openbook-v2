@@ -20,7 +20,7 @@ fuzz_target!(|fuzz_data: FuzzData| { run_fuzz(fuzz_data) });
 fn run_fuzz(fuzz_data: FuzzData) {
     println!("{:?}", fuzz_data);
 
-    let mut ctx = FuzzContext::new(3).initialize();
+    let mut ctx = FuzzContext::new().initialize();
 
     panic!();
 }

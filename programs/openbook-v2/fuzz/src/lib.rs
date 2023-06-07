@@ -9,7 +9,7 @@ use processor::*;
 use solana_program::{entrypoint::ProgramResult, pubkey::Pubkey, system_program};
 use spl_associated_token_account::get_associated_token_address;
 
-pub const MAX_NUM_USERS: usize = 8;
+pub const NUM_USERS: u8 = 8;
 
 pub struct FuzzContext {
     payer: Pubkey,
@@ -28,7 +28,7 @@ pub struct FuzzContext {
 }
 
 impl FuzzContext {
-    pub fn new(n_users: u8) -> Self {
+    pub fn new() -> Self {
         let payer = Pubkey::new_unique();
         let admin = Pubkey::new_unique();
         let base_mint = Pubkey::new_unique();
@@ -54,7 +54,7 @@ impl FuzzContext {
         let base_vault = get_associated_token_address(&market, &base_mint);
         let quote_vault = get_associated_token_address(&market, &quote_mint);
 
-        let users: Vec<UserAccounts> = (0..n_users)
+        let users: Vec<UserAccounts> = (0..NUM_USERS)
             .map(|_| {
                 let account_num = 0_u32;
                 let owner = Pubkey::new_unique();
@@ -121,7 +121,7 @@ impl FuzzContext {
 
         self.stub_oracle_create().unwrap();
         self.create_market().unwrap();
-        for i in 0..self.users.len() {
+        for i in 0..NUM_USERS {
             self.init_open_orders(i).unwrap();
         }
     }
@@ -172,8 +172,8 @@ impl FuzzContext {
         process_instruction(&mut self.state, &accounts, &data)
     }
 
-    fn init_open_orders(&mut self, user: usize) -> ProgramResult {
-        let user = &self.users[user];
+    fn init_open_orders(&mut self, user_indx: u8) -> ProgramResult {
+        let user = &self.users[user_indx as usize];
         let accounts = openbook_v2::accounts::InitOpenOrders {
             open_orders_account: user.open_orders,
             owner: user.owner,
