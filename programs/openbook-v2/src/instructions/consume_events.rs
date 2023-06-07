@@ -21,11 +21,11 @@ macro_rules! load_open_orders_acc {
         let loader = match $ais.iter().find(|ai| ai.key == &$key) {
             None => {
                 msg!(
-                    "Unable to find {} account {}",
+                    "Unable to find {} account {}, skipping",
                     stringify!($name),
                     $key.to_string()
                 );
-                return Ok(());
+                continue;
             }
 
             Some(ai) => {
@@ -46,7 +46,11 @@ macro_rules! load_open_orders_acc {
     };
 }
 
-pub fn consume_events(ctx: Context<ConsumeEvents>, limit: usize) -> Result<()> {
+pub fn consume_events(
+    ctx: Context<ConsumeEvents>,
+    limit: usize,
+    slots: Option<Vec<usize>>,
+) -> Result<()> {
     let limit = std::cmp::min(limit, MAX_EVENTS_CONSUME);
 
     let mut market = ctx.accounts.market.load_mut()?;
@@ -66,17 +70,28 @@ pub fn consume_events(ctx: Context<ConsumeEvents>, limit: usize) -> Result<()> {
     let mut event_queue = ctx.accounts.event_queue.load_mut()?;
     let remaining_accs = &ctx.remaining_accounts;
 
-    // Iterate over event_queue
-    for _ in 0..limit {
-        let event = match event_queue.peek_front() {
-            None => break,
+    let slots_to_consume: Vec<usize> = match slots {
+        Some(slots) => slots
+            .into_iter()
+            .filter(|slot| !event_queue.nodes[*slot].is_free())
+            .take(limit)
+            .collect(),
+        None => event_queue
+            .iter()
+            .map(|(_event, slot)| slot)
+            .take(limit)
+            .collect(),
+    };
+
+    for slot in slots_to_consume {
+        let event = match event_queue.at_slot(slot) {
             Some(e) => e,
+            None => continue,
         };
 
         match EventType::try_from(event.event_type).map_err(|_| error!(OpenBookError::SomeError))? {
             EventType::Fill => {
                 let fill: &FillEvent = cast_ref(event);
-
                 load_open_orders_acc!(maker, fill.maker, remaining_accs, event_queue);
                 maker.execute_maker(&mut market, fill)?;
             }
@@ -88,7 +103,8 @@ pub fn consume_events(ctx: Context<ConsumeEvents>, limit: usize) -> Result<()> {
         }
 
         // consume this event
-        event_queue.pop_front()?;
+        event_queue.delete_slot(slot)?;
     }
+
     Ok(())
 }

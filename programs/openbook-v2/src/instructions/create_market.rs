@@ -2,6 +2,7 @@ use anchor_lang::prelude::*;
 use fixed::types::I80F48;
 
 use crate::error::*;
+use crate::pod_option::PodOption;
 use crate::state::*;
 use crate::util::fill_from_str;
 
@@ -19,10 +20,6 @@ pub fn create_market(
     maker_fee: f32,
     taker_fee: f32,
     fee_penalty: u64,
-    collect_fee_admin: Pubkey,
-    open_orders_admin: Option<Pubkey>,
-    consume_events_admin: Option<Pubkey>,
-    close_market_admin: Option<Pubkey>,
 ) -> Result<()> {
     let now_ts: u64 = Clock::get()?.unix_timestamp.try_into().unwrap();
 
@@ -32,12 +29,33 @@ pub fn create_market(
         OpenBookError::InvalidFeesError
     );
 
+    let open_orders_admin: PodOption<Pubkey> = ctx
+        .accounts
+        .open_orders_admin
+        .as_ref()
+        .map(|account| account.key())
+        .into();
+
+    let consume_events_admin: PodOption<Pubkey> = ctx
+        .accounts
+        .consume_events_admin
+        .as_ref()
+        .map(|account| account.key())
+        .into();
+
+    let close_market_admin: PodOption<Pubkey> = ctx
+        .accounts
+        .close_market_admin
+        .as_ref()
+        .map(|account| account.key())
+        .into();
+
     let mut openbook_market = ctx.accounts.market.load_init()?;
     *openbook_market = Market {
-        collect_fee_admin,
-        open_orders_admin: open_orders_admin.into(),
-        consume_events_admin: consume_events_admin.into(),
-        close_market_admin: close_market_admin.into(),
+        collect_fee_admin: ctx.accounts.collect_fee_admin.key(),
+        open_orders_admin,
+        consume_events_admin,
+        close_market_admin,
         market_index,
         bump: *ctx.bumps.get("market").ok_or(OpenBookError::SomeError)?,
         base_decimals: ctx.accounts.base_mint.decimals,
@@ -80,6 +98,9 @@ pub fn create_market(
         asks: ctx.accounts.asks.load_init()?,
     };
     orderbook.init();
+
+    let mut event_queue = ctx.accounts.event_queue.load_init()?;
+    event_queue.init();
 
     emit!(MarketMetaDataLog {
         market: ctx.accounts.market.key(),
