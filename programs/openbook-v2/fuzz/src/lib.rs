@@ -4,7 +4,6 @@ pub mod processor;
 use accounts_state::*;
 use arbitrary::{Arbitrary, Unstructured};
 use fixed::types::I80F48;
-use openbook_v2::state::OracleConfigParams;
 use openbook_v2::state::*;
 use processor::*;
 use solana_program::{entrypoint::ProgramResult, pubkey::Pubkey, system_program};
@@ -127,6 +126,7 @@ impl FuzzContext {
             .add_openbook_account::<Market>(self.market)
             .add_openbook_account::<StubOracle>(self.oracle)
             .add_program(openbook_v2::ID) // optional accounts use this pubkey
+            .add_program(spl_token::ID)
             .add_program(system_program::ID)
             .add_token_account_with_lamports(self.base_vault, self.market, self.base_mint, 0)
             .add_token_account_with_lamports(self.quote_vault, self.market, self.quote_mint, 0);
@@ -211,6 +211,36 @@ impl FuzzContext {
         let data = openbook_v2::instruction::InitOpenOrders {
             account_num: 0,
             open_orders_count: 8,
+        };
+        process_instruction(&mut self.state, &accounts, &data)
+    }
+
+    pub fn place_order(
+        &mut self,
+        user_id: UserId,
+        data: openbook_v2::instruction::PlaceOrder,
+    ) -> ProgramResult {
+        let user = self.user(user_id);
+
+        let token_deposit_account = match data.side {
+            Side::Ask => user.base_vault,
+            Side::Bid => user.quote_vault,
+        };
+
+        let accounts = openbook_v2::accounts::PlaceOrder {
+            open_orders_account: user.open_orders,
+            owner: user.owner,
+            open_orders_admin: None,
+            market: self.market,
+            bids: self.bids,
+            asks: self.asks,
+            token_deposit_account,
+            base_vault: self.base_vault,
+            quote_vault: self.quote_vault,
+            event_queue: self.event_queue,
+            oracle: self.oracle,
+            token_program: spl_token::ID,
+            system_program: system_program::ID,
         };
         process_instruction(&mut self.state, &accounts, &data)
     }
