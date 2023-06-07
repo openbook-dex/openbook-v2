@@ -20,6 +20,10 @@ enum FuzzInstruction {
 fuzz_target!(|fuzz_data: FuzzData| { run_fuzz(fuzz_data) });
 
 fn run_fuzz(fuzz_data: FuzzData) {
+    if fuzz_data.instructions.len() == 0 {
+        return;
+    }
+
     let mut ctx = FuzzContext::new();
     ctx.initialize();
 
