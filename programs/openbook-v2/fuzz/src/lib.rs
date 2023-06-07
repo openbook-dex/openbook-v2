@@ -151,6 +151,10 @@ impl FuzzContext {
             quote_mint: self.quote_mint,
             oracle: self.oracle,
             system_program: system_program::ID,
+            collect_fee_admin: Pubkey::new_unique(),
+            open_orders_admin: None,
+            consume_events_admin: None,
+            close_market_admin: None,
         };
         let data = openbook_v2::instruction::CreateMarket {
             market_index: 0,
@@ -164,10 +168,6 @@ impl FuzzContext {
             maker_fee: -0.0002,
             taker_fee: 0.0004,
             fee_penalty: 0,
-            collect_fee_admin: Pubkey::new_unique(),
-            open_orders_admin: None,
-            consume_events_admin: None,
-            close_market_admin: None,
         };
         process_instruction(&mut self.state, &accounts, &data)
     }
