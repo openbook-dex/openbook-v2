@@ -20,6 +20,9 @@ solana-rpc = "~1.14.17"
 solana-sdk = "~1.14.17"
 spl-associated-token-account = "1.0.3"
 
+[patch.crates-io]
+anchor-syn = { path = "./3rdparty/anchor/lang/syn" }
+
 [profile.release]
 codegen-units = 1
 lto = "fat"
