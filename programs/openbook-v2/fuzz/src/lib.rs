@@ -126,6 +126,7 @@ impl FuzzContext {
             .add_openbook_account::<EventQueue>(self.event_queue)
             .add_openbook_account::<Market>(self.market)
             .add_openbook_account::<StubOracle>(self.oracle)
+            .add_program(openbook_v2::ID) // optional accounts use this pubkey
             .add_program(system_program::ID)
             .add_token_account_with_lamports(self.base_vault, self.market, self.base_mint, 0)
             .add_token_account_with_lamports(self.quote_vault, self.market, self.quote_mint, 0);
