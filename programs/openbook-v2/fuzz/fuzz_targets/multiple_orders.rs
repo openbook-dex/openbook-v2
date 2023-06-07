@@ -2,7 +2,7 @@
 
 use arbitrary::Arbitrary;
 use libfuzzer_sys::fuzz_target;
-use openbook_v2_fuzz::FuzzContext;
+use openbook_v2_fuzz::{FuzzContext, UserId};
 
 #[derive(Debug, Arbitrary, Clone)]
 struct FuzzData {
@@ -11,7 +11,7 @@ struct FuzzData {
 
 #[derive(Debug, Arbitrary, Clone)]
 enum FuzzInstruction {
-    Foo,
+    Foo { user: UserId },
     Bar,
 }
 
@@ -20,7 +20,6 @@ fuzz_target!(|fuzz_data: FuzzData| { run_fuzz(fuzz_data) });
 fn run_fuzz(fuzz_data: FuzzData) {
     println!("{:?}", fuzz_data);
 
-    let mut ctx = FuzzContext::new().initialize();
-
-    panic!();
+    //let mut ctx = FuzzContext::new().initialize();
+    //panic!();
 }

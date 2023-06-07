@@ -2,6 +2,7 @@ pub mod accounts_state;
 pub mod processor;
 
 use accounts_state::*;
+use arbitrary::{Arbitrary, Unstructured};
 use fixed::types::I80F48;
 use openbook_v2::state::OracleConfigParams;
 use openbook_v2::state::*;
@@ -10,6 +11,20 @@ use solana_program::{entrypoint::ProgramResult, pubkey::Pubkey, system_program};
 use spl_associated_token_account::get_associated_token_address;
 
 pub const NUM_USERS: u8 = 8;
+
+#[derive(Debug, Clone)]
+pub struct UserId(u8);
+
+impl Arbitrary<'_> for UserId {
+    fn arbitrary(u: &mut Unstructured<'_>) -> arbitrary::Result<Self> {
+        let i: u8 = u.arbitrary()?;
+        Ok(Self(i % NUM_USERS))
+    }
+
+    fn size_hint(_: usize) -> (usize, Option<usize>) {
+        (1, Some(1))
+    }
+}
 
 pub struct FuzzContext {
     payer: Pubkey,
@@ -95,7 +110,7 @@ impl FuzzContext {
         }
     }
 
-    pub fn initialize(&mut self) {
+    pub fn initialize(&mut self) -> &mut Self {
         self.state
             .add_account_with_lamports(self.admin, 1_000_000)
             .add_account_with_lamports(self.payer, 1_000_000)
@@ -124,6 +139,12 @@ impl FuzzContext {
         for i in 0..NUM_USERS {
             self.init_open_orders(i).unwrap();
         }
+
+        self
+    }
+
+    pub fn user(&self, user_id: UserId) -> &UserAccounts {
+        &self.users[user_id.0 as usize]
     }
 
     fn stub_oracle_create(&mut self) -> ProgramResult {
