@@ -38,6 +38,7 @@ pub struct FuzzContext {
     event_queue: Pubkey,
     base_vault: Pubkey,
     quote_vault: Pubkey,
+    collect_fee_admin: Pubkey,
     users: Vec<UserAccounts>,
     state: AccountsState,
 }
@@ -68,6 +69,8 @@ impl FuzzContext {
 
         let base_vault = get_associated_token_address(&market, &base_mint);
         let quote_vault = get_associated_token_address(&market, &quote_mint);
+
+        let collect_fee_admin = Pubkey::new_unique();
 
         let users: Vec<UserAccounts> = (0..NUM_USERS)
             .map(|_| {
@@ -105,6 +108,7 @@ impl FuzzContext {
             event_queue,
             base_vault,
             quote_vault,
+            collect_fee_admin,
             users,
             state: AccountsState::new(),
         }
@@ -113,6 +117,7 @@ impl FuzzContext {
     pub fn initialize(&mut self) -> &mut Self {
         self.state
             .add_account_with_lamports(self.admin, 1_000_000)
+            .add_account_with_lamports(self.collect_fee_admin, 0)
             .add_account_with_lamports(self.payer, 1_000_000)
             .add_mint(self.base_mint)
             .add_mint(self.quote_mint)
@@ -172,7 +177,7 @@ impl FuzzContext {
             quote_mint: self.quote_mint,
             oracle: self.oracle,
             system_program: system_program::ID,
-            collect_fee_admin: Pubkey::new_unique(),
+            collect_fee_admin: self.collect_fee_admin,
             open_orders_admin: None,
             consume_events_admin: None,
             close_market_admin: None,
