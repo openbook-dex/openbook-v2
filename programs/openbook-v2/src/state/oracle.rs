@@ -64,7 +64,8 @@ const_assert_eq!(size_of::<OracleConfig>(), 16 + 8 + 72);
 const_assert_eq!(size_of::<OracleConfig>(), 96);
 const_assert_eq!(size_of::<OracleConfig>() % 8, 0);
 
-#[derive(AnchorDeserialize, AnchorSerialize, Debug)]
+#[derive(AnchorDeserialize, AnchorSerialize, Debug, Clone)]
+#[cfg_attr(feature = "arbitrary", derive(arbitrary::Arbitrary))]
 pub struct OracleConfigParams {
     pub conf_filter: f32,
     pub max_staleness_slots: Option<u32>,

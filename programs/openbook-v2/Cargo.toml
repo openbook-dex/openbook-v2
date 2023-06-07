@@ -25,11 +25,12 @@ enable-gpl = []
 [dependencies]
 anchor-lang = { workspace = true }
 anchor-spl = { workspace = true }
+arbitrary = { version = "1.3.0", features = ["derive"], optional = true }
 arrayref = "0.3.6"
 borsh = { version = "0.9.3", features = ["const-generics"] }
 bytemuck = { version = "^1.7.2", features = ["derive", "min_const_generics"] }
 derivative = "2.2.0"
-fixed = { workspace = true, features = ["serde", "borsh", "debug-assert-in-release"] }
+fixed = { workspace = true, features = ["serde", "borsh", "debug-assert-in-release", "arbitrary"] }
 num_enum = "0.5.1"
 pyth-sdk-solana = { workspace = true }
 solana-program = { workspace = true }
