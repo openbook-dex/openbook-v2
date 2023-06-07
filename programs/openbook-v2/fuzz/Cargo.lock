@@ -232,8 +232,6 @@ dependencies = [
 [[package]]
 name = "anchor-syn"
 version = "0.27.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "11cb31fe143aedb36fc41409ea072aa0b840cbea727e62eb2ff6e7b6cea036ff"
 dependencies = [
  "anyhow",
  "bs58 0.3.1",
@@ -961,6 +959,7 @@ dependencies = [
 name = "fixed"
 version = "1.11.0"
 dependencies = [
+ "arbitrary",
  "az",
  "borsh",
  "bytemuck",
@@ -1726,6 +1725,7 @@ version = "0.1.0"
 dependencies = [
  "anchor-lang",
  "anchor-spl",
+ "arbitrary",
  "arrayref",
  "borsh",
  "bytemuck",

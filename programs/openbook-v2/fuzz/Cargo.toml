@@ -19,9 +19,12 @@ spl-associated-token-account = { version = "^1.0.3", features = ["no-entrypoint"
 spl-token = "3.5.0"
 solana-sdk = "~1.14.16"
 
+[patch.crates-io]
+anchor-syn = { path = "../../../3rdparty/anchor/lang/syn" }
+
 [dependencies.openbook-v2]
 path = ".."
-features = ["enable-gpl"]
+features = ["enable-gpl", "arbitrary"]
 
 # Prevent this from interfering with workspaces
 [workspace]
