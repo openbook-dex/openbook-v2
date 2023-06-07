@@ -8,10 +8,11 @@ use openbook_v2::state::*;
 use processor::*;
 use solana_program::{entrypoint::ProgramResult, pubkey::Pubkey, system_program};
 use spl_associated_token_account::get_associated_token_address;
+use std::collections::HashMap;
 
 pub const NUM_USERS: u8 = 8;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Eq, Hash, PartialEq)]
 pub struct UserId(u8);
 
 impl Arbitrary<'_> for UserId {
@@ -38,7 +39,7 @@ pub struct FuzzContext {
     base_vault: Pubkey,
     quote_vault: Pubkey,
     collect_fee_admin: Pubkey,
-    users: Vec<UserAccounts>,
+    users: HashMap<UserId, UserAccounts>,
     state: AccountsState,
 }
 
@@ -71,30 +72,6 @@ impl FuzzContext {
 
         let collect_fee_admin = Pubkey::new_unique();
 
-        let users: Vec<UserAccounts> = (0..NUM_USERS)
-            .map(|_| {
-                let account_num = 0_u32;
-                let owner = Pubkey::new_unique();
-                let open_orders = Pubkey::find_program_address(
-                    &[
-                        b"OpenOrders".as_ref(),
-                        owner.as_ref(),
-                        market.as_ref(),
-                        &account_num.to_le_bytes(),
-                    ],
-                    &openbook_v2::ID,
-                )
-                .0;
-
-                UserAccounts {
-                    owner,
-                    open_orders,
-                    base_vault: Pubkey::new_unique(),
-                    quote_vault: Pubkey::new_unique(),
-                }
-            })
-            .collect();
-
         Self {
             payer,
             admin,
@@ -108,7 +85,7 @@ impl FuzzContext {
             base_vault,
             quote_vault,
             collect_fee_admin,
-            users,
+            users: HashMap::new(),
             state: AccountsState::new(),
         }
     }
@@ -131,26 +108,59 @@ impl FuzzContext {
             .add_token_account_with_lamports(self.base_vault, self.market, self.base_mint, 0)
             .add_token_account_with_lamports(self.quote_vault, self.market, self.quote_mint, 0);
 
-        self.users.iter().for_each(|u| {
-            self.state
-                .add_account_with_lamports(u.owner, 1_000_000)
-                .add_account_with_lamports(u.owner, 1_000_000)
-                .add_token_account_with_lamports(u.base_vault, u.owner, self.base_mint, 1_000_000)
-                .add_token_account_with_lamports(u.quote_vault, u.owner, self.quote_mint, 1_000_000)
-                .add_open_orders_account(u.open_orders, 8);
-        });
-
         self.stub_oracle_create().unwrap();
         self.create_market().unwrap();
-        for i in 0..NUM_USERS {
-            self.init_open_orders(i).unwrap();
-        }
 
         self
     }
 
-    pub fn user(&self, user_id: UserId) -> &UserAccounts {
-        &self.users[user_id.0 as usize]
+    fn user(&mut self, user_id: UserId) -> &UserAccounts {
+        let create_new_user = || -> UserAccounts {
+            let account_num = 0_u32;
+
+            let owner = Pubkey::new_unique();
+            let base_vault = Pubkey::new_unique();
+            let quote_vault = Pubkey::new_unique();
+            let open_orders = Pubkey::find_program_address(
+                &[
+                    b"OpenOrders".as_ref(),
+                    owner.as_ref(),
+                    self.market.as_ref(),
+                    &account_num.to_le_bytes(),
+                ],
+                &openbook_v2::ID,
+            )
+            .0;
+
+            self.state
+                .add_account_with_lamports(owner, 1_000_000)
+                .add_account_with_lamports(owner, 1_000_000)
+                .add_token_account_with_lamports(base_vault, owner, self.base_mint, 1_000_000)
+                .add_token_account_with_lamports(quote_vault, owner, self.quote_mint, 1_000_000)
+                .add_open_orders_account(open_orders, 8);
+
+            let accounts = openbook_v2::accounts::InitOpenOrders {
+                open_orders_account: open_orders,
+                owner,
+                payer: self.payer,
+                market: self.market,
+                system_program: system_program::ID,
+            };
+            let data = openbook_v2::instruction::InitOpenOrders {
+                account_num: 0,
+                open_orders_count: 8,
+            };
+            process_instruction(&mut self.state, &accounts, &data).unwrap();
+
+            UserAccounts {
+                owner,
+                open_orders,
+                base_vault,
+                quote_vault,
+            }
+        };
+
+        self.users.entry(user_id).or_insert_with(create_new_user)
     }
 
     fn stub_oracle_create(&mut self) -> ProgramResult {
@@ -195,22 +205,6 @@ impl FuzzContext {
             maker_fee: -0.0002,
             taker_fee: 0.0004,
             fee_penalty: 0,
-        };
-        process_instruction(&mut self.state, &accounts, &data)
-    }
-
-    fn init_open_orders(&mut self, user_indx: u8) -> ProgramResult {
-        let user = &self.users[user_indx as usize];
-        let accounts = openbook_v2::accounts::InitOpenOrders {
-            open_orders_account: user.open_orders,
-            owner: user.owner,
-            payer: self.payer,
-            market: self.market,
-            system_program: system_program::ID,
-        };
-        let data = openbook_v2::instruction::InitOpenOrders {
-            account_num: 0,
-            open_orders_count: 8,
         };
         process_instruction(&mut self.state, &accounts, &data)
     }
