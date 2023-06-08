@@ -4,6 +4,7 @@ use anchor_spl::token::{self, Transfer};
 
 use crate::accounts_ix::*;
 use crate::accounts_zerocopy::*;
+use crate::error::*;
 use crate::state::*;
 
 // TODO
@@ -17,6 +18,11 @@ pub fn place_take_order<'info>(
     require_gte!(order.max_quote_lots_including_fees, 0);
 
     let mut market = ctx.accounts.market.load_mut()?;
+    require!(
+        market.time_expiry > Clock::get()?.unix_timestamp,
+        OpenBookError::MarketHasExpired
+    );
+
     let mut book = Orderbook {
         bids: ctx.accounts.bids.load_mut()?,
         asks: ctx.accounts.asks.load_mut()?,

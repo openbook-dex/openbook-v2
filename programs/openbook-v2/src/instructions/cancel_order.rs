@@ -25,6 +25,10 @@ pub fn cancel_order(ctx: Context<CancelOrder>, order_id: u128) -> Result<()> {
     let order_side_and_tree = oo.side_and_tree();
 
     let market = ctx.accounts.market.load()?;
+    require!(
+        market.time_expiry > Clock::get()?.unix_timestamp,
+        OpenBookError::MarketHasExpired
+    );
 
     book.cancel_order(
         &mut account.borrow_mut(),

@@ -17,6 +17,10 @@ pub fn cancel_all_orders_by_side(
     );
 
     let market = ctx.accounts.market.load()?;
+    require!(
+        market.time_expiry > Clock::get()?.unix_timestamp,
+        OpenBookError::MarketHasExpired
+    );
     let mut book = Orderbook {
         bids: ctx.accounts.bids.load_mut()?,
         asks: ctx.accounts.asks.load_mut()?,
