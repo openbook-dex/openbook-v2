@@ -27,6 +27,9 @@ pub struct Market {
 
     pub padding1: [u8; 1],
 
+    /// No expiry = 0. Market will expire and no trading allowed after time_expiry
+    pub time_expiry: i64,
+
     /// Admin who can collect fees from the market
     pub collect_fee_admin: Pubkey,
     /// Admin who must sign off on all order creations
@@ -118,6 +121,7 @@ const_assert_eq!(
     1 + // size of base_decimals
     1 + // size of quote_decimals
     1 + // size of padding1
+    8 + // size of time_expiry
     16 + // size of name
     3 * 32 + // size of bids, asks, and event_queue
     32 + // size of oracle
@@ -140,7 +144,7 @@ const_assert_eq!(
     8 + // size of referrer_rebates_accrued
     1768 // size of reserved
 );
-const_assert_eq!(size_of::<Market>(), 2720);
+const_assert_eq!(size_of::<Market>(), 2728);
 const_assert_eq!(size_of::<Market>() % 8, 0);
 
 impl Market {
@@ -194,6 +198,7 @@ impl Market {
             base_decimals: 0,
             quote_decimals: 0,
             padding1: Default::default(),
+            time_expiry: 0,
             name: Default::default(),
             bids: Pubkey::new_unique(),
             asks: Pubkey::new_unique(),

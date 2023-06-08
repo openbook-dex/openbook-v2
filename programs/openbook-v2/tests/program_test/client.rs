@@ -227,6 +227,7 @@ pub struct CreateMarketInstruction {
     pub fee_penalty: u64,
     pub settle_fee_flat: f32,
     pub settle_fee_amount_threshold: f32,
+    pub time_expiry: i64,
 }
 impl CreateMarketInstruction {
     pub async fn with_new_book_and_queue(
@@ -270,6 +271,7 @@ impl ClientInstruction for CreateMarketInstruction {
             maker_fee: self.maker_fee,
             taker_fee: self.taker_fee,
             fee_penalty: self.fee_penalty,
+            time_expiry: self.time_expiry,
         };
 
         let market = Pubkey::find_program_address(

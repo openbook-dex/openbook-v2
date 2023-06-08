@@ -44,6 +44,7 @@ pub mod openbook_v2 {
         maker_fee: f32,
         taker_fee: f32,
         fee_penalty: u64,
+        time_expiry: i64,
     ) -> Result<()> {
         #[cfg(feature = "enable-gpl")]
         instructions::create_market(
@@ -56,6 +57,7 @@ pub mod openbook_v2 {
             maker_fee,
             taker_fee,
             fee_penalty,
+            time_expiry,
         )?;
         Ok(())
     }

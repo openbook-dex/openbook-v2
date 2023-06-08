@@ -20,6 +20,7 @@ pub fn create_market(
     maker_fee: f32,
     taker_fee: f32,
     fee_penalty: u64,
+    time_expiry: i64,
 ) -> Result<()> {
     let now_ts: u64 = Clock::get()?.unix_timestamp.try_into().unwrap();
 
@@ -61,6 +62,7 @@ pub fn create_market(
         base_decimals: ctx.accounts.base_mint.decimals,
         quote_decimals: ctx.accounts.quote_mint.decimals,
         padding1: Default::default(),
+        time_expiry,
         name: fill_from_str(&name)?,
         bids: ctx.accounts.bids.key(),
         asks: ctx.accounts.asks.key(),
