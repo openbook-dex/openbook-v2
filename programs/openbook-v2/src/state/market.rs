@@ -185,57 +185,6 @@ impl Market {
         )
     }
 
-    // TODO binye
-    /// Creates default market for tests
-    pub fn default_for_tests() -> Market {
-        Market {
-            collect_fee_admin: Pubkey::new_unique(),
-            open_orders_admin: Some(Pubkey::new_unique()).into(),
-            consume_events_admin: Some(Pubkey::new_unique()).into(),
-            close_market_admin: Some(Pubkey::new_unique()).into(),
-            market_index: 0,
-            bump: 0,
-            base_decimals: 0,
-            quote_decimals: 0,
-            padding1: Default::default(),
-            time_expiry: 0,
-            name: Default::default(),
-            bids: Pubkey::new_unique(),
-            asks: Pubkey::new_unique(),
-            event_queue: Pubkey::new_unique(),
-            oracle: Pubkey::new_unique(),
-            oracle_config: OracleConfig {
-                conf_filter: I80F48::ZERO,
-                max_staleness_slots: -1,
-                reserved: [0; 72],
-            },
-            stable_price_model: StablePriceModel::default(),
-
-            quote_lot_size: 1,
-            base_lot_size: 1,
-            seq_num: 0,
-            registration_time: 0,
-            maker_fee: I80F48::ZERO,
-            taker_fee: I80F48::ZERO,
-            fee_penalty: 0,
-            fees_accrued: 0,
-            fees_to_referrers: 0,
-            vault_signer_nonce: 0,
-            base_mint: Pubkey::new_unique(),
-            quote_mint: Pubkey::new_unique(),
-
-            base_vault: Pubkey::new_unique(),
-            base_deposit_total: 0,
-            base_fees_accrued: 0,
-
-            quote_vault: Pubkey::new_unique(),
-            quote_deposit_total: 0,
-            quote_fees_accrued: 0,
-            referrer_rebates_accrued: 0,
-            reserved: [0; 1768],
-        }
-    }
-
     pub fn subtract_taker_fees(&self, quote: i64) -> i64 {
         (I80F48::from(quote) / (I80F48::ONE + self.taker_fee)).to_num()
     }
