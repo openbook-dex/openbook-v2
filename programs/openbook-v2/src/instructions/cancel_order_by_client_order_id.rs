@@ -17,7 +17,7 @@ pub fn cancel_order_by_client_order_id(
 
     let market = ctx.accounts.market.load()?;
     require!(
-        market.time_expiry > Clock::get()?.unix_timestamp,
+        market.time_expiry == 0 || market.time_expiry > Clock::get()?.unix_timestamp,
         OpenBookError::MarketHasExpired
     );
     let mut book = Orderbook {

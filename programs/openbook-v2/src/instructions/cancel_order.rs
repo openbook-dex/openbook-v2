@@ -26,7 +26,7 @@ pub fn cancel_order(ctx: Context<CancelOrder>, order_id: u128) -> Result<()> {
 
     let market = ctx.accounts.market.load()?;
     require!(
-        market.time_expiry > Clock::get()?.unix_timestamp,
+        market.time_expiry == 0 || market.time_expiry > Clock::get()?.unix_timestamp,
         OpenBookError::MarketHasExpired
     );
 

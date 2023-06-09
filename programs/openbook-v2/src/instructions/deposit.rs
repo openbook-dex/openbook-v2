@@ -9,7 +9,7 @@ pub fn deposit(ctx: Context<Deposit>, base_amount_lots: u64, quote_amount_lots: 
     let mut open_orders_account = ctx.accounts.open_orders_account.load_full_mut()?;
     let mut market = ctx.accounts.market.load_mut()?;
     require!(
-        market.time_expiry > Clock::get()?.unix_timestamp,
+        market.time_expiry == 0 || market.time_expiry > Clock::get()?.unix_timestamp,
         OpenBookError::MarketHasExpired
     );
 
