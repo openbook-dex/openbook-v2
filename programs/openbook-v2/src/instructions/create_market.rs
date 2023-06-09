@@ -33,6 +33,15 @@ pub fn create_market(
         time_expiry == 0 || time_expiry > Clock::get()?.unix_timestamp,
         OpenBookError::MarketHasExpired
     );
+    // Check if the decimals are greater than zero
+    require!(
+        ctx.accounts.base_mint.decimals > 0,
+        OpenBookError::InvalidMint
+    );
+    require!(
+        ctx.accounts.quote_mint.decimals > 0,
+        OpenBookError::InvalidMint
+    );
 
     let open_orders_admin: PodOption<Pubkey> = ctx
         .accounts
