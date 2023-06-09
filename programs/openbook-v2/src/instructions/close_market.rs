@@ -4,10 +4,6 @@ use anchor_lang::prelude::*;
 
 pub fn close_market(ctx: Context<CloseMarket>) -> Result<()> {
     let market = ctx.accounts.market.load()?;
-    require!(
-        market.time_expiry == 0 || market.time_expiry > Clock::get()?.unix_timestamp,
-        OpenBookError::MarketHasExpired
-    );
     let close_admin =
         Option::from(market.close_market_admin).ok_or(OpenBookError::NoCloseMarketAdmin)?;
     require!(

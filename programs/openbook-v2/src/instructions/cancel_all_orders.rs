@@ -13,10 +13,6 @@ pub fn cancel_all_orders(ctx: Context<CancelAllOrders>, limit: u8) -> Result<()>
     );
 
     let market = ctx.accounts.market.load()?;
-    require!(
-        market.time_expiry == 0 || market.time_expiry > Clock::get()?.unix_timestamp,
-        OpenBookError::MarketHasExpired
-    );
     let mut book = Orderbook {
         bids: ctx.accounts.bids.load_mut()?,
         asks: ctx.accounts.asks.load_mut()?,
