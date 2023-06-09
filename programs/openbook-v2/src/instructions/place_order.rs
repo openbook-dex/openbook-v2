@@ -22,7 +22,7 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<
         open_orders_account
             .fixed
             .is_owner_or_delegate(ctx.accounts.owner.key()),
-        OpenBookError::SomeError
+        OpenBookError::NoOwnerOrDelegate
     );
     let open_orders_account_pk = ctx.accounts.open_orders_account.key();
 

@@ -101,8 +101,12 @@ pub enum OpenBookError {
     InvalidConsumeEventsAdmin,
     #[msg("The Market has already expired.")]
     MarketHasExpired,
+    #[msg("The Market has not expired yet.")]
+    MarketHasNotExpired,
     #[msg("The mint has invalid decimals.")]
     InvalidMint,
+    #[msg("No correct owner or delegate.")]
+    NoOwnerOrDelegate,
 }
 
 impl OpenBookError {

@@ -36,7 +36,7 @@ pub struct Market {
     pub open_orders_admin: PodOption<Pubkey>,
     /// Admin who must sign off on all event consumptions
     pub consume_events_admin: PodOption<Pubkey>,
-    /// Admin who can close the market
+    /// Admin who can set market expired, prune orders and close the market
     pub close_market_admin: PodOption<Pubkey>,
 
     /// Name. Trailing zero bytes are ignored.

@@ -9,7 +9,7 @@ pub fn cancel_all_orders(ctx: Context<CancelAllOrders>, limit: u8) -> Result<()>
     // account constraint #1
     require!(
         account.fixed.is_owner_or_delegate(ctx.accounts.owner.key()),
-        OpenBookError::SomeError
+        OpenBookError::NoOwnerOrDelegate
     );
 
     let market = ctx.accounts.market.load()?;

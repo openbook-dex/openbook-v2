@@ -9,7 +9,7 @@ pub fn cancel_order(ctx: Context<CancelOrder>, order_id: u128) -> Result<()> {
     // account constraint #1
     require!(
         account.fixed.is_owner_or_delegate(ctx.accounts.owner.key()),
-        OpenBookError::SomeError
+        OpenBookError::NoOwnerOrDelegate
     );
 
     let mut book = Orderbook {
