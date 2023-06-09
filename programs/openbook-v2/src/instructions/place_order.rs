@@ -27,6 +27,10 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<
     let open_orders_account_pk = ctx.accounts.open_orders_account.key();
 
     let mut market = ctx.accounts.market.load_mut()?;
+    require!(
+        market.time_expiry == 0 || market.time_expiry > Clock::get()?.unix_timestamp,
+        OpenBookError::MarketHasExpired
+    );
     let mut book = Orderbook {
         bids: ctx.accounts.bids.load_mut()?,
         asks: ctx.accounts.asks.load_mut()?,

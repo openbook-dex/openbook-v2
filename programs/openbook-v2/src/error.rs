@@ -99,6 +99,10 @@ pub enum OpenBookError {
         "The `consume_events_admin` passed does not match this market's `consume_events_admin`."
     )]
     InvalidConsumeEventsAdmin,
+    #[msg("The Market has already expired.")]
+    MarketHasExpired,
+    #[msg("The mint has invalid decimals.")]
+    InvalidMint,
 }
 
 impl OpenBookError {

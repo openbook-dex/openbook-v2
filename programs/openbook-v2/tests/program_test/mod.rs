@@ -279,6 +279,7 @@ pub struct TestNewMarketInitialize {
     pub open_orders_admin_bool: bool,
     pub close_market_admin_bool: bool,
     pub consume_events_admin_bool: bool,
+    pub time_expiry: i64,
 }
 
 impl Default for TestNewMarketInitialize {
@@ -292,6 +293,7 @@ impl Default for TestNewMarketInitialize {
             open_orders_admin_bool: false,
             close_market_admin_bool: false,
             consume_events_admin_bool: false,
+            time_expiry: 0,
         }
     }
 }
@@ -369,6 +371,7 @@ impl TestContext {
                 base_vault,
                 quote_vault,
                 fee_penalty: args.fee_penalty,
+                time_expiry: args.time_expiry,
                 ..CreateMarketInstruction::with_new_book_and_queue(solana, &tokens[0]).await
             },
         )

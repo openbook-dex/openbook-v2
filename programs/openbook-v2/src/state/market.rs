@@ -27,6 +27,9 @@ pub struct Market {
 
     pub padding1: [u8; 1],
 
+    /// No expiry = 0. Market will expire and no trading allowed after time_expiry
+    pub time_expiry: i64,
+
     /// Admin who can collect fees from the market
     pub collect_fee_admin: Pubkey,
     /// Admin who must sign off on all order creations
@@ -118,6 +121,7 @@ const_assert_eq!(
     1 + // size of base_decimals
     1 + // size of quote_decimals
     1 + // size of padding1
+    8 + // size of time_expiry
     16 + // size of name
     3 * 32 + // size of bids, asks, and event_queue
     32 + // size of oracle
@@ -140,7 +144,7 @@ const_assert_eq!(
     8 + // size of referrer_rebates_accrued
     1768 // size of reserved
 );
-const_assert_eq!(size_of::<Market>(), 2720);
+const_assert_eq!(size_of::<Market>(), 2728);
 const_assert_eq!(size_of::<Market>() % 8, 0);
 
 impl Market {
@@ -179,56 +183,6 @@ impl Market {
             self.quote_decimals,
             staleness_slot,
         )
-    }
-
-    // TODO binye
-    /// Creates default market for tests
-    pub fn default_for_tests() -> Market {
-        Market {
-            collect_fee_admin: Pubkey::new_unique(),
-            open_orders_admin: Some(Pubkey::new_unique()).into(),
-            consume_events_admin: Some(Pubkey::new_unique()).into(),
-            close_market_admin: Some(Pubkey::new_unique()).into(),
-            market_index: 0,
-            bump: 0,
-            base_decimals: 0,
-            quote_decimals: 0,
-            padding1: Default::default(),
-            name: Default::default(),
-            bids: Pubkey::new_unique(),
-            asks: Pubkey::new_unique(),
-            event_queue: Pubkey::new_unique(),
-            oracle: Pubkey::new_unique(),
-            oracle_config: OracleConfig {
-                conf_filter: I80F48::ZERO,
-                max_staleness_slots: -1,
-                reserved: [0; 72],
-            },
-            stable_price_model: StablePriceModel::default(),
-
-            quote_lot_size: 1,
-            base_lot_size: 1,
-            seq_num: 0,
-            registration_time: 0,
-            maker_fee: I80F48::ZERO,
-            taker_fee: I80F48::ZERO,
-            fee_penalty: 0,
-            fees_accrued: 0,
-            fees_to_referrers: 0,
-            vault_signer_nonce: 0,
-            base_mint: Pubkey::new_unique(),
-            quote_mint: Pubkey::new_unique(),
-
-            base_vault: Pubkey::new_unique(),
-            base_deposit_total: 0,
-            base_fees_accrued: 0,
-
-            quote_vault: Pubkey::new_unique(),
-            quote_deposit_total: 0,
-            quote_fees_accrued: 0,
-            referrer_rebates_accrued: 0,
-            reserved: [0; 1768],
-        }
     }
 
     pub fn subtract_taker_fees(&self, quote: i64) -> i64 {

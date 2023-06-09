@@ -20,6 +20,7 @@ pub fn create_market(
     maker_fee: f32,
     taker_fee: f32,
     fee_penalty: u64,
+    time_expiry: i64,
 ) -> Result<()> {
     let now_ts: u64 = Clock::get()?.unix_timestamp.try_into().unwrap();
 
@@ -27,6 +28,19 @@ pub fn create_market(
         taker_fee.is_sign_positive()
             && (maker_fee.is_sign_positive() || maker_fee.abs() <= taker_fee),
         OpenBookError::InvalidFeesError
+    );
+    require!(
+        time_expiry == 0 || time_expiry > Clock::get()?.unix_timestamp,
+        OpenBookError::MarketHasExpired
+    );
+    // Check if the decimals are greater than zero
+    require!(
+        ctx.accounts.base_mint.decimals > 0,
+        OpenBookError::InvalidMint
+    );
+    require!(
+        ctx.accounts.quote_mint.decimals > 0,
+        OpenBookError::InvalidMint
     );
 
     let open_orders_admin: PodOption<Pubkey> = ctx
@@ -61,6 +75,7 @@ pub fn create_market(
         base_decimals: ctx.accounts.base_mint.decimals,
         quote_decimals: ctx.accounts.quote_mint.decimals,
         padding1: Default::default(),
+        time_expiry,
         name: fill_from_str(&name)?,
         bids: ctx.accounts.bids.key(),
         asks: ctx.accounts.asks.key(),
