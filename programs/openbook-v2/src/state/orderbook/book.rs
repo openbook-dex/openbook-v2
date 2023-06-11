@@ -95,7 +95,7 @@ impl<'a> Orderbook<'a> {
         let mut remaining_quote_lots = order.max_quote_lots_including_fees;
         let mut decremented_quote_lots = 0_i64;
 
-        let mut max_quote_lots = remaining_quote_lots;
+        let mut max_quote_lots = order.max_quote_lots_including_fees;
         let mut matched_order_changes: Vec<(BookSideOrderHandle, i64)> = vec![];
         let mut matched_order_deletes: Vec<(BookSideOrderTree, u128)> = vec![];
         let mut number_of_dropped_expired_orders = 0;
@@ -230,12 +230,18 @@ impl<'a> Orderbook<'a> {
             }
         }
         let total_quote_lots_taken = max_quote_lots - remaining_quote_lots;
-        let total_base_lots_taken: i64 = order.max_base_lots - remaining_base_lots;
+        let total_base_lots_taken = order.max_base_lots - remaining_base_lots;
         assert!(total_quote_lots_taken >= 0);
         assert!(total_base_lots_taken >= 0);
 
-        let total_base_taken_native = (market.base_lot_size * total_base_lots_taken) as u64;
-        let mut total_quote_taken_native = (market.quote_lot_size * total_quote_lots_taken) as u64;
+        let total_base_taken_native = total_base_lots_taken
+            .checked_mul(market.base_lot_size)
+            .ok_or(OpenBookError::InvalidOrderSize)? as u64;
+
+        let mut total_quote_taken_native = total_quote_lots_taken
+            .checked_mul(market.quote_lot_size)
+            .ok_or(OpenBookError::InvalidOrderSize)?
+            as u64;
 
         let total_quote_taken_lots_wo_self = total_quote_lots_taken - decremented_quote_lots;
         let total_quote_taken_native_wo_self =
