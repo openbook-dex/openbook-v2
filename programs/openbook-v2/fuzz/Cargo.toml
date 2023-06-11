@@ -11,7 +11,7 @@ cargo-fuzz = true
 anchor-lang = "0.27.0"
 arbitrary = { version = "~1.0", features = ["derive"] }
 bumpalo = "3.13.0"
-fixed = {path = "../../../3rdparty/fixed", version = "1.11.0", features = ["serde", "borsh", "debug-assert-in-release"]}
+fixed = {path = "../../../3rdparty/fixed", version = "1.11.0", features = ["serde", "borsh", "debug-assert-in-release", "arbitrary"]}
 libfuzzer-sys = "0.4"
 solana-program = "~1.14.16"
 solana-runtime = "~1.14.16"
