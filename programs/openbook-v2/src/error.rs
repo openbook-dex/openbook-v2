@@ -103,6 +103,8 @@ pub enum OpenBookError {
     MarketHasExpired,
     #[msg("The mint has invalid decimals.")]
     InvalidMint,
+    #[msg("Lots cannot be negative")]
+    NegativeLots,
 }
 
 impl OpenBookError {
