@@ -4,7 +4,7 @@ pub mod processor;
 use accounts_state::*;
 use arbitrary::{Arbitrary, Unstructured};
 use fixed::types::I80F48;
-use openbook_v2::state::*;
+use openbook_v2::{error::OpenBookError, state::*};
 use processor::*;
 use solana_program::{entrypoint::ProgramResult, pubkey::Pubkey, system_program};
 use spl_associated_token_account::get_associated_token_address;
@@ -236,6 +236,14 @@ impl FuzzContext {
             token_program: spl_token::ID,
             system_program: system_program::ID,
         };
-        process_instruction(&mut self.state, &accounts, &data)
+
+        process_instruction(&mut self.state, &accounts, &data).or_else(|err| match err {
+            e if e == OpenBookError::InvalidOrderSize.into() => Ok(()),
+            e if e == OpenBookError::InvalidPriceLots.into() => Ok(()),
+            e if e == OpenBookError::NegativeLots.into() => Ok(()),
+            e if e == OpenBookError::WouldSelfTrade.into() => Ok(()),
+            e if e == spl_token::error::TokenError::InsufficientFunds.into() => Ok(()),
+            _ => Err(err),
+        })
     }
 }
