@@ -111,6 +111,12 @@ pub enum OpenBookError {
     InvalidOrderSize,
 }
 
+impl From<OpenBookError> for ProgramError {
+    fn from(error: OpenBookError) -> Self {
+        ProgramError::from(Error::from(error))
+    }
+}
+
 impl OpenBookError {
     pub fn error_code(&self) -> u32 {
         (*self).into()
