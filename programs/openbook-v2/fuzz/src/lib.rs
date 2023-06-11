@@ -147,7 +147,7 @@ impl FuzzContext {
                 system_program: system_program::ID,
             };
             let data = openbook_v2::instruction::InitOpenOrders {
-                account_num: 0,
+                account_num,
                 open_orders_count: 8,
             };
             process_instruction(&mut self.state, &accounts, &data).unwrap();
