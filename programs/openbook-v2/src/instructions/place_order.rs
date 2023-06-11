@@ -49,7 +49,8 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<
         order_id,
         total_base_taken_native,
         total_quote_taken_native,
-        placed_quantity,
+        posted_base_native,
+        posted_quote_native,
         maker_fees,
         ..
     } = book.new_order(
@@ -73,19 +74,8 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<
         Side::Bid => {
             let free_quote = position.quote_free_native;
 
-            let max_quote_including_fees = if let Some(order_id) = order_id {
-                let price = match order.params {
-                    OrderParams::OraclePegged { peg_limit, .. } => peg_limit,
-                    OrderParams::Fixed { .. } => (order_id >> 64) as i64,
-                    _ => unreachable!(),
-                };
-
-                total_quote_taken_native
-                    + (placed_quantity * market.quote_lot_size * price) as u64
-                    + maker_fees
-            } else {
-                total_quote_taken_native
-            };
+            let max_quote_including_fees =
+                total_quote_taken_native + posted_quote_native as u64 + maker_fees;
 
             let free_qty_to_lock = cmp::min(max_quote_including_fees, free_quote);
             position.quote_free_native -= free_qty_to_lock;
@@ -103,8 +93,7 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<
 
         Side::Ask => {
             let free_assets_native = position.base_free_native;
-            let max_base_native =
-                total_base_taken_native + (placed_quantity * market.base_lot_size) as u64;
+            let max_base_native = total_base_taken_native + posted_base_native as u64;
 
             let free_qty_to_lock = cmp::min(max_base_native, free_assets_native);
             position.base_free_native -= free_qty_to_lock;
