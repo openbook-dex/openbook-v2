@@ -107,6 +107,8 @@ pub enum OpenBookError {
     NegativeLots,
     #[msg("Price lots cannot be negative")]
     NegativePriceLots,
+    #[msg("Order size above market limits")]
+    InvalidOrderSize,
 }
 
 impl OpenBookError {

@@ -340,19 +340,21 @@ impl<'a> Orderbook<'a> {
         let mut maker_fees = 0;
 
         if let Some(order_tree_target) = post_target {
+            let book_price = match order_tree_target {
+                BookSideOrderTree::Fixed => fixed_price_lots(price_data),
+                BookSideOrderTree::OraclePegged => order.peg_limit(),
+            };
+
+            let book_quote_native = book_base_quantity_lots
+                .checked_mul(book_price)
+                .and_then(|book_quote_lots| book_quote_lots.checked_mul(market.quote_lot_size))
+                .ok_or(OpenBookError::InvalidOrderSize)?;
+
             // Subtract maker fees in bid.
             if market.maker_fee.is_positive() && side == Side::Bid {
-                let book_price = match order_tree_target {
-                    BookSideOrderTree::Fixed => fixed_price_lots(price_data),
-                    BookSideOrderTree::OraclePegged => order.peg_limit(),
-                };
-
-                let book_quote_quantity_lots = book_base_quantity_lots * book_price;
-                maker_fees = (I80F48::from_num(book_quote_quantity_lots)
-                    * market.maker_fee
-                    * I80F48::from_num(market.quote_lot_size))
-                .ceil()
-                .to_num::<u64>();
+                maker_fees = (I80F48::from_num(book_quote_native) * market.maker_fee)
+                    .ceil()
+                    .to_num::<u64>();
             }
 
             let bookside = self.bookside_mut(side);
