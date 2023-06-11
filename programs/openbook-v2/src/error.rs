@@ -105,6 +105,8 @@ pub enum OpenBookError {
     InvalidMint,
     #[msg("Lots cannot be negative")]
     NegativeLots,
+    #[msg("Price lots cannot be negative")]
+    NegativePriceLots,
 }
 
 impl OpenBookError {
