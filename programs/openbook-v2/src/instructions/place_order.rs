@@ -1,9 +1,7 @@
-use std::cmp;
-
 use anchor_lang::prelude::*;
-
 use anchor_spl::token::{self, Transfer};
 use fixed::types::I80F48;
+use std::cmp;
 
 use crate::accounts_ix::*;
 use crate::accounts_zerocopy::*;
@@ -13,8 +11,12 @@ use crate::state::*;
 // TODO
 #[allow(clippy::too_many_arguments)]
 pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<Option<u128>> {
-    require_gte!(order.max_base_lots, 0);
-    require_gte!(order.max_quote_lots_including_fees, 0);
+    require_gte!(order.max_base_lots, 0, OpenBookError::NegativeLots);
+    require_gte!(
+        order.max_quote_lots_including_fees,
+        0,
+        OpenBookError::NegativeLots
+    );
 
     let mut open_orders_account = ctx.accounts.open_orders_account.load_full_mut()?;
     // account constraint #1
