@@ -101,7 +101,7 @@ pub mod openbook_v2 {
         expiry_timestamp: u64,
         limit: u8,
     ) -> Result<Option<u128>> {
-        require_gte!(price_lots, 0, OpenBookError::NegativePriceLots);
+        require_gte!(price_lots, 1, OpenBookError::InvalidPriceLots);
 
         use crate::state::{Order, OrderParams};
         let time_in_force = match Order::tif_from_expiry(expiry_timestamp) {
@@ -221,7 +221,7 @@ pub mod openbook_v2 {
         self_trade_behavior: SelfTradeBehavior,
         limit: u8,
     ) -> Result<Option<u128>> {
-        require_gte!(price_lots, 0, OpenBookError::NegativePriceLots);
+        require_gte!(price_lots, 1, OpenBookError::InvalidPriceLots);
 
         use crate::state::{Order, OrderParams};
         require!(

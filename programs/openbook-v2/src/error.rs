@@ -105,8 +105,8 @@ pub enum OpenBookError {
     InvalidMint,
     #[msg("Lots cannot be negative")]
     NegativeLots,
-    #[msg("Price lots cannot be negative")]
-    NegativePriceLots,
+    #[msg("Price lots should be above zero")]
+    InvalidPriceLots,
     #[msg("Order size above market limits")]
     InvalidOrderSize,
 }
