@@ -23,7 +23,8 @@ pub struct Orderbook<'a> {
 
 pub struct OrderWithAmounts {
     pub order_id: Option<u128>,
-    pub placed_quantity: i64,
+    pub posted_base_native: i64,
+    pub posted_quote_native: i64,
     pub total_base_taken_native: u64,
     pub total_quote_taken_native: u64,
     pub maker_fees: u64,
@@ -94,7 +95,7 @@ impl<'a> Orderbook<'a> {
         let mut remaining_quote_lots = order.max_quote_lots_including_fees;
         let mut decremented_quote_lots = 0_i64;
 
-        let mut max_quote_lots = remaining_quote_lots;
+        let mut max_quote_lots = order.max_quote_lots_including_fees;
         let mut matched_order_changes: Vec<(BookSideOrderHandle, i64)> = vec![];
         let mut matched_order_deletes: Vec<(BookSideOrderTree, u128)> = vec![];
         let mut number_of_dropped_expired_orders = 0;
@@ -229,12 +230,18 @@ impl<'a> Orderbook<'a> {
             }
         }
         let total_quote_lots_taken = max_quote_lots - remaining_quote_lots;
-        let total_base_lots_taken: i64 = order.max_base_lots - remaining_base_lots;
+        let total_base_lots_taken = order.max_base_lots - remaining_base_lots;
         assert!(total_quote_lots_taken >= 0);
         assert!(total_base_lots_taken >= 0);
 
-        let total_base_taken_native = (market.base_lot_size * total_base_lots_taken) as u64;
-        let mut total_quote_taken_native = (market.quote_lot_size * total_quote_lots_taken) as u64;
+        let total_base_taken_native = total_base_lots_taken
+            .checked_mul(market.base_lot_size)
+            .ok_or(OpenBookError::InvalidOrderSize)? as u64;
+
+        let mut total_quote_taken_native = total_quote_lots_taken
+            .checked_mul(market.quote_lot_size)
+            .ok_or(OpenBookError::InvalidOrderSize)?
+            as u64;
 
         let total_quote_taken_lots_wo_self = total_quote_lots_taken - decremented_quote_lots;
         let total_quote_taken_native_wo_self =
@@ -338,21 +345,29 @@ impl<'a> Orderbook<'a> {
         }
 
         let mut maker_fees = 0;
+        let mut posted_base_native = 0;
+        let mut posted_quote_native = 0;
 
         if let Some(order_tree_target) = post_target {
+            let book_price = match order_tree_target {
+                BookSideOrderTree::Fixed => fixed_price_lots(price_data),
+                BookSideOrderTree::OraclePegged => order.peg_limit(),
+            };
+
+            posted_base_native = book_base_quantity_lots
+                .checked_mul(market.base_lot_size)
+                .ok_or(OpenBookError::InvalidOrderSize)?;
+
+            posted_quote_native = book_base_quantity_lots
+                .checked_mul(book_price)
+                .and_then(|book_quote_lots| book_quote_lots.checked_mul(market.quote_lot_size))
+                .ok_or(OpenBookError::InvalidOrderSize)?;
+
             // Subtract maker fees in bid.
             if market.maker_fee.is_positive() && side == Side::Bid {
-                let book_price = match order_tree_target {
-                    BookSideOrderTree::Fixed => fixed_price_lots(price_data),
-                    BookSideOrderTree::OraclePegged => order.peg_limit(),
-                };
-
-                let book_quote_quantity_lots = book_base_quantity_lots * book_price;
-                maker_fees = (I80F48::from_num(book_quote_quantity_lots)
-                    * market.maker_fee
-                    * I80F48::from_num(market.quote_lot_size))
-                .ceil()
-                .to_num::<u64>();
+                maker_fees = (I80F48::from_num(posted_quote_native) * market.maker_fee)
+                    .ceil()
+                    .to_num::<u64>();
             }
 
             let bookside = self.bookside_mut(side);
@@ -440,15 +455,16 @@ impl<'a> Orderbook<'a> {
             )?;
         }
 
-        let (placed_order_id, placed_quantity) = if post_target.is_some() {
-            (Some(order_id), book_base_quantity_lots)
+        let placed_order_id = if post_target.is_some() {
+            Some(order_id)
         } else {
-            (None, 0)
+            None
         };
 
         Ok(OrderWithAmounts {
             order_id: placed_order_id,
-            placed_quantity,
+            posted_base_native,
+            posted_quote_native,
             total_base_taken_native,
             total_quote_taken_native,
             referrer_amount,
