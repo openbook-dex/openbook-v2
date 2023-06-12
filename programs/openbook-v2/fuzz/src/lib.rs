@@ -205,6 +205,7 @@ impl FuzzContext {
             maker_fee: -0.0002,
             taker_fee: 0.0004,
             fee_penalty: 0,
+            time_expiry: 0,
         };
         process_instruction(&mut self.state, &accounts, &data)
     }
