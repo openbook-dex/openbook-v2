@@ -15,6 +15,10 @@ enum FuzzInstruction {
         user_id: UserId,
         data: openbook_v2::instruction::PlaceOrder,
     },
+    PlaceOrderPegged {
+        user_id: UserId,
+        data: openbook_v2::instruction::PlaceOrderPegged,
+    },
     PlaceTakeOrder {
         user_id: UserId,
         data: openbook_v2::instruction::PlaceTakeOrder,
@@ -36,6 +40,11 @@ fn run_fuzz(fuzz_data: FuzzData) {
             FuzzInstruction::PlaceOrder { user_id, data } => {
                 ctx.place_order(user_id, data).unwrap()
             }
+
+            FuzzInstruction::PlaceOrderPegged { user_id, data } => {
+                ctx.place_order_pegged(user_id, data).unwrap()
+            }
+
             FuzzInstruction::PlaceTakeOrder { user_id, data } => {
                 ctx.place_take_order(user_id, data).unwrap()
             }

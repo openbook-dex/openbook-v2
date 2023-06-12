@@ -248,6 +248,48 @@ impl FuzzContext {
         })
     }
 
+    pub fn place_order_pegged(
+        &mut self,
+        user_id: UserId,
+        data: openbook_v2::instruction::PlaceOrderPegged,
+    ) -> ProgramResult {
+        let user = self.user(user_id);
+
+        let token_deposit_account = match data.side {
+            Side::Ask => user.base_vault,
+            Side::Bid => user.quote_vault,
+        };
+
+        let accounts = openbook_v2::accounts::PlaceOrder {
+            open_orders_account: user.open_orders,
+            owner: user.owner,
+            open_orders_admin: None,
+            market: self.market,
+            bids: self.bids,
+            asks: self.asks,
+            token_deposit_account,
+            base_vault: self.base_vault,
+            quote_vault: self.quote_vault,
+            event_queue: self.event_queue,
+            oracle: self.oracle,
+            token_program: spl_token::ID,
+            system_program: system_program::ID,
+        };
+
+        process_instruction(&mut self.state, &accounts, &data).or_else(|err| match err {
+            e if e == OpenBookError::InvalidOrderPostIOC.into() => Ok(()),
+            e if e == OpenBookError::InvalidOrderPostMarket.into() => Ok(()),
+            e if e == OpenBookError::InvalidOrderSize.into() => Ok(()),
+            e if e == OpenBookError::InvalidPegLimit.into() => Ok(()),
+            e if e == OpenBookError::InvalidPriceLots.into() => Ok(()),
+            e if e == OpenBookError::UnimplementedStaleness.into() => Ok(()),
+            e if e == OpenBookError::NegativeLots.into() => Ok(()),
+            e if e == OpenBookError::WouldSelfTrade.into() => Ok(()),
+            e if e == spl_token::error::TokenError::InsufficientFunds.into() => Ok(()),
+            _ => Err(err),
+        })
+    }
+
     pub fn place_take_order(
         &mut self,
         user_id: UserId,
