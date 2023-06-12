@@ -301,7 +301,7 @@ impl<
     pub fn next_order_slot(&self) -> Result<usize> {
         self.all_orders()
             .position(|&oo| oo.id == 0)
-            .ok_or_else(|| error_msg!("no free perp order index"))
+            .ok_or_else(|| error!(OpenBookError::OpenOrdersFull))
     }
 
     pub fn find_order_with_client_order_id(&self, client_order_id: u64) -> Option<&OpenOrder> {
