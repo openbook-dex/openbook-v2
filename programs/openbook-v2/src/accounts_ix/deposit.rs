@@ -9,7 +9,9 @@ pub struct Deposit<'info> {
     pub token_base_account: Account<'info, TokenAccount>,
     #[account(mut)]
     pub token_quote_account: Account<'info, TokenAccount>,
-    #[account(mut)]
+    #[account(mut,
+        has_one = market,
+    )]
     pub open_orders_account: AccountLoader<'info, OpenOrdersAccountFixed>,
     #[account(mut)]
     pub market: AccountLoader<'info, Market>,
