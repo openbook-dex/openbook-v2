@@ -6,6 +6,7 @@ pub struct CancelOrderByClientOrderId<'info> {
     #[account(
         mut,
         // owner is checked at #1
+        has_one = market,
     )]
     pub open_orders_account: AccountLoader<'info, OpenOrdersAccountFixed>,
     pub owner: Signer<'info>,

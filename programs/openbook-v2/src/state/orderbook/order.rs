@@ -1,6 +1,7 @@
 use anchor_lang::prelude::*;
 
 use super::*;
+use crate::error::*;
 
 ///  order parameters
 pub struct Order {
@@ -154,7 +155,7 @@ impl Order {
             }
             _ => fixed_price_data(price_lots)?,
         };
-        require_gte!(price_lots, 1);
+        require_gte!(price_lots, 1, OpenBookError::InvalidPriceLots);
         Ok((price_lots, price_data))
     }
 

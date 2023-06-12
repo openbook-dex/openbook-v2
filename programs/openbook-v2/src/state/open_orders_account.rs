@@ -34,6 +34,7 @@ const DEFAULT_OPEN_ORDERS_ACCOUNT_VERSION: u8 = 1;
 pub struct OpenOrdersAccount {
     // ABI: Clients rely on this being at offset 40
     pub owner: Pubkey,
+    pub market: Pubkey,
 
     pub name: [u8; 32],
 
@@ -69,6 +70,7 @@ impl OpenOrdersAccount {
         Self {
             name: Default::default(),
             owner: Pubkey::default(),
+            market: Pubkey::default(),
             delegate: Pubkey::default(),
             account_num: 0,
             bump: 0,
@@ -110,6 +112,7 @@ impl OpenOrdersAccount {
 #[derive(bytemuck::Pod, bytemuck::Zeroable)]
 pub struct OpenOrdersAccountFixed {
     pub owner: Pubkey,
+    pub market: Pubkey,
     pub name: [u8; 32],
     pub delegate: Pubkey,
     pub account_num: u32,
@@ -125,14 +128,14 @@ pub struct OpenOrdersAccountFixed {
 const_assert_eq!(
     size_of::<Position>(),
     size_of::<OpenOrdersAccountFixed>()
-        - size_of::<Pubkey>() * 3
+        - size_of::<Pubkey>() * 4
         - size_of::<u32>()
         - size_of::<u8>()
         - size_of::<[u8; 3]>()
         - size_of::<u64>() * 3
         - size_of::<[u8; 208]>()
 );
-const_assert_eq!(size_of::<OpenOrdersAccountFixed>(), 488);
+const_assert_eq!(size_of::<OpenOrdersAccountFixed>(), 520);
 const_assert_eq!(size_of::<OpenOrdersAccountFixed>() % 8, 0);
 
 impl OpenOrdersAccountFixed {
@@ -301,7 +304,7 @@ impl<
     pub fn next_order_slot(&self) -> Result<usize> {
         self.all_orders()
             .position(|&oo| oo.id == 0)
-            .ok_or_else(|| error_msg!("no free perp order index"))
+            .ok_or_else(|| error!(OpenBookError::OpenOrdersFull))
     }
 
     pub fn find_order_with_client_order_id(&self, client_order_id: u64) -> Option<&OpenOrder> {
