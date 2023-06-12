@@ -247,4 +247,42 @@ impl FuzzContext {
             _ => Err(err),
         })
     }
+
+    pub fn place_take_order(
+        &mut self,
+        user_id: UserId,
+        data: openbook_v2::instruction::PlaceTakeOrder,
+    ) -> ProgramResult {
+        let user = self.user(user_id);
+
+        let (token_deposit_account, token_receiver_account) = match data.side {
+            Side::Ask => (user.base_vault, user.quote_vault),
+            Side::Bid => (user.quote_vault, user.base_vault),
+        };
+
+        let accounts = openbook_v2::accounts::PlaceTakeOrder {
+            owner: user.owner,
+            market: self.market,
+            bids: self.bids,
+            asks: self.asks,
+            token_deposit_account,
+            token_receiver_account,
+            base_vault: self.base_vault,
+            quote_vault: self.quote_vault,
+            event_queue: self.event_queue,
+            oracle: self.oracle,
+            token_program: spl_token::ID,
+            system_program: system_program::ID,
+            open_orders_admin: None,
+        };
+
+        process_instruction(&mut self.state, &accounts, &data).or_else(|err| match err {
+            e if e == OpenBookError::InvalidOrderSize.into() => Ok(()),
+            e if e == OpenBookError::InvalidOrderType.into() => Ok(()),
+            e if e == OpenBookError::InvalidPriceLots.into() => Ok(()),
+            e if e == OpenBookError::NegativeLots.into() => Ok(()),
+            e if e == spl_token::error::TokenError::InsufficientFunds.into() => Ok(()),
+            _ => Err(err),
+        })
+    }
 }

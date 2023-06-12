@@ -15,6 +15,10 @@ enum FuzzInstruction {
         user_id: UserId,
         data: openbook_v2::instruction::PlaceOrder,
     },
+    PlaceTakeOrder {
+        user_id: UserId,
+        data: openbook_v2::instruction::PlaceTakeOrder,
+    },
 }
 
 fuzz_target!(|fuzz_data: FuzzData| { run_fuzz(fuzz_data) });
@@ -31,6 +35,9 @@ fn run_fuzz(fuzz_data: FuzzData) {
         match fuzz_instruction {
             FuzzInstruction::PlaceOrder { user_id, data } => {
                 ctx.place_order(user_id, data).unwrap()
+            }
+            FuzzInstruction::PlaceTakeOrder { user_id, data } => {
+                ctx.place_take_order(user_id, data).unwrap()
             }
         };
     }
