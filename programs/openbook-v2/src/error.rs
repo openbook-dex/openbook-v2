@@ -23,6 +23,10 @@ pub enum OpenBookError {
     InvalidFeesError,
     #[msg("The order type is invalid. A taker order must be Market or ImmediateOrCancel")]
     InvalidOrderType,
+    #[msg("ImmediateOrCancel is not a PostOrderType")]
+    InvalidOrderPostIOC,
+    #[msg("Market is not a PostOrderType")]
+    InvalidOrderPostMarket,
     #[msg("would self trade")]
     WouldSelfTrade,
     #[msg("This market does not have a `close_market_admin` and thus cannot be closed.")]
@@ -52,7 +56,7 @@ pub enum OpenBookError {
     #[msg("Order size above market limits")]
     InvalidOrderSize,
     #[msg("Oracle staleness limit is currently unimplemented")]
-    Unimplemented,
+    UnimplementedStaleness,
 }
 
 impl From<OpenBookError> for ProgramError {
