@@ -1,5 +1,4 @@
 use anchor_lang::prelude::*;
-
 use anchor_spl::token::{self, Transfer};
 
 use crate::accounts_ix::*;
@@ -14,8 +13,12 @@ pub fn place_take_order<'info>(
     order: Order,
     limit: u8,
 ) -> Result<Option<u128>> {
-    require_gte!(order.max_base_lots, 0);
-    require_gte!(order.max_quote_lots_including_fees, 0);
+    require_gte!(order.max_base_lots, 0, OpenBookError::NegativeLots);
+    require_gte!(
+        order.max_quote_lots_including_fees,
+        0,
+        OpenBookError::NegativeLots
+    );
 
     let mut market = ctx.accounts.market.load_mut()?;
     require!(

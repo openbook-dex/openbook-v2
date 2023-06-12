@@ -103,6 +103,18 @@ pub enum OpenBookError {
     MarketHasExpired,
     #[msg("The mint has invalid decimals.")]
     InvalidMint,
+    #[msg("Lots cannot be negative")]
+    NegativeLots,
+    #[msg("Price lots should be above zero")]
+    InvalidPriceLots,
+    #[msg("Order size above market limits")]
+    InvalidOrderSize,
+}
+
+impl From<OpenBookError> for ProgramError {
+    fn from(error: OpenBookError) -> Self {
+        ProgramError::from(Error::from(error))
+    }
 }
 
 impl OpenBookError {
