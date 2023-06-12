@@ -183,9 +183,8 @@ impl DynamicHeader for OpenOrdersAccountDynamicHeader {
 
                 Ok(Self { oo_count })
             }
-            _ => {
-                err!(OpenBookError::NotImplementedError).context("unexpected header version number")
-            }
+            _ => err!(OpenBookError::HeaderVersionNotKnown)
+                .context("unexpected header version number"),
         }
     }
 

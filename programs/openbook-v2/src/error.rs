@@ -7,80 +7,22 @@ use core::fmt::Display;
 pub enum OpenBookError {
     #[msg("")]
     SomeError,
-    #[msg("")]
-    NotImplementedError,
-    #[msg("checked math error")]
-    MathError,
-    #[msg("")]
-    UnexpectedOracle,
+    #[msg("The header version is not 1")]
+    HeaderVersionNotKnown,
     #[msg("oracle type cannot be determined")]
     UnknownOracleType,
-    #[msg("invalid bank")]
-    InvalidBank,
-    #[msg("account profitability is mismatched")]
-    ProfitabilityMismatch,
-    #[msg("cannot settle with self")]
-    CannotSettleWithSelf,
-    #[msg("perp position does not exist")]
-    PositionDoesNotExist,
-    #[msg("max settle amount must be greater than zero")]
-    MaxSettleAmountMustBeGreaterThanZero,
-    #[msg("the perp position has open orders or unprocessed fill events")]
-    HasOpenOrders,
     #[msg("an oracle does not reach the confidence threshold")]
     OracleConfidence,
     #[msg("an oracle is stale")]
     OracleStale,
-    #[msg("settlement amount must always be positive")]
-    SettlementAmountMustBePositive,
-    #[msg("bank utilization has reached limit")]
-    BankBorrowLimitReached,
-    #[msg("bank net borrows has reached limit - this is an intermittent error - the limit will reset regularly")]
-    BankNetBorrowsLimitReached,
-    #[msg("token position does not exist")]
-    TokenPositionDoesNotExist,
-    #[msg("token deposits into accounts that are being liquidated must bring their health above the init threshold")]
-    DepositsIntoLiquidatingMustRecover,
-    #[msg("token is in reduce only mode")]
-    TokenInReduceOnlyMode,
-    #[msg("market is in reduce only mode")]
-    MarketInReduceOnlyMode,
-    #[msg("group is halted")]
-    GroupIsHalted,
-    #[msg("the perp position has non-zero base lots")]
-    HasBaseLots,
-    #[msg("there are open or unsettled serum3 orders")]
-    HasOpenOrUnsettledSerum3Orders,
-    #[msg("has liquidatable token position")]
-    HasLiquidatableTokenPosition,
-    #[msg("has liquidatable perp base position")]
-    HasLiquidatableBasePosition,
-    #[msg("has liquidatable positive perp pnl")]
-    HasLiquidatablePositivePnl,
-    #[msg("account is frozen")]
-    AccountIsFrozen,
-    #[msg("Init Asset Weight can't be negative")]
-    InitAssetWeightCantBeNegative,
-    #[msg("has open perp taker fills")]
-    HasOpenTakerFills,
-    #[msg("deposit crosses the current group deposit limit")]
-    DepositLimit,
-    #[msg("instruction is disabled")]
-    IxIsDisabled,
-    #[msg("no liquidatable perp base position")]
-    NoLiquidatableBasePosition,
     #[msg("perp order id not found on the orderbook")]
     OrderIdNotFound,
-    #[msg("HealthRegions allow only specific instructions between Begin and End")]
-    HealthRegionBadInnerInstruction,
     #[msg("Event queue contains elements and market can't be closed")]
     EventQueueContainsElements,
     #[msg("Taker fees should be positive and if maker fees are negative, greater or equal to their abs value")]
     InvalidFeesError,
     #[msg("The order type is invalid. A taker order must be Market or ImmediateOrCancel")]
     InvalidOrderType,
-    #[msg("The receiver is invalid. Makes sure the receiver's owner is the market admin")]
-    InvalidFundsReceiver,
     #[msg("would self trade")]
     WouldSelfTrade,
     #[msg("This market does not have a `close_market_admin` and thus cannot be closed.")]
@@ -101,8 +43,6 @@ pub enum OpenBookError {
     InvalidConsumeEventsAdmin,
     #[msg("The Market has already expired.")]
     MarketHasExpired,
-    #[msg("The mint has invalid decimals.")]
-    InvalidMint,
     #[msg("Lots cannot be negative")]
     NegativeLots,
     #[msg("Price lots should be above zero")]
