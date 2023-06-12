@@ -10,6 +10,11 @@ pub fn close_market(ctx: Context<CloseMarket>) -> Result<()> {
         ctx.accounts.close_market_admin.key() == close_admin,
         OpenBookError::InvalidCloseMarketAdmin
     );
+    // check market is expired
+    require!(
+        market.time_expiry == -1 || market.time_expiry < Clock::get()?.unix_timestamp,
+        OpenBookError::MarketHasNotExpired
+    );
 
     let event_queue = ctx.accounts.event_queue.load()?;
     require!(

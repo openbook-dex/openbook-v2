@@ -355,16 +355,23 @@ pub mod openbook_v2 {
         Ok(())
     }
 
+    /// Set market to expired before pruning orders and closing the market
+    pub fn set_market_expired(ctx: Context<SetMarketExpired>) -> Result<()> {
+        #[cfg(feature = "enable-gpl")]
+        instructions::set_market_expired(ctx)?;
+        Ok(())
+    }
+
+    pub fn prune_orders(ctx: Context<PruneOrders>, limit: u8) -> Result<()> {
+        #[cfg(feature = "enable-gpl")]
+        instructions::prune_orders(ctx, limit)?;
+        Ok(())
+    }
+
     /// Close a [`Market`](crate::state::Market).
     pub fn close_market(ctx: Context<CloseMarket>) -> Result<()> {
         #[cfg(feature = "enable-gpl")]
         instructions::close_market(ctx)?;
-        Ok(())
-    }
-
-    pub fn set_market_expired(ctx: Context<SetMarketExpired>) -> Result<()> {
-        #[cfg(feature = "enable-gpl")]
-        instructions::set_market_expired(ctx)?;
         Ok(())
     }
 
