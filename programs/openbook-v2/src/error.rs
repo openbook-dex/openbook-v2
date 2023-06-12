@@ -57,6 +57,8 @@ pub enum OpenBookError {
     InvalidOrderSize,
     #[msg("Oracle staleness limit is currently unimplemented")]
     UnimplementedStaleness,
+    #[msg("No free order index in open orders account")]
+    OpenOrdersFull,
 }
 
 impl From<OpenBookError> for ProgramError {
