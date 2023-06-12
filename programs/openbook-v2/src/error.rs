@@ -45,10 +45,14 @@ pub enum OpenBookError {
     MarketHasExpired,
     #[msg("Lots cannot be negative")]
     NegativeLots,
-    #[msg("Price lots should be above zero")]
+    #[msg("Price lots should be greater than zero")]
     InvalidPriceLots,
+    #[msg("Peg limit should be greater than zero")]
+    InvalidPegLimit,
     #[msg("Order size above market limits")]
     InvalidOrderSize,
+    #[msg("Oracle staleness limit is currently unimplemented")]
+    Unimplemented,
 }
 
 impl From<OpenBookError> for ProgramError {

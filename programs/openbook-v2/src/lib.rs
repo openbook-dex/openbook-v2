@@ -172,8 +172,12 @@ pub mod openbook_v2 {
         // WARNING: Not currently implemented.
         max_oracle_staleness_slots: i32,
     ) -> Result<Option<u128>> {
-        require_gt!(peg_limit, 0);
-        require_eq!(max_oracle_staleness_slots, -1); // unimplemented
+        require_gt!(peg_limit, 0, OpenBookError::InvalidPegLimit);
+        require_eq!(
+            max_oracle_staleness_slots,
+            -1,
+            OpenBookError::UnimplementedStaleness
+        );
 
         use crate::state::{Order, OrderParams};
         let time_in_force = match Order::tif_from_expiry(expiry_timestamp) {
