@@ -242,6 +242,7 @@ impl FuzzContext {
             e if e == OpenBookError::InvalidOrderSize.into() => Ok(()),
             e if e == OpenBookError::InvalidPriceLots.into() => Ok(()),
             e if e == OpenBookError::NegativeLots.into() => Ok(()),
+            e if e == OpenBookError::OpenOrdersFull.into() => Ok(()),
             e if e == OpenBookError::WouldSelfTrade.into() => Ok(()),
             e if e == spl_token::error::TokenError::InsufficientFunds.into() => Ok(()),
             _ => Err(err),
