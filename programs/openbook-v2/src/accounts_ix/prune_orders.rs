@@ -4,8 +4,6 @@ use anchor_lang::prelude::*;
 #[derive(Accounts)]
 pub struct PruneOrders<'info> {
     pub close_market_admin: Signer<'info>,
-    // owner is not checked, only close_market_admin
-    pub owner: UncheckedAccount<'info>,
     #[account(
         mut,
         has_one = market

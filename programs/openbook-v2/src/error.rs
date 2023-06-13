@@ -63,6 +63,8 @@ pub enum OpenBookError {
     UnimplementedStaleness,
     #[msg("No free order index in open orders account")]
     OpenOrdersFull,
+    #[msg("Book contains elements")]
+    BookContainsElements,
 }
 
 impl From<OpenBookError> for ProgramError {
