@@ -403,10 +403,6 @@ impl OrderTreeNodes {
         self.free_list_len <= 1 && (self.bump_index as usize) >= self.nodes.len() - 1
     }
 
-    pub fn is_empty(&self, roots: [&OrderTreeRoot; 2]) -> bool {
-        roots.into_iter().all(|x| self.iter(x).count() == 0)
-    }
-
     /// When a node changes, the parents' child_earliest_expiry may need to be updated.
     ///
     /// This function walks up the `stack` of parents and applies the change where the

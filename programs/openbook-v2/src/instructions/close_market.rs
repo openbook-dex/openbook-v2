@@ -22,16 +22,7 @@ pub fn close_market(ctx: Context<CloseMarket>) -> Result<()> {
         asks: ctx.accounts.asks.load_mut()?,
     };
 
-    require!(
-        book.bids.nodes.is_empty([
-            book.bids.root(BookSideOrderTree::Fixed),
-            book.bids.root(BookSideOrderTree::OraclePegged)
-        ]) && book.asks.nodes.is_empty([
-            book.asks.root(BookSideOrderTree::Fixed),
-            book.asks.root(BookSideOrderTree::OraclePegged)
-        ]),
-        OpenBookError::BookContainsElements
-    );
+    require!(book.is_empty(), OpenBookError::BookContainsElements);
 
     let event_queue = ctx.accounts.event_queue.load()?;
     require!(
