@@ -3,7 +3,9 @@ use anchor_lang::prelude::*;
 
 #[derive(Accounts)]
 pub struct CancelAllOrdersBySide<'info> {
-    #[account(mut)]
+    #[account(mut,
+        has_one = market,
+    )]
     pub open_orders_account: AccountLoader<'info, OpenOrdersAccountFixed>,
     pub owner: Signer<'info>,
 

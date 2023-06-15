@@ -1010,3 +1010,66 @@ impl ClientInstruction for CloseMarketInstruction {
         vec![self.close_market_admin]
     }
 }
+
+pub struct SetMarketExpiredInstruction {
+    pub close_market_admin: TestKeypair,
+    pub market: Pubkey,
+}
+#[async_trait::async_trait(?Send)]
+impl ClientInstruction for SetMarketExpiredInstruction {
+    type Accounts = openbook_v2::accounts::SetMarketExpired;
+    type Instruction = openbook_v2::instruction::SetMarketExpired;
+    async fn to_instruction(
+        &self,
+        _account_loader: impl ClientAccountLoader + 'async_trait,
+    ) -> (Self::Accounts, instruction::Instruction) {
+        let program_id = openbook_v2::id();
+        let instruction = Self::Instruction {};
+
+        let accounts = Self::Accounts {
+            close_market_admin: self.close_market_admin.pubkey(),
+            market: self.market,
+        };
+
+        let instruction = make_instruction(program_id, &accounts, instruction);
+        (accounts, instruction)
+    }
+
+    fn signers(&self) -> Vec<TestKeypair> {
+        vec![self.close_market_admin]
+    }
+}
+
+pub struct PruneOrdersInstruction {
+    pub close_market_admin: TestKeypair,
+    pub market: Pubkey,
+    pub open_orders_account: Pubkey,
+}
+#[async_trait::async_trait(?Send)]
+impl ClientInstruction for PruneOrdersInstruction {
+    type Accounts = openbook_v2::accounts::PruneOrders;
+    type Instruction = openbook_v2::instruction::PruneOrders;
+    async fn to_instruction(
+        &self,
+        account_loader: impl ClientAccountLoader + 'async_trait,
+    ) -> (Self::Accounts, instruction::Instruction) {
+        let program_id = openbook_v2::id();
+        let instruction = Self::Instruction { limit: 5 };
+        let market: Market = account_loader.load(&self.market).await.unwrap();
+
+        let accounts = Self::Accounts {
+            close_market_admin: self.close_market_admin.pubkey(),
+            market: self.market,
+            open_orders_account: self.open_orders_account,
+            bids: market.bids,
+            asks: market.asks,
+        };
+
+        let instruction = make_instruction(program_id, &accounts, instruction);
+        (accounts, instruction)
+    }
+
+    fn signers(&self) -> Vec<TestKeypair> {
+        vec![self.close_market_admin]
+    }
+}

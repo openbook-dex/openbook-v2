@@ -172,8 +172,12 @@ pub mod openbook_v2 {
         // WARNING: Not currently implemented.
         max_oracle_staleness_slots: i32,
     ) -> Result<Option<u128>> {
-        require_gt!(peg_limit, 0);
-        require_eq!(max_oracle_staleness_slots, -1); // unimplemented
+        require_gt!(peg_limit, 0, OpenBookError::InvalidPegLimit);
+        require_eq!(
+            max_oracle_staleness_slots,
+            -1,
+            OpenBookError::UnimplementedStaleness
+        );
 
         use crate::state::{Order, OrderParams};
         let time_in_force = match Order::tif_from_expiry(expiry_timestamp) {
@@ -352,6 +356,19 @@ pub mod openbook_v2 {
     pub fn sweep_fees(ctx: Context<SweepFees>) -> Result<()> {
         #[cfg(feature = "enable-gpl")]
         instructions::sweep_fees(ctx)?;
+        Ok(())
+    }
+
+    /// Set market to expired before pruning orders and closing the market
+    pub fn set_market_expired(ctx: Context<SetMarketExpired>) -> Result<()> {
+        #[cfg(feature = "enable-gpl")]
+        instructions::set_market_expired(ctx)?;
+        Ok(())
+    }
+
+    pub fn prune_orders(ctx: Context<PruneOrders>, limit: u8) -> Result<()> {
+        #[cfg(feature = "enable-gpl")]
+        instructions::prune_orders(ctx, limit)?;
         Ok(())
     }
 

@@ -34,6 +34,7 @@ const DEFAULT_OPEN_ORDERS_ACCOUNT_VERSION: u8 = 1;
 pub struct OpenOrdersAccount {
     // ABI: Clients rely on this being at offset 40
     pub owner: Pubkey,
+    pub market: Pubkey,
 
     pub name: [u8; 32],
 
@@ -69,6 +70,7 @@ impl OpenOrdersAccount {
         Self {
             name: Default::default(),
             owner: Pubkey::default(),
+            market: Pubkey::default(),
             delegate: Pubkey::default(),
             account_num: 0,
             bump: 0,
@@ -110,6 +112,7 @@ impl OpenOrdersAccount {
 #[derive(bytemuck::Pod, bytemuck::Zeroable)]
 pub struct OpenOrdersAccountFixed {
     pub owner: Pubkey,
+    pub market: Pubkey,
     pub name: [u8; 32],
     pub delegate: Pubkey,
     pub account_num: u32,
@@ -125,14 +128,14 @@ pub struct OpenOrdersAccountFixed {
 const_assert_eq!(
     size_of::<Position>(),
     size_of::<OpenOrdersAccountFixed>()
-        - size_of::<Pubkey>() * 3
+        - size_of::<Pubkey>() * 4
         - size_of::<u32>()
         - size_of::<u8>()
         - size_of::<[u8; 3]>()
         - size_of::<u64>() * 3
         - size_of::<[u8; 208]>()
 );
-const_assert_eq!(size_of::<OpenOrdersAccountFixed>(), 488);
+const_assert_eq!(size_of::<OpenOrdersAccountFixed>(), 520);
 const_assert_eq!(size_of::<OpenOrdersAccountFixed>() % 8, 0);
 
 impl OpenOrdersAccountFixed {
@@ -301,7 +304,7 @@ impl<
     pub fn next_order_slot(&self) -> Result<usize> {
         self.all_orders()
             .position(|&oo| oo.id == 0)
-            .ok_or_else(|| error_msg!("no free perp order index"))
+            .ok_or_else(|| error!(OpenBookError::OpenOrdersFull))
     }
 
     pub fn find_order_with_client_order_id(&self, client_order_id: u64) -> Option<&OpenOrder> {
@@ -366,13 +369,9 @@ impl<
                 .to_num::<u64>()
         };
 
-        let locked_price = {
-            let oo = self.order_by_raw_index(fill.maker_slot as usize);
-            match oo.side_and_tree().order_tree() {
-                BookSideOrderTree::Fixed => fill.price,
-                BookSideOrderTree::OraclePegged => oo.peg_limit,
-            }
-        };
+        let price = self
+            .order_by_raw_index(fill.maker_slot as usize)
+            .locked_price;
 
         let pa = &mut self.fixed_mut().position;
         pa.maker_volume += quote_native_abs;
@@ -388,8 +387,8 @@ impl<
         // Update free_lots
         {
             let (base_locked_change, quote_locked_change): (i64, i64) = match side {
-                Side::Bid => (fill.quantity, -locked_price * fill.quantity),
-                Side::Ask => (-fill.quantity, locked_price * fill.quantity),
+                Side::Bid => (fill.quantity, -price * fill.quantity),
+                Side::Ask => (-fill.quantity, price * fill.quantity),
             };
 
             let base_to_free = (market.base_lot_size * base_locked_change.abs()) as u64;
@@ -530,7 +529,7 @@ impl<
         order_tree: BookSideOrderTree,
         order: &LeafNode,
         client_order_id: u64,
-        peg_limit: i64,
+        locked_price: i64,
     ) -> Result<()> {
         let position = &mut self.fixed_mut().position;
         match side {
@@ -547,7 +546,7 @@ impl<
         oo.side_and_tree = SideAndOrderTree::new(side, order_tree).into();
         oo.id = order.key;
         oo.client_id = client_order_id;
-        oo.peg_limit = peg_limit;
+        oo.locked_price = locked_price;
         Ok(())
     }
 
@@ -582,15 +581,12 @@ impl<
         {
             let oo = self.open_order_mut_by_raw_index(slot);
 
-            let price = match oo.side_and_tree().order_tree() {
-                BookSideOrderTree::Fixed => (oo.id >> 64) as i64,
-                BookSideOrderTree::OraclePegged => oo.peg_limit,
-            };
+            let price = oo.locked_price;
+            let order_side = oo.side_and_tree().side();
 
             let mut base_quantity_native = (base_quantity * market.base_lot_size) as u64;
             let mut quote_quantity_native =
                 (base_quantity.checked_mul(price).unwrap() * market.quote_lot_size) as u64;
-            let order_side = oo.side_and_tree().side();
 
             let position = &mut self.fixed_mut().position;
 

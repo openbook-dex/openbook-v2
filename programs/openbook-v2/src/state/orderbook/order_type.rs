@@ -3,7 +3,6 @@ use num_enum::{IntoPrimitive, TryFromPrimitive};
 
 use super::*;
 use crate::error::*;
-use crate::error_msg;
 
 #[derive(
     Eq,
@@ -45,8 +44,8 @@ pub enum PlaceOrderType {
 impl PlaceOrderType {
     pub fn to_post_order_type(&self) -> Result<PostOrderType> {
         match *self {
-            Self::Market => Err(error_msg!("Market is not a PostOrderType")),
-            Self::ImmediateOrCancel => Err(error_msg!("ImmediateOrCancel is not a PostOrderType")),
+            Self::Market => Err(OpenBookError::InvalidOrderPostMarket.into()),
+            Self::ImmediateOrCancel => Err(OpenBookError::InvalidOrderPostIOC.into()),
             Self::Limit => Ok(PostOrderType::Limit),
             Self::PostOnly => Ok(PostOrderType::PostOnly),
             Self::PostOnlySlide => Ok(PostOrderType::PostOnlySlide),

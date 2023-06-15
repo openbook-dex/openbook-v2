@@ -37,6 +37,10 @@ impl<'a> Orderbook<'a> {
         self.asks.nodes.order_tree_type = OrderTreeType::Asks.into();
     }
 
+    pub fn is_empty(&self) -> bool {
+        self.bids.is_empty() && self.asks.is_empty()
+    }
+
     pub fn bookside_mut(&mut self, side: Side) -> &mut BookSide {
         match side {
             Side::Bid => &mut self.bids,
@@ -325,8 +329,9 @@ impl<'a> Orderbook<'a> {
         // Place remainder on the book if requested
         //
 
-        // To calculate max quantity to post, for oracle peg orders, take the peg_limit as it's the upper price limitation
-        let price = if order.peg_limit() != -1 {
+        // To calculate max quantity to post, for oracle peg orders & bids take the peg_limit as
+        // it's the upper price limitation
+        let price = if order.peg_limit() != -1 && order.side == Side::Bid {
             order.peg_limit()
         } else {
             price_lots
@@ -349,17 +354,12 @@ impl<'a> Orderbook<'a> {
         let mut posted_quote_native = 0;
 
         if let Some(order_tree_target) = post_target {
-            let book_price = match order_tree_target {
-                BookSideOrderTree::Fixed => fixed_price_lots(price_data),
-                BookSideOrderTree::OraclePegged => order.peg_limit(),
-            };
-
             posted_base_native = book_base_quantity_lots
                 .checked_mul(market.base_lot_size)
                 .ok_or(OpenBookError::InvalidOrderSize)?;
 
             posted_quote_native = book_base_quantity_lots
-                .checked_mul(book_price)
+                .checked_mul(price)
                 .and_then(|book_quote_lots| book_quote_lots.checked_mul(market.quote_lot_size))
                 .ok_or(OpenBookError::InvalidOrderSize)?;
 
@@ -451,7 +451,7 @@ impl<'a> Orderbook<'a> {
                 order_tree_target,
                 &new_order,
                 order.client_order_id,
-                order.peg_limit(),
+                price,
             )?;
         }
 

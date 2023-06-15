@@ -79,6 +79,12 @@ impl BookSide {
         self.nodes.is_full()
     }
 
+    pub fn is_empty(&self) -> bool {
+        [BookSideOrderTree::Fixed, BookSideOrderTree::OraclePegged]
+            .into_iter()
+            .all(|component| self.nodes.iter(self.root(component)).count() == 0)
+    }
+
     pub fn insert_leaf(
         &mut self,
         component: BookSideOrderTree,

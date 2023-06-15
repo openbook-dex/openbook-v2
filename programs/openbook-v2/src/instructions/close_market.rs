@@ -1,5 +1,6 @@
 use crate::accounts_ix::*;
 use crate::error::OpenBookError;
+use crate::state::*;
 use anchor_lang::prelude::*;
 
 pub fn close_market(ctx: Context<CloseMarket>) -> Result<()> {
@@ -10,6 +11,18 @@ pub fn close_market(ctx: Context<CloseMarket>) -> Result<()> {
         ctx.accounts.close_market_admin.key() == close_admin,
         OpenBookError::InvalidCloseMarketAdmin
     );
+    // check market is expired
+    require!(
+        market.time_expiry == -1 || market.time_expiry < Clock::get()?.unix_timestamp,
+        OpenBookError::MarketHasNotExpired
+    );
+
+    let book = Orderbook {
+        bids: ctx.accounts.bids.load_mut()?,
+        asks: ctx.accounts.asks.load_mut()?,
+    };
+
+    require!(book.is_empty(), OpenBookError::BookContainsElements);
 
     let event_queue = ctx.accounts.event_queue.load()?;
     require!(
