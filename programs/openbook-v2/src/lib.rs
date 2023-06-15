@@ -362,12 +362,6 @@ pub mod openbook_v2 {
         Ok(())
     }
 
-    pub fn set_market_expired(ctx: Context<SetMarketExpired>) -> Result<()> {
-        #[cfg(feature = "enable-gpl")]
-        instructions::set_market_expired(ctx)?;
-        Ok(())
-    }
-
     // todo:
     // ckamm: generally, using an I80F48 arg will make it harder to call
     // because generic anchor clients won't know how to deal with it
