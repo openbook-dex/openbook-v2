@@ -37,6 +37,10 @@ impl<'a> Orderbook<'a> {
         self.asks.nodes.order_tree_type = OrderTreeType::Asks.into();
     }
 
+    pub fn is_empty(&self) -> bool {
+        self.bids.is_empty() && self.asks.is_empty()
+    }
+
     pub fn bookside_mut(&mut self, side: Side) -> &mut BookSide {
         match side {
             Side::Bid => &mut self.bids,

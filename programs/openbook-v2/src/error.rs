@@ -55,10 +55,16 @@ pub enum OpenBookError {
     InvalidPegLimit,
     #[msg("Order size above market limits")]
     InvalidOrderSize,
+    #[msg("The Market has not expired yet.")]
+    MarketHasNotExpired,
+    #[msg("No correct owner or delegate.")]
+    NoOwnerOrDelegate,
     #[msg("Oracle staleness limit is currently unimplemented")]
     UnimplementedStaleness,
     #[msg("No free order index in open orders account")]
     OpenOrdersFull,
+    #[msg("Book contains elements")]
+    BookContainsElements,
 }
 
 impl From<OpenBookError> for ProgramError {
