@@ -480,6 +480,35 @@ impl<
         Ok(())
     }
 
+    /// Release funds and apply taker fees to the taker account. Account fees for referrer
+    pub fn release_funds_apply_fees(
+        &mut self,
+        taker_side: Side,
+        market: &mut Market,
+        base_native: u64,
+        quote_native: u64,
+        taker_fees: u64,
+    ) -> Result<()> {
+        let pa = &mut self.fixed_mut().position;
+        // Update free_native
+        match taker_side {
+            Side::Bid => {
+                pa.base_free_native += base_native;
+            }
+            Side::Ask => {
+                pa.quote_free_native += quote_native - taker_fees;
+            }
+        };
+
+        // Referrer rebates
+        pa.referrer_rebates_accrued += market.referrer_taker_rebate(quote_native);
+        market.referrer_rebates_accrued += market.referrer_taker_rebate(quote_native);
+
+        pa.taker_volume += taker_fees;
+
+        Ok(())
+    }
+
     fn write_oo_length(&mut self) {
         let oo_offset = self.header().oo_offset(0);
 

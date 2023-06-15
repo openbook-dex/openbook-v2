@@ -278,10 +278,9 @@ impl<'a> Orderbook<'a> {
             };
 
             if let Some(open_orders_acc) = &mut open_orders_acc {
-                release_funds_fees(
+                open_orders_acc.release_funds_apply_fees(
                     side,
                     market,
-                    open_orders_acc,
                     total_base_taken_native,
                     total_quote_taken_native_wo_self,
                     taker_fees,
@@ -582,35 +581,6 @@ pub fn process_fill_event(
     } else {
         event_queue.push_back(cast(event));
     }
-    Ok(())
-}
-
-/// Release funds and apply taker fees to the taker account. Account fees for referrer
-fn release_funds_fees(
-    taker_side: Side,
-    market: &mut Market,
-    open_orders_acc: &mut OpenOrdersAccountRefMut,
-    base_native: u64,
-    quote_native: u64,
-    taker_fees: u64,
-) -> Result<()> {
-    let pa = &mut open_orders_acc.fixed_mut().position;
-    // Update free_lots
-    match taker_side {
-        Side::Bid => {
-            pa.base_free_native += base_native;
-        }
-        Side::Ask => {
-            pa.quote_free_native += quote_native - taker_fees;
-        }
-    };
-
-    // Referrer rebates
-    pa.referrer_rebates_accrued += market.referrer_taker_rebate(quote_native);
-    market.referrer_rebates_accrued += market.referrer_taker_rebate(quote_native);
-
-    open_orders_acc.fixed.position.taker_volume += taker_fees;
-
     Ok(())
 }
 
