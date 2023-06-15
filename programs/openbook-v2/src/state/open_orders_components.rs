@@ -75,7 +75,8 @@ pub struct OpenOrder {
     pub side_and_tree: u8, // SideAndOrderTree -- enums aren't POD
     pub padding1: [u8; 7],
     pub client_id: u64,
-    pub peg_limit: i64,
+    /// Price at which user's assets were locked
+    pub locked_price: i64,
     pub id: u128,
     pub reserved: [u8; 64],
 }
@@ -89,7 +90,7 @@ impl Default for OpenOrder {
             side_and_tree: SideAndOrderTree::BidFixed.into(),
             padding1: Default::default(),
             client_id: 0,
-            peg_limit: 0,
+            locked_price: 0,
             id: 0,
             reserved: [0; 64],
         }
