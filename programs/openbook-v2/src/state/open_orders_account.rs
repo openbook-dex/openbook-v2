@@ -369,13 +369,9 @@ impl<
                 .to_num::<u64>()
         };
 
-        let locked_price = {
-            let oo = self.order_by_raw_index(fill.maker_slot as usize);
-            match oo.side_and_tree().order_tree() {
-                BookSideOrderTree::Fixed => fill.price,
-                BookSideOrderTree::OraclePegged => oo.peg_limit,
-            }
-        };
+        let price = self
+            .order_by_raw_index(fill.maker_slot as usize)
+            .locked_price;
 
         let pa = &mut self.fixed_mut().position;
         pa.maker_volume += quote_native_abs;
@@ -391,8 +387,8 @@ impl<
         // Update free_lots
         {
             let (base_locked_change, quote_locked_change): (i64, i64) = match side {
-                Side::Bid => (fill.quantity, -locked_price * fill.quantity),
-                Side::Ask => (-fill.quantity, locked_price * fill.quantity),
+                Side::Bid => (fill.quantity, -price * fill.quantity),
+                Side::Ask => (-fill.quantity, price * fill.quantity),
             };
 
             let base_to_free = (market.base_lot_size * base_locked_change.abs()) as u64;
@@ -533,7 +529,7 @@ impl<
         order_tree: BookSideOrderTree,
         order: &LeafNode,
         client_order_id: u64,
-        peg_limit: i64,
+        locked_price: i64,
     ) -> Result<()> {
         let position = &mut self.fixed_mut().position;
         match side {
@@ -550,7 +546,7 @@ impl<
         oo.side_and_tree = SideAndOrderTree::new(side, order_tree).into();
         oo.id = order.key;
         oo.client_id = client_order_id;
-        oo.peg_limit = peg_limit;
+        oo.locked_price = locked_price;
         Ok(())
     }
 
@@ -585,15 +581,12 @@ impl<
         {
             let oo = self.open_order_mut_by_raw_index(slot);
 
-            let price = match oo.side_and_tree().order_tree() {
-                BookSideOrderTree::Fixed => (oo.id >> 64) as i64,
-                BookSideOrderTree::OraclePegged => oo.peg_limit,
-            };
+            let price = oo.locked_price;
+            let order_side = oo.side_and_tree().side();
 
             let mut base_quantity_native = (base_quantity * market.base_lot_size) as u64;
             let mut quote_quantity_native =
                 (base_quantity.checked_mul(price).unwrap() * market.quote_lot_size) as u64;
-            let order_side = oo.side_and_tree().side();
 
             let position = &mut self.fixed_mut().position;
 
