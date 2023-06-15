@@ -4,8 +4,6 @@ use crate::accounts_ix::*;
 use crate::error::*;
 use crate::state::*;
 
-// TODO
-#[allow(clippy::too_many_arguments)]
 pub fn prune_orders(ctx: Context<PruneOrders>, limit: u8) -> Result<()> {
     let mut account = ctx.accounts.open_orders_account.load_full_mut()?;
     let market = ctx.accounts.market.load()?;

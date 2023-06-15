@@ -3,7 +3,6 @@ use anchor_lang::prelude::*;
 use anchor_spl::token::{Token, TokenAccount};
 
 #[derive(Accounts)]
-#[instruction(account_num: u32)]
 pub struct PlaceOrder<'info> {
     #[account(mut,
         has_one = market,
