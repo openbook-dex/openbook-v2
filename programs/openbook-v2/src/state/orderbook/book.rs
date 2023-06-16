@@ -303,7 +303,7 @@ impl<'a> Orderbook<'a> {
             });
         } else if order.needs_penalty_fee() {
             // IOC orders have a fee penalty applied if not match to avoid spam
-            total_quote_taken_native += apply_penalty(market);
+            total_quote_taken_native += market.apply_penalty();
         }
 
         // Update remaining based on quote_lots taken. If nothing taken, same as the beginning
@@ -582,10 +582,4 @@ pub fn process_fill_event(
         event_queue.push_back(cast(event));
     }
     Ok(())
-}
-
-/// Applies a fixed penalty fee to the account, and update the market's quote fees_accrued
-fn apply_penalty(market: &mut Market) -> u64 {
-    market.quote_fees_accrued += market.fee_penalty;
-    market.fee_penalty
 }
