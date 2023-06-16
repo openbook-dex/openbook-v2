@@ -247,20 +247,25 @@ impl<'a> Orderbook<'a> {
             .ok_or(OpenBookError::InvalidOrderSize)?
             as u64;
 
-        let total_quote_taken_lots_wo_self = total_quote_lots_taken - decremented_quote_lots;
-        let total_quote_taken_native_wo_self =
-            (total_quote_taken_lots_wo_self * market.quote_lot_size) as u64;
-
         // Record the taker trade in the account already, even though it will only be
         // realized when the fill event gets executed
+        let mut taker_fees = 0_i64;
         if total_quote_lots_taken > 0 || total_base_lots_taken > 0 {
-            let taker_fees = (I80F48::from_num(total_quote_taken_native_wo_self)
-                * market.taker_fee)
-                .ceil()
-                .to_num::<u64>();
+            let total_quote_taken_native_wo_self =
+                ((total_quote_lots_taken - decremented_quote_lots) * market.quote_lot_size) as u64;
 
-            // taker fees should never be negative
-            require_gte!(taker_fees, 0);
+            if total_quote_taken_native_wo_self > 0 {
+                taker_fees = (I80F48::from_num(total_quote_taken_native_wo_self)
+                    * market.taker_fee)
+                    .ceil()
+                    .to_num();
+
+                // taker fees should never be negative
+                require_gte!(taker_fees, 0);
+
+                // Only account taker fees now. Maker fees accounted once processing the event
+                market.fees_accrued += taker_fees;
+            };
 
             if let Some(open_orders_acc) = &mut open_orders_acc {
                 open_orders_acc.release_funds_apply_fees(
@@ -268,27 +273,23 @@ impl<'a> Orderbook<'a> {
                     market,
                     total_base_taken_native,
                     total_quote_taken_native_wo_self,
-                    taker_fees,
+                    taker_fees as u64,
                 )?;
             } else {
                 // It's a taker order, transfer to referrer
                 referrer_amount += market.referrer_taker_rebate(total_quote_taken_native_wo_self);
             }
-            // Only account taker fees now. Maker fees accounted once processing the event
-            market.fees_accrued += (I80F48::from_num(total_quote_taken_native_wo_self)
-                * market.taker_fee)
-                .to_num::<i64>();
 
             let total_quantity_paid: u64;
             let total_quantity_received: u64;
             match side {
                 Side::Bid => {
-                    total_quote_taken_native += taker_fees;
+                    total_quote_taken_native += taker_fees as u64;
                     total_quantity_paid = total_quote_taken_native;
                     total_quantity_received = total_base_taken_native;
                 }
                 Side::Ask => {
-                    total_quote_taken_native -= taker_fees;
+                    total_quote_taken_native -= taker_fees as u64;
                     total_quantity_paid = total_base_taken_native;
                     total_quantity_received = total_quote_taken_native;
                 }
@@ -299,7 +300,7 @@ impl<'a> Orderbook<'a> {
                 taker: *owner,
                 total_quantity_paid,
                 total_quantity_received,
-                fees: taker_fees,
+                fees: taker_fees as u64,
             });
         } else if order.needs_penalty_fee() {
             // IOC orders have a fee penalty applied if not match to avoid spam
@@ -307,9 +308,8 @@ impl<'a> Orderbook<'a> {
         }
 
         // Update remaining based on quote_lots taken. If nothing taken, same as the beginning
-        remaining_quote_lots = order.max_quote_lots_including_fees
-            - total_quote_lots_taken
-            - (market.taker_fee * I80F48::from_num(total_quote_taken_lots_wo_self)).to_num::<i64>();
+        remaining_quote_lots =
+            order.max_quote_lots_including_fees - total_quote_lots_taken - taker_fees;
 
         // Apply changes to matched asks (handles invalidate on delete!)
         for (handle, new_quantity) in matched_order_changes {
