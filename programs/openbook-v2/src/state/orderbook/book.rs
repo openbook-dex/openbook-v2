@@ -254,9 +254,6 @@ impl<'a> Orderbook<'a> {
         // Record the taker trade in the account already, even though it will only be
         // realized when the fill event gets executed
         if total_quote_lots_taken > 0 || total_base_lots_taken > 0 {
-            // Calculations
-            let total_quantity_paid: u64;
-            let total_quantity_received: u64;
             let taker_fees = (I80F48::from_num(total_quote_taken_native_wo_self)
                 * market.taker_fee)
                 .ceil()
@@ -264,18 +261,6 @@ impl<'a> Orderbook<'a> {
 
             // taker fees should never be negative
             require_gte!(taker_fees, 0);
-            match side {
-                Side::Bid => {
-                    total_quote_taken_native += taker_fees;
-                    total_quantity_paid = total_quote_taken_native;
-                    total_quantity_received = total_base_taken_native;
-                }
-                Side::Ask => {
-                    total_quote_taken_native -= taker_fees;
-                    total_quantity_paid = total_base_taken_native;
-                    total_quantity_received = total_quote_taken_native;
-                }
-            };
 
             if let Some(open_orders_acc) = &mut open_orders_acc {
                 open_orders_acc.release_funds_apply_fees(
@@ -293,6 +278,21 @@ impl<'a> Orderbook<'a> {
             market.fees_accrued += (I80F48::from_num(total_quote_taken_native_wo_self)
                 * market.taker_fee)
                 .to_num::<i64>();
+
+            let total_quantity_paid: u64;
+            let total_quantity_received: u64;
+            match side {
+                Side::Bid => {
+                    total_quote_taken_native += taker_fees;
+                    total_quantity_paid = total_quote_taken_native;
+                    total_quantity_received = total_base_taken_native;
+                }
+                Side::Ask => {
+                    total_quote_taken_native -= taker_fees;
+                    total_quantity_paid = total_base_taken_native;
+                    total_quantity_received = total_quote_taken_native;
+                }
+            };
 
             emit!(TotalOrderFillEvent {
                 side: side.into(),
