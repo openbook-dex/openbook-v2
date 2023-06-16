@@ -413,7 +413,9 @@ impl<
 
             if market.maker_fee.is_positive() {
                 // Apply rebates
-                let maker_fees = (I80F48::from(quote_to_free) * market.maker_fee).to_num::<u64>();
+                let maker_fees = (I80F48::from(quote_to_free) * market.maker_fee)
+                    .ceil()
+                    .to_num::<u64>();
                 pa.referrer_rebates_accrued += maker_fees;
                 market.referrer_rebates_accrued += maker_fees;
             }

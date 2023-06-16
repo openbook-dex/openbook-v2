@@ -420,7 +420,7 @@ async fn test_maker_fees() -> Result<(), TransportError> {
         let market = solana.get_account::<Market>(market).await;
         assert_eq!(market.quote_fees_accrued, 40);
         assert_eq!(market.fees_accrued, 59);
-        assert_eq!(market.fees_to_referrers, 19);
+        assert_eq!(market.fees_to_referrers, 20);
     }
 
     send_tx(
