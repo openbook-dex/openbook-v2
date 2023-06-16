@@ -190,13 +190,12 @@ impl Market {
     }
 
     pub fn referrer_taker_rebate(&self, quote: u64) -> u64 {
-        let quo = I80F48::from_num(quote);
-        if self.maker_fee < 0 {
-            (quo * (self.taker_fee + self.maker_fee)).to_num()
-        } else {
+        let fee_amount = match self.maker_fee.is_positive() {
             // Nothing goes to maker, all to referrer
-            (quo * self.taker_fee).to_num()
-        }
+            true => I80F48::from(quote) * self.taker_fee,
+            false => I80F48::from(quote) * (self.taker_fee + self.maker_fee),
+        };
+        fee_amount.ceil().to_num()
     }
 
     /// Update the market's quote fees acrued and returns the penalty fee
