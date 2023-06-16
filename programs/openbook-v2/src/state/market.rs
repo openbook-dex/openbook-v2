@@ -190,10 +190,11 @@ impl Market {
     }
 
     pub fn referrer_taker_rebate(&self, quote: u64) -> u64 {
-        let fee_amount = match self.maker_fee.is_positive() {
+        let fee_amount = if self.maker_fee.is_positive() {
             // Nothing goes to maker, all to referrer
-            true => I80F48::from(quote) * self.taker_fee,
-            false => I80F48::from(quote) * (self.taker_fee + self.maker_fee),
+            I80F48::from(quote) * self.taker_fee
+        } else {
+            I80F48::from(quote) * (self.taker_fee + self.maker_fee)
         };
         fee_amount.ceil().to_num()
     }

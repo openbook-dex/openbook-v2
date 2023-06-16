@@ -96,10 +96,9 @@ impl<'a> Orderbook<'a> {
         // Any changes to matching orders on the other side of the book are collected in
         // matched_changes/matched_deletes and then applied after this loop.
 
-        let order_max_quote_lots = if side == Side::Bid {
-            market.subtract_taker_fees(order.max_quote_lots_including_fees)
-        } else {
-            order.max_quote_lots_including_fees
+        let order_max_quote_lots = match side {
+            Side::Bid => market.subtract_taker_fees(order.max_quote_lots_including_fees),
+            Side::Ask => order.max_quote_lots_including_fees,
         };
 
         let mut remaining_base_lots = order.max_base_lots;

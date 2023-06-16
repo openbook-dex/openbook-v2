@@ -432,9 +432,10 @@ impl<
         // Update market fees
         let fee_amount: i64 = {
             let amount = I80F48::from(quote_native_abs) * market.maker_fee;
-            match market.maker_fee.is_positive() {
-                true => amount.ceil().to_num(),
-                false => amount.floor().to_num(),
+            if market.maker_fee.is_positive() {
+                amount.ceil().to_num()
+            } else {
+                amount.floor().to_num()
             }
         };
         market.fees_accrued += fee_amount;
