@@ -1,5 +1,6 @@
 #[cfg(test)]
 use anchor_lang::prelude::Pubkey;
+use borsh::{BorshDeserialize, BorshSerialize};
 use bytemuck::{Pod, Zeroable};
 use std::convert::From;
 
@@ -39,6 +40,44 @@ impl<T: Pod> From<Option<T>> for PodOption<T> {
                 flag: 0,
                 value: T::zeroed(),
             },
+        }
+    }
+}
+
+impl<T: Pod> BorshDeserialize for PodOption<T>
+where
+    T: BorshSerialize + BorshDeserialize + Default,
+{
+    fn deserialize(buf: &mut &[u8]) -> std::io::Result<Self> {
+        let flag = u64::deserialize(buf)?;
+        let value = if flag != 0 {
+            T::deserialize(buf)?
+        } else {
+            T::default()
+        };
+        Ok(PodOption { flag, value })
+    }
+}
+
+impl<T: Pod> BorshSerialize for PodOption<T>
+where
+    T: BorshSerialize + BorshDeserialize,
+{
+    fn serialize<W: std::io::Write>(&self, writer: &mut W) -> std::io::Result<()> {
+        self.flag.serialize(writer)?;
+        self.value.serialize(writer)?;
+        Ok(())
+    }
+}
+
+impl<T: Pod> Default for PodOption<T>
+where
+    T: BorshSerialize + BorshDeserialize + Default,
+{
+    fn default() -> Self {
+        PodOption {
+            flag: 0,
+            value: T::default(),
         }
     }
 }

@@ -63,6 +63,7 @@ pub async fn create_open_orders_account(
     market: Pubkey,
     account_num: u32,
     payer: &UserCookie,
+    delegate: Option<Pubkey>,
 ) -> Pubkey {
     send_tx(
         solana,
@@ -72,6 +73,7 @@ pub async fn create_open_orders_account(
             market,
             owner,
             payer: payer.key,
+            delegate,
         },
     )
     .await

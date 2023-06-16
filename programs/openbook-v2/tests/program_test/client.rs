@@ -160,6 +160,7 @@ pub struct InitOpenOrdersInstruction {
     pub market: Pubkey,
     pub owner: TestKeypair,
     pub payer: TestKeypair,
+    pub delegate: Option<Pubkey>,
 }
 #[async_trait::async_trait(?Send)]
 impl ClientInstruction for InitOpenOrdersInstruction {
@@ -191,6 +192,7 @@ impl ClientInstruction for InitOpenOrdersInstruction {
             open_orders_account,
             market: self.market,
             payer: self.payer.pubkey(),
+            delegate_account: self.delegate,
             system_program: System::id(),
         };
 

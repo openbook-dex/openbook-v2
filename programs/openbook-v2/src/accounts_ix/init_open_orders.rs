@@ -17,6 +17,8 @@ pub struct InitOpenOrders<'info> {
     pub owner: Signer<'info>,
     #[account(mut)]
     pub payer: Signer<'info>,
+    #[account()]
+    pub delegate_account: Option<UncheckedAccount<'info>>,
     #[account(mut)]
     pub market: AccountLoader<'info, Market>,
     pub system_program: Program<'info, System>,
