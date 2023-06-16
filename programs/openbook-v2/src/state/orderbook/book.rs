@@ -95,24 +95,23 @@ impl<'a> Orderbook<'a> {
         //
         // Any changes to matching orders on the other side of the book are collected in
         // matched_changes/matched_deletes and then applied after this loop.
-        let mut remaining_base_lots = order.max_base_lots;
-        let mut remaining_quote_lots = order.max_quote_lots_including_fees;
-        let mut decremented_quote_lots = 0_i64;
 
-        let mut max_quote_lots = order.max_quote_lots_including_fees;
+        let order_max_quote_lots = if side == Side::Bid {
+            market.subtract_taker_fees(order.max_quote_lots_including_fees)
+        } else {
+            order.max_quote_lots_including_fees
+        };
+
+        let mut remaining_base_lots = order.max_base_lots;
+        let mut remaining_quote_lots = order_max_quote_lots;
+        let mut decremented_quote_lots = 0_i64;
+        let mut referrer_amount = 0_u64;
+
         let mut matched_order_changes: Vec<(BookSideOrderHandle, i64)> = vec![];
         let mut matched_order_deletes: Vec<(BookSideOrderTree, u128)> = vec![];
         let mut number_of_dropped_expired_orders = 0;
-        // In case of take order, need this
-        let mut referrer_amount: u64 = 0;
+
         let opposing_bookside = self.bookside_mut(other_side);
-
-        // Subtract fees in case of bid
-        if side == Side::Bid {
-            max_quote_lots = market.subtract_taker_fees(remaining_quote_lots);
-            remaining_quote_lots = max_quote_lots;
-        }
-
         for best_opposing in opposing_bookside.iter_all_including_invalid(now_ts, oracle_price_lots)
         {
             if remaining_base_lots == 0 || remaining_quote_lots == 0 {
@@ -233,7 +232,8 @@ impl<'a> Orderbook<'a> {
                 open_orders_acc.execute_taker(market, &fill)?
             }
         }
-        let total_quote_lots_taken = max_quote_lots - remaining_quote_lots;
+
+        let total_quote_lots_taken = order_max_quote_lots - remaining_quote_lots;
         let total_base_lots_taken = order.max_base_lots - remaining_base_lots;
         assert!(total_quote_lots_taken >= 0);
         assert!(total_base_lots_taken >= 0);
