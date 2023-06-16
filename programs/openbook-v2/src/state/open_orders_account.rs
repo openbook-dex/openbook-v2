@@ -488,12 +488,8 @@ impl<
         let pa = &mut self.fixed_mut().position;
         // Update free_native
         match taker_side {
-            Side::Bid => {
-                pa.base_free_native += base_native;
-            }
-            Side::Ask => {
-                pa.quote_free_native += quote_native - taker_fees;
-            }
+            Side::Bid => pa.base_free_native += base_native,
+            Side::Ask => pa.quote_free_native += quote_native - taker_fees,
         };
 
         // Referrer rebates
@@ -558,12 +554,8 @@ impl<
     ) -> Result<()> {
         let position = &mut self.fixed_mut().position;
         match side {
-            Side::Bid => {
-                position.bids_base_lots += order.quantity;
-            }
-            Side::Ask => {
-                position.asks_base_lots += order.quantity;
-            }
+            Side::Bid => position.bids_base_lots += order.quantity,
+            Side::Ask => position.asks_base_lots += order.quantity,
         };
         let slot = order.owner_slot as usize;
 
@@ -585,12 +577,8 @@ impl<
 
             // accounting
             match order_side {
-                Side::Bid => {
-                    position.bids_base_lots -= base_quantity;
-                }
-                Side::Ask => {
-                    position.asks_base_lots -= base_quantity;
-                }
+                Side::Bid => position.bids_base_lots -= base_quantity,
+                Side::Ask => position.asks_base_lots -= base_quantity,
             }
         }
 
@@ -626,12 +614,8 @@ impl<
 
             // accounting
             match order_side {
-                Side::Bid => {
-                    position.quote_free_native += quote_quantity_native;
-                }
-                Side::Ask => {
-                    position.base_free_native += base_quantity_native;
-                }
+                Side::Bid => position.quote_free_native += quote_quantity_native,
+                Side::Ask => position.base_free_native += base_quantity_native,
             }
         }
 
