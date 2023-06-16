@@ -422,12 +422,8 @@ impl<
             self.remove_order(fill.maker_slot as usize, base_change.abs())?;
         } else {
             match side {
-                Side::Bid => {
-                    pa.bids_base_lots -= base_change.abs();
-                }
-                Side::Ask => {
-                    pa.asks_base_lots -= base_change.abs();
-                }
+                Side::Bid => pa.bids_base_lots -= base_change.abs(),
+                Side::Ask => pa.asks_base_lots -= base_change.abs(),
             };
         }
 
