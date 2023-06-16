@@ -188,10 +188,6 @@ impl Market {
     pub fn subtract_taker_fees(&self, quote: i64) -> i64 {
         (I80F48::from(quote) / (I80F48::ONE + self.taker_fee)).to_num()
     }
-    // Only for maker_fee > 0
-    pub fn subtract_maker_fees(&self, quote: i64) -> i64 {
-        (I80F48::from(quote) / (I80F48::ONE + self.maker_fee)).to_num()
-    }
 
     pub fn referrer_taker_rebate(&self, quote: u64) -> u64 {
         let quo = I80F48::from_num(quote);
