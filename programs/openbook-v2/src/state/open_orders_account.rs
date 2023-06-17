@@ -413,7 +413,9 @@ impl<
 
             if market.maker_fee.is_positive() {
                 // Apply rebates
-                let maker_fees = (I80F48::from(quote_to_free) * market.maker_fee).to_num::<u64>();
+                let maker_fees = (I80F48::from(quote_to_free) * market.maker_fee)
+                    .ceil()
+                    .to_num::<u64>();
                 pa.referrer_rebates_accrued += maker_fees;
                 market.referrer_rebates_accrued += maker_fees;
             }
@@ -422,17 +424,21 @@ impl<
             self.remove_order(fill.maker_slot as usize, base_change.abs())?;
         } else {
             match side {
-                Side::Bid => {
-                    pa.bids_base_lots -= base_change.abs();
-                }
-                Side::Ask => {
-                    pa.asks_base_lots -= base_change.abs();
-                }
+                Side::Bid => pa.bids_base_lots -= base_change.abs(),
+                Side::Ask => pa.asks_base_lots -= base_change.abs(),
             };
         }
 
         // Update market fees
-        market.fees_accrued += (market.maker_fee * I80F48::from(quote_native_abs)).to_num::<i64>();
+        let fee_amount: i64 = {
+            let amount = I80F48::from(quote_native_abs) * market.maker_fee;
+            if market.maker_fee.is_positive() {
+                amount.ceil().to_num()
+            } else {
+                amount.floor().to_num()
+            }
+        };
+        market.fees_accrued += fee_amount;
 
         //Emit event
         emit!(FillLog {
@@ -492,12 +498,8 @@ impl<
         let pa = &mut self.fixed_mut().position;
         // Update free_native
         match taker_side {
-            Side::Bid => {
-                pa.base_free_native += base_native;
-            }
-            Side::Ask => {
-                pa.quote_free_native += quote_native - taker_fees;
-            }
+            Side::Bid => pa.base_free_native += base_native,
+            Side::Ask => pa.quote_free_native += quote_native - taker_fees,
         };
 
         // Referrer rebates
@@ -562,12 +564,8 @@ impl<
     ) -> Result<()> {
         let position = &mut self.fixed_mut().position;
         match side {
-            Side::Bid => {
-                position.bids_base_lots += order.quantity;
-            }
-            Side::Ask => {
-                position.asks_base_lots += order.quantity;
-            }
+            Side::Bid => position.bids_base_lots += order.quantity,
+            Side::Ask => position.asks_base_lots += order.quantity,
         };
         let slot = order.owner_slot as usize;
 
@@ -589,12 +587,8 @@ impl<
 
             // accounting
             match order_side {
-                Side::Bid => {
-                    position.bids_base_lots -= base_quantity;
-                }
-                Side::Ask => {
-                    position.asks_base_lots -= base_quantity;
-                }
+                Side::Bid => position.bids_base_lots -= base_quantity,
+                Side::Ask => position.asks_base_lots -= base_quantity,
             }
         }
 
@@ -630,12 +624,8 @@ impl<
 
             // accounting
             match order_side {
-                Side::Bid => {
-                    position.quote_free_native += quote_quantity_native;
-                }
-                Side::Ask => {
-                    position.base_free_native += base_quantity_native;
-                }
+                Side::Bid => position.quote_free_native += quote_quantity_native,
+                Side::Ask => position.base_free_native += base_quantity_native,
             }
         }
 
