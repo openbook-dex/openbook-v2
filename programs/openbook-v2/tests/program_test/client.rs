@@ -312,6 +312,7 @@ impl ClientInstruction for CreateMarketInstruction {
     }
 }
 
+#[derive(Clone)]
 pub struct PlaceOrderInstruction {
     pub open_orders_account: Pubkey,
     pub open_orders_admin: Option<TestKeypair>,
@@ -637,6 +638,7 @@ impl ClientInstruction for CancelAllOrdersInstruction {
     }
 }
 
+#[derive(Clone)]
 pub struct ConsumeEventsInstruction {
     pub consume_events_admin: Option<TestKeypair>,
     pub market: Pubkey,
@@ -724,6 +726,7 @@ impl ClientInstruction for ConsumeGivenEventsInstruction {
     }
 }
 
+#[derive(Clone)]
 pub struct SettleFundsInstruction {
     pub owner: TestKeypair,
     pub open_orders_account: Pubkey,
