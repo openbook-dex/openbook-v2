@@ -47,14 +47,6 @@ pub struct OpenOrdersAccount {
 
     pub padding: [u8; 3],
 
-    /// Fees usable with the "fees buyback" feature.
-    /// This tracks the ones that accrued in the current expiry interval.
-    pub buyback_fees_accrued_current: u64,
-    /// Fees buyback amount from the previous expiry interval.
-    pub buyback_fees_accrued_previous: u64,
-    /// End timestamp of the current expiry interval of the buyback fees amount.
-    pub buyback_fees_expiry_timestamp: u64,
-
     pub position: Position,
     pub reserved: [u8; 208],
 
@@ -76,9 +68,6 @@ impl OpenOrdersAccount {
             bump: 0,
 
             padding: Default::default(),
-            buyback_fees_accrued_current: 0,
-            buyback_fees_accrued_previous: 0,
-            buyback_fees_expiry_timestamp: 0,
             reserved: [0; 208],
             header_version: DEFAULT_OPEN_ORDERS_ACCOUNT_VERSION,
             padding3: Default::default(),
@@ -118,9 +107,6 @@ pub struct OpenOrdersAccountFixed {
     pub account_num: u32,
     pub bump: u8,
     pub padding: [u8; 3],
-    pub buyback_fees_accrued_current: u64,
-    pub buyback_fees_accrued_previous: u64,
-    pub buyback_fees_expiry_timestamp: u64,
     pub position: Position,
     pub reserved: [u8; 208],
 }
@@ -132,10 +118,9 @@ const_assert_eq!(
         - size_of::<u32>()
         - size_of::<u8>()
         - size_of::<[u8; 3]>()
-        - size_of::<u64>() * 3
         - size_of::<[u8; 208]>()
 );
-const_assert_eq!(size_of::<OpenOrdersAccountFixed>(), 520);
+const_assert_eq!(size_of::<OpenOrdersAccountFixed>(), 496);
 const_assert_eq!(size_of::<OpenOrdersAccountFixed>() % 8, 0);
 
 impl OpenOrdersAccountFixed {
