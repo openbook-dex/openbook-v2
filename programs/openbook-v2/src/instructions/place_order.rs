@@ -82,7 +82,7 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<
 
             // Update market deposit total
             market.quote_deposit_total += (max_quote_including_fees - free_qty_to_lock)
-                - (I80F48::from(total_quote_taken_native) * (market.taker_fee - market.maker_fee))
+                - (I80F48::from(total_quote_taken_native) * (market.taker_fee + market.maker_fee))
                     .to_num::<u64>();
 
             (
