@@ -271,7 +271,7 @@ impl<'a> Orderbook<'a> {
                     side,
                     market,
                     total_base_taken_native,
-                    total_quote_taken_native_wo_self,
+                    total_quote_taken_native,
                     taker_fees as u64,
                 )?;
             } else {
