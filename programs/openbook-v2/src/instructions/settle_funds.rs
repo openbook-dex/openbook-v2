@@ -16,11 +16,6 @@ pub fn settle_funds<'info>(ctx: Context<'_, '_, '_, 'info, SettleFunds<'info>>) 
     }
     market.referrer_rebates_accrued -= position.referrer_rebates_accrued;
     market.base_deposit_total -= position.base_free_native;
-    msg!(
-        "position.quote_free_native {}, market.quote_deposit_total {}",
-        position.quote_free_native,
-        market.quote_deposit_total
-    );
     market.quote_deposit_total -= position.quote_free_native;
 
     let seeds = market_seeds!(market);
