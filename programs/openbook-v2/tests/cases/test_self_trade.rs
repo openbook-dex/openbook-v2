@@ -191,7 +191,7 @@ async fn test_self_trade_decrement_take() -> Result<(), TransportError> {
         assert_eq!(open_orders_account_0.position.bids_base_lots, 0);
         assert_eq!(open_orders_account_0.position.asks_base_lots, 0);
         assert_eq!(open_orders_account_0.position.base_free_native, 200);
-        assert_eq!(open_orders_account_0.position.quote_free_native, 20004);
+        assert_eq!(open_orders_account_0.position.quote_free_native, 20000);
 
         assert_eq!(open_orders_account_1.position.bids_base_lots, 0);
         assert_eq!(open_orders_account_1.position.asks_base_lots, 1);
