@@ -8,6 +8,7 @@ use std::mem::size_of;
 
 use crate::error::*;
 use crate::logs::FillLog;
+use crate::pod_option::PodOption;
 
 use super::FillEvent;
 use super::LeafNode;
@@ -35,7 +36,7 @@ pub struct OpenOrdersAccount {
     pub name: [u8; 32],
 
     // Alternative authority/signer of transactions for a openbook account
-    pub delegate: Pubkey,
+    pub delegate: PodOption<Pubkey>,
 
     pub account_num: u32,
 
@@ -59,7 +60,7 @@ impl OpenOrdersAccount {
             name: Default::default(),
             owner: Pubkey::default(),
             market: Pubkey::default(),
-            delegate: Pubkey::default(),
+            delegate: PodOption::default(),
             account_num: 0,
             bump: 0,
 
@@ -99,7 +100,7 @@ pub struct OpenOrdersAccountFixed {
     pub owner: Pubkey,
     pub market: Pubkey,
     pub name: [u8; 32],
-    pub delegate: Pubkey,
+    pub delegate: PodOption<Pubkey>,
     pub account_num: u32,
     pub bump: u8,
     pub padding: [u8; 3],
@@ -110,13 +111,14 @@ pub struct OpenOrdersAccountFixed {
 const_assert_eq!(
     size_of::<Position>(),
     size_of::<OpenOrdersAccountFixed>()
-        - size_of::<Pubkey>() * 4
+        - size_of::<Pubkey>() * 3
+        - 40
         - size_of::<u32>()
         - size_of::<u8>()
         - size_of::<[u8; 3]>()
         - size_of::<[u8; 208]>()
 );
-const_assert_eq!(size_of::<OpenOrdersAccountFixed>(), 496);
+const_assert_eq!(size_of::<OpenOrdersAccountFixed>(), 504);
 const_assert_eq!(size_of::<OpenOrdersAccountFixed>() % 8, 0);
 
 impl OpenOrdersAccountFixed {
@@ -127,7 +129,11 @@ impl OpenOrdersAccountFixed {
     }
 
     pub fn is_owner_or_delegate(&self, ix_signer: Pubkey) -> bool {
-        self.delegate == ix_signer
+        let delegate_option: Option<Pubkey> = Option::from(self.delegate);
+        if let Some(delegate) = delegate_option {
+            return self.owner == ix_signer || delegate == ix_signer;
+        }
+        self.owner == ix_signer
     }
 }
 

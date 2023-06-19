@@ -1,17 +1,20 @@
 use anchor_lang::prelude::*;
 
 use crate::accounts_ix::*;
-use crate::error::*;
+use crate::pod_option::PodOption;
 use crate::state::*;
 
-pub fn set_delegate(ctx: Context<SetDelegate>, limit: u8) -> Result<()> {
+pub fn set_delegate(ctx: Context<SetDelegate>) -> Result<()> {
     let mut account = ctx.accounts.open_orders_account.load_full_mut()?;
 
-    account.delegate = if let Some(delegate) = ctx.accounts.delegate_account {
-        delegate;
+    let delegate_account: PodOption<Pubkey> = ctx
+        .accounts
+        .delegate_account
+        .as_ref()
+        .map(|account| account.key())
+        .into();
 
-    } else {
-        ctx.accounts.owner.key()
-    };
+    account.fixed.delegate = delegate_account;
+
     Ok(())
 }
