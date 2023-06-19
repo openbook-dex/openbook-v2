@@ -480,7 +480,6 @@ async fn test_delegate() -> Result<(), TransportError> {
         context,
         collect_fee_admin,
         owner,
-        owner_token_1,
         market,
         base_vault,
         quote_vault,
@@ -493,17 +492,18 @@ async fn test_delegate() -> Result<(), TransportError> {
     .await?;
     let solana = &context.solana.clone();
 
-    let account_0_delegate = TestKeypair::new();
+    let account_0_delegate = context.users[2].key;
 
     let account_0 = create_open_orders_account(
         solana,
         owner,
         market,
-        0,
-        &context.users[1],
+        2,
+        &context.users[0],
         Some(account_0_delegate.pubkey()),
     )
     .await;
+    let delegate_token_1 = context.users[2].token_accounts[1];
 
     // Set the initial oracle price
     set_stub_oracle_price(solana, &tokens[1], collect_fee_admin, 1000.0).await;
@@ -515,7 +515,7 @@ async fn test_delegate() -> Result<(), TransportError> {
             open_orders_admin: None,
             market,
             owner,
-            token_deposit_account: owner_token_1,
+            token_deposit_account: delegate_token_1,
             base_vault,
             quote_vault,
             side: Side::Bid,
@@ -540,7 +540,7 @@ async fn test_delegate() -> Result<(), TransportError> {
             open_orders_admin: None,
             market,
             owner: account_0_delegate,
-            token_deposit_account: owner_token_1,
+            token_deposit_account: delegate_token_1,
             base_vault,
             quote_vault,
             side: Side::Bid,
@@ -560,11 +560,11 @@ async fn test_delegate() -> Result<(), TransportError> {
 
     let result = send_tx(
         solana,
-        CancelOrderInstruction {
+        CancelOrderByClientOrderIdInstruction {
             owner,
             market,
             open_orders_account: account_0,
-            order_id: 23,
+            client_order_id: 23,
         },
     )
     .await;
@@ -572,11 +572,11 @@ async fn test_delegate() -> Result<(), TransportError> {
 
     send_tx(
         solana,
-        CancelOrderInstruction {
+        CancelOrderByClientOrderIdInstruction {
             owner: account_0_delegate,
             market,
             open_orders_account: account_0,
-            order_id: 23,
+            client_order_id: 23,
         },
     )
     .await
