@@ -386,7 +386,8 @@ impl<
                 }
                 Side::Ask => {
                     let maker_fees = if market.maker_fee.is_positive() {
-                        (I80F48::from(quote_locked_change) * market.maker_fee)
+                        (I80F48::from(quote_locked_change * market.quote_lot_size)
+                            * market.maker_fee)
                             .ceil()
                             .to_num::<u64>()
                     } else {
