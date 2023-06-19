@@ -249,7 +249,7 @@ async fn test_take_bid_order() -> Result<(), TransportError> {
             solana.token_account_balance(owner_token_1).await
         );
         assert_eq!(
-            balance_referral + 19,
+            balance_referral + 20,
             solana.token_account_balance(admin_token_1).await
         );
     }
