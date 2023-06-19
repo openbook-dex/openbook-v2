@@ -191,7 +191,7 @@ async fn test_self_trade_decrement_take() -> Result<(), TransportError> {
         assert_eq!(open_orders_account_0.position.bids_base_lots, 0);
         assert_eq!(open_orders_account_0.position.asks_base_lots, 0);
         assert_eq!(open_orders_account_0.position.base_free_native, 200);
-        assert_eq!(open_orders_account_0.position.quote_free_native, 20004);
+        assert_eq!(open_orders_account_0.position.quote_free_native, 20000);
 
         assert_eq!(open_orders_account_1.position.bids_base_lots, 0);
         assert_eq!(open_orders_account_1.position.asks_base_lots, 1);
@@ -456,6 +456,95 @@ async fn test_self_abort_transaction() -> Result<(), TransportError> {
     )
     .await
     .is_err());
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_self_trade_no_fees() -> Result<(), TransportError> {
+    let TestInitialize {
+        context,
+        owner,
+        owner_token_0: owner_base_ata,
+        owner_token_1: owner_quote_ata,
+        market,
+        base_vault,
+        quote_vault,
+        account_0: open_orders_account,
+        ..
+    } = TestContext::new_with_market(TestNewMarketInitialize::default()).await?;
+    let solana = &context.solana.clone();
+
+    let place_bid_ix = PlaceOrderInstruction {
+        open_orders_account,
+        open_orders_admin: None,
+        market,
+        owner,
+        token_deposit_account: owner_quote_ata,
+        base_vault,
+        quote_vault,
+        side: Side::Bid,
+        price_lots: 1000,
+        max_base_lots: 1,
+        max_quote_lots_including_fees: 10000,
+        client_order_id: 1,
+        expiry_timestamp: 0,
+        order_type: PlaceOrderType::Limit,
+        self_trade_behavior: SelfTradeBehavior::default(),
+        remainings: vec![],
+    };
+
+    let place_ask_ix = PlaceOrderInstruction {
+        side: Side::Ask,
+        token_deposit_account: owner_base_ata,
+        ..place_bid_ix.clone()
+    };
+
+    let consume_events_ix = ConsumeEventsInstruction {
+        consume_events_admin: None,
+        market,
+        open_orders_accounts: vec![open_orders_account],
+    };
+
+    let settle_funds_ix = SettleFundsInstruction {
+        owner,
+        market,
+        open_orders_account,
+        base_vault,
+        quote_vault,
+        token_base_account: owner_base_ata,
+        token_quote_account: owner_quote_ata,
+        referrer: None,
+    };
+
+    let balances_before = (
+        solana.token_account_balance(owner_base_ata).await,
+        solana.token_account_balance(owner_quote_ata).await,
+    );
+
+    send_tx(solana, place_bid_ix.clone()).await.unwrap();
+    send_tx(solana, place_ask_ix.clone()).await.unwrap();
+    send_tx(solana, consume_events_ix.clone()).await.unwrap();
+    send_tx(solana, settle_funds_ix.clone()).await.unwrap();
+
+    let balances_after = (
+        solana.token_account_balance(owner_base_ata).await,
+        solana.token_account_balance(owner_quote_ata).await,
+    );
+
+    assert_eq!(balances_before, balances_after);
+
+    send_tx(solana, place_ask_ix).await.unwrap();
+    send_tx(solana, place_bid_ix).await.unwrap();
+    send_tx(solana, consume_events_ix).await.unwrap();
+    send_tx(solana, settle_funds_ix).await.unwrap();
+
+    let balances_after = (
+        solana.token_account_balance(owner_base_ata).await,
+        solana.token_account_balance(owner_quote_ata).await,
+    );
+
+    assert_eq!(balances_before, balances_after);
 
     Ok(())
 }

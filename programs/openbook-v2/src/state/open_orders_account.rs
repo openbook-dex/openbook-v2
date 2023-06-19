@@ -341,10 +341,12 @@ impl<
     }
 
     pub fn execute_maker(&mut self, market: &mut Market, fill: &FillEvent) -> Result<()> {
+        let is_self_trade = fill.maker == fill.taker;
+
         let side = fill.taker_side().invert_side();
         let (base_change, quote_change) = fill.base_quote_change(side);
         let quote_native_abs = (market.quote_lot_size * quote_change).unsigned_abs();
-        let fees = if market.maker_fee.is_positive() {
+        let fees = if is_self_trade || market.maker_fee.is_positive() {
             // Maker pays fee. Fees already subtracted before sending to the book
             0
         } else {
@@ -397,7 +399,7 @@ impl<
                 }
             };
 
-            if market.maker_fee.is_positive() {
+            if !is_self_trade && market.maker_fee.is_positive() {
                 // Apply rebates
                 let maker_fees = (I80F48::from(quote_to_free) * market.maker_fee)
                     .ceil()
@@ -416,15 +418,17 @@ impl<
         }
 
         // Update market fees
-        let fee_amount: i64 = {
-            let amount = I80F48::from(quote_native_abs) * market.maker_fee;
-            if market.maker_fee.is_positive() {
-                amount.ceil().to_num()
-            } else {
-                amount.floor().to_num()
-            }
-        };
-        market.fees_accrued += fee_amount;
+        if !is_self_trade {
+            let fee_amount: i64 = {
+                let amount = I80F48::from(quote_native_abs) * market.maker_fee;
+                if market.maker_fee.is_positive() {
+                    amount.ceil().to_num()
+                } else {
+                    amount.floor().to_num()
+                }
+            };
+            market.fees_accrued += fee_amount;
+        }
 
         //Emit event
         emit!(FillLog {
