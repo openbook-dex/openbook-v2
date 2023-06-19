@@ -226,10 +226,6 @@ impl<'a> Orderbook<'a> {
             process_fill_event(fill, market, event_queue, remaining_accs)?;
 
             limit -= 1;
-
-            if let Some(open_orders_acc) = open_orders_acc.as_mut() {
-                open_orders_acc.execute_taker(market, &fill)?
-            }
         }
 
         let total_quote_lots_taken = order_max_quote_lots - remaining_quote_lots;

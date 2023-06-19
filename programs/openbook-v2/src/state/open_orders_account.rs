@@ -446,32 +446,6 @@ impl<
         Ok(())
     }
 
-    pub fn execute_taker(&mut self, market: &mut Market, fill: &FillEvent) -> Result<()> {
-        let pa = &mut self.fixed_mut().position;
-
-        // Replicate the base_quote_change function but subtracting the fees for an Ask
-        // let (base_change, quote_change) = fill.base_quote_change(fill.taker_side());
-        let _base_change: i64;
-        let quote_change: i64;
-        match fill.taker_side() {
-            Side::Bid => {
-                _base_change = fill.quantity;
-                quote_change = -fill.price * fill.quantity;
-            }
-            Side::Ask => {
-                // remove fee from quote_change
-                _base_change = -fill.quantity;
-                quote_change = fill.price * fill.quantity * (1 - market.taker_fee.to_num::<i64>());
-            }
-        };
-
-        // fees are assessed at time of trade; no need to assess fees here
-        let quote_change_native = I80F48::from(market.quote_lot_size) * I80F48::from(quote_change);
-        pa.taker_volume += quote_change_native.abs().to_num::<u64>();
-
-        Ok(())
-    }
-
     /// Release funds and apply taker fees to the taker account. Account fees for referrer
     pub fn release_funds_apply_fees(
         &mut self,
@@ -482,17 +456,20 @@ impl<
         taker_fees: u64,
     ) -> Result<()> {
         let pa = &mut self.fixed_mut().position;
-        // Update free_native
         match taker_side {
-            Side::Bid => pa.base_free_native += base_native,
-            Side::Ask => pa.quote_free_native += quote_native - taker_fees,
+            Side::Bid => {
+                pa.base_free_native += base_native;
+                pa.taker_volume += quote_native + taker_fees;
+            }
+            Side::Ask => {
+                pa.quote_free_native += quote_native - taker_fees;
+                pa.taker_volume += quote_native;
+            }
         };
 
         // Referrer rebates
         pa.referrer_rebates_accrued += market.referrer_taker_rebate(quote_native);
         market.referrer_rebates_accrued += market.referrer_taker_rebate(quote_native);
-
-        pa.taker_volume += taker_fees;
 
         Ok(())
     }
