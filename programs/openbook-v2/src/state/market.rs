@@ -7,7 +7,7 @@ use crate::pod_option::PodOption;
 use crate::state::oracle;
 use crate::{accounts_zerocopy::KeyedAccountReader, state::orderbook::Side};
 
-use super::{orderbook, OracleConfig, StablePriceModel};
+use super::{orderbook, OracleConfig};
 
 pub type MarketIndex = u32;
 
@@ -53,8 +53,6 @@ pub struct Market {
     pub oracle: Pubkey,
     /// Oracle configuration
     pub oracle_config: OracleConfig,
-    /// Maintains a stable price based on the oracle price that is less volatile.
-    pub stable_price_model: StablePriceModel,
 
     /// Number of quote native in a quote lot. Must be a power of 10.
     ///
@@ -126,7 +124,6 @@ const_assert_eq!(
     3 * 32 + // size of bids, asks, and event_queue
     32 + // size of oracle
     size_of::<OracleConfig>() + // size of oracle_config
-    size_of::<StablePriceModel>() + // size of stable_price_model
     8 + // size of quote_lot_size
     8 + // size of base_lot_size
     8 + // size of seq_num
@@ -144,7 +141,7 @@ const_assert_eq!(
     8 + // size of referrer_rebates_accrued
     1768 // size of reserved
 );
-const_assert_eq!(size_of::<Market>(), 2728);
+const_assert_eq!(size_of::<Market>(), 2440);
 const_assert_eq!(size_of::<Market>() % 8, 0);
 
 impl Market {
