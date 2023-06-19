@@ -1,5 +1,4 @@
 use crate::accounts_ix::InitOpenOrders;
-use crate::pod_option::PodOption;
 use crate::state::*;
 use anchor_lang::prelude::*;
 
@@ -10,18 +9,15 @@ pub fn init_open_orders(
 ) -> Result<()> {
     let mut account = ctx.accounts.open_orders_account.load_full_init()?;
 
-    let delegate_account: PodOption<Pubkey> = ctx
-        .accounts
-        .delegate_account
-        .as_ref()
-        .map(|account| account.key())
-        .into();
-
     account.fixed.account_num = account_num;
     account.fixed.market = ctx.accounts.market.key();
     account.fixed.bump = *ctx.bumps.get("open_orders_account").unwrap();
     account.fixed.owner = ctx.accounts.owner.key();
-    account.fixed.delegate = delegate_account;
+    if let Some(delegate) = &ctx.accounts.delegate_account {
+        account.fixed.delegate = delegate.key();
+    } else {
+        account.fixed.delegate = ctx.accounts.owner.key()
+    };
 
     account.expand_dynamic_content(open_orders_count)?;
 
