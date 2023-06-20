@@ -142,6 +142,7 @@ impl FuzzContext {
             let accounts = openbook_v2::accounts::InitOpenOrders {
                 open_orders_account: open_orders,
                 owner,
+                delegate_account: None,
                 payer: self.payer,
                 market: self.market,
                 system_program: system_program::ID,
