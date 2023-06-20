@@ -508,31 +508,6 @@ async fn test_delegate() -> Result<(), TransportError> {
     // Set the initial oracle price
     set_stub_oracle_price(solana, &tokens[1], collect_fee_admin, 1000.0).await;
 
-    let result = send_tx(
-        solana,
-        PlaceOrderInstruction {
-            open_orders_account: account_0,
-            open_orders_admin: None,
-            market,
-            owner,
-            token_deposit_account: delegate_token_1,
-            base_vault,
-            quote_vault,
-            side: Side::Bid,
-            price_lots,
-            max_base_lots: 1,
-            max_quote_lots_including_fees: 10000,
-
-            client_order_id: 0,
-            expiry_timestamp: 0,
-            order_type: PlaceOrderType::Limit,
-            self_trade_behavior: SelfTradeBehavior::default(),
-            remainings: vec![],
-        },
-    )
-    .await;
-    assert!(result.is_err());
-
     send_tx(
         solana,
         PlaceOrderInstruction {
@@ -569,6 +544,43 @@ async fn test_delegate() -> Result<(), TransportError> {
     )
     .await
     .unwrap();
+
+    send_tx(
+        solana,
+        SetDelegateInstruction {
+            owner,
+            open_orders_account: account_0,
+            delegate_account: None,
+        },
+    )
+    .await
+    .unwrap();
+
+    // No delegate anymore
+    let result = send_tx(
+        solana,
+        PlaceOrderInstruction {
+            open_orders_account: account_0,
+            open_orders_admin: None,
+            market,
+            owner: account_0_delegate,
+            token_deposit_account: delegate_token_1,
+            base_vault,
+            quote_vault,
+            side: Side::Bid,
+            price_lots,
+            max_base_lots: 1,
+            max_quote_lots_including_fees: 10000,
+
+            client_order_id: 23,
+            expiry_timestamp: 0,
+            order_type: PlaceOrderType::Limit,
+            self_trade_behavior: SelfTradeBehavior::default(),
+            remainings: vec![],
+        },
+    )
+    .await;
+    assert!(result.is_err());
 
     Ok(())
 }

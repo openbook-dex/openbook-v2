@@ -1075,3 +1075,34 @@ impl ClientInstruction for PruneOrdersInstruction {
         vec![self.close_market_admin]
     }
 }
+
+pub struct SetDelegateInstruction {
+    pub delegate_account: Option<Pubkey>,
+    pub owner: TestKeypair,
+    pub open_orders_account: Pubkey,
+}
+#[async_trait::async_trait(?Send)]
+impl ClientInstruction for SetDelegateInstruction {
+    type Accounts = openbook_v2::accounts::SetDelegate;
+    type Instruction = openbook_v2::instruction::SetDelegate;
+    async fn to_instruction(
+        &self,
+        _account_loader: impl ClientAccountLoader + 'async_trait,
+    ) -> (Self::Accounts, instruction::Instruction) {
+        let program_id = openbook_v2::id();
+        let instruction = Self::Instruction {};
+
+        let accounts = Self::Accounts {
+            owner: self.owner.pubkey(),
+            open_orders_account: self.open_orders_account,
+            delegate_account: self.delegate_account,
+        };
+
+        let instruction = make_instruction(program_id, &accounts, instruction);
+        (accounts, instruction)
+    }
+
+    fn signers(&self) -> Vec<TestKeypair> {
+        vec![self.owner]
+    }
+}
