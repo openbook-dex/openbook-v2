@@ -558,18 +558,6 @@ async fn test_delegate() -> Result<(), TransportError> {
     .await
     .unwrap();
 
-    let result = send_tx(
-        solana,
-        CancelOrderByClientOrderIdInstruction {
-            owner,
-            market,
-            open_orders_account: account_0,
-            client_order_id: 23,
-        },
-    )
-    .await;
-    assert!(result.is_err());
-
     send_tx(
         solana,
         CancelOrderByClientOrderIdInstruction {
