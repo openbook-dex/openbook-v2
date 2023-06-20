@@ -73,7 +73,6 @@ pub fn create_market(
         event_queue: ctx.accounts.event_queue.key(),
         oracle: ctx.accounts.oracle.key(),
         oracle_config: oracle_config.to_oracle_config(),
-        stable_price_model: StablePriceModel::default(),
         quote_lot_size,
         base_lot_size,
         seq_num: 0,

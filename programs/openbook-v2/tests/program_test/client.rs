@@ -160,6 +160,7 @@ pub struct InitOpenOrdersInstruction {
     pub market: Pubkey,
     pub owner: TestKeypair,
     pub payer: TestKeypair,
+    pub delegate: Option<Pubkey>,
 }
 #[async_trait::async_trait(?Send)]
 impl ClientInstruction for InitOpenOrdersInstruction {
@@ -191,6 +192,7 @@ impl ClientInstruction for InitOpenOrdersInstruction {
             open_orders_account,
             market: self.market,
             payer: self.payer.pubkey(),
+            delegate_account: self.delegate,
             system_program: System::id(),
         };
 
@@ -312,6 +314,7 @@ impl ClientInstruction for CreateMarketInstruction {
     }
 }
 
+#[derive(Clone)]
 pub struct PlaceOrderInstruction {
     pub open_orders_account: Pubkey,
     pub open_orders_admin: Option<TestKeypair>,
@@ -637,6 +640,7 @@ impl ClientInstruction for CancelAllOrdersInstruction {
     }
 }
 
+#[derive(Clone)]
 pub struct ConsumeEventsInstruction {
     pub consume_events_admin: Option<TestKeypair>,
     pub market: Pubkey,
@@ -724,6 +728,7 @@ impl ClientInstruction for ConsumeGivenEventsInstruction {
     }
 }
 
+#[derive(Clone)]
 pub struct SettleFundsInstruction {
     pub owner: TestKeypair,
     pub open_orders_account: Pubkey,
@@ -1071,5 +1076,36 @@ impl ClientInstruction for PruneOrdersInstruction {
 
     fn signers(&self) -> Vec<TestKeypair> {
         vec![self.close_market_admin]
+    }
+}
+
+pub struct SetDelegateInstruction {
+    pub delegate_account: Option<Pubkey>,
+    pub owner: TestKeypair,
+    pub open_orders_account: Pubkey,
+}
+#[async_trait::async_trait(?Send)]
+impl ClientInstruction for SetDelegateInstruction {
+    type Accounts = openbook_v2::accounts::SetDelegate;
+    type Instruction = openbook_v2::instruction::SetDelegate;
+    async fn to_instruction(
+        &self,
+        _account_loader: impl ClientAccountLoader + 'async_trait,
+    ) -> (Self::Accounts, instruction::Instruction) {
+        let program_id = openbook_v2::id();
+        let instruction = Self::Instruction {};
+
+        let accounts = Self::Accounts {
+            owner: self.owner.pubkey(),
+            open_orders_account: self.open_orders_account,
+            delegate_account: self.delegate_account,
+        };
+
+        let instruction = make_instruction(program_id, &accounts, instruction);
+        (accounts, instruction)
+    }
+
+    fn signers(&self) -> Vec<TestKeypair> {
+        vec![self.owner]
     }
 }

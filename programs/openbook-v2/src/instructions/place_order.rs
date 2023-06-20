@@ -1,6 +1,5 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Transfer};
-use fixed::types::I80F48;
 use std::cmp;
 
 use crate::accounts_ix::*;
@@ -80,15 +79,12 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<
             let free_qty_to_lock = cmp::min(max_quote_including_fees, free_quote);
             position.quote_free_native -= free_qty_to_lock;
 
-            // Update market deposit total
-            market.quote_deposit_total += (max_quote_including_fees - free_qty_to_lock)
-                - (I80F48::from(total_quote_taken_native) * (market.taker_fee - market.maker_fee))
-                    .to_num::<u64>();
+            let deposit_amount = max_quote_including_fees - free_qty_to_lock;
 
-            (
-                ctx.accounts.quote_vault.to_account_info(),
-                max_quote_including_fees - free_qty_to_lock,
-            )
+            // Update market deposit total
+            market.quote_deposit_total += deposit_amount;
+
+            (ctx.accounts.quote_vault.to_account_info(), deposit_amount)
         }
 
         Side::Ask => {
@@ -98,13 +94,11 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<
             let free_qty_to_lock = cmp::min(max_base_native, free_assets_native);
             position.base_free_native -= free_qty_to_lock;
 
+            let deposit_amount = max_base_native - free_qty_to_lock;
             // Update market deposit total
-            market.base_deposit_total += max_base_native - free_qty_to_lock;
+            market.base_deposit_total += deposit_amount;
 
-            (
-                ctx.accounts.base_vault.to_account_info(),
-                max_base_native - free_qty_to_lock,
-            )
+            (ctx.accounts.base_vault.to_account_info(), deposit_amount)
         }
     };
 

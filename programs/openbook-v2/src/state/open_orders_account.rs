@@ -1,17 +1,14 @@
+use anchor_lang::{prelude::*, Discriminator};
+use arrayref::array_ref;
+use fixed::types::I80F48;
+use solana_program::program_memory::sol_memmove;
+use static_assertions::const_assert_eq;
 use std::cell::{Ref, RefMut};
 use std::mem::size_of;
 
-use anchor_lang::prelude::*;
-use anchor_lang::Discriminator;
-use arrayref::array_ref;
-
-use fixed::types::I80F48;
-
-use solana_program::program_memory::sol_memmove;
-use static_assertions::const_assert_eq;
-
 use crate::error::*;
 use crate::logs::FillLog;
+use crate::pod_option::PodOption;
 
 use super::FillEvent;
 use super::LeafNode;
@@ -39,21 +36,13 @@ pub struct OpenOrdersAccount {
     pub name: [u8; 32],
 
     // Alternative authority/signer of transactions for a openbook account
-    pub delegate: Pubkey,
+    pub delegate: PodOption<Pubkey>,
 
     pub account_num: u32,
 
     pub bump: u8,
 
     pub padding: [u8; 3],
-
-    /// Fees usable with the "fees buyback" feature.
-    /// This tracks the ones that accrued in the current expiry interval.
-    pub buyback_fees_accrued_current: u64,
-    /// Fees buyback amount from the previous expiry interval.
-    pub buyback_fees_accrued_previous: u64,
-    /// End timestamp of the current expiry interval of the buyback fees amount.
-    pub buyback_fees_expiry_timestamp: u64,
 
     pub position: Position,
     pub reserved: [u8; 208],
@@ -71,14 +60,11 @@ impl OpenOrdersAccount {
             name: Default::default(),
             owner: Pubkey::default(),
             market: Pubkey::default(),
-            delegate: Pubkey::default(),
+            delegate: PodOption::default(),
             account_num: 0,
             bump: 0,
 
             padding: Default::default(),
-            buyback_fees_accrued_current: 0,
-            buyback_fees_accrued_previous: 0,
-            buyback_fees_expiry_timestamp: 0,
             reserved: [0; 208],
             header_version: DEFAULT_OPEN_ORDERS_ACCOUNT_VERSION,
             padding3: Default::default(),
@@ -114,13 +100,10 @@ pub struct OpenOrdersAccountFixed {
     pub owner: Pubkey,
     pub market: Pubkey,
     pub name: [u8; 32],
-    pub delegate: Pubkey,
+    pub delegate: PodOption<Pubkey>,
     pub account_num: u32,
     pub bump: u8,
     pub padding: [u8; 3],
-    pub buyback_fees_accrued_current: u64,
-    pub buyback_fees_accrued_previous: u64,
-    pub buyback_fees_expiry_timestamp: u64,
     pub position: Position,
     pub reserved: [u8; 208],
 }
@@ -128,14 +111,14 @@ pub struct OpenOrdersAccountFixed {
 const_assert_eq!(
     size_of::<Position>(),
     size_of::<OpenOrdersAccountFixed>()
-        - size_of::<Pubkey>() * 4
+        - size_of::<Pubkey>() * 3
+        - 40
         - size_of::<u32>()
         - size_of::<u8>()
         - size_of::<[u8; 3]>()
-        - size_of::<u64>() * 3
         - size_of::<[u8; 208]>()
 );
-const_assert_eq!(size_of::<OpenOrdersAccountFixed>(), 520);
+const_assert_eq!(size_of::<OpenOrdersAccountFixed>(), 504);
 const_assert_eq!(size_of::<OpenOrdersAccountFixed>() % 8, 0);
 
 impl OpenOrdersAccountFixed {
@@ -146,11 +129,11 @@ impl OpenOrdersAccountFixed {
     }
 
     pub fn is_owner_or_delegate(&self, ix_signer: Pubkey) -> bool {
-        self.owner == ix_signer || self.delegate == ix_signer
-    }
-
-    pub fn is_delegate(&self, ix_signer: Pubkey) -> bool {
-        self.delegate == ix_signer
+        let delegate_option: Option<Pubkey> = Option::from(self.delegate);
+        if let Some(delegate) = delegate_option {
+            return self.owner == ix_signer || delegate == ix_signer;
+        }
+        self.owner == ix_signer
     }
 }
 
@@ -356,10 +339,12 @@ impl<
     }
 
     pub fn execute_maker(&mut self, market: &mut Market, fill: &FillEvent) -> Result<()> {
+        let is_self_trade = fill.maker == fill.taker;
+
         let side = fill.taker_side().invert_side();
         let (base_change, quote_change) = fill.base_quote_change(side);
         let quote_native_abs = (market.quote_lot_size * quote_change).unsigned_abs();
-        let fees = if market.maker_fee.is_positive() {
+        let fees = if is_self_trade || market.maker_fee.is_positive() {
             // Maker pays fee. Fees already subtracted before sending to the book
             0
         } else {
@@ -401,7 +386,8 @@ impl<
                 }
                 Side::Ask => {
                     let maker_fees = if market.maker_fee.is_positive() {
-                        (I80F48::from(quote_locked_change) * market.maker_fee)
+                        (I80F48::from(quote_locked_change * market.quote_lot_size)
+                            * market.maker_fee)
                             .ceil()
                             .to_num::<u64>()
                     } else {
@@ -411,9 +397,11 @@ impl<
                 }
             };
 
-            if market.maker_fee.is_positive() {
+            if !is_self_trade && market.maker_fee.is_positive() {
                 // Apply rebates
-                let maker_fees = (I80F48::from(quote_to_free) * market.maker_fee).to_num::<u64>();
+                let maker_fees = (I80F48::from(quote_to_free) * market.maker_fee)
+                    .ceil()
+                    .to_num::<u64>();
                 pa.referrer_rebates_accrued += maker_fees;
                 market.referrer_rebates_accrued += maker_fees;
             }
@@ -422,17 +410,23 @@ impl<
             self.remove_order(fill.maker_slot as usize, base_change.abs())?;
         } else {
             match side {
-                Side::Bid => {
-                    pa.bids_base_lots -= base_change.abs();
-                }
-                Side::Ask => {
-                    pa.asks_base_lots -= base_change.abs();
-                }
+                Side::Bid => pa.bids_base_lots -= base_change.abs(),
+                Side::Ask => pa.asks_base_lots -= base_change.abs(),
             };
         }
 
         // Update market fees
-        market.fees_accrued += (market.maker_fee * I80F48::from(quote_native_abs)).to_num::<i64>();
+        if !is_self_trade {
+            let fee_amount: i64 = {
+                let amount = I80F48::from(quote_native_abs) * market.maker_fee;
+                if market.maker_fee.is_positive() {
+                    amount.ceil().to_num()
+                } else {
+                    amount.floor().to_num()
+                }
+            };
+            market.fees_accrued += fee_amount;
+        }
 
         //Emit event
         emit!(FillLog {
@@ -454,28 +448,30 @@ impl<
         Ok(())
     }
 
-    pub fn execute_taker(&mut self, market: &mut Market, fill: &FillEvent) -> Result<()> {
+    /// Release funds and apply taker fees to the taker account. Account fees for referrer
+    pub fn release_funds_apply_fees(
+        &mut self,
+        taker_side: Side,
+        market: &mut Market,
+        base_native: u64,
+        quote_native: u64,
+        taker_fees: u64,
+    ) -> Result<()> {
         let pa = &mut self.fixed_mut().position;
-
-        // Replicate the base_quote_change function but subtracting the fees for an Ask
-        // let (base_change, quote_change) = fill.base_quote_change(fill.taker_side());
-        let _base_change: i64;
-        let quote_change: i64;
-        match fill.taker_side() {
+        match taker_side {
             Side::Bid => {
-                _base_change = fill.quantity;
-                quote_change = -fill.price * fill.quantity;
+                pa.base_free_native += base_native;
+                pa.taker_volume += quote_native + taker_fees;
             }
             Side::Ask => {
-                // remove fee from quote_change
-                _base_change = -fill.quantity;
-                quote_change = fill.price * fill.quantity * (1 - market.taker_fee.to_num::<i64>());
+                pa.quote_free_native += quote_native - taker_fees;
+                pa.taker_volume += quote_native;
             }
         };
 
-        // fees are assessed at time of trade; no need to assess fees here
-        let quote_change_native = I80F48::from(market.quote_lot_size) * I80F48::from(quote_change);
-        pa.taker_volume += quote_change_native.abs().to_num::<u64>();
+        // Referrer rebates
+        pa.referrer_rebates_accrued += market.referrer_taker_rebate(quote_native);
+        market.referrer_rebates_accrued += market.referrer_taker_rebate(quote_native);
 
         Ok(())
     }
@@ -533,12 +529,8 @@ impl<
     ) -> Result<()> {
         let position = &mut self.fixed_mut().position;
         match side {
-            Side::Bid => {
-                position.bids_base_lots += order.quantity;
-            }
-            Side::Ask => {
-                position.asks_base_lots += order.quantity;
-            }
+            Side::Bid => position.bids_base_lots += order.quantity,
+            Side::Ask => position.asks_base_lots += order.quantity,
         };
         let slot = order.owner_slot as usize;
 
@@ -560,12 +552,8 @@ impl<
 
             // accounting
             match order_side {
-                Side::Bid => {
-                    position.bids_base_lots -= base_quantity;
-                }
-                Side::Ask => {
-                    position.asks_base_lots -= base_quantity;
-                }
+                Side::Bid => position.bids_base_lots -= base_quantity,
+                Side::Ask => position.asks_base_lots -= base_quantity,
             }
         }
 
@@ -601,12 +589,8 @@ impl<
 
             // accounting
             match order_side {
-                Side::Bid => {
-                    position.quote_free_native += quote_quantity_native;
-                }
-                Side::Ask => {
-                    position.base_free_native += base_quantity_native;
-                }
+                Side::Bid => position.quote_free_native += quote_quantity_native,
+                Side::Ask => position.base_free_native += base_quantity_native,
             }
         }
 

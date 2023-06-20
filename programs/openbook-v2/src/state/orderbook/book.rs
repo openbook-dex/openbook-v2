@@ -95,24 +95,22 @@ impl<'a> Orderbook<'a> {
         //
         // Any changes to matching orders on the other side of the book are collected in
         // matched_changes/matched_deletes and then applied after this loop.
-        let mut remaining_base_lots = order.max_base_lots;
-        let mut remaining_quote_lots = order.max_quote_lots_including_fees;
-        let mut decremented_quote_lots = 0_i64;
 
-        let mut max_quote_lots = order.max_quote_lots_including_fees;
+        let order_max_quote_lots = match side {
+            Side::Bid => market.subtract_taker_fees(order.max_quote_lots_including_fees),
+            Side::Ask => order.max_quote_lots_including_fees,
+        };
+
+        let mut remaining_base_lots = order.max_base_lots;
+        let mut remaining_quote_lots = order_max_quote_lots;
+        let mut decremented_quote_lots = 0_i64;
+        let mut referrer_amount = 0_u64;
+
         let mut matched_order_changes: Vec<(BookSideOrderHandle, i64)> = vec![];
         let mut matched_order_deletes: Vec<(BookSideOrderTree, u128)> = vec![];
         let mut number_of_dropped_expired_orders = 0;
-        // In case of take order, need this
-        let mut referrer_amount: u64 = 0;
+
         let opposing_bookside = self.bookside_mut(other_side);
-
-        // Subtract fees in case of bid
-        if side == Side::Bid {
-            max_quote_lots = market.subtract_taker_fees(remaining_quote_lots);
-            remaining_quote_lots = max_quote_lots;
-        }
-
         for best_opposing in opposing_bookside.iter_all_including_invalid(now_ts, oracle_price_lots)
         {
             if remaining_base_lots == 0 || remaining_quote_lots == 0 {
@@ -228,12 +226,9 @@ impl<'a> Orderbook<'a> {
             process_fill_event(fill, market, event_queue, remaining_accs)?;
 
             limit -= 1;
-
-            if let Some(open_orders_acc) = open_orders_acc.as_mut() {
-                open_orders_acc.execute_taker(market, &fill)?
-            }
         }
-        let total_quote_lots_taken = max_quote_lots - remaining_quote_lots;
+
+        let total_quote_lots_taken = order_max_quote_lots - remaining_quote_lots;
         let total_base_lots_taken = order.max_base_lots - remaining_base_lots;
         assert!(total_quote_lots_taken >= 0);
         assert!(total_base_lots_taken >= 0);
@@ -247,70 +242,69 @@ impl<'a> Orderbook<'a> {
             .ok_or(OpenBookError::InvalidOrderSize)?
             as u64;
 
-        let total_quote_taken_lots_wo_self = total_quote_lots_taken - decremented_quote_lots;
-        let total_quote_taken_native_wo_self =
-            (total_quote_taken_lots_wo_self * market.quote_lot_size) as u64;
-
         // Record the taker trade in the account already, even though it will only be
         // realized when the fill event gets executed
+        let mut taker_fees = 0_i64;
         if total_quote_lots_taken > 0 || total_base_lots_taken > 0 {
-            // Calculations
-            let total_quantity_paid: u64;
-            let total_quantity_received: u64;
-            let taker_fees = (I80F48::from_num(total_quote_taken_native_wo_self)
-                * market.taker_fee)
-                .ceil()
-                .to_num::<u64>();
+            let total_quote_taken_native_wo_self =
+                ((total_quote_lots_taken - decremented_quote_lots) * market.quote_lot_size) as u64;
 
-            // taker fees should never be negative
-            require_gte!(taker_fees, 0);
-            match side {
-                Side::Bid => {
-                    total_quote_taken_native += taker_fees;
-                    total_quantity_paid = total_quote_taken_native;
-                    total_quantity_received = total_base_taken_native;
-                }
-                Side::Ask => {
-                    total_quote_taken_native -= taker_fees;
-                    total_quantity_paid = total_base_taken_native;
-                    total_quantity_received = total_quote_taken_native;
-                }
+            if total_quote_taken_native_wo_self > 0 {
+                taker_fees = (I80F48::from_num(total_quote_taken_native_wo_self)
+                    * market.taker_fee)
+                    .ceil()
+                    .to_num();
+
+                // taker fees should never be negative
+                require_gte!(taker_fees, 0);
+
+                // Only account taker fees now. Maker fees accounted once processing the event
+                market.fees_accrued += taker_fees;
             };
 
             if let Some(open_orders_acc) = &mut open_orders_acc {
-                release_funds_fees(
+                open_orders_acc.release_funds_apply_fees(
                     side,
                     market,
-                    open_orders_acc,
                     total_base_taken_native,
-                    total_quote_taken_native_wo_self,
-                    taker_fees,
+                    total_quote_taken_native,
+                    taker_fees as u64,
                 )?;
             } else {
                 // It's a taker order, transfer to referrer
                 referrer_amount += market.referrer_taker_rebate(total_quote_taken_native_wo_self);
             }
-            // Only account taker fees now. Maker fees accounted once processing the event
-            market.fees_accrued += (I80F48::from_num(total_quote_taken_native_wo_self)
-                * market.taker_fee)
-                .to_num::<i64>();
+
+            let total_quantity_paid: u64;
+            let total_quantity_received: u64;
+            match side {
+                Side::Bid => {
+                    total_quote_taken_native += taker_fees as u64;
+                    total_quantity_paid = total_quote_taken_native;
+                    total_quantity_received = total_base_taken_native;
+                }
+                Side::Ask => {
+                    total_quote_taken_native -= taker_fees as u64;
+                    total_quantity_paid = total_base_taken_native;
+                    total_quantity_received = total_quote_taken_native;
+                }
+            };
 
             emit!(TotalOrderFillEvent {
                 side: side.into(),
                 taker: *owner,
                 total_quantity_paid,
                 total_quantity_received,
-                fees: taker_fees,
+                fees: taker_fees as u64,
             });
         } else if order.needs_penalty_fee() {
             // IOC orders have a fee penalty applied if not match to avoid spam
-            total_quote_taken_native += apply_penalty(market);
+            total_quote_taken_native += market.apply_penalty();
         }
 
         // Update remaining based on quote_lots taken. If nothing taken, same as the beginning
-        remaining_quote_lots = order.max_quote_lots_including_fees
-            - total_quote_lots_taken
-            - (market.taker_fee * I80F48::from_num(total_quote_taken_lots_wo_self)).to_num::<i64>();
+        remaining_quote_lots =
+            order.max_quote_lots_including_fees - total_quote_lots_taken - taker_fees;
 
         // Apply changes to matched asks (handles invalidate on delete!)
         for (handle, new_quantity) in matched_order_changes {
@@ -583,39 +577,4 @@ pub fn process_fill_event(
         event_queue.push_back(cast(event));
     }
     Ok(())
-}
-
-/// Release funds and apply taker fees to the taker account. Account fees for referrer
-fn release_funds_fees(
-    taker_side: Side,
-    market: &mut Market,
-    open_orders_acc: &mut OpenOrdersAccountRefMut,
-    base_native: u64,
-    quote_native: u64,
-    taker_fees: u64,
-) -> Result<()> {
-    let pa = &mut open_orders_acc.fixed_mut().position;
-    // Update free_lots
-    match taker_side {
-        Side::Bid => {
-            pa.base_free_native += base_native;
-        }
-        Side::Ask => {
-            pa.quote_free_native += quote_native - taker_fees;
-        }
-    };
-
-    // Referrer rebates
-    pa.referrer_rebates_accrued += market.referrer_taker_rebate(quote_native);
-    market.referrer_rebates_accrued += market.referrer_taker_rebate(quote_native);
-
-    open_orders_acc.fixed.position.taker_volume += taker_fees;
-
-    Ok(())
-}
-
-/// Applies a fixed penalty fee to the account, and update the market's quote fees_accrued
-fn apply_penalty(market: &mut Market) -> u64 {
-    market.quote_fees_accrued += market.fee_penalty;
-    market.fee_penalty
 }

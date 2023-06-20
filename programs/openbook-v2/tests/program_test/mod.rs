@@ -379,9 +379,9 @@ impl TestContext {
         .unwrap();
 
         let account_0 =
-            create_open_orders_account(solana, owner, market, 0, &context.users[1]).await;
+            create_open_orders_account(solana, owner, market, 0, &context.users[1], None).await;
         let account_1 =
-            create_open_orders_account(solana, owner, market, 1, &context.users[1]).await;
+            create_open_orders_account(solana, owner, market, 1, &context.users[1], None).await;
 
         let price_lots = {
             let market = solana.get_account::<Market>(market).await;
