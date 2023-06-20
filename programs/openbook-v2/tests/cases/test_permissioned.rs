@@ -473,3 +473,114 @@ async fn test_close_market_admin() -> Result<(), TransportError> {
 
     Ok(())
 }
+
+#[tokio::test]
+async fn test_delegate() -> Result<(), TransportError> {
+    let TestInitialize {
+        context,
+        collect_fee_admin,
+        owner,
+        market,
+        base_vault,
+        quote_vault,
+        price_lots,
+        tokens,
+        ..
+    } = TestContext::new_with_market(TestNewMarketInitialize {
+        ..TestNewMarketInitialize::default()
+    })
+    .await?;
+    let solana = &context.solana.clone();
+
+    let account_0_delegate = context.users[2].key;
+
+    let account_0 = create_open_orders_account(
+        solana,
+        owner,
+        market,
+        2,
+        &context.users[0],
+        Some(account_0_delegate.pubkey()),
+    )
+    .await;
+    let delegate_token_1 = context.users[2].token_accounts[1];
+
+    // Set the initial oracle price
+    set_stub_oracle_price(solana, &tokens[1], collect_fee_admin, 1000.0).await;
+
+    send_tx(
+        solana,
+        PlaceOrderInstruction {
+            open_orders_account: account_0,
+            open_orders_admin: None,
+            market,
+            owner: account_0_delegate,
+            token_deposit_account: delegate_token_1,
+            base_vault,
+            quote_vault,
+            side: Side::Bid,
+            price_lots,
+            max_base_lots: 1,
+            max_quote_lots_including_fees: 10000,
+
+            client_order_id: 23,
+            expiry_timestamp: 0,
+            order_type: PlaceOrderType::Limit,
+            self_trade_behavior: SelfTradeBehavior::default(),
+            remainings: vec![],
+        },
+    )
+    .await
+    .unwrap();
+
+    send_tx(
+        solana,
+        CancelOrderByClientOrderIdInstruction {
+            owner: account_0_delegate,
+            market,
+            open_orders_account: account_0,
+            client_order_id: 23,
+        },
+    )
+    .await
+    .unwrap();
+
+    send_tx(
+        solana,
+        SetDelegateInstruction {
+            owner,
+            open_orders_account: account_0,
+            delegate_account: None,
+        },
+    )
+    .await
+    .unwrap();
+
+    // No delegate anymore
+    let result = send_tx(
+        solana,
+        PlaceOrderInstruction {
+            open_orders_account: account_0,
+            open_orders_admin: None,
+            market,
+            owner: account_0_delegate,
+            token_deposit_account: delegate_token_1,
+            base_vault,
+            quote_vault,
+            side: Side::Bid,
+            price_lots,
+            max_base_lots: 1,
+            max_quote_lots_including_fees: 10000,
+
+            client_order_id: 23,
+            expiry_timestamp: 0,
+            order_type: PlaceOrderType::Limit,
+            self_trade_behavior: SelfTradeBehavior::default(),
+            remainings: vec![],
+        },
+    )
+    .await;
+    assert!(result.is_err());
+
+    Ok(())
+}

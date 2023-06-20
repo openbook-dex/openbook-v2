@@ -359,6 +359,12 @@ pub mod openbook_v2 {
         Ok(())
     }
 
+    pub fn set_delegate(ctx: Context<SetDelegate>) -> Result<()> {
+        #[cfg(feature = "enable-gpl")]
+        instructions::set_delegate(ctx)?;
+        Ok(())
+    }
+
     /// Set market to expired before pruning orders and closing the market
     pub fn set_market_expired(ctx: Context<SetMarketExpired>) -> Result<()> {
         #[cfg(feature = "enable-gpl")]

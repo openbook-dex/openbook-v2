@@ -23,7 +23,7 @@ pub struct PlaceOrder<'info> {
     pub bids: AccountLoader<'info, BookSide>,
     #[account(mut)]
     pub asks: AccountLoader<'info, BookSide>,
-    #[account(mut, constraint = token_deposit_account.owner == owner.key())]
+    #[account(mut)]
     pub token_deposit_account: Account<'info, TokenAccount>,
     #[account(mut)]
     pub base_vault: Account<'info, TokenAccount>,

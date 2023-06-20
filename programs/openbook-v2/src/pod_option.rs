@@ -1,5 +1,4 @@
-#[cfg(test)]
-use anchor_lang::prelude::Pubkey;
+use anchor_lang::prelude::*;
 use bytemuck::{Pod, Zeroable};
 use std::convert::From;
 
@@ -8,7 +7,7 @@ use std::convert::From;
 /// To ensure that there are no illegal bit patterns or padding bytes,
 /// `PodOption` is laid out as a single byte which is 0 in the case of `None`
 /// or non-zero in the case of `Some`, and then the value, if any.
-#[derive(Copy, Clone, Debug)]
+#[derive(AnchorSerialize, AnchorDeserialize, Default, Copy, Clone, Debug)]
 #[repr(C)]
 pub struct PodOption<T: Pod> {
     flag: u64,
