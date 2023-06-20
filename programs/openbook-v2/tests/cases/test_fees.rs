@@ -927,7 +927,7 @@ async fn test_fees_half() -> Result<(), TransportError> {
         assert_eq!(open_orders_account_1.position.quote_free_native, 99259);
 
         let market = solana.get_account::<Market>(market).await;
-        assert_eq!(market.referrer_rebates_accrued, 371);
+        assert_eq!(market.referrer_rebates_accrued, 370);
     }
 
     let admin_token_1 = solana
