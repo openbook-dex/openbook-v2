@@ -621,7 +621,10 @@ impl ClientInstruction for CancelAllOrdersInstruction {
         account_loader: impl ClientAccountLoader + 'async_trait,
     ) -> (Self::Accounts, instruction::Instruction) {
         let program_id = openbook_v2::id();
-        let instruction = Self::Instruction { limit: 5 };
+        let instruction = Self::Instruction {
+            side_option: None,
+            limit: 5,
+        };
         let market: Market = account_loader.load(&self.market).await.unwrap();
         let accounts = Self::Accounts {
             open_orders_account: self.open_orders_account,

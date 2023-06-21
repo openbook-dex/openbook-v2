@@ -12,6 +12,7 @@ pub fn cancel_order(ctx: Context<CancelOrder>, order_id: u128) -> Result<()> {
         OpenBookError::NoOwnerOrDelegate
     );
 
+    let market = ctx.accounts.market.load()?;
     let mut book = Orderbook {
         bids: ctx.accounts.bids.load_mut()?,
         asks: ctx.accounts.asks.load_mut()?,
@@ -23,12 +24,6 @@ pub fn cancel_order(ctx: Context<CancelOrder>, order_id: u128) -> Result<()> {
 
     let order_id = oo.id;
     let order_side_and_tree = oo.side_and_tree();
-
-    let market = ctx.accounts.market.load()?;
-    require!(
-        market.time_expiry == 0 || market.time_expiry > Clock::get()?.unix_timestamp,
-        OpenBookError::MarketHasExpired
-    );
 
     book.cancel_order(
         &mut account.borrow_mut(),

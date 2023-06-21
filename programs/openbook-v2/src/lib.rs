@@ -312,21 +312,14 @@ pub mod openbook_v2 {
         Ok(())
     }
 
-    /// Cancel up to `limit` orders.
-    pub fn cancel_all_orders(ctx: Context<CancelAllOrders>, limit: u8) -> Result<()> {
-        #[cfg(feature = "enable-gpl")]
-        instructions::cancel_all_orders(ctx, limit)?;
-        Ok(())
-    }
-
-    /// Cancel up to `limit` orders on a single side of the book.
-    pub fn cancel_all_orders_by_side(
-        ctx: Context<CancelAllOrdersBySide>,
+    /// Cancel up to `limit` orders, optionally filtering by side
+    pub fn cancel_all_orders(
+        ctx: Context<CancelAllOrders>,
         side_option: Option<Side>,
         limit: u8,
     ) -> Result<()> {
         #[cfg(feature = "enable-gpl")]
-        instructions::cancel_all_orders_by_side(ctx, side_option, limit)?;
+        instructions::cancel_all_orders(ctx, side_option, limit)?;
         Ok(())
     }
 
