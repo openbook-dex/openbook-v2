@@ -26,14 +26,14 @@ pub struct FillLog {
 
     pub maker: Pubkey,
     pub maker_client_order_id: u64,
-    pub maker_fee: f32,
+    pub maker_fee: i64,
 
     // Timestamp of when the maker order was placed; copied over from the LeafNode
     pub maker_timestamp: u64,
 
     pub taker: Pubkey,
     pub taker_client_order_id: u64,
-    pub taker_fee: f32,
+    pub taker_fee: i64,
 
     pub price: i64,
     pub quantity: i64, // number of base lots

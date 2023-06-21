@@ -1,6 +1,6 @@
 use crate::logs::TotalOrderFillEvent;
 use crate::state::open_orders_account::OpenOrdersLoader;
-use crate::state::OpenOrdersAccountRefMut;
+use crate::state::{OpenOrdersAccountRefMut, FEES_UNIT};
 use crate::{
     error::*,
     state::{orderbook::bookside::*, EventQueue, Market, OpenOrdersAccountFixed},
@@ -250,10 +250,11 @@ impl<'a> Orderbook<'a> {
                 ((total_quote_lots_taken - decremented_quote_lots) * market.quote_lot_size) as u64;
 
             if total_quote_taken_native_wo_self > 0 {
-                taker_fees = (I80F48::from_num(total_quote_taken_native_wo_self)
-                    * market.taker_fee)
-                    .ceil()
-                    .to_num();
+                taker_fees = ((total_quote_taken_native_wo_self as i128)
+                    * (market.taker_fee as i128)
+                    + (FEES_UNIT - 1i128))
+                    .checked_div(FEES_UNIT)
+                    .unwrap() as i64;
 
                 // taker fees should never be negative
                 require_gte!(taker_fees, 0);
@@ -333,7 +334,9 @@ impl<'a> Orderbook<'a> {
         // If there are still quantity unmatched, place on the book
         let book_base_quantity_lots = if market.maker_fee.is_positive() {
             // Subtract fees
-            remaining_quote_lots -= remaining_quote_lots * market.maker_fee.to_num::<i64>();
+            remaining_quote_lots -= ((remaining_quote_lots as i128) * (market.maker_fee as i128))
+                .checked_div(FEES_UNIT)
+                .unwrap() as i64;
             remaining_base_lots.min(remaining_quote_lots / price)
         } else {
             remaining_base_lots.min(remaining_quote_lots / price)
@@ -359,9 +362,10 @@ impl<'a> Orderbook<'a> {
 
             // Subtract maker fees in bid.
             if market.maker_fee.is_positive() && side == Side::Bid {
-                maker_fees = (I80F48::from_num(posted_quote_native) * market.maker_fee)
-                    .ceil()
-                    .to_num::<u64>();
+                maker_fees = ((posted_quote_native as i128) * (market.maker_fee as i128)
+                    + (FEES_UNIT - 1i128))
+                    .checked_div(FEES_UNIT)
+                    .unwrap() as u64;
             }
 
             let bookside = self.bookside_mut(side);

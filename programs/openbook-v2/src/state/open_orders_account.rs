@@ -1,6 +1,5 @@
 use anchor_lang::{prelude::*, Discriminator};
 use arrayref::array_ref;
-use fixed::types::I80F48;
 use solana_program::program_memory::sol_memmove;
 use static_assertions::const_assert_eq;
 use std::cell::{Ref, RefMut};
@@ -9,6 +8,7 @@ use std::mem::size_of;
 use crate::error::*;
 use crate::logs::FillLog;
 use crate::pod_option::PodOption;
+use crate::state::FEES_UNIT;
 
 use super::FillEvent;
 use super::LeafNode;
@@ -348,10 +348,9 @@ impl<
             // Maker pays fee. Fees already subtracted before sending to the book
             0
         } else {
-            (I80F48::from(quote_native_abs) * market.maker_fee)
-                .abs()
-                .ceil()
-                .to_num::<u64>()
+            ((quote_native_abs as i128) * (market.maker_fee as i128) + (FEES_UNIT - 1i128))
+                .checked_div(FEES_UNIT)
+                .unwrap() as u64
         };
 
         let price = self
@@ -386,10 +385,12 @@ impl<
                 }
                 Side::Ask => {
                     let maker_fees = if market.maker_fee.is_positive() {
-                        (I80F48::from(quote_locked_change * market.quote_lot_size)
-                            * market.maker_fee)
-                            .ceil()
-                            .to_num::<u64>()
+                        ((quote_locked_change as i128)
+                            * (market.quote_lot_size as i128)
+                            * (market.maker_fee as i128)
+                            + (FEES_UNIT - 1i128))
+                            .checked_div(FEES_UNIT)
+                            .unwrap() as u64
                     } else {
                         0
                     };
@@ -399,9 +400,11 @@ impl<
 
             if !is_self_trade && market.maker_fee.is_positive() {
                 // Apply rebates
-                let maker_fees = (I80F48::from(quote_to_free) * market.maker_fee)
-                    .ceil()
-                    .to_num::<u64>();
+                let maker_fees = ((quote_to_free as i128) * (market.maker_fee as i128)
+                    + (FEES_UNIT - 1i128))
+                    .checked_div(FEES_UNIT)
+                    .unwrap() as u64;
+
                 pa.referrer_rebates_accrued += maker_fees;
                 market.referrer_rebates_accrued += maker_fees;
             }
@@ -418,11 +421,15 @@ impl<
         // Update market fees
         if !is_self_trade {
             let fee_amount: i64 = {
-                let amount = I80F48::from(quote_native_abs) * market.maker_fee;
+                let amount = (quote_native_abs as i128) * (market.maker_fee as i128);
                 if market.maker_fee.is_positive() {
-                    amount.ceil().to_num()
+                    (amount + (FEES_UNIT - 1i128))
+                        .checked_div(FEES_UNIT)
+                        .unwrap() as i64
                 } else {
-                    amount.floor().to_num()
+                    (amount - (FEES_UNIT - 1i128))
+                        .checked_div(FEES_UNIT)
+                        .unwrap() as i64
                 }
             };
             market.fees_accrued += fee_amount;
@@ -437,11 +444,11 @@ impl<
             seq_num: fill.seq_num,
             maker: fill.maker,
             maker_client_order_id: fill.maker_client_order_id,
-            maker_fee: market.maker_fee.to_num(),
+            maker_fee: market.maker_fee,
             maker_timestamp: fill.maker_timestamp,
             taker: fill.taker,
             taker_client_order_id: fill.taker_client_order_id,
-            taker_fee: market.taker_fee.to_num(),
+            taker_fee: market.taker_fee,
             price: fill.price,
             quantity: fill.quantity,
         });
@@ -580,9 +587,10 @@ impl<
 
             // If maker fees, give back fees to user
             if market.maker_fee.is_positive() {
-                let fees = (I80F48::from_num(quote_quantity_native) * market.maker_fee)
-                    .ceil()
-                    .to_num::<u64>();
+                let fees = ((quote_quantity_native as i128) * (market.maker_fee as i128)
+                    + (FEES_UNIT - 1i128))
+                    .checked_div(FEES_UNIT)
+                    .unwrap() as u64;
                 quote_quantity_native += fees;
                 base_quantity_native += fees / (price as u64);
             }
