@@ -8,7 +8,6 @@ use std::mem::size_of;
 use crate::error::*;
 use crate::logs::FillLog;
 use crate::pod_option::PodOption;
-use crate::state::FEES_UNIT;
 
 use super::FillEvent;
 use super::LeafNode;
@@ -348,9 +347,7 @@ impl<
             // Maker pays fee. Fees already subtracted before sending to the book
             0
         } else {
-            ((quote_native_abs as i128) * (market.maker_fee as i128) + (FEES_UNIT - 1i128))
-                .checked_div(FEES_UNIT)
-                .unwrap() as u64
+            market.maker_fees_ceil(quote_native_abs)
         };
 
         let price = self
@@ -384,15 +381,13 @@ impl<
                     pa.quote_free_native += fees;
                 }
                 Side::Ask => {
-                    let maker_fees = if market.maker_fee.is_positive() {
-                        ((quote_locked_change as i128)
-                            * (market.quote_lot_size as i128)
-                            * (market.maker_fee as i128)
-                            + (FEES_UNIT - 1i128))
-                            .checked_div(FEES_UNIT)
-                            .unwrap() as u64
+                    let maker_fees: u64 = if market.maker_fee.is_positive() {
+                        market
+                            .maker_fees_ceil(quote_locked_change * market.quote_lot_size)
+                            .try_into()
+                            .unwrap()
                     } else {
-                        0
+                        0_u64
                     };
                     pa.quote_free_native += quote_to_free + fees - maker_fees;
                 }
@@ -400,10 +395,7 @@ impl<
 
             if !is_self_trade && market.maker_fee.is_positive() {
                 // Apply rebates
-                let maker_fees = ((quote_to_free as i128) * (market.maker_fee as i128)
-                    + (FEES_UNIT - 1i128))
-                    .checked_div(FEES_UNIT)
-                    .unwrap() as u64;
+                let maker_fees = market.maker_fees_ceil(quote_to_free);
 
                 pa.referrer_rebates_accrued += maker_fees;
                 market.referrer_rebates_accrued += maker_fees;
@@ -420,19 +412,14 @@ impl<
 
         // Update market fees
         if !is_self_trade {
-            let fee_amount: i64 = {
-                let amount = (quote_native_abs as i128) * (market.maker_fee as i128);
+            let fee_amount: u64 = {
                 if market.maker_fee.is_positive() {
-                    (amount + (FEES_UNIT - 1i128))
-                        .checked_div(FEES_UNIT)
-                        .unwrap() as i64
+                    market.maker_fees_ceil(quote_native_abs)
                 } else {
-                    (amount - (FEES_UNIT - 1i128))
-                        .checked_div(FEES_UNIT)
-                        .unwrap() as i64
+                    market.maker_fees_ceil(quote_native_abs)
                 }
             };
-            market.fees_accrued += fee_amount;
+            market.fees_accrued += fee_amount as i64;
         }
 
         //Emit event
@@ -587,10 +574,7 @@ impl<
 
             // If maker fees, give back fees to user
             if market.maker_fee.is_positive() {
-                let fees = ((quote_quantity_native as i128) * (market.maker_fee as i128)
-                    + (FEES_UNIT - 1i128))
-                    .checked_div(FEES_UNIT)
-                    .unwrap() as u64;
+                let fees = market.maker_fees_ceil(quote_quantity_native);
                 quote_quantity_native += fees;
                 base_quantity_native += fees / (price as u64);
             }

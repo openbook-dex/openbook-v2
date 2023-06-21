@@ -1,6 +1,7 @@
 use anchor_lang::prelude::*;
 use fixed::types::I80F48;
 use static_assertions::const_assert_eq;
+use std::convert::{TryFrom, TryInto};
 use std::mem::size_of;
 
 use crate::pod_option::PodOption;
@@ -186,25 +187,38 @@ impl Market {
     }
 
     pub fn subtract_taker_fees(&self, quote: i64) -> i64 {
-        ((quote as i128) * FEES_UNIT)
-            .checked_div(1i128 + (self.taker_fee as i128))
-            .unwrap() as i64
+        ((quote as i128) * FEES_UNIT / (1_i128 + (self.taker_fee as i128)))
+            .try_into()
+            .unwrap()
     }
 
     pub fn referrer_taker_rebate(&self, quote: u64) -> u64 {
         if self.maker_fee.is_positive() {
             // Nothing goes to maker, all to referrer
-            ((quote as i128) * (self.taker_fee as i128) + (FEES_UNIT - 1i128))
-                .checked_div(FEES_UNIT)
-                .unwrap() as u64
+            self.taker_fees_ceil(quote)
         } else {
-            ((quote as i128) * (self.taker_fee as i128) + (FEES_UNIT - 1i128))
-                .checked_div(FEES_UNIT)
-                .unwrap() as u64
-                - ((quote as i128) * (self.maker_fee as i128) + (FEES_UNIT - 1i128))
-                    .checked_div(FEES_UNIT)
-                    .unwrap() as u64
+            self.taker_fees_ceil(quote) - self.maker_fees_ceil(quote)
         }
+    }
+
+    pub fn maker_fees_ceil<T>(self, amount: T) -> T
+    where
+        T: Into<i128> + TryFrom<i128>,
+        <T as TryFrom<i128>>::Error: std::fmt::Debug,
+    {
+        ((amount.into() * (self.maker_fee as i128) + (FEES_UNIT - 1_i128)) / FEES_UNIT)
+            .try_into()
+            .unwrap()
+    }
+
+    pub fn taker_fees_ceil<T>(self, amount: T) -> T
+    where
+        T: Into<i128> + TryFrom<i128>,
+        <T as TryFrom<i128>>::Error: std::fmt::Debug,
+    {
+        ((amount.into() * (self.taker_fee as i128) + (FEES_UNIT - 1_i128)) / FEES_UNIT)
+            .try_into()
+            .unwrap()
     }
 
     /// Update the market's quote fees acrued and returns the penalty fee

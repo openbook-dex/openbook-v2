@@ -1,6 +1,6 @@
 use crate::logs::TotalOrderFillEvent;
 use crate::state::open_orders_account::OpenOrdersLoader;
-use crate::state::{OpenOrdersAccountRefMut, FEES_UNIT};
+use crate::state::OpenOrdersAccountRefMut;
 use crate::{
     error::*,
     state::{orderbook::bookside::*, EventQueue, Market, OpenOrdersAccountFixed},
@@ -244,23 +244,15 @@ impl<'a> Orderbook<'a> {
 
         // Record the taker trade in the account already, even though it will only be
         // realized when the fill event gets executed
-        let mut taker_fees = 0_i64;
+        let mut taker_fees = 0_u64;
         if total_quote_lots_taken > 0 || total_base_lots_taken > 0 {
             let total_quote_taken_native_wo_self =
                 ((total_quote_lots_taken - decremented_quote_lots) * market.quote_lot_size) as u64;
 
             if total_quote_taken_native_wo_self > 0 {
-                taker_fees = ((total_quote_taken_native_wo_self as i128)
-                    * (market.taker_fee as i128)
-                    + (FEES_UNIT - 1i128))
-                    .checked_div(FEES_UNIT)
-                    .unwrap() as i64;
-
-                // taker fees should never be negative
-                require_gte!(taker_fees, 0);
-
+                taker_fees = market.taker_fees_ceil(total_quote_taken_native_wo_self);
                 // Only account taker fees now. Maker fees accounted once processing the event
-                market.fees_accrued += taker_fees;
+                market.fees_accrued += taker_fees as i64;
             };
 
             if let Some(open_orders_acc) = &mut open_orders_acc {
@@ -269,7 +261,7 @@ impl<'a> Orderbook<'a> {
                     market,
                     total_base_taken_native,
                     total_quote_taken_native,
-                    taker_fees as u64,
+                    taker_fees,
                 )?;
             } else {
                 // It's a taker order, transfer to referrer
@@ -280,12 +272,12 @@ impl<'a> Orderbook<'a> {
             let total_quantity_received: u64;
             match side {
                 Side::Bid => {
-                    total_quote_taken_native += taker_fees as u64;
+                    total_quote_taken_native += taker_fees;
                     total_quantity_paid = total_quote_taken_native;
                     total_quantity_received = total_base_taken_native;
                 }
                 Side::Ask => {
-                    total_quote_taken_native -= taker_fees as u64;
+                    total_quote_taken_native -= taker_fees;
                     total_quantity_paid = total_base_taken_native;
                     total_quantity_received = total_quote_taken_native;
                 }
@@ -296,7 +288,7 @@ impl<'a> Orderbook<'a> {
                 taker: *owner,
                 total_quantity_paid,
                 total_quantity_received,
-                fees: taker_fees as u64,
+                fees: taker_fees,
             });
         } else if order.needs_penalty_fee() {
             // IOC orders have a fee penalty applied if not match to avoid spam
@@ -305,7 +297,7 @@ impl<'a> Orderbook<'a> {
 
         // Update remaining based on quote_lots taken. If nothing taken, same as the beginning
         remaining_quote_lots =
-            order.max_quote_lots_including_fees - total_quote_lots_taken - taker_fees;
+            order.max_quote_lots_including_fees - total_quote_lots_taken - (taker_fees as i64);
 
         // Apply changes to matched asks (handles invalidate on delete!)
         for (handle, new_quantity) in matched_order_changes {
@@ -334,9 +326,7 @@ impl<'a> Orderbook<'a> {
         // If there are still quantity unmatched, place on the book
         let book_base_quantity_lots = if market.maker_fee.is_positive() {
             // Subtract fees
-            remaining_quote_lots -= ((remaining_quote_lots as i128) * (market.maker_fee as i128))
-                .checked_div(FEES_UNIT)
-                .unwrap() as i64;
+            remaining_quote_lots -= market.taker_fees_ceil(remaining_quote_lots);
             remaining_base_lots.min(remaining_quote_lots / price)
         } else {
             remaining_base_lots.min(remaining_quote_lots / price)
@@ -362,10 +352,10 @@ impl<'a> Orderbook<'a> {
 
             // Subtract maker fees in bid.
             if market.maker_fee.is_positive() && side == Side::Bid {
-                maker_fees = ((posted_quote_native as i128) * (market.maker_fee as i128)
-                    + (FEES_UNIT - 1i128))
-                    .checked_div(FEES_UNIT)
-                    .unwrap() as u64;
+                maker_fees = market
+                    .maker_fees_ceil(posted_quote_native)
+                    .try_into()
+                    .unwrap();
             }
 
             let bookside = self.bookside_mut(side);
