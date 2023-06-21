@@ -18,7 +18,12 @@ async fn test_ioc() -> Result<(), TransportError> {
         account_0,
         account_1,
         ..
-    } = TestContext::new_with_market(TestNewMarketInitialize{fee_penalty, maker_fee: 0.0002, taker_fee:0.0002, ..TestNewMarketInitialize::default()})
+    } = TestContext::new_with_market(TestNewMarketInitialize {
+        fee_penalty,
+        maker_fee: 200,
+        taker_fee: 200,
+        ..TestNewMarketInitialize::default()
+    })
     .await?;
     let solana = &context.solana.clone();
 
@@ -39,7 +44,7 @@ async fn test_ioc() -> Result<(), TransportError> {
             client_order_id: 0,
             expiry_timestamp: 0,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings:vec![],
+            remainings: vec![],
         },
     )
     .await
@@ -62,7 +67,7 @@ async fn test_ioc() -> Result<(), TransportError> {
             client_order_id: 0,
             expiry_timestamp: 0,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings:vec![],
+            remainings: vec![],
         },
     )
     .await
@@ -74,13 +79,7 @@ async fn test_ioc() -> Result<(), TransportError> {
 
         assert_eq!(open_orders_account_0.position.base_position_lots(), 0);
         assert_eq!(open_orders_account_1.position.base_position_lots(), 0);
-        assert_eq!(
-            open_orders_account_0
-                .position
-                .quote_position_native()
-                ,
-            0
-        );
+        assert_eq!(open_orders_account_0.position.quote_position_native(), 0);
         // assert_eq!(open_orders_account_1.position.quote_position_native(), 0);
         assert_eq!(open_orders_account_0.position.bids_base_lots, 1);
         assert_eq!(open_orders_account_1.position.bids_base_lots, 0);
@@ -91,10 +90,7 @@ async fn test_ioc() -> Result<(), TransportError> {
         assert_eq!(open_orders_account_0.position.base_free_native, 0);
         assert_eq!(open_orders_account_1.position.base_free_native, 0);
         assert_eq!(open_orders_account_0.position.quote_free_native, 0);
-        assert_eq!(
-            open_orders_account_1.position.quote_free_native,
-            99960
-        );
+        assert_eq!(open_orders_account_1.position.quote_free_native, 99960);
     }
 
     Ok(())
