@@ -27,11 +27,11 @@ pub fn create_market(
     require!(
         taker_fee.is_sign_positive()
             && (maker_fee.is_sign_positive() || maker_fee.abs() <= taker_fee),
-        OpenBookError::InvalidFeesError
+        OpenBookError::InvalidInputMarketFees
     );
     require!(
         time_expiry == 0 || time_expiry > Clock::get()?.unix_timestamp,
-        OpenBookError::MarketHasExpired
+        OpenBookError::InvalidInputMarketExpired
     );
 
     let open_orders_admin: PodOption<Pubkey> = ctx

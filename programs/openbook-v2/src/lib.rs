@@ -101,7 +101,7 @@ pub mod openbook_v2 {
         expiry_timestamp: u64,
         limit: u8,
     ) -> Result<Option<u128>> {
-        require_gte!(price_lots, 1, OpenBookError::InvalidPriceLots);
+        require_gte!(price_lots, 1, OpenBookError::InvalidInputPriceLots);
 
         use crate::state::{Order, OrderParams};
         let time_in_force = match Order::tif_from_expiry(expiry_timestamp) {
@@ -172,11 +172,11 @@ pub mod openbook_v2 {
         // WARNING: Not currently implemented.
         max_oracle_staleness_slots: i32,
     ) -> Result<Option<u128>> {
-        require_gt!(peg_limit, 0, OpenBookError::InvalidPegLimit);
+        require_gt!(peg_limit, 0, OpenBookError::InvalidInputPegLimit);
         require_eq!(
             max_oracle_staleness_slots,
             -1,
-            OpenBookError::UnimplementedStaleness
+            OpenBookError::InvalidInputStaleness
         );
 
         use crate::state::{Order, OrderParams};
@@ -225,12 +225,12 @@ pub mod openbook_v2 {
         self_trade_behavior: SelfTradeBehavior,
         limit: u8,
     ) -> Result<Option<u128>> {
-        require_gte!(price_lots, 1, OpenBookError::InvalidPriceLots);
+        require_gte!(price_lots, 1, OpenBookError::InvalidInputPriceLots);
 
         use crate::state::{Order, OrderParams};
         require!(
             order_type == PlaceOrderType::Market || order_type == PlaceOrderType::ImmediateOrCancel,
-            OpenBookError::InvalidOrderType
+            OpenBookError::InvalidInputOrderType
         );
         let order = Order {
             side,
