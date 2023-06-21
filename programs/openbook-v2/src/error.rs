@@ -59,6 +59,8 @@ pub enum OpenBookError {
     InvalidConsumeEventsAdmin,
     #[msg("The Market has already expired.")]
     MarketHasExpired,
+    #[msg("Price lots should be greater than zero")]
+    InvalidPriceLots,
     #[msg("Order size above market limits")]
     InvalidOrderSize,
     #[msg("The Market has not expired yet.")]
