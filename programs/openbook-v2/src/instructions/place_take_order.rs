@@ -13,11 +13,11 @@ pub fn place_take_order<'info>(
     order: Order,
     limit: u8,
 ) -> Result<Option<u128>> {
-    require_gte!(order.max_base_lots, 0, OpenBookError::NegativeLots);
+    require_gte!(order.max_base_lots, 0, OpenBookError::InvalidInputLots);
     require_gte!(
         order.max_quote_lots_including_fees,
         0,
-        OpenBookError::NegativeLots
+        OpenBookError::InvalidInputLots
     );
 
     let mut market = ctx.accounts.market.load_mut()?;
