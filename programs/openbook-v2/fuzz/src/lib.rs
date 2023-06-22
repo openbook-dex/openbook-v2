@@ -303,4 +303,30 @@ impl FuzzContext {
 
         process_instruction(&mut self.state, &accounts, &data)
     }
+
+    pub fn consume_events(
+        &mut self,
+        data: openbook_v2::instruction::ConsumeEvents,
+    ) -> ProgramResult {
+        let accounts = openbook_v2::accounts::ConsumeEvents {
+            consume_events_admin: None,
+            market: self.market,
+            event_queue: self.event_queue,
+        };
+
+        process_instruction(&mut self.state, &accounts, &data)
+    }
+
+    pub fn consume_given_events(
+        &mut self,
+        data: openbook_v2::instruction::ConsumeGivenEvents,
+    ) -> ProgramResult {
+        let accounts = openbook_v2::accounts::ConsumeEvents {
+            consume_events_admin: None,
+            market: self.market,
+            event_queue: self.event_queue,
+        };
+
+        process_instruction(&mut self.state, &accounts, &data)
+    }
 }

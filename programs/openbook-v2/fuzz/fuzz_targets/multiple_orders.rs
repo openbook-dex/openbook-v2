@@ -25,6 +25,12 @@ enum FuzzInstruction {
         user_id: UserId,
         data: openbook_v2::instruction::PlaceTakeOrder,
     },
+    ConsumeEvents {
+        data: openbook_v2::instruction::ConsumeEvents,
+    },
+    ConsumeGivenEvents {
+        data: openbook_v2::instruction::ConsumeGivenEvents,
+    },
 }
 
 fuzz_target!(|fuzz_data: FuzzData| -> Corpus {
@@ -58,6 +64,14 @@ fn run_fuzz(fuzz_data: FuzzData) -> Corpus {
             FuzzInstruction::PlaceTakeOrder { user_id, data } => ctx
                 .place_take_order(user_id, data)
                 .map_or_else(error_filter::place_take_order, |_| true),
+
+            FuzzInstruction::ConsumeEvents { data } => ctx
+                .consume_events(data)
+                .map_or_else(error_filter::consume_events, |_| true),
+
+            FuzzInstruction::ConsumeGivenEvents { data } => ctx
+                .consume_given_events(data)
+                .map_or_else(error_filter::consume_given_events, |_| true),
         };
 
         if !has_valid_inputs {
@@ -108,6 +122,19 @@ mod error_filter {
             e if e == OpenBookError::InvalidInputPriceLots.into() => false,
             e if e == OpenBookError::InvalidOrderSize.into() => true,
             e if e == TokenError::InsufficientFunds.into() => true,
+            _ => panic!("{}", err),
+        }
+    }
+
+    pub fn consume_events(err: ProgramError) -> bool {
+        match err {
+            _ => panic!("{}", err),
+        }
+    }
+
+    pub fn consume_given_events(err: ProgramError) -> bool {
+        match err {
+            e if e == OpenBookError::InvalidInputQueueSlots.into() => false,
             _ => panic!("{}", err),
         }
     }
