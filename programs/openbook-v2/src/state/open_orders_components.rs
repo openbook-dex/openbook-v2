@@ -6,8 +6,6 @@ use std::mem::size_of;
 
 use crate::state::*;
 
-pub const FREE_ORDER_SLOT: MarketIndex = MarketIndex::MAX;
-
 #[zero_copy]
 #[derive(AnchorSerialize, AnchorDeserialize, Derivative)]
 #[derivative(Debug)]
@@ -72,8 +70,9 @@ impl Position {
 #[zero_copy]
 #[derive(AnchorSerialize, AnchorDeserialize, Debug)]
 pub struct OpenOrder {
+    pub is_free: u8,
     pub side_and_tree: u8, // SideAndOrderTree -- enums aren't POD
-    pub padding1: [u8; 7],
+    pub padding1: [u8; 6],
     pub client_id: u64,
     /// Price at which user's assets were locked
     pub locked_price: i64,
@@ -87,6 +86,7 @@ const_assert_eq!(size_of::<OpenOrder>() % 8, 0);
 impl Default for OpenOrder {
     fn default() -> Self {
         Self {
+            is_free: true.into(),
             side_and_tree: SideAndOrderTree::BidFixed.into(),
             padding1: Default::default(),
             client_id: 0,
@@ -98,6 +98,10 @@ impl Default for OpenOrder {
 }
 
 impl OpenOrder {
+    pub fn is_free(&self) -> bool {
+        self.is_free == u8::from(true)
+    }
+
     pub fn side_and_tree(&self) -> SideAndOrderTree {
         SideAndOrderTree::try_from(self.side_and_tree).unwrap()
     }
