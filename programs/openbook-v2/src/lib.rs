@@ -41,8 +41,8 @@ pub mod openbook_v2 {
         oracle_config: OracleConfigParams,
         quote_lot_size: i64,
         base_lot_size: i64,
-        maker_fee: f32,
-        taker_fee: f32,
+        maker_fee: i64,
+        taker_fee: i64,
         fee_penalty: u64,
         time_expiry: i64,
     ) -> Result<()> {

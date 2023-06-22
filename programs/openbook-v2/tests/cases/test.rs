@@ -48,8 +48,8 @@ async fn test_simple_settle() -> Result<(), TransportError> {
             market_index: 2,
             quote_lot_size: 10,
             base_lot_size: 100,
-            maker_fee: -0.0002,
-            taker_fee: 0.0004,
+            maker_fee: -200,
+            taker_fee: 400,
             base_mint: mints[0].pubkey,
             quote_mint: mints[1].pubkey,
             base_vault: base_vault_2,
@@ -233,7 +233,7 @@ async fn test_cancel_orders() -> Result<(), TransportError> {
         account_1,
         ..
     } = TestContext::new_with_market(TestNewMarketInitialize {
-        maker_fee: -0.0001,
+        maker_fee: -100,
         ..TestNewMarketInitialize::default()
     })
     .await?;

@@ -20,8 +20,8 @@ async fn test_fees_accrued() -> Result<(), TransportError> {
         ..
     } = TestContext::new_with_market(TestNewMarketInitialize {
         fee_penalty,
-        maker_fee: -0.0001,
-        taker_fee: 0.0002,
+        maker_fee: -100,
+        taker_fee: 200,
         ..TestNewMarketInitialize::default()
     })
     .await?;
@@ -222,8 +222,8 @@ async fn test_maker_fees() -> Result<(), TransportError> {
         account_1,
         ..
     } = TestContext::new_with_market(TestNewMarketInitialize {
-        maker_fee: 0.0002,
-        taker_fee: 0.0004,
+        maker_fee: 200,
+        taker_fee: 400,
         ..TestNewMarketInitialize::default()
     })
     .await?;
@@ -245,7 +245,7 @@ async fn test_maker_fees() -> Result<(), TransportError> {
             side: Side::Bid,
             price_lots,
             max_base_lots: 1,
-            max_quote_lots_including_fees: 10002,
+            max_quote_lots_including_fees: 10020,
             client_order_id: 30,
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
@@ -290,7 +290,7 @@ async fn test_maker_fees() -> Result<(), TransportError> {
             side: Side::Bid,
             price_lots,
             max_base_lots: 1,
-            max_quote_lots_including_fees: 10002,
+            max_quote_lots_including_fees: 10020,
             client_order_id: 0,
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
@@ -461,8 +461,8 @@ async fn test_no_maker_fees_ask() -> Result<(), TransportError> {
         account_1,
         ..
     } = TestContext::new_with_market(TestNewMarketInitialize {
-        maker_fee: -0.0002,
-        taker_fee: 0.0004,
+        maker_fee: -200,
+        taker_fee: 400,
         ..TestNewMarketInitialize::default()
     })
     .await?;
@@ -655,8 +655,8 @@ async fn test_maker_fees_ask() -> Result<(), TransportError> {
         account_1,
         ..
     } = TestContext::new_with_market(TestNewMarketInitialize {
-        maker_fee: 0.0002,
-        taker_fee: 0.0004,
+        maker_fee: 200,
+        taker_fee: 400,
         ..TestNewMarketInitialize::default()
     })
     .await?;
@@ -678,7 +678,7 @@ async fn test_maker_fees_ask() -> Result<(), TransportError> {
             side: Side::Ask,
             price_lots,
             max_base_lots: 1,
-            max_quote_lots_including_fees: 10000,
+            max_quote_lots_including_fees: 10020,
             client_order_id: 0,
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
@@ -849,8 +849,8 @@ async fn test_fees_half() -> Result<(), TransportError> {
         account_1,
         ..
     } = TestContext::new_with_market(TestNewMarketInitialize {
-        maker_fee: -0.0037,
-        taker_fee: 0.0074,
+        maker_fee: -3700,
+        taker_fee: 7400,
         ..TestNewMarketInitialize::default()
     })
     .await?;
@@ -924,8 +924,8 @@ async fn test_fees_half() -> Result<(), TransportError> {
         let open_orders_account_1 = solana.get_account::<OpenOrdersAccount>(account_1).await;
         let market = solana.get_account::<Market>(market).await;
 
-        assert_eq!(open_orders_account_0.position.quote_free_native, 371);
-        assert_eq!(open_orders_account_1.position.quote_free_native, 99259);
+        assert_eq!(open_orders_account_0.position.quote_free_native, 370);
+        assert_eq!(open_orders_account_1.position.quote_free_native, 99260);
         assert_eq!(market.referrer_rebates_accrued, 370);
 
         assert_eq!(
@@ -1012,8 +1012,8 @@ async fn test_fees_half() -> Result<(), TransportError> {
         account_1,
         ..
     } = TestContext::new_with_market(TestNewMarketInitialize {
-        maker_fee: -0.0032,
-        taker_fee: 0.0064,
+        maker_fee: -3200,
+        taker_fee: 6400,
         ..TestNewMarketInitialize::default()
     })
     .await?;

@@ -1,6 +1,7 @@
 use anchor_lang::prelude::*;
 use fixed::types::I80F48;
 use static_assertions::const_assert_eq;
+use std::convert::{TryFrom, TryInto};
 use std::mem::size_of;
 
 use crate::pod_option::PodOption;
@@ -10,6 +11,7 @@ use crate::{accounts_zerocopy::KeyedAccountReader, state::orderbook::Side};
 use super::{orderbook, OracleConfig};
 
 pub type MarketIndex = u32;
+pub const FEES_SCALE_FACTOR: i128 = 1e6 as i128;
 
 #[account(zero_copy)]
 #[derive(Debug)]
@@ -75,12 +77,13 @@ pub struct Market {
     pub registration_time: u64,
 
     /// Fees
-    /// Fee when matching maker orders.
+    ///
+    /// Fee (in 10^-6) when matching maker orders.
     /// maker_fee < 0 it means some of the taker_fees goes to the maker
     /// maker_fee > 0, it means no taker_fee to the maker, and maker fee goes to the referral
-    pub maker_fee: I80F48,
-    /// Fee for taker orders, always >= 0.
-    pub taker_fee: I80F48,
+    pub maker_fee: i64,
+    /// Fee (in 10^-6) for taker orders, always >= 0.
+    pub taker_fee: i64,
     /// Fee (in quote native) to charge for ioc orders that don't match to avoid spam
     pub fee_penalty: u64,
 
@@ -128,7 +131,8 @@ const_assert_eq!(
     8 + // size of base_lot_size
     8 + // size of seq_num
     8 + // size of registration_time
-    2 * size_of::<I80F48>() + // size of maker_fee and taker_fee
+    8 + // size of maker_fee 
+    8 + // size of taker_fee
     8 + // size of fee_penalty
     8 + // size of fees_accrued
     8 + // size of fees_to_referrers
@@ -141,7 +145,7 @@ const_assert_eq!(
     8 + // size of referrer_rebates_accrued
     1768 // size of reserved
 );
-const_assert_eq!(size_of::<Market>(), 2440);
+const_assert_eq!(size_of::<Market>(), 2424);
 const_assert_eq!(size_of::<Market>() % 8, 0);
 
 impl Market {
@@ -183,21 +187,40 @@ impl Market {
     }
 
     pub fn subtract_taker_fees(&self, quote: i64) -> i64 {
-        (I80F48::from(quote) / (I80F48::ONE + self.taker_fee)).to_num()
+        ((quote as i128) * FEES_SCALE_FACTOR / (FEES_SCALE_FACTOR + (self.taker_fee as i128)))
+            .try_into()
+            .unwrap()
     }
 
     pub fn referrer_taker_rebate(&self, quote: u64) -> u64 {
         if self.maker_fee.is_positive() {
             // Nothing goes to maker, all to referrer
-            (I80F48::from(quote) * self.taker_fee).ceil().to_num()
+            self.taker_fees_ceil(quote)
         } else {
-            (I80F48::from(quote) * self.taker_fee)
-                .ceil()
-                .to_num::<u64>()
-                - (I80F48::from(quote) * self.maker_fee.abs())
-                    .ceil()
-                    .to_num::<u64>()
+            self.taker_fees_ceil(quote) - self.maker_fees_ceil(quote)
         }
+    }
+
+    pub fn maker_fees_ceil<T>(self, amount: T) -> T
+    where
+        T: Into<i128> + TryFrom<i128>,
+        <T as TryFrom<i128>>::Error: std::fmt::Debug,
+    {
+        ((amount.into() * (self.maker_fee.abs() as i128) + (FEES_SCALE_FACTOR - 1_i128))
+            / FEES_SCALE_FACTOR)
+            .try_into()
+            .unwrap()
+    }
+
+    pub fn taker_fees_ceil<T>(self, amount: T) -> T
+    where
+        T: Into<i128> + TryFrom<i128>,
+        <T as TryFrom<i128>>::Error: std::fmt::Debug,
+    {
+        ((amount.into() * (self.taker_fee as i128) + (FEES_SCALE_FACTOR - 1_i128))
+            / FEES_SCALE_FACTOR)
+            .try_into()
+            .unwrap()
     }
 
     /// Update the market's quote fees acrued and returns the penalty fee
