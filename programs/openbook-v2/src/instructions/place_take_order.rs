@@ -53,7 +53,7 @@ pub fn place_take_order<'info>(
         &mut event_queue,
         oracle_price,
         &mut None,
-        &ctx.accounts.owner.key(),
+        &ctx.accounts.signer.key(),
         now_ts,
         limit,
         ctx.accounts
@@ -94,7 +94,7 @@ pub fn place_take_order<'info>(
             Transfer {
                 from: ctx.accounts.token_deposit_account.to_account_info(),
                 to: to_vault,
-                authority: ctx.accounts.owner.to_account_info(),
+                authority: ctx.accounts.signer.to_account_info(),
             },
         );
         token::transfer(cpi_context, deposit_amount)?;
