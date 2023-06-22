@@ -203,8 +203,8 @@ impl FuzzContext {
             },
             quote_lot_size: 10,
             base_lot_size: 100,
-            maker_fee: -0.0002,
-            taker_fee: 0.0004,
+            maker_fee: -200,
+            taker_fee: 400,
             fee_penalty: 0,
             time_expiry: 0,
         };
