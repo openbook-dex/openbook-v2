@@ -20,8 +20,12 @@ pub enum OpenBookError {
     InvalidInputPegLimit,
     #[msg("The order type is invalid. A taker order must be Market or ImmediateOrCancel")]
     InvalidInputOrderType,
+    #[msg("Order id cannot be zero")]
+    InvalidInputOrderId,
     #[msg("Oracle staleness limit is currently unimplemented")]
     InvalidInputStaleness,
+    #[msg("Slot above queue limit")]
+    InvalidInputQueueSlots,
 
     #[msg("The header version is not 1")]
     HeaderVersionNotKnown,
@@ -31,7 +35,7 @@ pub enum OpenBookError {
     OracleConfidence,
     #[msg("an oracle is stale")]
     OracleStale,
-    #[msg("perp order id not found on the orderbook")]
+    #[msg("Order id not found on the orderbook")]
     OrderIdNotFound,
     #[msg("Event queue contains elements and market can't be closed")]
     EventQueueContainsElements,
@@ -71,6 +75,8 @@ pub enum OpenBookError {
     OpenOrdersFull,
     #[msg("Book contains elements")]
     BookContainsElements,
+    #[msg("Could not find order in user account")]
+    OpenOrdersOrderNotFound,
 }
 
 impl From<OpenBookError> for ProgramError {

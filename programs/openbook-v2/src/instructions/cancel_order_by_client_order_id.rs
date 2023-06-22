@@ -24,8 +24,9 @@ pub fn cancel_order_by_client_order_id(
     let oo = account
         .find_order_with_client_order_id(client_order_id)
         .ok_or_else(|| {
-            error_msg!(
-                "could not find order with client order id {client_order_id} in user account"
+            error_msg_typed!(
+                OpenBookError::OpenOrdersOrderNotFound,
+                "client order id = {client_order_id}"
             )
         })?;
 

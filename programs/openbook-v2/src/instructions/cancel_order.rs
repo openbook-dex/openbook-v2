@@ -5,6 +5,8 @@ use crate::error::*;
 use crate::state::*;
 
 pub fn cancel_order(ctx: Context<CancelOrder>, order_id: u128) -> Result<()> {
+    require_gt!(order_id, 0, OpenBookError::InvalidInputOrderId);
+
     let mut account = ctx.accounts.open_orders_account.load_full_mut()?;
     // account constraint #1
     require!(
@@ -18,9 +20,9 @@ pub fn cancel_order(ctx: Context<CancelOrder>, order_id: u128) -> Result<()> {
         asks: ctx.accounts.asks.load_mut()?,
     };
 
-    let oo = account
-        .find_order_with_order_id(order_id)
-        .ok_or_else(|| error_msg!("could not find order with id {order_id} in user account"))?;
+    let oo = account.find_order_with_order_id(order_id).ok_or_else(|| {
+        error_msg_typed!(OpenBookError::OpenOrdersOrderNotFound, "id = {order_id}")
+    })?;
 
     let order_id = oo.id;
     let order_side_and_tree = oo.side_and_tree();

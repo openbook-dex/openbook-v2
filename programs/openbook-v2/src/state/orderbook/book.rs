@@ -486,6 +486,11 @@ impl<'a> Orderbook<'a> {
                 }
             }
 
+            if limit == 0 {
+                msg!("Cancel orders limit reached");
+                break;
+            }
+
             let order_id = oo.id;
 
             let cancel_result =
@@ -503,9 +508,6 @@ impl<'a> Orderbook<'a> {
             }
 
             limit -= 1;
-            if limit == 0 {
-                break;
-            }
         }
         Ok(())
     }
