@@ -20,8 +20,8 @@ async fn test_fees_accrued() -> Result<(), TransportError> {
         ..
     } = TestContext::new_with_market(TestNewMarketInitialize {
         fee_penalty,
-        maker_fee: -1000,
-        taker_fee: 2000,
+        maker_fee: -100,
+        taker_fee: 200,
         ..TestNewMarketInitialize::default()
     })
     .await?;
@@ -222,8 +222,8 @@ async fn test_maker_fees() -> Result<(), TransportError> {
         account_1,
         ..
     } = TestContext::new_with_market(TestNewMarketInitialize {
-        maker_fee: 2000,
-        taker_fee: 4000,
+        maker_fee: 200,
+        taker_fee: 400,
         ..TestNewMarketInitialize::default()
     })
     .await?;
@@ -461,8 +461,8 @@ async fn test_no_maker_fees_ask() -> Result<(), TransportError> {
         account_1,
         ..
     } = TestContext::new_with_market(TestNewMarketInitialize {
-        maker_fee: -2000,
-        taker_fee: 4000,
+        maker_fee: -200,
+        taker_fee: 400,
         ..TestNewMarketInitialize::default()
     })
     .await?;
@@ -655,8 +655,8 @@ async fn test_maker_fees_ask() -> Result<(), TransportError> {
         account_1,
         ..
     } = TestContext::new_with_market(TestNewMarketInitialize {
-        maker_fee: 2000,
-        taker_fee: 4000,
+        maker_fee: 200,
+        taker_fee: 400,
         ..TestNewMarketInitialize::default()
     })
     .await?;
@@ -849,8 +849,8 @@ async fn test_fees_half() -> Result<(), TransportError> {
         account_1,
         ..
     } = TestContext::new_with_market(TestNewMarketInitialize {
-        maker_fee: -37000,
-        taker_fee: 74000,
+        maker_fee: -3700,
+        taker_fee: 7400,
         ..TestNewMarketInitialize::default()
     })
     .await?;
@@ -1012,8 +1012,8 @@ async fn test_fees_half() -> Result<(), TransportError> {
         account_1,
         ..
     } = TestContext::new_with_market(TestNewMarketInitialize {
-        maker_fee: -32000,
-        taker_fee: 64000,
+        maker_fee: -3200,
+        taker_fee: 6400,
         ..TestNewMarketInitialize::default()
     })
     .await?;

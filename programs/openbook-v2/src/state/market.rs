@@ -11,7 +11,7 @@ use crate::{accounts_zerocopy::KeyedAccountReader, state::orderbook::Side};
 use super::{orderbook, OracleConfig};
 
 pub type MarketIndex = u32;
-pub const FEES_SCALE_FACTOR: i128 = 10e6 as i128;
+pub const FEES_SCALE_FACTOR: i128 = 1e6 as i128;
 
 #[account(zero_copy)]
 #[derive(Debug)]
