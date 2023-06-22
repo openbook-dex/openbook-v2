@@ -283,19 +283,23 @@ impl<
         (0..self.header().oo_count()).map(|i| self.order_by_raw_index(i))
     }
 
+    pub fn all_orders_in_use(&self) -> impl Iterator<Item = &OpenOrder> {
+        self.all_orders().filter(|oo| !oo.is_free())
+    }
+
     pub fn next_order_slot(&self) -> Result<usize> {
         self.all_orders()
-            .position(|&oo| oo.id == 0)
+            .position(|&oo| oo.is_free())
             .ok_or_else(|| error!(OpenBookError::OpenOrdersFull))
     }
 
     pub fn find_order_with_client_order_id(&self, client_order_id: u64) -> Option<&OpenOrder> {
-        self.all_orders()
+        self.all_orders_in_use()
             .find(|&oo| oo.client_id == client_order_id)
     }
 
     pub fn find_order_with_order_id(&self, order_id: u128) -> Option<&OpenOrder> {
-        self.all_orders().find(|&oo| oo.id == order_id)
+        self.all_orders_in_use().find(|&oo| oo.id == order_id)
     }
 
     pub fn borrow(&self) -> OpenOrdersAccountRef {
@@ -529,6 +533,7 @@ impl<
         let slot = order.owner_slot as usize;
 
         let oo = self.open_order_mut_by_raw_index(slot);
+        oo.is_free = false.into();
         oo.side_and_tree = SideAndOrderTree::new(side, order_tree).into();
         oo.id = order.key;
         oo.client_id = client_order_id;
@@ -539,7 +544,7 @@ impl<
     pub fn remove_order(&mut self, slot: usize, base_quantity: i64) -> Result<()> {
         {
             let oo = self.open_order_mut_by_raw_index(slot);
-            require_neq!(oo.id, 0);
+            assert!(!oo.is_free());
 
             let order_side = oo.side_and_tree().side();
             let position = &mut self.fixed_mut().position;
@@ -552,10 +557,8 @@ impl<
         }
 
         // release space
-        let oo = self.open_order_mut_by_raw_index(slot);
-        oo.side_and_tree = SideAndOrderTree::BidFixed.into();
-        oo.id = 0;
-        oo.client_id = 0;
+        *self.open_order_mut_by_raw_index(slot) = OpenOrder::default();
+
         Ok(())
     }
 
