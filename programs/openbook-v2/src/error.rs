@@ -22,6 +22,8 @@ pub enum OpenBookError {
     InvalidInputOrderType,
     #[msg("Oracle staleness limit is currently unimplemented")]
     InvalidInputStaleness,
+    #[msg("Slot above queue limit")]
+    InvalidInputQueueSlots,
 
     #[msg("The header version is not 1")]
     HeaderVersionNotKnown,

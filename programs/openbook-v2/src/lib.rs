@@ -284,6 +284,12 @@ pub mod openbook_v2 {
 
     /// Process the [events](crate::state::AnyEvent) at the given positions.
     pub fn consume_given_events(ctx: Context<ConsumeEvents>, slots: Vec<usize>) -> Result<()> {
+        require!(
+            slots
+                .iter()
+                .all(|slot| *slot < crate::state::MAX_NUM_EVENTS as usize),
+            OpenBookError::InvalidInputQueueSlots
+        );
         #[cfg(feature = "enable-gpl")]
         instructions::consume_events(ctx, slots.len(), Some(slots))?;
         Ok(())
