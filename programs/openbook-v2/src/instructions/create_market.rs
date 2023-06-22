@@ -24,7 +24,7 @@ pub fn create_market(
     let now_ts: u64 = Clock::get()?.unix_timestamp.try_into().unwrap();
 
     require!(
-        taker_fee.is_positive() && (maker_fee.is_positive() || maker_fee.abs() <= taker_fee),
+        taker_fee >= 0 && (maker_fee >= 0 || maker_fee.abs() <= taker_fee),
         OpenBookError::InvalidInputMarketFees
     );
     require!(

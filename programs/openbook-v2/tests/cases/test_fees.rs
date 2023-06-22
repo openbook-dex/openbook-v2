@@ -223,7 +223,7 @@ async fn test_maker_fees() -> Result<(), TransportError> {
         ..
     } = TestContext::new_with_market(TestNewMarketInitialize {
         maker_fee: 2000,
-        taker_fee: 400,
+        taker_fee: 4000,
         ..TestNewMarketInitialize::default()
     })
     .await?;
@@ -245,7 +245,7 @@ async fn test_maker_fees() -> Result<(), TransportError> {
             side: Side::Bid,
             price_lots,
             max_base_lots: 1,
-            max_quote_lots_including_fees: 10002,
+            max_quote_lots_including_fees: 10020,
             client_order_id: 30,
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
@@ -290,7 +290,7 @@ async fn test_maker_fees() -> Result<(), TransportError> {
             side: Side::Bid,
             price_lots,
             max_base_lots: 1,
-            max_quote_lots_including_fees: 10002,
+            max_quote_lots_including_fees: 10020,
             client_order_id: 0,
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
@@ -461,8 +461,8 @@ async fn test_no_maker_fees_ask() -> Result<(), TransportError> {
         account_1,
         ..
     } = TestContext::new_with_market(TestNewMarketInitialize {
-        maker_fee: -200,
-        taker_fee: 400,
+        maker_fee: -2000,
+        taker_fee: 4000,
         ..TestNewMarketInitialize::default()
     })
     .await?;
@@ -656,7 +656,7 @@ async fn test_maker_fees_ask() -> Result<(), TransportError> {
         ..
     } = TestContext::new_with_market(TestNewMarketInitialize {
         maker_fee: 2000,
-        taker_fee: 400,
+        taker_fee: 4000,
         ..TestNewMarketInitialize::default()
     })
     .await?;
@@ -678,7 +678,7 @@ async fn test_maker_fees_ask() -> Result<(), TransportError> {
             side: Side::Ask,
             price_lots,
             max_base_lots: 1,
-            max_quote_lots_including_fees: 10000,
+            max_quote_lots_including_fees: 10020,
             client_order_id: 0,
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
