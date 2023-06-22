@@ -225,7 +225,7 @@ impl FuzzContext {
 
         let accounts = openbook_v2::accounts::PlaceOrder {
             open_orders_account: user.open_orders,
-            owner: user.owner,
+            owner_or_delegate: user.owner,
             open_orders_admin: None,
             market: self.market,
             bids: self.bids,
@@ -264,7 +264,7 @@ impl FuzzContext {
 
         let accounts = openbook_v2::accounts::PlaceOrder {
             open_orders_account: user.open_orders,
-            owner: user.owner,
+            owner_or_delegate: user.owner,
             open_orders_admin: None,
             market: self.market,
             bids: self.bids,
@@ -305,7 +305,7 @@ impl FuzzContext {
         };
 
         let accounts = openbook_v2::accounts::PlaceTakeOrder {
-            owner: user.owner,
+            signer: user.owner,
             market: self.market,
             bids: self.bids,
             asks: self.asks,
