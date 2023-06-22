@@ -20,8 +20,8 @@ async fn test_fees_accrued() -> Result<(), TransportError> {
         ..
     } = TestContext::new_with_market(TestNewMarketInitialize {
         fee_penalty,
-        maker_fee: -100,
-        taker_fee: 200,
+        maker_fee: -1000,
+        taker_fee: 2000,
         ..TestNewMarketInitialize::default()
     })
     .await?;
@@ -222,7 +222,7 @@ async fn test_maker_fees() -> Result<(), TransportError> {
         account_1,
         ..
     } = TestContext::new_with_market(TestNewMarketInitialize {
-        maker_fee: 200,
+        maker_fee: 2000,
         taker_fee: 400,
         ..TestNewMarketInitialize::default()
     })
@@ -655,7 +655,7 @@ async fn test_maker_fees_ask() -> Result<(), TransportError> {
         account_1,
         ..
     } = TestContext::new_with_market(TestNewMarketInitialize {
-        maker_fee: 200,
+        maker_fee: 2000,
         taker_fee: 400,
         ..TestNewMarketInitialize::default()
     })
@@ -849,8 +849,8 @@ async fn test_fees_half() -> Result<(), TransportError> {
         account_1,
         ..
     } = TestContext::new_with_market(TestNewMarketInitialize {
-        maker_fee: -370,
-        taker_fee: 740,
+        maker_fee: -37000,
+        taker_fee: 74000,
         ..TestNewMarketInitialize::default()
     })
     .await?;
@@ -924,8 +924,8 @@ async fn test_fees_half() -> Result<(), TransportError> {
         let open_orders_account_1 = solana.get_account::<OpenOrdersAccount>(account_1).await;
         let market = solana.get_account::<Market>(market).await;
 
-        assert_eq!(open_orders_account_0.position.quote_free_native, 371);
-        assert_eq!(open_orders_account_1.position.quote_free_native, 99259);
+        assert_eq!(open_orders_account_0.position.quote_free_native, 370);
+        assert_eq!(open_orders_account_1.position.quote_free_native, 99260);
         assert_eq!(market.referrer_rebates_accrued, 370);
 
         assert_eq!(
@@ -1012,8 +1012,8 @@ async fn test_fees_half() -> Result<(), TransportError> {
         account_1,
         ..
     } = TestContext::new_with_market(TestNewMarketInitialize {
-        maker_fee: -320,
-        taker_fee: 640,
+        maker_fee: -32000,
+        taker_fee: 64000,
         ..TestNewMarketInitialize::default()
     })
     .await?;

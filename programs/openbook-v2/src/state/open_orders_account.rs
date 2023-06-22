@@ -412,14 +412,14 @@ impl<
 
         // Update market fees
         if !is_self_trade {
-            let fee_amount: u64 = {
-                if market.maker_fee.is_positive() {
-                    market.maker_fees_ceil(quote_native_abs)
-                } else {
-                    market.maker_fees_ceil(quote_native_abs)
-                }
-            };
-            market.fees_accrued += fee_amount as i64;
+            let fee_amount: i64 = (market.maker_fees_ceil(quote_native_abs))
+                .try_into()
+                .unwrap();
+            if market.maker_fee.is_positive() {
+                market.fees_accrued += fee_amount
+            } else {
+                market.fees_accrued -= fee_amount
+            }
         }
 
         //Emit event

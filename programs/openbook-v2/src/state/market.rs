@@ -206,7 +206,17 @@ impl Market {
         T: Into<i128> + TryFrom<i128>,
         <T as TryFrom<i128>>::Error: std::fmt::Debug,
     {
-        ((amount.into() * (self.maker_fee as i128) + (FEES_UNIT - 1_i128)) / FEES_UNIT)
+        ((amount.into() * (self.maker_fee.abs() as i128) + (FEES_UNIT - 1_i128)) / FEES_UNIT)
+            .try_into()
+            .unwrap()
+    }
+
+    pub fn maker_fees_floor<T>(self, amount: T) -> T
+    where
+        T: Into<i128> + TryFrom<i128>,
+        <T as TryFrom<i128>>::Error: std::fmt::Debug,
+    {
+        (amount.into() * (self.maker_fee.abs() as i128) / FEES_UNIT)
             .try_into()
             .unwrap()
     }

@@ -233,7 +233,7 @@ async fn test_cancel_orders() -> Result<(), TransportError> {
         account_1,
         ..
     } = TestContext::new_with_market(TestNewMarketInitialize {
-        maker_fee: -100,
+        maker_fee: -1000,
         ..TestNewMarketInitialize::default()
     })
     .await?;

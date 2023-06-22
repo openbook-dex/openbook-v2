@@ -20,8 +20,8 @@ async fn test_ioc() -> Result<(), TransportError> {
         ..
     } = TestContext::new_with_market(TestNewMarketInitialize {
         fee_penalty,
-        maker_fee: 200,
-        taker_fee: 200,
+        maker_fee: 2000,
+        taker_fee: 2000,
         ..TestNewMarketInitialize::default()
     })
     .await?;
