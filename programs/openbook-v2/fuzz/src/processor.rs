@@ -1,5 +1,7 @@
 use crate::accounts_state::AccountsState;
+use base64::{prelude::BASE64_STANDARD, Engine};
 use bumpalo::Bump;
+use itertools::Itertools;
 use log::debug;
 use solana_program::{
     account_info::AccountInfo, clock::Clock, entrypoint::ProgramResult, instruction::Instruction,
@@ -10,6 +12,13 @@ pub struct TestSyscallStubs {}
 impl program_stubs::SyscallStubs for TestSyscallStubs {
     fn sol_log(&self, message: &str) {
         debug!("Program log: {}", message);
+    }
+
+    fn sol_log_data(&self, fields: &[&[u8]]) {
+        debug!(
+            "Program data: {}",
+            fields.iter().map(|b| BASE64_STANDARD.encode(b)).join(" ")
+        );
     }
 
     fn sol_invoke_signed(

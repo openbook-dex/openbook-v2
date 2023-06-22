@@ -1412,6 +1412,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "itertools"
+version = "0.11.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b1c173a5686ce8bfa551b3563d0c2170bf24ca44da99c7ca4bfdab5418c3fe57"
+dependencies = [
+ "either",
+]
+
+[[package]]
 name = "itoa"
 version = "1.0.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1767,9 +1776,11 @@ version = "0.0.0"
 dependencies = [
  "anchor-lang",
  "arbitrary",
+ "base64 0.21.2",
  "bumpalo",
  "env_logger 0.10.0",
  "fixed",
+ "itertools 0.11.0",
  "libfuzzer-sys",
  "log",
  "openbook-v2",
@@ -2625,7 +2636,7 @@ dependencies = [
  "console_log",
  "curve25519-dalek",
  "getrandom 0.2.9",
- "itertools",
+ "itertools 0.10.5",
  "js-sys",
  "lazy_static",
  "libc",
@@ -2664,7 +2675,7 @@ dependencies = [
  "bincode",
  "eager",
  "enum-iterator",
- "itertools",
+ "itertools 0.10.5",
  "libc",
  "libloading",
  "log",
@@ -2711,7 +2722,7 @@ dependencies = [
  "fnv",
  "im",
  "index_list",
- "itertools",
+ "itertools 0.10.5",
  "lazy_static",
  "log",
  "lru",
@@ -2773,7 +2784,7 @@ dependencies = [
  "ed25519-dalek-bip32",
  "generic-array",
  "hmac 0.12.1",
- "itertools",
+ "itertools 0.10.5",
  "js-sys",
  "lazy_static",
  "libsecp256k1",
@@ -2890,7 +2901,7 @@ dependencies = [
  "cipher 0.4.4",
  "curve25519-dalek",
  "getrandom 0.1.16",
- "itertools",
+ "itertools 0.10.5",
  "lazy_static",
  "merlin",
  "num-derive",
