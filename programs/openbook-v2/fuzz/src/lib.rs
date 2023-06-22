@@ -4,7 +4,7 @@ pub mod processor;
 use accounts_state::*;
 use arbitrary::{Arbitrary, Unstructured};
 use fixed::types::I80F48;
-use openbook_v2::{error::OpenBookError, state::*};
+use openbook_v2::state::*;
 use processor::*;
 use solana_program::{entrypoint::ProgramResult, pubkey::Pubkey, system_program};
 use spl_associated_token_account::get_associated_token_address;
@@ -239,15 +239,7 @@ impl FuzzContext {
             system_program: system_program::ID,
         };
 
-        process_instruction(&mut self.state, &accounts, &data).or_else(|err| match err {
-            e if e == OpenBookError::InvalidOrderSize.into() => Ok(()),
-            e if e == OpenBookError::InvalidPriceLots.into() => Ok(()),
-            e if e == OpenBookError::NegativeLots.into() => Ok(()),
-            e if e == OpenBookError::OpenOrdersFull.into() => Ok(()),
-            e if e == OpenBookError::WouldSelfTrade.into() => Ok(()),
-            e if e == spl_token::error::TokenError::InsufficientFunds.into() => Ok(()),
-            _ => Err(err),
-        })
+        process_instruction(&mut self.state, &accounts, &data)
     }
 
     pub fn place_order_pegged(
@@ -278,18 +270,7 @@ impl FuzzContext {
             system_program: system_program::ID,
         };
 
-        process_instruction(&mut self.state, &accounts, &data).or_else(|err| match err {
-            e if e == OpenBookError::InvalidOrderPostIOC.into() => Ok(()),
-            e if e == OpenBookError::InvalidOrderPostMarket.into() => Ok(()),
-            e if e == OpenBookError::InvalidOrderSize.into() => Ok(()),
-            e if e == OpenBookError::InvalidPegLimit.into() => Ok(()),
-            e if e == OpenBookError::InvalidPriceLots.into() => Ok(()),
-            e if e == OpenBookError::UnimplementedStaleness.into() => Ok(()),
-            e if e == OpenBookError::NegativeLots.into() => Ok(()),
-            e if e == OpenBookError::WouldSelfTrade.into() => Ok(()),
-            e if e == spl_token::error::TokenError::InsufficientFunds.into() => Ok(()),
-            _ => Err(err),
-        })
+        process_instruction(&mut self.state, &accounts, &data)
     }
 
     pub fn place_take_order(
@@ -320,13 +301,6 @@ impl FuzzContext {
             open_orders_admin: None,
         };
 
-        process_instruction(&mut self.state, &accounts, &data).or_else(|err| match err {
-            e if e == OpenBookError::InvalidOrderSize.into() => Ok(()),
-            e if e == OpenBookError::InvalidOrderType.into() => Ok(()),
-            e if e == OpenBookError::InvalidPriceLots.into() => Ok(()),
-            e if e == OpenBookError::NegativeLots.into() => Ok(()),
-            e if e == spl_token::error::TokenError::InsufficientFunds.into() => Ok(()),
-            _ => Err(err),
-        })
+        process_instruction(&mut self.state, &accounts, &data)
     }
 }
