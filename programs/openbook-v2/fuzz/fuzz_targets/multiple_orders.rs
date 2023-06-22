@@ -2,7 +2,9 @@
 
 use arbitrary::Arbitrary;
 use libfuzzer_sys::{fuzz_target, Corpus};
-use openbook_v2_fuzz::{FuzzContext, UserId};
+use log::info;
+use openbook_v2_fuzz::{processor::TestSyscallStubs, FuzzContext, UserId};
+use std::sync::Once;
 
 #[derive(Debug, Arbitrary, Clone)]
 struct FuzzData {
@@ -25,7 +27,12 @@ enum FuzzInstruction {
     },
 }
 
-fuzz_target!(|fuzz_data: FuzzData| -> Corpus { run_fuzz(fuzz_data) });
+fuzz_target!(|fuzz_data: FuzzData| -> Corpus {
+    static ONCE: Once = Once::new();
+    ONCE.call_once(env_logger::init);
+    solana_program::program_stubs::set_syscall_stubs(Box::new(TestSyscallStubs {}));
+    run_fuzz(fuzz_data)
+});
 
 fn run_fuzz(fuzz_data: FuzzData) -> Corpus {
     let mut corpus = Corpus::Keep;
@@ -37,6 +44,8 @@ fn run_fuzz(fuzz_data: FuzzData) -> Corpus {
     ctx.initialize();
 
     for fuzz_instruction in fuzz_data.instructions {
+        info!("{:#?}", fuzz_instruction);
+
         let has_valid_inputs = match fuzz_instruction {
             FuzzInstruction::PlaceOrder { user_id, data } => ctx
                 .place_order(user_id, data)

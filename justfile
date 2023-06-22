@@ -20,4 +20,4 @@ fuzz:
   cd ./programs/openbook-v2/fuzz && cargo {{ fuzz-toolchain }} fuzz run multiple_orders
 
 fuzz-reproduce CASE:
-  cd ./programs/openbook-v2/fuzz && cargo {{ fuzz-toolchain }} fuzz run multiple_orders {{ CASE }}
+  cd ./programs/openbook-v2/fuzz && RUST_LOG=debug cargo {{ fuzz-toolchain }} fuzz run multiple_orders {{ CASE }}

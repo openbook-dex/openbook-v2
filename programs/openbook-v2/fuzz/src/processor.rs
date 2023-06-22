@@ -1,12 +1,17 @@
 use crate::accounts_state::AccountsState;
 use bumpalo::Bump;
+use log::debug;
 use solana_program::{
     account_info::AccountInfo, clock::Clock, entrypoint::ProgramResult, instruction::Instruction,
     program_error::ProgramError, program_stubs, pubkey::Pubkey, rent::Rent, system_program,
 };
 
-struct TestSyscallStubs {}
+pub struct TestSyscallStubs {}
 impl program_stubs::SyscallStubs for TestSyscallStubs {
+    fn sol_log(&self, message: &str) {
+        debug!("Program log: {}", message);
+    }
+
     fn sol_invoke_signed(
         &self,
         instruction: &Instruction,
@@ -58,22 +63,11 @@ impl program_stubs::SyscallStubs for TestSyscallStubs {
     }
 }
 
-fn test_syscall_stubs() {
-    use std::sync::Once;
-    static ONCE: Once = Once::new();
-
-    ONCE.call_once(|| {
-        program_stubs::set_syscall_stubs(Box::new(TestSyscallStubs {}));
-    });
-}
-
 pub fn process_instruction(
     state: &mut AccountsState,
     accounts: &impl anchor_lang::ToAccountMetas,
     data: &impl anchor_lang::InstructionData,
 ) -> ProgramResult {
-    test_syscall_stubs();
-
     let bump = Bump::new();
     let metas = anchor_lang::ToAccountMetas::to_account_metas(accounts, None);
     let account_infos = state.account_infos(&bump, metas);
