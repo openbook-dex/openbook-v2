@@ -329,4 +329,58 @@ impl FuzzContext {
 
         process_instruction(&mut self.state, &accounts, &data)
     }
+
+    pub fn cancel_order(
+        &mut self,
+        user_id: UserId,
+        data: openbook_v2::instruction::CancelOrder,
+    ) -> ProgramResult {
+        let user = self.user(user_id);
+
+        let accounts = openbook_v2::accounts::CancelOrder {
+            owner: user.owner,
+            open_orders_account: user.open_orders,
+            market: self.market,
+            asks: self.asks,
+            bids: self.bids,
+        };
+
+        process_instruction(&mut self.state, &accounts, &data)
+    }
+
+    pub fn cancel_order_by_client_order_id(
+        &mut self,
+        user_id: UserId,
+        data: openbook_v2::instruction::CancelOrderByClientOrderId,
+    ) -> ProgramResult {
+        let user = self.user(user_id);
+
+        let accounts = openbook_v2::accounts::CancelOrderByClientOrderId {
+            owner: user.owner,
+            open_orders_account: user.open_orders,
+            market: self.market,
+            asks: self.asks,
+            bids: self.bids,
+        };
+
+        process_instruction(&mut self.state, &accounts, &data)
+    }
+
+    pub fn cancel_all_orders(
+        &mut self,
+        user_id: UserId,
+        data: openbook_v2::instruction::CancelAllOrders,
+    ) -> ProgramResult {
+        let user = self.user(user_id);
+
+        let accounts = openbook_v2::accounts::CancelAllOrders {
+            owner: user.owner,
+            open_orders_account: user.open_orders,
+            market: self.market,
+            asks: self.asks,
+            bids: self.bids,
+        };
+
+        process_instruction(&mut self.state, &accounts, &data)
+    }
 }

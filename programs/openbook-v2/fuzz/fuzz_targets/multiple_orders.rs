@@ -31,6 +31,18 @@ enum FuzzInstruction {
     ConsumeGivenEvents {
         data: openbook_v2::instruction::ConsumeGivenEvents,
     },
+    CancelOrder {
+        user_id: UserId,
+        data: openbook_v2::instruction::CancelOrder,
+    },
+    CancelOrderByClientOrderId {
+        user_id: UserId,
+        data: openbook_v2::instruction::CancelOrderByClientOrderId,
+    },
+    CancelAllOrders {
+        user_id: UserId,
+        data: openbook_v2::instruction::CancelAllOrders,
+    },
 }
 
 fuzz_target!(|fuzz_data: FuzzData| -> Corpus {
@@ -72,6 +84,18 @@ fn run_fuzz(fuzz_data: FuzzData) -> Corpus {
             FuzzInstruction::ConsumeGivenEvents { data } => ctx
                 .consume_given_events(data)
                 .map_or_else(error_filter::consume_given_events, |_| true),
+
+            FuzzInstruction::CancelOrder { user_id, data } => ctx
+                .cancel_order(user_id, data)
+                .map_or_else(error_filter::cancel_order, |_| true),
+
+            FuzzInstruction::CancelOrderByClientOrderId { user_id, data } => ctx
+                .cancel_order_by_client_order_id(user_id, data)
+                .map_or_else(error_filter::cancel_order_by_client_order_id, |_| true),
+
+            FuzzInstruction::CancelAllOrders { user_id, data } => ctx
+                .cancel_all_orders(user_id, data)
+                .map_or_else(error_filter::cancel_all_orders, |_| true),
         };
 
         if !has_valid_inputs {
@@ -135,6 +159,27 @@ mod error_filter {
     pub fn consume_given_events(err: ProgramError) -> bool {
         match err {
             e if e == OpenBookError::InvalidInputQueueSlots.into() => false,
+            _ => panic!("{}", err),
+        }
+    }
+
+    pub fn cancel_order(err: ProgramError) -> bool {
+        match err {
+            e if e == OpenBookError::InvalidInputOrderId.into() => false,
+            e if e == OpenBookError::OpenOrdersOrderNotFound.into() => true,
+            _ => panic!("{}", err),
+        }
+    }
+
+    pub fn cancel_order_by_client_order_id(err: ProgramError) -> bool {
+        match err {
+            e if e == OpenBookError::OpenOrdersOrderNotFound.into() => true,
+            _ => panic!("{}", err),
+        }
+    }
+
+    pub fn cancel_all_orders(err: ProgramError) -> bool {
+        match err {
             _ => panic!("{}", err),
         }
     }
