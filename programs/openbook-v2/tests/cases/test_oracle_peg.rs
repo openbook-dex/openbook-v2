@@ -22,8 +22,8 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
     } = TestContext::new_with_market(TestNewMarketInitialize {
         quote_lot_size: market_quote_lot_size,
         base_lot_size: market_base_lot_size,
-        maker_fee: -0.0,
-        taker_fee: 0.0,
+        maker_fee: -0,
+        taker_fee: 0,
         ..TestNewMarketInitialize::default()
     })
     .await?;
@@ -409,8 +409,8 @@ async fn test_oracle_peg_limit() -> Result<(), TransportError> {
     } = TestContext::new_with_market(TestNewMarketInitialize {
         quote_lot_size: market_quote_lot_size,
         base_lot_size: market_base_lot_size,
-        maker_fee: -0.0,
-        taker_fee: 0.0,
+        maker_fee: -0,
+        taker_fee: 0,
         ..TestNewMarketInitialize::default()
     })
     .await?;

@@ -1,5 +1,4 @@
 use anchor_lang::prelude::*;
-use fixed::types::I80F48;
 
 use crate::error::*;
 use crate::pod_option::PodOption;
@@ -17,21 +16,20 @@ pub fn create_market(
     oracle_config: OracleConfigParams,
     quote_lot_size: i64,
     base_lot_size: i64,
-    maker_fee: f32,
-    taker_fee: f32,
+    maker_fee: i64,
+    taker_fee: i64,
     fee_penalty: u64,
     time_expiry: i64,
 ) -> Result<()> {
     let now_ts: u64 = Clock::get()?.unix_timestamp.try_into().unwrap();
 
     require!(
-        taker_fee.is_sign_positive()
-            && (maker_fee.is_sign_positive() || maker_fee.abs() <= taker_fee),
-        OpenBookError::InvalidFeesError
+        taker_fee >= 0 && (maker_fee >= 0 || maker_fee.abs() <= taker_fee),
+        OpenBookError::InvalidInputMarketFees
     );
     require!(
         time_expiry == 0 || time_expiry > Clock::get()?.unix_timestamp,
-        OpenBookError::MarketHasExpired
+        OpenBookError::InvalidInputMarketExpired
     );
 
     let open_orders_admin: PodOption<Pubkey> = ctx
@@ -78,8 +76,8 @@ pub fn create_market(
         seq_num: 0,
         registration_time: now_ts,
 
-        maker_fee: I80F48::from_num(maker_fee),
-        taker_fee: I80F48::from_num(taker_fee),
+        maker_fee,
+        taker_fee,
         fee_penalty,
 
         fees_accrued: 0,

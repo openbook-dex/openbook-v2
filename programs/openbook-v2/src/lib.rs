@@ -41,8 +41,8 @@ pub mod openbook_v2 {
         oracle_config: OracleConfigParams,
         quote_lot_size: i64,
         base_lot_size: i64,
-        maker_fee: f32,
-        taker_fee: f32,
+        maker_fee: i64,
+        taker_fee: i64,
         fee_penalty: u64,
         time_expiry: i64,
     ) -> Result<()> {
@@ -101,7 +101,7 @@ pub mod openbook_v2 {
         expiry_timestamp: u64,
         limit: u8,
     ) -> Result<Option<u128>> {
-        require_gte!(price_lots, 1, OpenBookError::InvalidPriceLots);
+        require_gte!(price_lots, 1, OpenBookError::InvalidInputPriceLots);
 
         use crate::state::{Order, OrderParams};
         let time_in_force = match Order::tif_from_expiry(expiry_timestamp) {
@@ -172,11 +172,11 @@ pub mod openbook_v2 {
         // WARNING: Not currently implemented.
         max_oracle_staleness_slots: i32,
     ) -> Result<Option<u128>> {
-        require_gt!(peg_limit, 0, OpenBookError::InvalidPegLimit);
+        require_gt!(peg_limit, 0, OpenBookError::InvalidInputPegLimit);
         require_eq!(
             max_oracle_staleness_slots,
             -1,
-            OpenBookError::UnimplementedStaleness
+            OpenBookError::InvalidInputStaleness
         );
 
         use crate::state::{Order, OrderParams};
@@ -225,12 +225,12 @@ pub mod openbook_v2 {
         self_trade_behavior: SelfTradeBehavior,
         limit: u8,
     ) -> Result<Option<u128>> {
-        require_gte!(price_lots, 1, OpenBookError::InvalidPriceLots);
+        require_gte!(price_lots, 1, OpenBookError::InvalidInputPriceLots);
 
         use crate::state::{Order, OrderParams};
         require!(
             order_type == PlaceOrderType::Market || order_type == PlaceOrderType::ImmediateOrCancel,
-            OpenBookError::InvalidOrderType
+            OpenBookError::InvalidInputOrderType
         );
         let order = Order {
             side,
@@ -284,6 +284,12 @@ pub mod openbook_v2 {
 
     /// Process the [events](crate::state::AnyEvent) at the given positions.
     pub fn consume_given_events(ctx: Context<ConsumeEvents>, slots: Vec<usize>) -> Result<()> {
+        require!(
+            slots
+                .iter()
+                .all(|slot| *slot < crate::state::MAX_NUM_EVENTS as usize),
+            OpenBookError::InvalidInputQueueSlots
+        );
         #[cfg(feature = "enable-gpl")]
         instructions::consume_events(ctx, slots.len(), Some(slots))?;
         Ok(())
@@ -312,21 +318,14 @@ pub mod openbook_v2 {
         Ok(())
     }
 
-    /// Cancel up to `limit` orders.
-    pub fn cancel_all_orders(ctx: Context<CancelAllOrders>, limit: u8) -> Result<()> {
-        #[cfg(feature = "enable-gpl")]
-        instructions::cancel_all_orders(ctx, limit)?;
-        Ok(())
-    }
-
-    /// Cancel up to `limit` orders on a single side of the book.
-    pub fn cancel_all_orders_by_side(
-        ctx: Context<CancelAllOrdersBySide>,
+    /// Cancel up to `limit` orders, optionally filtering by side
+    pub fn cancel_all_orders(
+        ctx: Context<CancelAllOrders>,
         side_option: Option<Side>,
         limit: u8,
     ) -> Result<()> {
         #[cfg(feature = "enable-gpl")]
-        instructions::cancel_all_orders_by_side(ctx, side_option, limit)?;
+        instructions::cancel_all_orders(ctx, side_option, limit)?;
         Ok(())
     }
 

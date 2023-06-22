@@ -13,11 +13,11 @@ pub fn place_take_order<'info>(
     order: Order,
     limit: u8,
 ) -> Result<Option<u128>> {
-    require_gte!(order.max_base_lots, 0, OpenBookError::NegativeLots);
+    require_gte!(order.max_base_lots, 0, OpenBookError::InvalidInputLots);
     require_gte!(
         order.max_quote_lots_including_fees,
         0,
-        OpenBookError::NegativeLots
+        OpenBookError::InvalidInputLots
     );
 
     let mut market = ctx.accounts.market.load_mut()?;
@@ -53,7 +53,7 @@ pub fn place_take_order<'info>(
         &mut event_queue,
         oracle_price,
         &mut None,
-        &ctx.accounts.owner.key(),
+        &ctx.accounts.signer.key(),
         now_ts,
         limit,
         ctx.accounts
@@ -94,7 +94,7 @@ pub fn place_take_order<'info>(
             Transfer {
                 from: ctx.accounts.token_deposit_account.to_account_info(),
                 to: to_vault,
-                authority: ctx.accounts.owner.to_account_info(),
+                authority: ctx.accounts.signer.to_account_info(),
             },
         );
         token::transfer(cpi_context, deposit_amount)?;

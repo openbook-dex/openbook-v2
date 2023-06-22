@@ -224,8 +224,8 @@ pub struct CreateMarketInstruction {
     pub payer: TestKeypair,
     pub quote_lot_size: i64,
     pub base_lot_size: i64,
-    pub maker_fee: f32,
-    pub taker_fee: f32,
+    pub maker_fee: i64,
+    pub taker_fee: i64,
     pub fee_penalty: u64,
     pub settle_fee_flat: f32,
     pub settle_fee_amount_threshold: f32,
@@ -365,7 +365,7 @@ impl ClientInstruction for PlaceOrderInstruction {
             asks: market.asks,
             event_queue: market.event_queue,
             oracle: market.oracle,
-            owner: self.owner.pubkey(),
+            owner_or_delegate: self.owner.pubkey(),
             token_deposit_account: self.token_deposit_account,
             base_vault: self.base_vault,
             quote_vault: self.quote_vault,
@@ -442,7 +442,7 @@ impl ClientInstruction for PlaceOrderPeggedInstruction {
             asks: market.asks,
             event_queue: market.event_queue,
             oracle: market.oracle,
-            owner: self.owner.pubkey(),
+            owner_or_delegate: self.owner.pubkey(),
             token_deposit_account: self.token_deposit_account,
             base_vault: self.base_vault,
             quote_vault: self.quote_vault,
@@ -504,7 +504,7 @@ impl ClientInstruction for PlaceTakeOrderInstruction {
             asks: market.asks,
             event_queue: market.event_queue,
             oracle: market.oracle,
-            owner: self.owner.pubkey(),
+            signer: self.owner.pubkey(),
             token_deposit_account: self.token_deposit_account,
             token_receiver_account: self.token_receiver_account,
             base_vault: self.base_vault,
@@ -621,7 +621,10 @@ impl ClientInstruction for CancelAllOrdersInstruction {
         account_loader: impl ClientAccountLoader + 'async_trait,
     ) -> (Self::Accounts, instruction::Instruction) {
         let program_id = openbook_v2::id();
-        let instruction = Self::Instruction { limit: 5 };
+        let instruction = Self::Instruction {
+            side_option: None,
+            limit: 5,
+        };
         let market: Market = account_loader.load(&self.market).await.unwrap();
         let accounts = Self::Accounts {
             open_orders_account: self.open_orders_account,

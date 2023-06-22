@@ -4,7 +4,11 @@ use crate::accounts_ix::*;
 use crate::error::OpenBookError;
 use crate::state::*;
 
-pub fn cancel_all_orders(ctx: Context<CancelAllOrders>, limit: u8) -> Result<()> {
+pub fn cancel_all_orders(
+    ctx: Context<CancelAllOrders>,
+    side_option: Option<Side>,
+    limit: u8,
+) -> Result<()> {
     let mut account = ctx.accounts.open_orders_account.load_full_mut()?;
     // account constraint #1
     require!(
@@ -18,7 +22,7 @@ pub fn cancel_all_orders(ctx: Context<CancelAllOrders>, limit: u8) -> Result<()>
         asks: ctx.accounts.asks.load_mut()?,
     };
 
-    book.cancel_all_orders(&mut account.borrow_mut(), *market, limit, None)?;
+    book.cancel_all_orders(&mut account.borrow_mut(), *market, limit, side_option)?;
 
     Ok(())
 }

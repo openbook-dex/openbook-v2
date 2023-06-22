@@ -1,6 +1,5 @@
 use anchor_lang::{prelude::*, Discriminator};
 use arrayref::array_ref;
-use fixed::types::I80F48;
 use solana_program::program_memory::sol_memmove;
 use static_assertions::const_assert_eq;
 use std::cell::{Ref, RefMut};
@@ -284,19 +283,23 @@ impl<
         (0..self.header().oo_count()).map(|i| self.order_by_raw_index(i))
     }
 
+    pub fn all_orders_in_use(&self) -> impl Iterator<Item = &OpenOrder> {
+        self.all_orders().filter(|oo| !oo.is_free())
+    }
+
     pub fn next_order_slot(&self) -> Result<usize> {
         self.all_orders()
-            .position(|&oo| oo.id == 0)
+            .position(|&oo| oo.is_free())
             .ok_or_else(|| error!(OpenBookError::OpenOrdersFull))
     }
 
     pub fn find_order_with_client_order_id(&self, client_order_id: u64) -> Option<&OpenOrder> {
-        self.all_orders()
+        self.all_orders_in_use()
             .find(|&oo| oo.client_id == client_order_id)
     }
 
     pub fn find_order_with_order_id(&self, order_id: u128) -> Option<&OpenOrder> {
-        self.all_orders().find(|&oo| oo.id == order_id)
+        self.all_orders_in_use().find(|&oo| oo.id == order_id)
     }
 
     pub fn borrow(&self) -> OpenOrdersAccountRef {
@@ -348,10 +351,7 @@ impl<
             // Maker pays fee. Fees already subtracted before sending to the book
             0
         } else {
-            (I80F48::from(quote_native_abs) * market.maker_fee)
-                .abs()
-                .ceil()
-                .to_num::<u64>()
+            market.maker_fees_ceil(quote_native_abs)
         };
 
         let price = self
@@ -385,13 +385,13 @@ impl<
                     pa.quote_free_native += fees;
                 }
                 Side::Ask => {
-                    let maker_fees = if market.maker_fee.is_positive() {
-                        (I80F48::from(quote_locked_change * market.quote_lot_size)
-                            * market.maker_fee)
-                            .ceil()
-                            .to_num::<u64>()
+                    let maker_fees: u64 = if market.maker_fee.is_positive() {
+                        market
+                            .maker_fees_ceil(quote_locked_change * market.quote_lot_size)
+                            .try_into()
+                            .unwrap()
                     } else {
-                        0
+                        0_u64
                     };
                     pa.quote_free_native += quote_to_free + fees - maker_fees;
                 }
@@ -399,9 +399,8 @@ impl<
 
             if !is_self_trade && market.maker_fee.is_positive() {
                 // Apply rebates
-                let maker_fees = (I80F48::from(quote_to_free) * market.maker_fee)
-                    .ceil()
-                    .to_num::<u64>();
+                let maker_fees = market.maker_fees_ceil(quote_to_free);
+
                 pa.referrer_rebates_accrued += maker_fees;
                 market.referrer_rebates_accrued += maker_fees;
             }
@@ -417,15 +416,14 @@ impl<
 
         // Update market fees
         if !is_self_trade {
-            let fee_amount: i64 = {
-                let amount = I80F48::from(quote_native_abs) * market.maker_fee;
-                if market.maker_fee.is_positive() {
-                    amount.ceil().to_num()
-                } else {
-                    amount.floor().to_num()
-                }
-            };
-            market.fees_accrued += fee_amount;
+            let fee_amount: i64 = (market.maker_fees_ceil(quote_native_abs))
+                .try_into()
+                .unwrap();
+            if market.maker_fee.is_positive() {
+                market.fees_accrued += fee_amount
+            } else {
+                market.fees_accrued -= fee_amount
+            }
         }
 
         //Emit event
@@ -437,11 +435,11 @@ impl<
             seq_num: fill.seq_num,
             maker: fill.maker,
             maker_client_order_id: fill.maker_client_order_id,
-            maker_fee: market.maker_fee.to_num(),
+            maker_fee: market.maker_fee,
             maker_timestamp: fill.maker_timestamp,
             taker: fill.taker,
             taker_client_order_id: fill.taker_client_order_id,
-            taker_fee: market.taker_fee.to_num(),
+            taker_fee: market.taker_fee,
             price: fill.price,
             quantity: fill.quantity,
         });
@@ -535,6 +533,7 @@ impl<
         let slot = order.owner_slot as usize;
 
         let oo = self.open_order_mut_by_raw_index(slot);
+        oo.is_free = false.into();
         oo.side_and_tree = SideAndOrderTree::new(side, order_tree).into();
         oo.id = order.key;
         oo.client_id = client_order_id;
@@ -545,7 +544,7 @@ impl<
     pub fn remove_order(&mut self, slot: usize, base_quantity: i64) -> Result<()> {
         {
             let oo = self.open_order_mut_by_raw_index(slot);
-            require_neq!(oo.id, 0);
+            assert!(!oo.is_free());
 
             let order_side = oo.side_and_tree().side();
             let position = &mut self.fixed_mut().position;
@@ -558,10 +557,8 @@ impl<
         }
 
         // release space
-        let oo = self.open_order_mut_by_raw_index(slot);
-        oo.side_and_tree = SideAndOrderTree::BidFixed.into();
-        oo.id = 0;
-        oo.client_id = 0;
+        *self.open_order_mut_by_raw_index(slot) = OpenOrder::default();
+
         Ok(())
     }
 
@@ -580,9 +577,7 @@ impl<
 
             // If maker fees, give back fees to user
             if market.maker_fee.is_positive() {
-                let fees = (I80F48::from_num(quote_quantity_native) * market.maker_fee)
-                    .ceil()
-                    .to_num::<u64>();
+                let fees = market.maker_fees_ceil(quote_quantity_native);
                 quote_quantity_native += fees;
                 base_quantity_native += fees / (price as u64);
             }

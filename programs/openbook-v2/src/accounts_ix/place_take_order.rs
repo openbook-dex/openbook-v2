@@ -4,7 +4,7 @@ use anchor_spl::token::{Token, TokenAccount};
 
 #[derive(Accounts)]
 pub struct PlaceTakeOrder<'info> {
-    pub owner: Signer<'info>,
+    pub signer: Signer<'info>,
 
     #[account(
         mut,
@@ -18,7 +18,7 @@ pub struct PlaceTakeOrder<'info> {
     pub bids: AccountLoader<'info, BookSide>,
     #[account(mut)]
     pub asks: AccountLoader<'info, BookSide>,
-    #[account(mut, constraint = token_deposit_account.owner == owner.key())]
+    #[account(mut, constraint = token_deposit_account.owner == signer.key())]
     pub token_deposit_account: Box<Account<'info, TokenAccount>>,
     #[account(mut)]
     pub token_receiver_account: Box<Account<'info, TokenAccount>>,

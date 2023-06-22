@@ -7,6 +7,26 @@ use core::fmt::Display;
 pub enum OpenBookError {
     #[msg("")]
     SomeError,
+
+    #[msg("Market cannot be created as expired")]
+    InvalidInputMarketExpired,
+    #[msg("Taker fees should be positive and if maker fees are negative, greater or equal to their abs value")]
+    InvalidInputMarketFees,
+    #[msg("Lots cannot be negative")]
+    InvalidInputLots,
+    #[msg("Price lots should be greater than zero")]
+    InvalidInputPriceLots,
+    #[msg("Peg limit should be greater than zero")]
+    InvalidInputPegLimit,
+    #[msg("The order type is invalid. A taker order must be Market or ImmediateOrCancel")]
+    InvalidInputOrderType,
+    #[msg("Order id cannot be zero")]
+    InvalidInputOrderId,
+    #[msg("Oracle staleness limit is currently unimplemented")]
+    InvalidInputStaleness,
+    #[msg("Slot above queue limit")]
+    InvalidInputQueueSlots,
+
     #[msg("The header version is not 1")]
     HeaderVersionNotKnown,
     #[msg("oracle type cannot be determined")]
@@ -15,14 +35,10 @@ pub enum OpenBookError {
     OracleConfidence,
     #[msg("an oracle is stale")]
     OracleStale,
-    #[msg("perp order id not found on the orderbook")]
+    #[msg("Order id not found on the orderbook")]
     OrderIdNotFound,
     #[msg("Event queue contains elements and market can't be closed")]
     EventQueueContainsElements,
-    #[msg("Taker fees should be positive and if maker fees are negative, greater or equal to their abs value")]
-    InvalidFeesError,
-    #[msg("The order type is invalid. A taker order must be Market or ImmediateOrCancel")]
-    InvalidOrderType,
     #[msg("ImmediateOrCancel is not a PostOrderType")]
     InvalidOrderPostIOC,
     #[msg("Market is not a PostOrderType")]
@@ -47,24 +63,20 @@ pub enum OpenBookError {
     InvalidConsumeEventsAdmin,
     #[msg("The Market has already expired.")]
     MarketHasExpired,
-    #[msg("Lots cannot be negative")]
-    NegativeLots,
     #[msg("Price lots should be greater than zero")]
     InvalidPriceLots,
-    #[msg("Peg limit should be greater than zero")]
-    InvalidPegLimit,
     #[msg("Order size above market limits")]
     InvalidOrderSize,
     #[msg("The Market has not expired yet.")]
     MarketHasNotExpired,
     #[msg("No correct owner or delegate.")]
     NoOwnerOrDelegate,
-    #[msg("Oracle staleness limit is currently unimplemented")]
-    UnimplementedStaleness,
     #[msg("No free order index in open orders account")]
     OpenOrdersFull,
     #[msg("Book contains elements")]
     BookContainsElements,
+    #[msg("Could not find order in user account")]
+    OpenOrdersOrderNotFound,
 }
 
 impl From<OpenBookError> for ProgramError {

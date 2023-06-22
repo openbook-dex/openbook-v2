@@ -10,11 +10,11 @@ use crate::state::*;
 // TODO
 #[allow(clippy::too_many_arguments)]
 pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<Option<u128>> {
-    require_gte!(order.max_base_lots, 0, OpenBookError::NegativeLots);
+    require_gte!(order.max_base_lots, 0, OpenBookError::InvalidInputLots);
     require_gte!(
         order.max_quote_lots_including_fees,
         0,
-        OpenBookError::NegativeLots
+        OpenBookError::InvalidInputLots
     );
 
     let mut open_orders_account = ctx.accounts.open_orders_account.load_full_mut()?;
@@ -22,7 +22,7 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<
     require!(
         open_orders_account
             .fixed
-            .is_owner_or_delegate(ctx.accounts.owner.key()),
+            .is_owner_or_delegate(ctx.accounts.owner_or_delegate.key()),
         OpenBookError::NoOwnerOrDelegate
     );
     let open_orders_account_pk = ctx.accounts.open_orders_account.key();
@@ -109,7 +109,7 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<
             Transfer {
                 from: ctx.accounts.token_deposit_account.to_account_info(),
                 to: to_vault,
-                authority: ctx.accounts.owner.to_account_info(),
+                authority: ctx.accounts.owner_or_delegate.to_account_info(),
             },
         );
         token::transfer(cpi_context, deposit_amount)?;

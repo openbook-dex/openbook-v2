@@ -288,7 +288,7 @@ impl OpenBookClient {
                     &openbook_v2::accounts::PlaceOrder {
                         open_orders_account: self.open_orders_account,
                         open_orders_admin: None,
-                        owner: self.owner(),
+                        owner_or_delegate: self.owner(),
                         market: market.address,
                         bids: market.market.bids,
                         asks: market.market.asks,
@@ -346,7 +346,7 @@ impl OpenBookClient {
                     &openbook_v2::accounts::PlaceOrder {
                         open_orders_account: self.open_orders_account,
                         open_orders_admin: None,
-                        owner: self.owner(),
+                        owner_or_delegate: self.owner(),
                         market: market.address,
                         bids: market.market.bids,
                         asks: market.market.asks,

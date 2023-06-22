@@ -1,5 +1,4 @@
 pub use cancel_all_orders::*;
-pub use cancel_all_orders_by_side::*;
 pub use cancel_order::*;
 pub use cancel_order_by_client_order_id::*;
 pub use close_market::*;
@@ -19,7 +18,6 @@ pub use stub_oracle_set::*;
 pub use sweep_fees::*;
 
 mod cancel_all_orders;
-mod cancel_all_orders_by_side;
 mod cancel_order;
 mod cancel_order_by_client_order_id;
 mod close_market;
