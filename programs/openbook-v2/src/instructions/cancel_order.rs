@@ -5,6 +5,8 @@ use crate::error::*;
 use crate::state::*;
 
 pub fn cancel_order(ctx: Context<CancelOrder>, order_id: u128) -> Result<()> {
+    require_gt!(order_id, 0, OpenBookError::InvalidInputOrderId);
+
     let mut account = ctx.accounts.open_orders_account.load_full_mut()?;
     // account constraint #1
     require!(

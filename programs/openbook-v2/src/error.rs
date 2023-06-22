@@ -20,6 +20,8 @@ pub enum OpenBookError {
     InvalidInputPegLimit,
     #[msg("The order type is invalid. A taker order must be Market or ImmediateOrCancel")]
     InvalidInputOrderType,
+    #[msg("Order id cannot be zero")]
+    InvalidInputOrderId,
     #[msg("Oracle staleness limit is currently unimplemented")]
     InvalidInputStaleness,
     #[msg("Slot above queue limit")]
