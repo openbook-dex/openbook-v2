@@ -18,9 +18,9 @@ pub fn cancel_order(ctx: Context<CancelOrder>, order_id: u128) -> Result<()> {
         asks: ctx.accounts.asks.load_mut()?,
     };
 
-    let oo = account
-        .find_order_with_order_id(order_id)
-        .ok_or_else(|| error_msg!("could not find order with id {order_id} in user account"))?;
+    let oo = account.find_order_with_order_id(order_id).ok_or_else(|| {
+        error_msg_typed!(OpenBookError::OpenOrdersOrderNotFound, "id = {order_id}")
+    })?;
 
     let order_id = oo.id;
     let order_side_and_tree = oo.side_and_tree();

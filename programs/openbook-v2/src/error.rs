@@ -33,7 +33,7 @@ pub enum OpenBookError {
     OracleConfidence,
     #[msg("an oracle is stale")]
     OracleStale,
-    #[msg("perp order id not found on the orderbook")]
+    #[msg("Order id not found on the orderbook")]
     OrderIdNotFound,
     #[msg("Event queue contains elements and market can't be closed")]
     EventQueueContainsElements,
@@ -73,6 +73,8 @@ pub enum OpenBookError {
     OpenOrdersFull,
     #[msg("Book contains elements")]
     BookContainsElements,
+    #[msg("Could not find order in user account")]
+    OpenOrdersOrderNotFound,
 }
 
 impl From<OpenBookError> for ProgramError {
