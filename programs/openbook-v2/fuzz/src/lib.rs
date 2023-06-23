@@ -450,4 +450,16 @@ impl FuzzContext {
 
         process_instruction(&mut self.state, &data, &accounts, &[])
     }
+
+    pub fn stub_oracle_set(
+        &mut self,
+        data: openbook_v2::instruction::StubOracleSet,
+    ) -> ProgramResult {
+        let accounts = openbook_v2::accounts::StubOracleSet {
+            oracle: self.oracle,
+            admin: self.admin,
+        };
+
+        process_instruction(&mut self.state, &data, &accounts, &[])
+    }
 }

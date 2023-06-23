@@ -52,6 +52,9 @@ enum FuzzInstruction {
     SweepFees {
         data: openbook_v2::instruction::SweepFees,
     },
+    StubOracleSet {
+        data: openbook_v2::instruction::StubOracleSet,
+    },
 }
 
 fuzz_target!(|fuzz_data: FuzzData| -> Corpus {
@@ -113,6 +116,10 @@ fn run_fuzz(fuzz_data: FuzzData) -> Corpus {
             FuzzInstruction::SweepFees { data } => ctx
                 .sweep_fees(data)
                 .map_or_else(error_filter::sweep_fees, |_| true),
+
+            FuzzInstruction::StubOracleSet { data } => ctx
+                .stub_oracle_set(data)
+                .map_or_else(error_filter::stub_oracle_set, |_| true),
         };
 
         if !has_valid_inputs {
@@ -132,6 +139,7 @@ mod error_filter {
         match err {
             e if e == OpenBookError::InvalidInputLots.into() => false,
             e if e == OpenBookError::InvalidInputPriceLots.into() => false,
+            e if e == OpenBookError::InvalidOraclePrice.into() => true,
             e if e == OpenBookError::InvalidOrderSize.into() => true,
             e if e == OpenBookError::OpenOrdersFull.into() => true,
             e if e == OpenBookError::WouldSelfTrade.into() => true,
@@ -146,6 +154,7 @@ mod error_filter {
             e if e == OpenBookError::InvalidInputPegLimit.into() => false,
             e if e == OpenBookError::InvalidInputPriceLots.into() => false,
             e if e == OpenBookError::InvalidInputStaleness.into() => false,
+            e if e == OpenBookError::InvalidOraclePrice.into() => true,
             e if e == OpenBookError::InvalidOrderPostIOC.into() => true,
             e if e == OpenBookError::InvalidOrderPostMarket.into() => true,
             e if e == OpenBookError::InvalidOrderSize.into() => true,
@@ -161,6 +170,7 @@ mod error_filter {
             e if e == OpenBookError::InvalidInputLots.into() => false,
             e if e == OpenBookError::InvalidInputOrderType.into() => false,
             e if e == OpenBookError::InvalidInputPriceLots.into() => false,
+            e if e == OpenBookError::InvalidOraclePrice.into() => true,
             e if e == OpenBookError::InvalidOrderSize.into() => true,
             e if e == TokenError::InsufficientFunds.into() => true,
             _ => panic!("{}", err),
@@ -202,6 +212,10 @@ mod error_filter {
     }
 
     pub fn sweep_fees(err: ProgramError) -> bool {
+        panic!("{}", err);
+    }
+
+    pub fn stub_oracle_set(err: ProgramError) -> bool {
         panic!("{}", err);
     }
 }
