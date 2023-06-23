@@ -49,6 +49,9 @@ enum FuzzInstruction {
         user_id: UserId,
         data: openbook_v2::instruction::SettleFunds,
     },
+    SweepFees {
+        data: openbook_v2::instruction::SweepFees,
+    },
 }
 
 fuzz_target!(|fuzz_data: FuzzData| -> Corpus {
@@ -106,6 +109,10 @@ fn run_fuzz(fuzz_data: FuzzData) -> Corpus {
             FuzzInstruction::SettleFunds { user_id, data } => ctx
                 .settle_funds(user_id, data)
                 .map_or_else(error_filter::settle_funds, |_| true),
+
+            FuzzInstruction::SweepFees { data } => ctx
+                .sweep_fees(data)
+                .map_or_else(error_filter::sweep_fees, |_| true),
         };
 
         if !has_valid_inputs {
@@ -191,6 +198,10 @@ mod error_filter {
     }
 
     pub fn settle_funds(err: ProgramError) -> bool {
+        panic!("{}", err);
+    }
+
+    pub fn sweep_fees(err: ProgramError) -> bool {
         panic!("{}", err);
     }
 }

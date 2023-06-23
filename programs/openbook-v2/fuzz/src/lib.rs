@@ -41,6 +41,7 @@ pub struct FuzzContext {
     base_vault: Pubkey,
     quote_vault: Pubkey,
     collect_fee_admin: Pubkey,
+    collect_fee_admin_quote_vault: Pubkey,
     users: HashMap<UserId, UserAccounts>,
     state: AccountsState,
 }
@@ -73,6 +74,8 @@ impl FuzzContext {
         let quote_vault = get_associated_token_address(&market, &quote_mint);
 
         let collect_fee_admin = Pubkey::new_unique();
+        let collect_fee_admin_quote_vault =
+            get_associated_token_address(&collect_fee_admin, &quote_mint);
 
         Self {
             payer,
@@ -87,6 +90,7 @@ impl FuzzContext {
             base_vault,
             quote_vault,
             collect_fee_admin,
+            collect_fee_admin_quote_vault,
             users: HashMap::new(),
             state: AccountsState::new(),
         }
@@ -108,7 +112,13 @@ impl FuzzContext {
             .add_program(spl_token::ID)
             .add_program(system_program::ID)
             .add_token_account_with_lamports(self.base_vault, self.market, self.base_mint, 0)
-            .add_token_account_with_lamports(self.quote_vault, self.market, self.quote_mint, 0);
+            .add_token_account_with_lamports(self.quote_vault, self.market, self.quote_mint, 0)
+            .add_token_account_with_lamports(
+                self.collect_fee_admin_quote_vault,
+                self.collect_fee_admin,
+                self.quote_mint,
+                0,
+            );
 
         self.stub_oracle_create().unwrap();
         self.create_market().unwrap();
@@ -420,6 +430,19 @@ impl FuzzContext {
             token_quote_account: user.quote_vault,
             market: self.market,
             base_vault: self.base_vault,
+            quote_vault: self.quote_vault,
+            token_program: spl_token::ID,
+            system_program: system_program::ID,
+        };
+
+        process_instruction(&mut self.state, &data, &accounts, &[])
+    }
+
+    pub fn sweep_fees(&mut self, data: openbook_v2::instruction::SweepFees) -> ProgramResult {
+        let accounts = openbook_v2::accounts::SweepFees {
+            collect_fee_admin: self.collect_fee_admin,
+            token_receiver_account: self.collect_fee_admin_quote_vault,
+            market: self.market,
             quote_vault: self.quote_vault,
             token_program: spl_token::ID,
             system_program: system_program::ID,
