@@ -1,8 +1,0 @@
-# Dockerfile for keeper service in Heroku
-# heroku container:push keeper -R -a HEROKU_APP_NAME
-# heroku container:release -a HEROKU_APP_NAME
-ARG BASE_TAG=latest
-FROM us-docker.pkg.dev/openbook/gcr.io/openbook-v2:$BASE_TAG
-ENTRYPOINT ["keeper"]
-USER openbookuser
-CMD ["crank"]

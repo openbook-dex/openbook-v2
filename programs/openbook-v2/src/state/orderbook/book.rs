@@ -83,7 +83,7 @@ impl<'a> Orderbook<'a> {
         let side = order.side;
 
         let other_side = side.invert_side();
-        let oracle_price_lots = market.native_price_to_lot(oracle_price);
+        let oracle_price_lots = market.native_price_to_lot(oracle_price)?;
         let post_only = order.is_post_only();
         let mut post_target = order.post_target();
         let (price_lots, price_data) = order.price(now_ts, oracle_price_lots, self)?;

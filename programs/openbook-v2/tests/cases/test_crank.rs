@@ -55,7 +55,7 @@ async fn test_skip_missing_accounts() -> Result<(), TransportError> {
 
     let price_lots = {
         let market = solana.get_account::<Market>(market).await;
-        market.native_price_to_lot(I80F48::ONE)
+        market.native_price_to_lot(I80F48::ONE).unwrap()
     };
 
     let taker = create_open_orders_account(solana, owner, market, 0, &context.users[1], None).await;
@@ -244,7 +244,7 @@ async fn test_crank_given_events() -> Result<(), TransportError> {
 
     let price_lots = {
         let market = solana.get_account::<Market>(market).await;
-        market.native_price_to_lot(I80F48::ONE)
+        market.native_price_to_lot(I80F48::ONE).unwrap()
     };
 
     let taker = create_open_orders_account(solana, owner, market, 0, &context.users[1], None).await;
