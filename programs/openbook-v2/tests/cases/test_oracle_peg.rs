@@ -31,7 +31,7 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
 
     let price_lots = {
         let market = solana.get_account::<Market>(market).await;
-        market.native_price_to_lot(I80F48::ONE)
+        market.native_price_to_lot(I80F48::ONE).unwrap()
     };
     assert_eq!(price_lots, market_base_lot_size / market_quote_lot_size);
 
@@ -418,7 +418,7 @@ async fn test_oracle_peg_limit() -> Result<(), TransportError> {
 
     let price_lots = {
         let market = solana.get_account::<Market>(market).await;
-        market.native_price_to_lot(I80F48::ONE)
+        market.native_price_to_lot(I80F48::ONE).unwrap()
     };
     assert_eq!(price_lots, market_base_lot_size / market_quote_lot_size);
 

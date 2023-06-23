@@ -23,7 +23,7 @@ async fn test_permissioned_open_order() -> Result<(), TransportError> {
 
     let price_lots = {
         let market = solana.get_account::<Market>(market).await;
-        market.native_price_to_lot(I80F48::from(1000))
+        market.native_price_to_lot(I80F48::from(1000)).unwrap()
     };
 
     // Set the initial oracle price

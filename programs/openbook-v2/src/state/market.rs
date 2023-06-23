@@ -4,6 +4,7 @@ use static_assertions::const_assert_eq;
 use std::convert::{TryFrom, TryInto};
 use std::mem::size_of;
 
+use crate::error::OpenBookError;
 use crate::pod_option::PodOption;
 use crate::state::oracle;
 use crate::{accounts_zerocopy::KeyedAccountReader, state::orderbook::Side};
@@ -166,9 +167,12 @@ impl Market {
             / I80F48::from_num(self.base_lot_size)
     }
 
-    pub fn native_price_to_lot(&self, price: I80F48) -> i64 {
-        (price * I80F48::from_num(self.base_lot_size) / I80F48::from_num(self.quote_lot_size))
-            .to_num()
+    pub fn native_price_to_lot(&self, price: I80F48) -> Result<i64> {
+        price
+            .checked_mul(I80F48::from_num(self.base_lot_size))
+            .and_then(|x| x.checked_div(I80F48::from_num(self.quote_lot_size)))
+            .and_then(|x| x.checked_to_num())
+            .ok_or_else(|| OpenBookError::InvalidOraclePrice.into())
     }
 
     pub fn oracle_price(
