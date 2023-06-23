@@ -4,7 +4,7 @@ use arbitrary::Arbitrary;
 use libfuzzer_sys::{fuzz_target, Corpus};
 use log::info;
 use openbook_v2_fuzz::{processor::TestSyscallStubs, FuzzContext, UserId};
-use std::sync::Once;
+use std::{collections::HashSet, sync::Once};
 
 #[derive(Debug, Arbitrary, Clone)]
 struct FuzzData {
@@ -26,9 +26,11 @@ enum FuzzInstruction {
         data: openbook_v2::instruction::PlaceTakeOrder,
     },
     ConsumeEvents {
+        user_ids: HashSet<UserId>,
         data: openbook_v2::instruction::ConsumeEvents,
     },
     ConsumeGivenEvents {
+        user_ids: HashSet<UserId>,
         data: openbook_v2::instruction::ConsumeGivenEvents,
     },
     CancelOrder {
@@ -77,12 +79,12 @@ fn run_fuzz(fuzz_data: FuzzData) -> Corpus {
                 .place_take_order(user_id, data)
                 .map_or_else(error_filter::place_take_order, |_| true),
 
-            FuzzInstruction::ConsumeEvents { data } => ctx
-                .consume_events(data)
+            FuzzInstruction::ConsumeEvents { user_ids, data } => ctx
+                .consume_events(user_ids, data)
                 .map_or_else(error_filter::consume_events, |_| true),
 
-            FuzzInstruction::ConsumeGivenEvents { data } => ctx
-                .consume_given_events(data)
+            FuzzInstruction::ConsumeGivenEvents { user_ids, data } => ctx
+                .consume_given_events(user_ids, data)
                 .map_or_else(error_filter::consume_given_events, |_| true),
 
             FuzzInstruction::CancelOrder { user_id, data } => ctx

@@ -6,13 +6,15 @@ use arbitrary::{Arbitrary, Unstructured};
 use fixed::types::I80F48;
 use openbook_v2::state::*;
 use processor::*;
-use solana_program::{entrypoint::ProgramResult, pubkey::Pubkey, system_program};
+use solana_program::{
+    entrypoint::ProgramResult, instruction::AccountMeta, pubkey::Pubkey, system_program,
+};
 use spl_associated_token_account::get_associated_token_address;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 pub const NUM_USERS: u8 = 8;
 
-#[derive(Debug, Clone, Eq, Hash, PartialEq)]
+#[derive(Debug, Clone, Copy, Eq, Hash, PartialEq)]
 pub struct UserId(u8);
 
 impl Arbitrary<'_> for UserId {
@@ -306,6 +308,7 @@ impl FuzzContext {
 
     pub fn consume_events(
         &mut self,
+        user_ids: HashSet<UserId>,
         data: openbook_v2::instruction::ConsumeEvents,
     ) -> ProgramResult {
         let accounts = openbook_v2::accounts::ConsumeEvents {
@@ -314,11 +317,21 @@ impl FuzzContext {
             event_queue: self.event_queue,
         };
 
-        process_instruction(&mut self.state, &data, &accounts, &[])
+        let remaining = user_ids
+            .into_iter()
+            .map(|user_id| AccountMeta {
+                pubkey: self.user(user_id).open_orders,
+                is_signer: false,
+                is_writable: true,
+            })
+            .collect::<Vec<_>>();
+
+        process_instruction(&mut self.state, &data, &accounts, &remaining)
     }
 
     pub fn consume_given_events(
         &mut self,
+        user_ids: HashSet<UserId>,
         data: openbook_v2::instruction::ConsumeGivenEvents,
     ) -> ProgramResult {
         let accounts = openbook_v2::accounts::ConsumeEvents {
@@ -327,7 +340,16 @@ impl FuzzContext {
             event_queue: self.event_queue,
         };
 
-        process_instruction(&mut self.state, &data, &accounts, &[])
+        let remaining = user_ids
+            .into_iter()
+            .map(|user_id| AccountMeta {
+                pubkey: self.user(user_id).open_orders,
+                is_signer: false,
+                is_writable: true,
+            })
+            .collect::<Vec<_>>();
+
+        process_instruction(&mut self.state, &data, &accounts, &remaining)
     }
 
     pub fn cancel_order(
