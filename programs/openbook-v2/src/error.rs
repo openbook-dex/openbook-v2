@@ -67,6 +67,8 @@ pub enum OpenBookError {
     InvalidPriceLots,
     #[msg("Order size above market limits")]
     InvalidOrderSize,
+    #[msg("Oracle price above market limits")]
+    InvalidOraclePrice,
     #[msg("The Market has not expired yet.")]
     MarketHasNotExpired,
     #[msg("No correct owner or delegate.")]
