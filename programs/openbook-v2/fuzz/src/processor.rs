@@ -4,8 +4,9 @@ use bumpalo::Bump;
 use itertools::Itertools;
 use log::debug;
 use solana_program::{
-    account_info::AccountInfo, clock::Clock, entrypoint::ProgramResult, instruction::Instruction,
-    program_error::ProgramError, program_stubs, pubkey::Pubkey, rent::Rent, system_program,
+    account_info::AccountInfo, clock::Clock, entrypoint::ProgramResult, instruction::AccountMeta,
+    instruction::Instruction, program_error::ProgramError, program_stubs, pubkey::Pubkey,
+    rent::Rent, system_program,
 };
 
 pub struct TestSyscallStubs {}
@@ -74,11 +75,13 @@ impl program_stubs::SyscallStubs for TestSyscallStubs {
 
 pub fn process_instruction(
     state: &mut AccountsState,
-    accounts: &impl anchor_lang::ToAccountMetas,
     data: &impl anchor_lang::InstructionData,
+    accounts: &impl anchor_lang::ToAccountMetas,
+    remaining_accounts: &[AccountMeta],
 ) -> ProgramResult {
     let bump = Bump::new();
-    let metas = anchor_lang::ToAccountMetas::to_account_metas(accounts, None);
+    let mut metas = anchor_lang::ToAccountMetas::to_account_metas(accounts, None);
+    metas.extend_from_slice(remaining_accounts);
     let account_infos = state.account_infos(&bump, metas);
 
     let res = openbook_v2::entry(

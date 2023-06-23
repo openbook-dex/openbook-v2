@@ -151,7 +151,7 @@ impl FuzzContext {
                 account_num,
                 open_orders_count: 8,
             };
-            process_instruction(&mut self.state, &accounts, &data).unwrap();
+            process_instruction(&mut self.state, &data, &accounts, &[]).unwrap();
 
             UserAccounts {
                 owner,
@@ -173,7 +173,7 @@ impl FuzzContext {
             system_program: system_program::ID,
         };
         let data = openbook_v2::instruction::StubOracleCreate { price: I80F48::ONE };
-        process_instruction(&mut self.state, &accounts, &data)
+        process_instruction(&mut self.state, &data, &accounts, &[])
     }
 
     fn create_market(&mut self) -> ProgramResult {
@@ -208,7 +208,7 @@ impl FuzzContext {
             fee_penalty: 0,
             time_expiry: 0,
         };
-        process_instruction(&mut self.state, &accounts, &data)
+        process_instruction(&mut self.state, &data, &accounts, &[])
     }
 
     pub fn place_order(
@@ -239,7 +239,7 @@ impl FuzzContext {
             system_program: system_program::ID,
         };
 
-        process_instruction(&mut self.state, &accounts, &data)
+        process_instruction(&mut self.state, &data, &accounts, &[])
     }
 
     pub fn place_order_pegged(
@@ -270,7 +270,7 @@ impl FuzzContext {
             system_program: system_program::ID,
         };
 
-        process_instruction(&mut self.state, &accounts, &data)
+        process_instruction(&mut self.state, &data, &accounts, &[])
     }
 
     pub fn place_take_order(
@@ -301,7 +301,7 @@ impl FuzzContext {
             open_orders_admin: None,
         };
 
-        process_instruction(&mut self.state, &accounts, &data)
+        process_instruction(&mut self.state, &data, &accounts, &[])
     }
 
     pub fn consume_events(
@@ -314,7 +314,7 @@ impl FuzzContext {
             event_queue: self.event_queue,
         };
 
-        process_instruction(&mut self.state, &accounts, &data)
+        process_instruction(&mut self.state, &data, &accounts, &[])
     }
 
     pub fn consume_given_events(
@@ -327,7 +327,7 @@ impl FuzzContext {
             event_queue: self.event_queue,
         };
 
-        process_instruction(&mut self.state, &accounts, &data)
+        process_instruction(&mut self.state, &data, &accounts, &[])
     }
 
     pub fn cancel_order(
@@ -345,7 +345,7 @@ impl FuzzContext {
             bids: self.bids,
         };
 
-        process_instruction(&mut self.state, &accounts, &data)
+        process_instruction(&mut self.state, &data, &accounts, &[])
     }
 
     pub fn cancel_order_by_client_order_id(
@@ -363,7 +363,7 @@ impl FuzzContext {
             bids: self.bids,
         };
 
-        process_instruction(&mut self.state, &accounts, &data)
+        process_instruction(&mut self.state, &data, &accounts, &[])
     }
 
     pub fn cancel_all_orders(
@@ -381,6 +381,6 @@ impl FuzzContext {
             bids: self.bids,
         };
 
-        process_instruction(&mut self.state, &accounts, &data)
+        process_instruction(&mut self.state, &data, &accounts, &[])
     }
 }
