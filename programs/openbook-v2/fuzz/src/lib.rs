@@ -405,4 +405,26 @@ impl FuzzContext {
 
         process_instruction(&mut self.state, &data, &accounts, &[])
     }
+
+    pub fn settle_funds(
+        &mut self,
+        user_id: UserId,
+        data: openbook_v2::instruction::SettleFunds,
+    ) -> ProgramResult {
+        let user = self.user(user_id);
+
+        let accounts = openbook_v2::accounts::SettleFunds {
+            owner: user.owner,
+            open_orders_account: user.open_orders,
+            token_base_account: user.base_vault,
+            token_quote_account: user.quote_vault,
+            market: self.market,
+            base_vault: self.base_vault,
+            quote_vault: self.quote_vault,
+            token_program: spl_token::ID,
+            system_program: system_program::ID,
+        };
+
+        process_instruction(&mut self.state, &data, &accounts, &[])
+    }
 }

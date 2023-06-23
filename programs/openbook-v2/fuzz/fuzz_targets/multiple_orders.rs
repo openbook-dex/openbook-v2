@@ -45,6 +45,10 @@ enum FuzzInstruction {
         user_id: UserId,
         data: openbook_v2::instruction::CancelAllOrders,
     },
+    SettleFunds {
+        user_id: UserId,
+        data: openbook_v2::instruction::SettleFunds,
+    },
 }
 
 fuzz_target!(|fuzz_data: FuzzData| -> Corpus {
@@ -98,6 +102,10 @@ fn run_fuzz(fuzz_data: FuzzData) -> Corpus {
             FuzzInstruction::CancelAllOrders { user_id, data } => ctx
                 .cancel_all_orders(user_id, data)
                 .map_or_else(error_filter::cancel_all_orders, |_| true),
+
+            FuzzInstruction::SettleFunds { user_id, data } => ctx
+                .settle_funds(user_id, data)
+                .map_or_else(error_filter::settle_funds, |_| true),
         };
 
         if !has_valid_inputs {
@@ -153,9 +161,7 @@ mod error_filter {
     }
 
     pub fn consume_events(err: ProgramError) -> bool {
-        match err {
-            _ => panic!("{}", err),
-        }
+        panic!("{}", err);
     }
 
     pub fn consume_given_events(err: ProgramError) -> bool {
@@ -181,8 +187,10 @@ mod error_filter {
     }
 
     pub fn cancel_all_orders(err: ProgramError) -> bool {
-        match err {
-            _ => panic!("{}", err),
-        }
+        panic!("{}", err);
+    }
+
+    pub fn settle_funds(err: ProgramError) -> bool {
+        panic!("{}", err);
     }
 }
