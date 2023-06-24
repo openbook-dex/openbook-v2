@@ -2,6 +2,7 @@ pub mod accounts_state;
 pub mod processor;
 
 use accounts_state::*;
+use anchor_spl::token::spl_token;
 use arbitrary::{Arbitrary, Unstructured};
 use fixed::types::I80F48;
 use openbook_v2::state::*;

@@ -1775,6 +1775,7 @@ name = "openbook-v2-fuzz"
 version = "0.0.0"
 dependencies = [
  "anchor-lang",
+ "anchor-spl",
  "arbitrary",
  "base64 0.21.2",
  "bumpalo",
@@ -1788,7 +1789,6 @@ dependencies = [
  "solana-runtime",
  "solana-sdk",
  "spl-associated-token-account",
- "spl-token",
 ]
 
 [[package]]

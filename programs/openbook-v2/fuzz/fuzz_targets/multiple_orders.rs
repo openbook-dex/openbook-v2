@@ -140,10 +140,10 @@ fn run_fuzz(fuzz_data: FuzzData) -> Corpus {
 }
 
 mod error_parser {
+    use anchor_spl::token::spl_token::error::TokenError;
     use libfuzzer_sys::Corpus;
     use openbook_v2::error::OpenBookError;
     use solana_program::program_error::ProgramError;
-    use spl_token::error::TokenError;
 
     pub fn place_order(err: ProgramError) -> Corpus {
         match err {

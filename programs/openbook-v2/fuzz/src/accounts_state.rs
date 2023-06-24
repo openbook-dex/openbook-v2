@@ -1,4 +1,8 @@
 use anchor_lang::AccountDeserialize;
+use anchor_spl::token::spl_token::{
+    self,
+    state::{Account as TokenAccount, AccountState, Mint},
+};
 use bumpalo::Bump;
 use openbook_v2::state::OpenOrdersAccount;
 use solana_program::{
@@ -6,7 +10,6 @@ use solana_program::{
     program_pack::Pack, pubkey::Pubkey, rent::Rent, system_program,
 };
 use solana_sdk::account::{Account, WritableAccount};
-use spl_token::state::{Account as TokenAccount, Mint};
 use std::collections::HashMap;
 
 pub struct UserAccounts {
@@ -105,7 +108,7 @@ impl AccountsState {
     ) -> &mut Self {
         let mut data = vec![0_u8; TokenAccount::LEN];
         let account = TokenAccount {
-            state: spl_token::state::AccountState::Initialized,
+            state: AccountState::Initialized,
             mint,
             owner,
             amount,
