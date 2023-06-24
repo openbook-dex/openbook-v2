@@ -57,6 +57,63 @@ enum FuzzInstruction {
     },
 }
 
+trait FuzzRunner {
+    fn run(&mut self, fuzz_ix: &FuzzInstruction) -> Corpus;
+}
+
+impl FuzzRunner for FuzzContext {
+    fn run(&mut self, fuzz_ix: &FuzzInstruction) -> Corpus {
+        info!("{:#?}", fuzz_ix);
+        let keep = |_| Corpus::Keep;
+
+        match fuzz_ix {
+            FuzzInstruction::PlaceOrder { user_id, data } => self
+                .place_order(user_id, data)
+                .map_or_else(error_parser::place_order, keep),
+
+            FuzzInstruction::PlaceOrderPegged { user_id, data } => self
+                .place_order_pegged(user_id, data)
+                .map_or_else(error_parser::place_order_pegged, keep),
+
+            FuzzInstruction::PlaceTakeOrder { user_id, data } => self
+                .place_take_order(user_id, data)
+                .map_or_else(error_parser::place_take_order, keep),
+
+            FuzzInstruction::ConsumeEvents { user_ids, data } => self
+                .consume_events(user_ids, data)
+                .map_or_else(error_parser::consume_events, keep),
+
+            FuzzInstruction::ConsumeGivenEvents { user_ids, data } => self
+                .consume_given_events(user_ids, data)
+                .map_or_else(error_parser::consume_given_events, keep),
+
+            FuzzInstruction::CancelOrder { user_id, data } => self
+                .cancel_order(user_id, data)
+                .map_or_else(error_parser::cancel_order, keep),
+
+            FuzzInstruction::CancelOrderByClientOrderId { user_id, data } => self
+                .cancel_order_by_client_order_id(user_id, data)
+                .map_or_else(error_parser::cancel_order_by_client_order_id, keep),
+
+            FuzzInstruction::CancelAllOrders { user_id, data } => self
+                .cancel_all_orders(user_id, data)
+                .map_or_else(error_parser::cancel_all_orders, keep),
+
+            FuzzInstruction::SettleFunds { user_id, data } => self
+                .settle_funds(user_id, data)
+                .map_or_else(error_parser::settle_funds, keep),
+
+            FuzzInstruction::SweepFees { data } => self
+                .sweep_fees(data)
+                .map_or_else(error_parser::sweep_fees, keep),
+
+            FuzzInstruction::StubOracleSet { data } => self
+                .stub_oracle_set(data)
+                .map_or_else(error_parser::stub_oracle_set, keep),
+        }
+    }
+}
+
 fuzz_target!(|fuzz_data: FuzzData| -> Corpus {
     static ONCE: Once = Once::new();
     ONCE.call_once(env_logger::init);
@@ -65,7 +122,6 @@ fuzz_target!(|fuzz_data: FuzzData| -> Corpus {
 });
 
 fn run_fuzz(fuzz_data: FuzzData) -> Corpus {
-    let mut corpus = Corpus::Keep;
     if fuzz_data.instructions.is_empty() {
         return Corpus::Reject;
     }
@@ -73,149 +129,103 @@ fn run_fuzz(fuzz_data: FuzzData) -> Corpus {
     let mut ctx = FuzzContext::new();
     ctx.initialize();
 
-    for fuzz_instruction in fuzz_data.instructions {
-        info!("{:#?}", fuzz_instruction);
+    if fuzz_data.instructions.iter().any(|ix| match ctx.run(ix) {
+        Corpus::Keep => false,
+        Corpus::Reject => true,
+    }) {
+        return Corpus::Reject;
+    };
 
-        let has_valid_inputs = match fuzz_instruction {
-            FuzzInstruction::PlaceOrder { user_id, data } => ctx
-                .place_order(user_id, data)
-                .map_or_else(error_filter::place_order, |_| true),
-
-            FuzzInstruction::PlaceOrderPegged { user_id, data } => ctx
-                .place_order_pegged(user_id, data)
-                .map_or_else(error_filter::place_order_pegged, |_| true),
-
-            FuzzInstruction::PlaceTakeOrder { user_id, data } => ctx
-                .place_take_order(user_id, data)
-                .map_or_else(error_filter::place_take_order, |_| true),
-
-            FuzzInstruction::ConsumeEvents { user_ids, data } => ctx
-                .consume_events(user_ids, data)
-                .map_or_else(error_filter::consume_events, |_| true),
-
-            FuzzInstruction::ConsumeGivenEvents { user_ids, data } => ctx
-                .consume_given_events(user_ids, data)
-                .map_or_else(error_filter::consume_given_events, |_| true),
-
-            FuzzInstruction::CancelOrder { user_id, data } => ctx
-                .cancel_order(user_id, data)
-                .map_or_else(error_filter::cancel_order, |_| true),
-
-            FuzzInstruction::CancelOrderByClientOrderId { user_id, data } => ctx
-                .cancel_order_by_client_order_id(user_id, data)
-                .map_or_else(error_filter::cancel_order_by_client_order_id, |_| true),
-
-            FuzzInstruction::CancelAllOrders { user_id, data } => ctx
-                .cancel_all_orders(user_id, data)
-                .map_or_else(error_filter::cancel_all_orders, |_| true),
-
-            FuzzInstruction::SettleFunds { user_id, data } => ctx
-                .settle_funds(user_id, data)
-                .map_or_else(error_filter::settle_funds, |_| true),
-
-            FuzzInstruction::SweepFees { data } => ctx
-                .sweep_fees(data)
-                .map_or_else(error_filter::sweep_fees, |_| true),
-
-            FuzzInstruction::StubOracleSet { data } => ctx
-                .stub_oracle_set(data)
-                .map_or_else(error_filter::stub_oracle_set, |_| true),
-        };
-
-        if !has_valid_inputs {
-            corpus = Corpus::Reject;
-        };
-    }
-
-    corpus
+    Corpus::Keep
 }
 
-mod error_filter {
+mod error_parser {
+    use libfuzzer_sys::Corpus;
     use openbook_v2::error::OpenBookError;
     use solana_program::program_error::ProgramError;
     use spl_token::error::TokenError;
 
-    pub fn place_order(err: ProgramError) -> bool {
+    pub fn place_order(err: ProgramError) -> Corpus {
         match err {
-            e if e == OpenBookError::InvalidInputLots.into() => false,
-            e if e == OpenBookError::InvalidInputPriceLots.into() => false,
-            e if e == OpenBookError::InvalidOraclePrice.into() => true,
-            e if e == OpenBookError::InvalidOrderSize.into() => true,
-            e if e == OpenBookError::OpenOrdersFull.into() => true,
-            e if e == OpenBookError::WouldSelfTrade.into() => true,
-            e if e == TokenError::InsufficientFunds.into() => true,
+            e if e == OpenBookError::InvalidInputLots.into() => Corpus::Reject,
+            e if e == OpenBookError::InvalidInputPriceLots.into() => Corpus::Reject,
+            e if e == OpenBookError::InvalidOraclePrice.into() => Corpus::Keep,
+            e if e == OpenBookError::InvalidOrderSize.into() => Corpus::Keep,
+            e if e == OpenBookError::OpenOrdersFull.into() => Corpus::Keep,
+            e if e == OpenBookError::WouldSelfTrade.into() => Corpus::Keep,
+            e if e == TokenError::InsufficientFunds.into() => Corpus::Keep,
             _ => panic!("{}", err),
         }
     }
 
-    pub fn place_order_pegged(err: ProgramError) -> bool {
+    pub fn place_order_pegged(err: ProgramError) -> Corpus {
         match err {
-            e if e == OpenBookError::InvalidInputLots.into() => false,
-            e if e == OpenBookError::InvalidInputPegLimit.into() => false,
-            e if e == OpenBookError::InvalidInputPriceLots.into() => false,
-            e if e == OpenBookError::InvalidInputStaleness.into() => false,
-            e if e == OpenBookError::InvalidOraclePrice.into() => true,
-            e if e == OpenBookError::InvalidOrderPostIOC.into() => true,
-            e if e == OpenBookError::InvalidOrderPostMarket.into() => true,
-            e if e == OpenBookError::InvalidOrderSize.into() => true,
-            e if e == OpenBookError::InvalidPriceLots.into() => true,
-            e if e == OpenBookError::WouldSelfTrade.into() => true,
-            e if e == TokenError::InsufficientFunds.into() => true,
+            e if e == OpenBookError::InvalidInputLots.into() => Corpus::Reject,
+            e if e == OpenBookError::InvalidInputPegLimit.into() => Corpus::Reject,
+            e if e == OpenBookError::InvalidInputPriceLots.into() => Corpus::Reject,
+            e if e == OpenBookError::InvalidInputStaleness.into() => Corpus::Reject,
+            e if e == OpenBookError::InvalidOraclePrice.into() => Corpus::Keep,
+            e if e == OpenBookError::InvalidOrderPostIOC.into() => Corpus::Keep,
+            e if e == OpenBookError::InvalidOrderPostMarket.into() => Corpus::Keep,
+            e if e == OpenBookError::InvalidOrderSize.into() => Corpus::Keep,
+            e if e == OpenBookError::InvalidPriceLots.into() => Corpus::Keep,
+            e if e == OpenBookError::WouldSelfTrade.into() => Corpus::Keep,
+            e if e == TokenError::InsufficientFunds.into() => Corpus::Keep,
             _ => panic!("{}", err),
         }
     }
 
-    pub fn place_take_order(err: ProgramError) -> bool {
+    pub fn place_take_order(err: ProgramError) -> Corpus {
         match err {
-            e if e == OpenBookError::InvalidInputLots.into() => false,
-            e if e == OpenBookError::InvalidInputOrderType.into() => false,
-            e if e == OpenBookError::InvalidInputPriceLots.into() => false,
-            e if e == OpenBookError::InvalidOraclePrice.into() => true,
-            e if e == OpenBookError::InvalidOrderSize.into() => true,
-            e if e == TokenError::InsufficientFunds.into() => true,
+            e if e == OpenBookError::InvalidInputLots.into() => Corpus::Reject,
+            e if e == OpenBookError::InvalidInputOrderType.into() => Corpus::Reject,
+            e if e == OpenBookError::InvalidInputPriceLots.into() => Corpus::Reject,
+            e if e == OpenBookError::InvalidOraclePrice.into() => Corpus::Keep,
+            e if e == OpenBookError::InvalidOrderSize.into() => Corpus::Keep,
+            e if e == TokenError::InsufficientFunds.into() => Corpus::Keep,
             _ => panic!("{}", err),
         }
     }
 
-    pub fn consume_events(err: ProgramError) -> bool {
+    pub fn consume_events(err: ProgramError) -> Corpus {
         panic!("{}", err);
     }
 
-    pub fn consume_given_events(err: ProgramError) -> bool {
+    pub fn consume_given_events(err: ProgramError) -> Corpus {
         match err {
-            e if e == OpenBookError::InvalidInputQueueSlots.into() => false,
+            e if e == OpenBookError::InvalidInputQueueSlots.into() => Corpus::Reject,
             _ => panic!("{}", err),
         }
     }
 
-    pub fn cancel_order(err: ProgramError) -> bool {
+    pub fn cancel_order(err: ProgramError) -> Corpus {
         match err {
-            e if e == OpenBookError::InvalidInputOrderId.into() => false,
-            e if e == OpenBookError::OpenOrdersOrderNotFound.into() => true,
+            e if e == OpenBookError::InvalidInputOrderId.into() => Corpus::Reject,
+            e if e == OpenBookError::OpenOrdersOrderNotFound.into() => Corpus::Keep,
             _ => panic!("{}", err),
         }
     }
 
-    pub fn cancel_order_by_client_order_id(err: ProgramError) -> bool {
+    pub fn cancel_order_by_client_order_id(err: ProgramError) -> Corpus {
         match err {
-            e if e == OpenBookError::OpenOrdersOrderNotFound.into() => true,
+            e if e == OpenBookError::OpenOrdersOrderNotFound.into() => Corpus::Keep,
             _ => panic!("{}", err),
         }
     }
 
-    pub fn cancel_all_orders(err: ProgramError) -> bool {
+    pub fn cancel_all_orders(err: ProgramError) -> Corpus {
         panic!("{}", err);
     }
 
-    pub fn settle_funds(err: ProgramError) -> bool {
+    pub fn settle_funds(err: ProgramError) -> Corpus {
         panic!("{}", err);
     }
 
-    pub fn sweep_fees(err: ProgramError) -> bool {
+    pub fn sweep_fees(err: ProgramError) -> Corpus {
         panic!("{}", err);
     }
 
-    pub fn stub_oracle_set(err: ProgramError) -> bool {
+    pub fn stub_oracle_set(err: ProgramError) -> Corpus {
         panic!("{}", err);
     }
 }

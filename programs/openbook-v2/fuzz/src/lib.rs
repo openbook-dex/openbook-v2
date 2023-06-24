@@ -126,7 +126,7 @@ impl FuzzContext {
         self
     }
 
-    fn user(&mut self, user_id: UserId) -> &UserAccounts {
+    fn user(&mut self, user_id: &UserId) -> &UserAccounts {
         let create_new_user = || -> UserAccounts {
             let account_num = 0_u32;
 
@@ -173,7 +173,7 @@ impl FuzzContext {
             }
         };
 
-        self.users.entry(user_id).or_insert_with(create_new_user)
+        self.users.entry(*user_id).or_insert_with(create_new_user)
     }
 
     fn stub_oracle_create(&mut self) -> ProgramResult {
@@ -225,8 +225,8 @@ impl FuzzContext {
 
     pub fn place_order(
         &mut self,
-        user_id: UserId,
-        data: openbook_v2::instruction::PlaceOrder,
+        user_id: &UserId,
+        data: &openbook_v2::instruction::PlaceOrder,
     ) -> ProgramResult {
         let user = self.user(user_id);
 
@@ -251,13 +251,13 @@ impl FuzzContext {
             system_program: system_program::ID,
         };
 
-        process_instruction(&mut self.state, &data, &accounts, &[])
+        process_instruction(&mut self.state, data, &accounts, &[])
     }
 
     pub fn place_order_pegged(
         &mut self,
-        user_id: UserId,
-        data: openbook_v2::instruction::PlaceOrderPegged,
+        user_id: &UserId,
+        data: &openbook_v2::instruction::PlaceOrderPegged,
     ) -> ProgramResult {
         let user = self.user(user_id);
 
@@ -282,13 +282,13 @@ impl FuzzContext {
             system_program: system_program::ID,
         };
 
-        process_instruction(&mut self.state, &data, &accounts, &[])
+        process_instruction(&mut self.state, data, &accounts, &[])
     }
 
     pub fn place_take_order(
         &mut self,
-        user_id: UserId,
-        data: openbook_v2::instruction::PlaceTakeOrder,
+        user_id: &UserId,
+        data: &openbook_v2::instruction::PlaceTakeOrder,
     ) -> ProgramResult {
         let user = self.user(user_id);
 
@@ -313,13 +313,13 @@ impl FuzzContext {
             open_orders_admin: None,
         };
 
-        process_instruction(&mut self.state, &data, &accounts, &[])
+        process_instruction(&mut self.state, data, &accounts, &[])
     }
 
     pub fn consume_events(
         &mut self,
-        user_ids: HashSet<UserId>,
-        data: openbook_v2::instruction::ConsumeEvents,
+        user_ids: &HashSet<UserId>,
+        data: &openbook_v2::instruction::ConsumeEvents,
     ) -> ProgramResult {
         let accounts = openbook_v2::accounts::ConsumeEvents {
             consume_events_admin: None,
@@ -328,7 +328,7 @@ impl FuzzContext {
         };
 
         let remaining = user_ids
-            .into_iter()
+            .iter()
             .map(|user_id| AccountMeta {
                 pubkey: self.user(user_id).open_orders,
                 is_signer: false,
@@ -336,13 +336,13 @@ impl FuzzContext {
             })
             .collect::<Vec<_>>();
 
-        process_instruction(&mut self.state, &data, &accounts, &remaining)
+        process_instruction(&mut self.state, data, &accounts, &remaining)
     }
 
     pub fn consume_given_events(
         &mut self,
-        user_ids: HashSet<UserId>,
-        data: openbook_v2::instruction::ConsumeGivenEvents,
+        user_ids: &HashSet<UserId>,
+        data: &openbook_v2::instruction::ConsumeGivenEvents,
     ) -> ProgramResult {
         let accounts = openbook_v2::accounts::ConsumeEvents {
             consume_events_admin: None,
@@ -351,7 +351,7 @@ impl FuzzContext {
         };
 
         let remaining = user_ids
-            .into_iter()
+            .iter()
             .map(|user_id| AccountMeta {
                 pubkey: self.user(user_id).open_orders,
                 is_signer: false,
@@ -359,13 +359,13 @@ impl FuzzContext {
             })
             .collect::<Vec<_>>();
 
-        process_instruction(&mut self.state, &data, &accounts, &remaining)
+        process_instruction(&mut self.state, data, &accounts, &remaining)
     }
 
     pub fn cancel_order(
         &mut self,
-        user_id: UserId,
-        data: openbook_v2::instruction::CancelOrder,
+        user_id: &UserId,
+        data: &openbook_v2::instruction::CancelOrder,
     ) -> ProgramResult {
         let user = self.user(user_id);
 
@@ -377,13 +377,13 @@ impl FuzzContext {
             bids: self.bids,
         };
 
-        process_instruction(&mut self.state, &data, &accounts, &[])
+        process_instruction(&mut self.state, data, &accounts, &[])
     }
 
     pub fn cancel_order_by_client_order_id(
         &mut self,
-        user_id: UserId,
-        data: openbook_v2::instruction::CancelOrderByClientOrderId,
+        user_id: &UserId,
+        data: &openbook_v2::instruction::CancelOrderByClientOrderId,
     ) -> ProgramResult {
         let user = self.user(user_id);
 
@@ -395,13 +395,13 @@ impl FuzzContext {
             bids: self.bids,
         };
 
-        process_instruction(&mut self.state, &data, &accounts, &[])
+        process_instruction(&mut self.state, data, &accounts, &[])
     }
 
     pub fn cancel_all_orders(
         &mut self,
-        user_id: UserId,
-        data: openbook_v2::instruction::CancelAllOrders,
+        user_id: &UserId,
+        data: &openbook_v2::instruction::CancelAllOrders,
     ) -> ProgramResult {
         let user = self.user(user_id);
 
@@ -413,13 +413,13 @@ impl FuzzContext {
             bids: self.bids,
         };
 
-        process_instruction(&mut self.state, &data, &accounts, &[])
+        process_instruction(&mut self.state, data, &accounts, &[])
     }
 
     pub fn settle_funds(
         &mut self,
-        user_id: UserId,
-        data: openbook_v2::instruction::SettleFunds,
+        user_id: &UserId,
+        data: &openbook_v2::instruction::SettleFunds,
     ) -> ProgramResult {
         let user = self.user(user_id);
 
@@ -435,10 +435,10 @@ impl FuzzContext {
             system_program: system_program::ID,
         };
 
-        process_instruction(&mut self.state, &data, &accounts, &[])
+        process_instruction(&mut self.state, data, &accounts, &[])
     }
 
-    pub fn sweep_fees(&mut self, data: openbook_v2::instruction::SweepFees) -> ProgramResult {
+    pub fn sweep_fees(&mut self, data: &openbook_v2::instruction::SweepFees) -> ProgramResult {
         let accounts = openbook_v2::accounts::SweepFees {
             collect_fee_admin: self.collect_fee_admin,
             token_receiver_account: self.collect_fee_admin_quote_vault,
@@ -448,18 +448,18 @@ impl FuzzContext {
             system_program: system_program::ID,
         };
 
-        process_instruction(&mut self.state, &data, &accounts, &[])
+        process_instruction(&mut self.state, data, &accounts, &[])
     }
 
     pub fn stub_oracle_set(
         &mut self,
-        data: openbook_v2::instruction::StubOracleSet,
+        data: &openbook_v2::instruction::StubOracleSet,
     ) -> ProgramResult {
         let accounts = openbook_v2::accounts::StubOracleSet {
             oracle: self.oracle,
             admin: self.admin,
         };
 
-        process_instruction(&mut self.state, &data, &accounts, &[])
+        process_instruction(&mut self.state, data, &accounts, &[])
     }
 }
