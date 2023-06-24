@@ -29,21 +29,21 @@ impl Arbitrary<'_> for UserId {
 }
 
 pub struct FuzzContext {
-    payer: Pubkey,
-    admin: Pubkey,
-    base_mint: Pubkey,
-    quote_mint: Pubkey,
-    market: Pubkey,
-    oracle: Pubkey,
-    bids: Pubkey,
-    asks: Pubkey,
-    event_queue: Pubkey,
-    base_vault: Pubkey,
-    quote_vault: Pubkey,
-    collect_fee_admin: Pubkey,
-    collect_fee_admin_quote_vault: Pubkey,
-    users: HashMap<UserId, UserAccounts>,
-    state: AccountsState,
+    pub payer: Pubkey,
+    pub admin: Pubkey,
+    pub base_mint: Pubkey,
+    pub quote_mint: Pubkey,
+    pub market: Pubkey,
+    pub oracle: Pubkey,
+    pub bids: Pubkey,
+    pub asks: Pubkey,
+    pub event_queue: Pubkey,
+    pub base_vault: Pubkey,
+    pub quote_vault: Pubkey,
+    pub collect_fee_admin: Pubkey,
+    pub collect_fee_admin_quote_vault: Pubkey,
+    pub users: HashMap<UserId, UserAccounts>,
+    pub state: AccountsState,
 }
 
 impl FuzzContext {

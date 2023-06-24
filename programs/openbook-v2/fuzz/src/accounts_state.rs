@@ -1,3 +1,4 @@
+use anchor_lang::AccountDeserialize;
 use bumpalo::Bump;
 use openbook_v2::state::OpenOrdersAccount;
 use solana_program::{
@@ -30,6 +31,12 @@ impl AccountsState {
 
     pub fn insert(&mut self, pubkey: Pubkey, account: Account) {
         self.0.insert(pubkey, account);
+    }
+
+    pub fn get_account<T: AccountDeserialize>(&self, pubkey: &Pubkey) -> Option<T> {
+        self.0
+            .get(pubkey)
+            .and_then(|acc| AccountDeserialize::try_deserialize(&mut &acc.data[..]).ok())
     }
 
     pub fn account_infos<'a, 'b: 'a>(
