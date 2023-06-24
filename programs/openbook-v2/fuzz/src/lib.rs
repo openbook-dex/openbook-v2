@@ -329,8 +329,9 @@ impl FuzzContext {
 
         let remaining = user_ids
             .iter()
-            .map(|user_id| AccountMeta {
-                pubkey: self.user(user_id).open_orders,
+            .filter_map(|user_id| self.users.get(user_id))
+            .map(|user| AccountMeta {
+                pubkey: user.open_orders,
                 is_signer: false,
                 is_writable: true,
             })
@@ -352,8 +353,9 @@ impl FuzzContext {
 
         let remaining = user_ids
             .iter()
-            .map(|user_id| AccountMeta {
-                pubkey: self.user(user_id).open_orders,
+            .filter_map(|user_id| self.users.get(user_id))
+            .map(|user| AccountMeta {
+                pubkey: user.open_orders,
                 is_signer: false,
                 is_writable: true,
             })
