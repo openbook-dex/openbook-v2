@@ -242,8 +242,7 @@ pub mod openbook_v2 {
             params: match order_type {
                 PlaceOrderType::Market => OrderParams::Market,
                 PlaceOrderType::ImmediateOrCancel => OrderParams::ImmediateOrCancel { price_lots },
-                // never goes here, order type already checked
-                _ => panic!(),
+                _ => unreachable!(),
             },
         };
         #[cfg(feature = "enable-gpl")]
