@@ -395,6 +395,7 @@ impl ClientInstruction for PlaceOrderInstruction {
     }
 }
 
+#[derive(Clone)]
 pub struct PlaceOrderPeggedInstruction {
     pub open_orders_account: Pubkey,
     pub market: Pubkey,
