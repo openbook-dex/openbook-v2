@@ -471,6 +471,9 @@ impl<'a> Orderbook<'a> {
     ) -> Result<()> {
         for i in 0..open_orders_acc.header.oo_count() {
             let oo = open_orders_acc.order_by_raw_index(i);
+            if oo.is_free() {
+                continue;
+            }
 
             let order_side_and_tree = oo.side_and_tree();
             if let Some(side_to_cancel) = side_to_cancel_option {

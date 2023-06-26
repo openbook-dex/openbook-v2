@@ -139,7 +139,10 @@ impl Order {
                 order_type,
                 ..
             } => {
-                let price_lots = oracle_price_lots + price_offset_lots;
+                let price_lots = oracle_price_lots
+                    .checked_add(price_offset_lots)
+                    .ok_or(OpenBookError::InvalidPriceLots)?;
+
                 self.price_for_order_type(
                     now_ts,
                     oracle_price_lots,

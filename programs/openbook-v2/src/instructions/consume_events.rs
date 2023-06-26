@@ -7,7 +7,7 @@ use crate::state::*;
 use crate::accounts_ix::*;
 
 // Max events to consume per ix.
-const MAX_EVENTS_CONSUME: usize = 8;
+pub const MAX_EVENTS_CONSUME: usize = 8;
 
 /// Load a open_orders account by key from the list of account infos.
 ///
