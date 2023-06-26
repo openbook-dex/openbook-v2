@@ -563,24 +563,17 @@ impl<
     pub fn cancel_order(&mut self, slot: usize, base_quantity: i64, market: Market) -> Result<()> {
         {
             let oo = self.open_order_mut_by_raw_index(slot);
-
             let price = oo.locked_price;
             let order_side = oo.side_and_tree().side();
 
-            let mut base_quantity_native = (base_quantity * market.base_lot_size) as u64;
-            let mut quote_quantity_native =
-                (base_quantity.checked_mul(price).unwrap() * market.quote_lot_size) as u64;
+            let base_quantity_native = (base_quantity * market.base_lot_size) as u64;
+            let mut quote_quantity_native = (base_quantity * price * market.quote_lot_size) as u64;
 
-            let position = &mut self.fixed_mut().position;
-
-            // If maker fees, give back fees to user
             if market.maker_fee.is_positive() {
-                let fees = market.maker_fees_ceil(quote_quantity_native);
-                quote_quantity_native += fees;
-                base_quantity_native += fees / (price as u64);
+                quote_quantity_native += market.maker_fees_ceil(quote_quantity_native);
             }
 
-            // accounting
+            let position = &mut self.fixed_mut().position;
             match order_side {
                 Side::Bid => position.quote_free_native += quote_quantity_native,
                 Side::Ask => position.base_free_native += base_quantity_native,
