@@ -485,3 +485,164 @@ async fn test_oracle_peg_limit() -> Result<(), TransportError> {
     }
     Ok(())
 }
+
+#[tokio::test]
+async fn test_locked_amounts() -> Result<(), TransportError> {
+    let quote_lot_size = 10;
+    let base_lot_size = 100;
+    let maker_fee = 200;
+    let taker_fee = 400;
+
+    let TestInitialize {
+        context,
+        owner,
+        owner_token_0: owner_base_ata,
+        owner_token_1: owner_quote_ata,
+        market,
+        base_vault,
+        quote_vault,
+        account_0,
+        account_1,
+        ..
+    } = TestContext::new_with_market(TestNewMarketInitialize {
+        quote_lot_size,
+        base_lot_size,
+        maker_fee,
+        taker_fee,
+        ..TestNewMarketInitialize::default()
+    })
+    .await?;
+    let solana = &context.solana.clone();
+
+    let place_bid_0_ix = PlaceOrderPeggedInstruction {
+        open_orders_account: account_0,
+        market,
+        owner,
+        token_deposit_account: owner_quote_ata,
+        base_vault,
+        quote_vault,
+        side: Side::Bid,
+        price_offset: 0,
+        peg_limit: 30,
+        max_base_lots: 1_000,
+        max_quote_lots_including_fees: 100_000_000,
+        client_order_id: 0,
+    };
+
+    let place_ask_1_ix = PlaceOrderPeggedInstruction {
+        side: Side::Ask,
+        token_deposit_account: owner_base_ata,
+        open_orders_account: account_1,
+        ..place_bid_0_ix.clone()
+    };
+
+    let settle_funds_0_ix = SettleFundsInstruction {
+        owner,
+        market,
+        open_orders_account: account_0,
+        base_vault,
+        quote_vault,
+        token_base_account: owner_base_ata,
+        token_quote_account: owner_quote_ata,
+        referrer: None,
+    };
+
+    let settle_funds_1_ix = SettleFundsInstruction {
+        open_orders_account: account_1,
+        ..settle_funds_0_ix.clone()
+    };
+
+    let consume_events_ix = ConsumeEventsInstruction {
+        consume_events_admin: None,
+        market,
+        open_orders_accounts: vec![account_0, account_1],
+    };
+
+    let init_balances = (
+        solana.token_account_balance(owner_base_ata).await,
+        solana.token_account_balance(owner_quote_ata).await,
+    );
+
+    // Cancel bid order
+    {
+        send_tx(solana, place_bid_0_ix.clone()).await.unwrap();
+
+        let balances = (
+            solana.token_account_balance(owner_base_ata).await,
+            solana.token_account_balance(owner_quote_ata).await + 300_000 + 60,
+        );
+
+        assert_eq!(init_balances, balances);
+
+        send_tx(
+            solana,
+            CancelAllOrdersInstruction {
+                open_orders_account: account_0,
+                market,
+                owner,
+            },
+        )
+        .await
+        .unwrap();
+        send_tx(solana, settle_funds_0_ix.clone()).await.unwrap();
+
+        let balances = (
+            solana.token_account_balance(owner_base_ata).await,
+            solana.token_account_balance(owner_quote_ata).await,
+        );
+
+        assert_eq!(init_balances, balances);
+    }
+
+    // Cancel ask order
+    {
+        send_tx(solana, place_ask_1_ix.clone()).await.unwrap();
+
+        let balances = (
+            solana.token_account_balance(owner_base_ata).await + 100_000,
+            solana.token_account_balance(owner_quote_ata).await,
+        );
+
+        assert_eq!(init_balances, balances);
+
+        send_tx(
+            solana,
+            CancelAllOrdersInstruction {
+                open_orders_account: account_1,
+                market,
+                owner,
+            },
+        )
+        .await
+        .unwrap();
+        send_tx(solana, settle_funds_1_ix.clone()).await.unwrap();
+
+        let balances = (
+            solana.token_account_balance(owner_base_ata).await,
+            solana.token_account_balance(owner_quote_ata).await,
+        );
+
+        assert_eq!(init_balances, balances);
+    }
+
+    // Place & take a bid
+    {
+        send_tx(solana, place_bid_0_ix.clone()).await.unwrap();
+        send_tx(solana, place_ask_1_ix.clone()).await.unwrap();
+        send_tx(solana, consume_events_ix.clone()).await.unwrap();
+
+        let (position_0, position_1) = {
+            let oo_0 = solana.get_account::<OpenOrdersAccount>(account_0).await;
+            let oo_1 = solana.get_account::<OpenOrdersAccount>(account_1).await;
+            (oo_0.position, oo_1.position)
+        };
+
+        assert_eq!(position_0.quote_free_native, 200_000 + 40);
+        assert_eq!(position_0.base_free_native, 100_000);
+
+        assert_eq!(position_1.quote_free_native, 100_000 - 40);
+        assert_eq!(position_1.base_free_native, 0);
+    }
+
+    Ok(())
+}

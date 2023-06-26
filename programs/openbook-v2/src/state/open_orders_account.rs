@@ -346,65 +346,64 @@ impl<
 
         let side = fill.taker_side().invert_side();
         let (base_change, quote_change) = fill.base_quote_change(side);
-        let quote_native_abs = (market.quote_lot_size * quote_change).unsigned_abs();
-        let fees = if is_self_trade || market.maker_fee.is_positive() {
-            // Maker pays fee. Fees already subtracted before sending to the book
-            0
-        } else {
-            market.maker_fees_ceil(quote_native_abs)
-        };
-
-        let price = self
-            .order_by_raw_index(fill.maker_slot as usize)
-            .locked_price;
-
-        let pa = &mut self.fixed_mut().position;
-        pa.maker_volume += quote_native_abs;
 
         msg!(
-            " maker price {}, quantity {}, base_change {}, quote_change {}",
+            "maker price {}, quantity {}, base_change {}, quote_change {}",
             fill.price,
             fill.quantity,
             base_change,
             quote_change,
         );
 
+        let base_native = (base_change * market.base_lot_size).unsigned_abs();
+        let quote_native = (quote_change * market.quote_lot_size).unsigned_abs();
+        let maker_fees = market.maker_fees_ceil(quote_native);
+
+        let (taker_fees_to_receive, maker_fees_to_pay) = if is_self_trade {
+            (0, 0)
+        } else if market.maker_fee.is_positive() {
+            (0, maker_fees)
+        } else {
+            (maker_fees, 0)
+        };
+
+        let locked_price = self
+            .order_by_raw_index(fill.maker_slot as usize)
+            .locked_price;
+
+        let pa = &mut self.fixed_mut().position;
+        pa.maker_volume += quote_native;
+
         // Update free_lots
         {
-            let (base_locked_change, quote_locked_change): (i64, i64) = match side {
-                Side::Bid => (fill.quantity, -price * fill.quantity),
-                Side::Ask => (-fill.quantity, price * fill.quantity),
-            };
+            let quote_at_lock_price = (fill.quantity * locked_price * market.quote_lot_size) as u64;
+            let quote_to_free = quote_at_lock_price - quote_native;
 
-            let base_to_free = (market.base_lot_size * base_locked_change.abs()) as u64;
-            let quote_to_free = (market.quote_lot_size * quote_locked_change.abs()) as u64;
+            let maker_fees_to_free = if market.maker_fee.is_positive() {
+                let fees_at_lock_price = market.maker_fees_ceil(quote_at_lock_price);
+                let fees_at_fill_price = maker_fees_to_pay;
+                fees_at_lock_price - fees_at_fill_price
+            } else {
+                0_u64
+            };
 
             match side {
                 Side::Bid => {
-                    pa.base_free_native += base_to_free;
-                    pa.quote_free_native += fees;
+                    pa.base_free_native += base_native;
+                    pa.quote_free_native +=
+                        quote_to_free + taker_fees_to_receive + maker_fees_to_free;
                 }
                 Side::Ask => {
-                    let maker_fees: u64 = if market.maker_fee.is_positive() {
-                        market
-                            .maker_fees_ceil(quote_locked_change * market.quote_lot_size)
-                            .try_into()
-                            .unwrap()
-                    } else {
-                        0_u64
-                    };
-                    pa.quote_free_native += quote_to_free + fees - maker_fees;
+                    pa.quote_free_native +=
+                        quote_native + taker_fees_to_receive - maker_fees_to_pay;
                 }
             };
 
-            if !is_self_trade && market.maker_fee.is_positive() {
-                // Apply rebates
-                let maker_fees = market.maker_fees_ceil(quote_to_free);
-
-                pa.referrer_rebates_accrued += maker_fees;
-                market.referrer_rebates_accrued += maker_fees;
-            }
+            // Apply rebates
+            pa.referrer_rebates_accrued += maker_fees_to_pay;
+            market.referrer_rebates_accrued += maker_fees_to_pay;
         }
+
         if fill.maker_out() {
             self.remove_order(fill.maker_slot as usize, base_change.abs())?;
         } else {
@@ -416,9 +415,7 @@ impl<
 
         // Update market fees
         if !is_self_trade {
-            let fee_amount: i64 = (market.maker_fees_ceil(quote_native_abs))
-                .try_into()
-                .unwrap();
+            let fee_amount: i64 = maker_fees.try_into().unwrap();
             if market.maker_fee.is_positive() {
                 market.fees_accrued += fee_amount
             } else {
@@ -563,24 +560,17 @@ impl<
     pub fn cancel_order(&mut self, slot: usize, base_quantity: i64, market: Market) -> Result<()> {
         {
             let oo = self.open_order_mut_by_raw_index(slot);
-
             let price = oo.locked_price;
             let order_side = oo.side_and_tree().side();
 
-            let mut base_quantity_native = (base_quantity * market.base_lot_size) as u64;
-            let mut quote_quantity_native =
-                (base_quantity.checked_mul(price).unwrap() * market.quote_lot_size) as u64;
+            let base_quantity_native = (base_quantity * market.base_lot_size) as u64;
+            let mut quote_quantity_native = (base_quantity * price * market.quote_lot_size) as u64;
 
-            let position = &mut self.fixed_mut().position;
-
-            // If maker fees, give back fees to user
             if market.maker_fee.is_positive() {
-                let fees = market.maker_fees_ceil(quote_quantity_native);
-                quote_quantity_native += fees;
-                base_quantity_native += fees / (price as u64);
+                quote_quantity_native += market.maker_fees_ceil(quote_quantity_native);
             }
 
-            // accounting
+            let position = &mut self.fixed_mut().position;
             match order_side {
                 Side::Bid => position.quote_free_native += quote_quantity_native,
                 Side::Ask => position.base_free_native += base_quantity_native,
