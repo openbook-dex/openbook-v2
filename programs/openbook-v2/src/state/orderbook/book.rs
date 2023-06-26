@@ -253,19 +253,18 @@ impl<'a> Orderbook<'a> {
                 taker_fees = market.taker_fees_ceil(total_quote_taken_native_wo_self);
                 // Only account taker fees now. Maker fees accounted once processing the event
                 market.fees_accrued += taker_fees as i64;
+                referrer_amount = market.referrer_taker_rebate(total_quote_taken_native_wo_self);
             };
 
             if let Some(open_orders_acc) = &mut open_orders_acc {
-                open_orders_acc.release_funds_apply_fees(
-                    side,
+                open_orders_acc.execute_taker(
                     market,
+                    side,
                     total_base_taken_native,
                     total_quote_taken_native,
                     taker_fees,
-                )?;
-            } else {
-                // It's a taker order, transfer to referrer
-                referrer_amount += market.referrer_taker_rebate(total_quote_taken_native_wo_self);
+                    referrer_amount,
+                );
             }
 
             let total_quantity_paid: u64;
