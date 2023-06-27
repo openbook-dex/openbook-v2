@@ -3,7 +3,6 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::Token;
 use fixed::types::I80F48;
-use openbook_v2::state::OpenOrdersAccount;
 use solana_program::instruction::Instruction;
 use solana_program_test::BanksClientError;
 use solana_sdk::instruction;

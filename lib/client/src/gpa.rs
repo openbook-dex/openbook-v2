@@ -1,6 +1,6 @@
 use anchor_lang::{AccountDeserialize, Discriminator};
 
-use openbook_v2::state::{Market, OpenOrdersAccount, OpenOrdersAccountValue};
+use openbook_v2::state::{Market, OpenOrdersAccount};
 
 use solana_account_decoder::UiAccountEncoding;
 use solana_client::nonblocking::rpc_client::RpcClient as RpcClientAsync;
@@ -12,7 +12,7 @@ pub async fn fetch_openbook_accounts(
     rpc: &RpcClientAsync,
     program: Pubkey,
     owner: Pubkey,
-) -> anyhow::Result<Vec<(Pubkey, OpenOrdersAccountValue)>> {
+) -> anyhow::Result<Vec<(Pubkey, OpenOrdersAccount)>> {
     let config = RpcProgramAccountsConfig {
         filters: Some(vec![
             RpcFilterType::Memcmp(Memcmp::new_raw_bytes(
@@ -30,8 +30,13 @@ pub async fn fetch_openbook_accounts(
     rpc.get_program_accounts_with_config(&program, config)
         .await?
         .into_iter()
-        .map(|(key, account)| Ok((key, OpenOrdersAccountValue::from_bytes(&account.data[8..])?)))
-        .collect::<Result<Vec<_>, _>>()
+        .map(|(key, account)| {
+            Ok((
+                key,
+                OpenOrdersAccount::try_deserialize(&mut (&account.data as &[u8]))?,
+            ))
+        })
+        .collect()
 }
 
 pub async fn fetch_anchor_account<T: AccountDeserialize>(
