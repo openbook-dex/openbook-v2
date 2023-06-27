@@ -220,6 +220,7 @@ impl<'a> Orderbook<'a> {
                 *owner,
                 order.client_order_id,
                 best_opposing_price,
+                best_opposing.node.peg_limit,
                 match_base_lots,
             );
 

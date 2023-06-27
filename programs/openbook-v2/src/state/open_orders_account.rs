@@ -345,18 +345,7 @@ impl<
         let is_self_trade = fill.maker == fill.taker;
 
         let side = fill.taker_side().invert_side();
-        let (base_change, quote_change) = fill.base_quote_change(side);
-
-        msg!(
-            "maker price {}, quantity {}, base_change {}, quote_change {}",
-            fill.price,
-            fill.quantity,
-            base_change,
-            quote_change,
-        );
-
-        let base_native = (base_change * market.base_lot_size).unsigned_abs();
-        let quote_native = (quote_change * market.quote_lot_size).unsigned_abs();
+        let quote_native = (fill.quantity * fill.price * market.quote_lot_size) as u64;
         let maker_fees = market.maker_fees_ceil(quote_native);
 
         let (taker_fees_to_receive, maker_fees_to_pay) = if is_self_trade {
@@ -367,16 +356,9 @@ impl<
             (maker_fees, 0)
         };
 
-        let locked_price = self
-            .order_by_raw_index(fill.maker_slot as usize)
-            .locked_price;
-
-        let pa = &mut self.fixed_mut().position;
-        pa.maker_volume += quote_native;
-
-        // Update free_lots
-        {
-            let quote_at_lock_price = (fill.quantity * locked_price * market.quote_lot_size) as u64;
+        let locked_amount_above_fill_price = if fill.peg_limit != -1 && side == Side::Bid {
+            let quote_at_lock_price =
+                (fill.quantity * fill.peg_limit * market.quote_lot_size) as u64;
             let quote_to_free = quote_at_lock_price - quote_native;
 
             let maker_fees_to_free = if market.maker_fee.is_positive() {
@@ -384,32 +366,38 @@ impl<
                 let fees_at_fill_price = maker_fees_to_pay;
                 fees_at_lock_price - fees_at_fill_price
             } else {
-                0_u64
+                0
             };
 
-            match side {
-                Side::Bid => {
-                    pa.base_free_native += base_native;
-                    pa.quote_free_native +=
-                        quote_to_free + taker_fees_to_receive + maker_fees_to_free;
-                }
-                Side::Ask => {
-                    pa.quote_free_native +=
-                        quote_native + taker_fees_to_receive - maker_fees_to_pay;
-                }
-            };
+            quote_to_free + maker_fees_to_free
+        } else {
+            0
+        };
 
-            // Apply rebates
-            pa.referrer_rebates_accrued += maker_fees_to_pay;
-            market.referrer_rebates_accrued += maker_fees_to_pay;
-        }
+        let pa = &mut self.fixed_mut().position;
+        pa.maker_volume += quote_native;
+
+        // Update free_lots
+        match side {
+            Side::Bid => {
+                pa.base_free_native += (fill.quantity * market.base_lot_size) as u64;
+                pa.quote_free_native += taker_fees_to_receive + locked_amount_above_fill_price;
+            }
+            Side::Ask => {
+                pa.quote_free_native += quote_native + taker_fees_to_receive - maker_fees_to_pay;
+            }
+        };
+
+        // Apply rebates
+        pa.referrer_rebates_accrued += maker_fees_to_pay;
+        market.referrer_rebates_accrued += maker_fees_to_pay;
 
         if fill.maker_out() {
-            self.remove_order(fill.maker_slot as usize, base_change.abs())?;
+            self.remove_order(fill.maker_slot as usize, fill.quantity)?;
         } else {
             match side {
-                Side::Bid => pa.bids_base_lots -= base_change.abs(),
-                Side::Ask => pa.asks_base_lots -= base_change.abs(),
+                Side::Bid => pa.bids_base_lots -= fill.quantity,
+                Side::Ask => pa.asks_base_lots -= fill.quantity,
             };
         }
 
