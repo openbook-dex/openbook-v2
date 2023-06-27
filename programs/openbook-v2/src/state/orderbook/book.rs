@@ -61,7 +61,7 @@ impl<'a> Orderbook<'a> {
         open_book_market: &mut Market,
         event_queue: &mut EventQueue,
         oracle_price: I80F48,
-        mut open_orders_acc: &mut Option<&mut OpenOrdersAccount>,
+        mut open_orders_acc: Option<&mut OpenOrdersAccount>,
         owner: &Pubkey,
         now_ts: u64,
         mut limit: u8,
@@ -133,7 +133,7 @@ impl<'a> Orderbook<'a> {
                         event,
                         market,
                         event_queue,
-                        open_orders_acc,
+                        open_orders_acc.as_deref_mut(),
                         owner,
                         remaining_accs,
                     )?;
@@ -372,7 +372,7 @@ impl<'a> Orderbook<'a> {
                     event,
                     market,
                     event_queue,
-                    open_orders_acc,
+                    open_orders_acc.as_deref_mut(),
                     owner,
                     remaining_accs,
                 )?;
@@ -399,14 +399,14 @@ impl<'a> Orderbook<'a> {
                     event,
                     market,
                     event_queue,
-                    open_orders_acc,
+                    open_orders_acc.as_deref_mut(),
                     owner,
                     remaining_accs,
                 )?;
             }
 
             // Open orders always exists in this case, unwrap
-            let open_orders = open_orders_acc.as_mut().unwrap();
+            let open_orders = open_orders_acc.unwrap();
             let owner_slot = open_orders.next_order_slot()?;
             let new_order = LeafNode::new(
                 owner_slot as u8,
@@ -537,11 +537,11 @@ pub fn process_out_event(
     event: OutEvent,
     market: &Market,
     event_queue: &mut EventQueue,
-    mut open_orders_acc: &mut Option<&mut OpenOrdersAccount>,
+    open_orders_acc: Option<&mut OpenOrdersAccount>,
     owner: &Pubkey,
     remaining_accs: &[AccountInfo],
 ) -> Result<()> {
-    if let Some(acc) = &mut open_orders_acc {
+    if let Some(acc) = open_orders_acc {
         if owner == &event.owner {
             acc.cancel_order(event.owner_slot as usize, event.quantity, *market)?;
             // Already canceled, return

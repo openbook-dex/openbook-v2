@@ -55,7 +55,7 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<
         &mut market,
         &mut event_queue,
         oracle_price,
-        &mut Some(&mut open_orders_account),
+        Some(&mut open_orders_account),
         &open_orders_account_pk,
         now_ts,
         limit,
