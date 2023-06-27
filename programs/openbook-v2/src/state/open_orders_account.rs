@@ -14,10 +14,7 @@ use super::Side;
 use super::SideAndOrderTree;
 use super::{BookSideOrderTree, Position};
 
-type BorshVecLength = u32;
-const BORSH_VEC_PADDING_BYTES: usize = 4;
-const BORSH_VEC_SIZE_BYTES: usize = 4;
-const DEFAULT_OPEN_ORDERS_ACCOUNT_VERSION: u8 = 1;
+pub const MAX_OPEN_ORDERS: usize = 128;
 
 #[account(zero_copy)]
 #[derive(Debug)]
@@ -39,7 +36,7 @@ pub struct OpenOrdersAccount {
 
     pub position: Position,
 
-    pub open_orders: [OpenOrder; 128],
+    pub open_orders: [OpenOrder; MAX_OPEN_ORDERS],
 }
 
 const_assert_eq!(
@@ -51,27 +48,12 @@ const_assert_eq!(
         + 1
         + 3
         + size_of::<Position>()
-        + 128 * size_of::<OpenOrder>()
+        + MAX_OPEN_ORDERS * size_of::<OpenOrder>()
 );
 const_assert_eq!(size_of::<OpenOrdersAccount>(), 9512);
 const_assert_eq!(size_of::<OpenOrdersAccount>() % 8, 0);
 
 impl OpenOrdersAccount {
-    pub fn default_for_tests() -> Self {
-        Self {
-            name: Default::default(),
-            owner: Pubkey::default(),
-            market: Pubkey::default(),
-            delegate: PodOption::default(),
-            account_num: 0,
-            bump: 0,
-
-            padding: Default::default(),
-            position: Position::default(),
-            open_orders: [OpenOrder::default(); 128],
-        }
-    }
-
     /// Number of bytes needed for the OpenOrdersAccount, including the discriminator
     pub fn space() -> Result<usize> {
         Ok(8 + size_of::<OpenOrdersAccount>())

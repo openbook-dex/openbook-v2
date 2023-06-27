@@ -1,4 +1,5 @@
 use crate::logs::TotalOrderFillEvent;
+use crate::state::MAX_OPEN_ORDERS;
 use crate::{
     error::*,
     state::{orderbook::bookside::*, EventQueue, Market, OpenOrdersAccount},
@@ -467,7 +468,8 @@ impl<'a> Orderbook<'a> {
         mut limit: u8,
         side_to_cancel_option: Option<Side>,
     ) -> Result<()> {
-        for oo in open_orders_acc.open_orders.iter_mut() {
+        for i in 0..=MAX_OPEN_ORDERS {
+            let oo = open_orders_acc.open_orders[i];
             if oo.is_free() {
                 continue;
             }
