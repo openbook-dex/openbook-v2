@@ -17,12 +17,10 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<
         OpenBookError::InvalidInputLots
     );
 
-    let mut open_orders_account = ctx.accounts.open_orders_account.load_full_mut()?;
+    let mut open_orders_account = ctx.accounts.open_orders_account.load_mut()?;
     // account constraint #1
     require!(
-        open_orders_account
-            .fixed
-            .is_owner_or_delegate(ctx.accounts.owner_or_delegate.key()),
+        open_orders_account.is_owner_or_delegate(ctx.accounts.owner_or_delegate.key()),
         OpenBookError::NoOwnerOrDelegate
     );
     let open_orders_account_pk = ctx.accounts.open_orders_account.key();
@@ -57,7 +55,7 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<
         &mut market,
         &mut event_queue,
         oracle_price,
-        &mut Some(open_orders_account.borrow_mut()),
+        &mut Some(*open_orders_account),
         &open_orders_account_pk,
         now_ts,
         limit,
@@ -68,7 +66,7 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<
         ctx.remaining_accounts,
     )?;
 
-    let position = &mut open_orders_account.fixed_mut().position;
+    let position = &mut open_orders_account.position;
     let (to_vault, deposit_amount) = match order.side {
         Side::Bid => {
             let free_quote = position.quote_free_native;

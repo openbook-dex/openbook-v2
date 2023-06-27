@@ -1,9 +1,7 @@
 use crate::logs::TotalOrderFillEvent;
-use crate::state::open_orders_account::OpenOrdersLoader;
-use crate::state::OpenOrdersAccountRefMut;
 use crate::{
     error::*,
-    state::{orderbook::bookside::*, EventQueue, Market, OpenOrdersAccountFixed},
+    state::{orderbook::bookside::*, EventQueue, Market, OpenOrdersAccount},
 };
 use anchor_lang::prelude::*;
 use bytemuck::cast;
@@ -62,7 +60,7 @@ impl<'a> Orderbook<'a> {
         open_book_market: &mut Market,
         event_queue: &mut EventQueue,
         oracle_price: I80F48,
-        mut open_orders_acc: &mut Option<OpenOrdersAccountRefMut>,
+        mut open_orders_acc: &mut Option<OpenOrdersAccount>,
         owner: &Pubkey,
         now_ts: u64,
         mut limit: u8,
@@ -464,13 +462,12 @@ impl<'a> Orderbook<'a> {
     /// The orders are removed from the book and from the openorders account open order list.
     pub fn cancel_all_orders(
         &mut self,
-        open_orders_acc: &mut OpenOrdersAccountRefMut,
+        open_orders_acc: &mut OpenOrdersAccount,
         market: Market,
         mut limit: u8,
         side_to_cancel_option: Option<Side>,
     ) -> Result<()> {
-        for i in 0..open_orders_acc.header.oo_count() {
-            let oo = open_orders_acc.order_by_raw_index(i);
+        for oo in open_orders_acc.open_orders.iter_mut() {
             if oo.is_free() {
                 continue;
             }
@@ -511,7 +508,7 @@ impl<'a> Orderbook<'a> {
     /// Cancels an order on a side, removing it from the book and the openorders account orders list
     pub fn cancel_order(
         &mut self,
-        open_orders_acc: &mut OpenOrdersAccountRefMut,
+        open_orders_acc: &mut OpenOrdersAccount,
         order_id: u128,
         side_and_tree: SideAndOrderTree,
         market: Market,
@@ -537,7 +534,7 @@ pub fn process_out_event(
     event: OutEvent,
     market: &Market,
     event_queue: &mut EventQueue,
-    mut open_orders_acc: &mut Option<OpenOrdersAccountRefMut>,
+    mut open_orders_acc: &mut Option<OpenOrdersAccount>,
     owner: &Pubkey,
     remaining_accs: &[AccountInfo],
 ) -> Result<()> {
@@ -550,8 +547,8 @@ pub fn process_out_event(
     }
     // Check if remaining is available so no event is pushed to event_queue
     if let Some(acc) = remaining_accs.iter().find(|ai| ai.key == &event.owner) {
-        let ooa: AccountLoader<OpenOrdersAccountFixed> = AccountLoader::try_from(acc)?;
-        let mut acc = ooa.load_full_mut()?;
+        let ooa: AccountLoader<OpenOrdersAccount> = AccountLoader::try_from(acc)?;
+        let mut acc = ooa.load_mut()?;
         acc.cancel_order(event.owner_slot as usize, event.quantity, *market)?;
     } else {
         event_queue.push_back(cast(event));
@@ -567,8 +564,8 @@ pub fn process_fill_event(
 ) -> Result<()> {
     let loader = remaining_accs.iter().find(|ai| ai.key == &event.maker);
     if let Some(acc) = loader {
-        let ooa: AccountLoader<OpenOrdersAccountFixed> = AccountLoader::try_from(acc)?;
-        let mut maker = ooa.load_full_mut()?;
+        let ooa: AccountLoader<OpenOrdersAccount> = AccountLoader::try_from(acc)?;
+        let mut maker = ooa.load_mut()?;
 
         maker.execute_maker(market, &event)?;
     } else {

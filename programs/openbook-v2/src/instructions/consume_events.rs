@@ -38,11 +38,11 @@ macro_rules! load_open_orders_acc {
                     continue;
                 }
 
-                let mal: AccountLoader<OpenOrdersAccountFixed> = AccountLoader::try_from(ai)?;
+                let mal: AccountLoader<OpenOrdersAccount> = AccountLoader::try_from(ai)?;
                 mal
             }
         };
-        let mut $name = loader.load_full_mut()?;
+        let mut $name = loader.load_mut()?;
     };
 }
 

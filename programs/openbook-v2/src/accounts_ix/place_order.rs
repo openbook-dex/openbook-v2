@@ -7,7 +7,7 @@ pub struct PlaceOrder<'info> {
     #[account(mut,
         has_one = market,
     )]
-    pub open_orders_account: AccountLoader<'info, OpenOrdersAccountFixed>,
+    pub open_orders_account: AccountLoader<'info, OpenOrdersAccount>,
     pub owner_or_delegate: Signer<'info>,
     pub open_orders_admin: Option<Signer<'info>>,
 

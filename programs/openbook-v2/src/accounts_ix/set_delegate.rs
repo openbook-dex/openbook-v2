@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-use crate::state::OpenOrdersAccountFixed;
+use crate::state::OpenOrdersAccount;
 
 #[derive(Accounts)]
 pub struct SetDelegate<'info> {
@@ -8,7 +8,7 @@ pub struct SetDelegate<'info> {
         mut,
         has_one = owner,
     )]
-    pub open_orders_account: AccountLoader<'info, OpenOrdersAccountFixed>,
+    pub open_orders_account: AccountLoader<'info, OpenOrdersAccount>,
     #[account(mut)]
     pub owner: Signer<'info>,
     /// CHECK:

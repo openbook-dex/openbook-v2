@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-use crate::state::{Market, OpenOrdersAccount, OpenOrdersAccountFixed};
+use crate::state::{Market, OpenOrdersAccount};
 
 #[derive(Accounts)]
 #[instruction(account_num: u32, open_orders_count: u8)]
@@ -10,9 +10,9 @@ pub struct InitOpenOrders<'info> {
         seeds = [b"OpenOrders".as_ref(), owner.key().as_ref(), market.key().as_ref(), &account_num.to_le_bytes()],
         bump,
         payer = owner,
-        space = OpenOrdersAccount::space(open_orders_count)?,
+        space = OpenOrdersAccount::space()?,
     )]
-    pub open_orders_account: AccountLoader<'info, OpenOrdersAccountFixed>,
+    pub open_orders_account: AccountLoader<'info, OpenOrdersAccount>,
     #[account(mut)]
     pub owner: Signer<'info>,
     #[account(mut)]

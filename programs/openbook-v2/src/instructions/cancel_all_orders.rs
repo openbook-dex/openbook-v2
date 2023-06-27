@@ -9,10 +9,10 @@ pub fn cancel_all_orders(
     side_option: Option<Side>,
     limit: u8,
 ) -> Result<()> {
-    let mut account = ctx.accounts.open_orders_account.load_full_mut()?;
+    let mut account = ctx.accounts.open_orders_account.load_mut()?;
     // account constraint #1
     require!(
-        account.fixed.is_owner_or_delegate(ctx.accounts.owner.key()),
+        account.is_owner_or_delegate(ctx.accounts.owner.key()),
         OpenBookError::NoOwnerOrDelegate
     );
 
@@ -22,7 +22,7 @@ pub fn cancel_all_orders(
         asks: ctx.accounts.asks.load_mut()?,
     };
 
-    book.cancel_all_orders(&mut account.borrow_mut(), *market, limit, side_option)?;
+    book.cancel_all_orders(&mut account, *market, limit, side_option)?;
 
     Ok(())
 }

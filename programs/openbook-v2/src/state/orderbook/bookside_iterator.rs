@@ -160,7 +160,7 @@ impl<'a> Iterator for BookSideIter<'a> {
     type Item = BookSideIterItem<'a>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let side = self.fixed_iter.side();
+        let side = self_iter.side();
 
         // Skip all the oracle pegged orders that aren't representable with the current oracle
         // price. Example: iterating asks, but the best ask is at offset -100 with the oracle at 50.
@@ -173,7 +173,7 @@ impl<'a> Iterator for BookSideIter<'a> {
             o_peek = self.oracle_pegged_iter.next()
         }
 
-        let f_peek = self.fixed_iter.peek();
+        let f_peek = self_iter.peek();
 
         let better = rank_orders(
             side,
@@ -184,7 +184,7 @@ impl<'a> Iterator for BookSideIter<'a> {
             self.oracle_price_lots,
         )?;
         match better.handle.order_tree {
-            BookSideOrderTree::Fixed => self.fixed_iter.next(),
+            BookSideOrderTree::Fixed => self_iter.next(),
             BookSideOrderTree::OraclePegged => self.oracle_pegged_iter.next(),
         };
 
