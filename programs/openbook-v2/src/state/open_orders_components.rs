@@ -7,7 +7,7 @@ use std::mem::size_of;
 use crate::state::*;
 
 #[zero_copy]
-#[derive(AnchorSerialize, AnchorDeserialize, Derivative)]
+#[derive(Derivative)]
 #[derivative(Debug)]
 pub struct Position {
     /// Base lots in open bids
@@ -68,7 +68,7 @@ impl Position {
 }
 
 #[zero_copy]
-#[derive(AnchorSerialize, AnchorDeserialize, Debug)]
+#[derive(Debug)]
 pub struct OpenOrder {
     pub id: u128,
     pub client_id: u64,

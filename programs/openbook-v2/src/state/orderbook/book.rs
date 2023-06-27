@@ -61,7 +61,7 @@ impl<'a> Orderbook<'a> {
         open_book_market: &mut Market,
         event_queue: &mut EventQueue,
         oracle_price: I80F48,
-        mut open_orders_acc: &mut Option<OpenOrdersAccount>,
+        mut open_orders_acc: &mut Option<&mut OpenOrdersAccount>,
         owner: &Pubkey,
         now_ts: u64,
         mut limit: u8,
@@ -536,7 +536,7 @@ pub fn process_out_event(
     event: OutEvent,
     market: &Market,
     event_queue: &mut EventQueue,
-    mut open_orders_acc: &mut Option<OpenOrdersAccount>,
+    mut open_orders_acc: &mut Option<&mut OpenOrdersAccount>,
     owner: &Pubkey,
     remaining_accs: &[AccountInfo],
 ) -> Result<()> {
