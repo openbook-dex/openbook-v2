@@ -250,9 +250,10 @@ pub struct FillEvent {
     pub taker: Pubkey,
     pub padding3: [u8; 16],
     pub taker_client_order_id: u64,
-    pub padding4: [u8; 16],
+    pub padding4: [u8; 8],
 
     pub price: i64,
+    pub peg_limit: i64,
     pub quantity: i64, // number of quote lots
     pub maker_client_order_id: u64,
     pub reserved: [u8; 8],
@@ -274,6 +275,7 @@ impl FillEvent {
         taker: Pubkey,
         taker_client_order_id: u64,
         price: i64,
+        peg_limit: i64,
         quantity: i64,
     ) -> FillEvent {
         Self {
@@ -289,19 +291,13 @@ impl FillEvent {
             taker,
             taker_client_order_id,
             price,
+            peg_limit,
             quantity,
             padding: Default::default(),
             padding2: Default::default(),
             padding3: Default::default(),
             padding4: Default::default(),
             reserved: [0; 8],
-        }
-    }
-
-    pub fn base_quote_change(&self, side: Side) -> (i64, i64) {
-        match side {
-            Side::Bid => (self.quantity, -self.price * self.quantity),
-            Side::Ask => (-self.quantity, self.price * self.quantity),
         }
     }
 
