@@ -3,7 +3,7 @@ use anchor_lang::prelude::*;
 use crate::state::{Market, OpenOrdersAccount};
 
 #[derive(Accounts)]
-#[instruction(account_num: u32, open_orders_count: u8)]
+#[instruction(account_num: u32)]
 pub struct InitOpenOrders<'info> {
     #[account(
         init,

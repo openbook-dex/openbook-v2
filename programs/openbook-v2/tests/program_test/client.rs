@@ -3,7 +3,7 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::Token;
 use fixed::types::I80F48;
-use openbook_v2::state::OpenOrdersAccountValue;
+use openbook_v2::state::OpenOrdersAccount;
 use solana_program::instruction::Instruction;
 use solana_program_test::BanksClientError;
 use solana_sdk::instruction;
@@ -20,11 +20,6 @@ pub trait ClientAccountLoader {
     async fn load<T: AccountDeserialize>(&self, pubkey: &Pubkey) -> Option<T> {
         let bytes = self.load_bytes(pubkey).await?;
         AccountDeserialize::try_deserialize(&mut &bytes[..]).ok()
-    }
-    async fn load_open_orders_account(&self, pubkey: &Pubkey) -> Option<OpenOrdersAccountValue> {
-        self.load_bytes(pubkey)
-            .await
-            .map(|v| OpenOrdersAccountValue::from_bytes(&v[8..]).unwrap())
     }
 }
 
@@ -128,14 +123,6 @@ async fn get_oracle_address_from_market_address(
     market.oracle
 }
 
-pub async fn get_open_orders_account(
-    solana: &SolanaCookie,
-    account: Pubkey,
-) -> OpenOrdersAccountValue {
-    let bytes = solana.get_account_data(account).await.unwrap();
-    OpenOrdersAccountValue::from_bytes(&bytes[8..]).unwrap()
-}
-
 pub async fn set_stub_oracle_price(
     solana: &SolanaCookie,
     token: &super::setup::Token,
@@ -156,7 +143,6 @@ pub async fn set_stub_oracle_price(
 
 pub struct InitOpenOrdersInstruction {
     pub account_num: u32,
-    pub open_orders_count: u8,
     pub market: Pubkey,
     pub owner: TestKeypair,
     pub payer: TestKeypair,
@@ -173,7 +159,6 @@ impl ClientInstruction for InitOpenOrdersInstruction {
         let program_id = openbook_v2::id();
         let instruction = openbook_v2::instruction::InitOpenOrders {
             account_num: self.account_num,
-            open_orders_count: self.open_orders_count,
         };
 
         let open_orders_account = Pubkey::find_program_address(
