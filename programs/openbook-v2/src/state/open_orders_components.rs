@@ -7,7 +7,7 @@ use std::mem::size_of;
 use crate::state::*;
 
 #[zero_copy]
-#[derive(AnchorSerialize, AnchorDeserialize, Derivative)]
+#[derive(Derivative)]
 #[derivative(Debug)]
 pub struct Position {
     /// Base lots in open bids
@@ -68,19 +68,20 @@ impl Position {
 }
 
 #[zero_copy]
-#[derive(AnchorSerialize, AnchorDeserialize, Debug)]
+#[derive(Debug)]
 pub struct OpenOrder {
-    pub is_free: u8,
-    pub side_and_tree: u8, // SideAndOrderTree -- enums aren't POD
-    pub padding1: [u8; 6],
+    pub id: u128,
     pub client_id: u64,
     /// Price at which user's assets were locked
     pub locked_price: i64,
-    pub id: u128,
-    pub reserved: [u8; 64],
+
+    pub is_free: u8,
+    pub side_and_tree: u8, // SideAndOrderTree -- enums aren't POD
+    pub padding: [u8; 6],
+    pub reserved: [u8; 32],
 }
-const_assert_eq!(size_of::<OpenOrder>(), 1 + 7 + 8 + 8 + 16 + 64);
-const_assert_eq!(size_of::<OpenOrder>(), 104);
+const_assert_eq!(size_of::<OpenOrder>(), 16 + 8 + 8 + 1 + 1 + 6 + 32);
+const_assert_eq!(size_of::<OpenOrder>(), 72);
 const_assert_eq!(size_of::<OpenOrder>() % 8, 0);
 
 impl Default for OpenOrder {
@@ -88,11 +89,11 @@ impl Default for OpenOrder {
         Self {
             is_free: true.into(),
             side_and_tree: SideAndOrderTree::BidFixed.into(),
-            padding1: Default::default(),
             client_id: 0,
             locked_price: 0,
             id: 0,
-            reserved: [0; 64],
+            padding: [0; 6],
+            reserved: [0u8; 32],
         }
     }
 }

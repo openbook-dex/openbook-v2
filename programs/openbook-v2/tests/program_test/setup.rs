@@ -69,7 +69,6 @@ pub async fn create_open_orders_account(
         solana,
         InitOpenOrdersInstruction {
             account_num,
-            open_orders_count: 8,
             market,
             owner,
             payer: payer.key,

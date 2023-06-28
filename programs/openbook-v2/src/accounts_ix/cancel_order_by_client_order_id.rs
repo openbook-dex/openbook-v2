@@ -1,4 +1,4 @@
-use crate::state::{BookSide, Market, OpenOrdersAccountFixed};
+use crate::state::{BookSide, Market, OpenOrdersAccount};
 use anchor_lang::prelude::*;
 
 #[derive(Accounts)]
@@ -8,7 +8,7 @@ pub struct CancelOrderByClientOrderId<'info> {
         // owner is checked at #1
         has_one = market,
     )]
-    pub open_orders_account: AccountLoader<'info, OpenOrdersAccountFixed>,
+    pub open_orders_account: AccountLoader<'info, OpenOrdersAccount>,
     pub owner: Signer<'info>,
 
     #[account(

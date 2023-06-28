@@ -8,7 +8,7 @@ pub struct PruneOrders<'info> {
         mut,
         has_one = market
     )]
-    pub open_orders_account: AccountLoader<'info, OpenOrdersAccountFixed>,
+    pub open_orders_account: AccountLoader<'info, OpenOrdersAccount>,
     #[account(
         has_one = bids,
         has_one = asks,

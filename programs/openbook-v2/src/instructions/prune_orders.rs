@@ -5,7 +5,7 @@ use crate::error::*;
 use crate::state::*;
 
 pub fn prune_orders(ctx: Context<PruneOrders>, limit: u8) -> Result<()> {
-    let mut account = ctx.accounts.open_orders_account.load_full_mut()?;
+    let mut account = ctx.accounts.open_orders_account.load_mut()?;
     let market = ctx.accounts.market.load()?;
 
     // check market is expired
@@ -25,7 +25,7 @@ pub fn prune_orders(ctx: Context<PruneOrders>, limit: u8) -> Result<()> {
         asks: ctx.accounts.asks.load_mut()?,
     };
 
-    book.cancel_all_orders(&mut account.borrow_mut(), *market, limit, None)?;
+    book.cancel_all_orders(&mut account, *market, limit, None)?;
 
     Ok(())
 }

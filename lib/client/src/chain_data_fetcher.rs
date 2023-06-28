@@ -6,8 +6,9 @@ use crate::chain_data::*;
 
 use anchor_lang::Discriminator;
 
+use anchor_lang::AccountDeserialize;
 use openbook_v2::accounts_zerocopy::LoadZeroCopy;
-use openbook_v2::state::{OpenOrdersAccount, OpenOrdersAccountValue};
+use openbook_v2::state::OpenOrdersAccount;
 
 use anyhow::Context;
 
@@ -34,13 +35,10 @@ impl AccountFetcher {
             .with_context(|| format!("loading account {}", address))?)
     }
 
-    pub fn fetch_openbook_account(
-        &self,
-        address: &Pubkey,
-    ) -> anyhow::Result<OpenOrdersAccountValue> {
+    pub fn fetch_openbook_account(&self, address: &Pubkey) -> anyhow::Result<OpenOrdersAccount> {
         let acc = self.fetch_raw(address)?;
 
-        let data = acc.data();
+        let mut data: &[u8] = acc.data();
         if data.len() < 8 {
             anyhow::bail!(
                 "account at {} has only {} bytes of data",
@@ -53,7 +51,7 @@ impl AccountFetcher {
             anyhow::bail!("not a openorders account at {}", address);
         }
 
-        OpenOrdersAccountValue::from_bytes(&data[8..])
+        OpenOrdersAccount::try_deserialize(&mut data)
             .with_context(|| format!("loading openorders account {}", address))
     }
 
@@ -69,7 +67,7 @@ impl AccountFetcher {
     pub async fn fetch_fresh_openbook_account(
         &self,
         address: &Pubkey,
-    ) -> anyhow::Result<OpenOrdersAccountValue> {
+    ) -> anyhow::Result<OpenOrdersAccount> {
         self.refresh_account_via_rpc(address).await?;
         self.fetch_openbook_account(address)
     }

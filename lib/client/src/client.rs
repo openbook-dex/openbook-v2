@@ -10,9 +10,7 @@ use anchor_spl::token::Token;
 
 use itertools::Itertools;
 
-use openbook_v2::state::{
-    MarketIndex, OpenOrdersAccountValue, PlaceOrderType, SelfTradeBehavior, Side,
-};
+use openbook_v2::state::{MarketIndex, OpenOrdersAccount, PlaceOrderType, SelfTradeBehavior, Side};
 
 use solana_client::nonblocking::rpc_client::RpcClient as RpcClientAsync;
 use solana_client::rpc_config::RpcSendTransactionConfig;
@@ -107,7 +105,7 @@ impl OpenBookClient {
     pub async fn find_accounts(
         client: &Client,
         owner: &Keypair,
-    ) -> anyhow::Result<Vec<(Pubkey, OpenOrdersAccountValue)>> {
+    ) -> anyhow::Result<Vec<(Pubkey, OpenOrdersAccount)>> {
         fetch_openbook_accounts(&client.rpc_async(), openbook_v2::ID, owner.pubkey()).await
     }
 
@@ -125,16 +123,12 @@ impl OpenBookClient {
             fetch_openbook_accounts(&rpc, program, owner.pubkey()).await?;
         let openbook_account_opt = openbook_account_tuples
             .iter()
-            .find(|(_, account)| account.fixed.name() == openbook_account_name);
+            .find(|(_, account)| account.name() == openbook_account_name);
         if openbook_account_opt.is_none() {
-            openbook_account_tuples.sort_by(|a, b| {
-                a.1.fixed
-                    .account_num
-                    .partial_cmp(&b.1.fixed.account_num)
-                    .unwrap()
-            });
+            openbook_account_tuples
+                .sort_by(|a, b| a.1.account_num.partial_cmp(&b.1.account_num).unwrap());
             let account_num = match openbook_account_tuples.last() {
-                Some(tuple) => tuple.1.fixed.account_num + 1,
+                Some(tuple) => tuple.1.account_num + 1,
                 None => 0u32,
             };
             Self::init_open_orders(client, market, owner, payer, None, account_num)
@@ -145,7 +139,7 @@ impl OpenBookClient {
             fetch_openbook_accounts(&rpc, program, owner.pubkey()).await?;
         let index = openbook_account_tuples
             .iter()
-            .position(|tuple| tuple.1.fixed.name() == openbook_account_name)
+            .position(|tuple| tuple.1.name() == openbook_account_name)
             .unwrap();
         Ok(openbook_account_tuples[index].0)
     }
@@ -183,7 +177,6 @@ impl OpenBookClient {
             ),
             data: anchor_lang::InstructionData::data(&openbook_v2::instruction::InitOpenOrders {
                 account_num,
-                open_orders_count: 8,
             }),
         };
 
@@ -212,10 +205,10 @@ impl OpenBookClient {
         })));
         let openbook_account =
             account_fetcher_fetch_openbook_account(&*account_fetcher, &account).await?;
-        if openbook_account.fixed.owner != owner.pubkey() {
+        if openbook_account.owner != owner.pubkey() {
             anyhow::bail!(
                 "bad owner for account: expected {} got {}",
-                openbook_account.fixed.owner,
+                openbook_account.owner,
                 owner.pubkey()
             );
         }
@@ -249,7 +242,7 @@ impl OpenBookClient {
         self.owner.pubkey()
     }
 
-    pub async fn openbook_account(&self) -> anyhow::Result<OpenOrdersAccountValue> {
+    pub async fn openbook_account(&self) -> anyhow::Result<OpenOrdersAccount> {
         account_fetcher_fetch_openbook_account(&*self.account_fetcher, &self.open_orders_account)
             .await
     }

@@ -52,7 +52,7 @@ pub fn place_take_order<'info>(
         &mut market,
         &mut event_queue,
         oracle_price,
-        &mut None,
+        None,
         &ctx.accounts.signer.key(),
         now_ts,
         limit,

@@ -590,12 +590,13 @@ async fn test_expired_orders() -> Result<(), TransportError> {
     )
     .await
     .unwrap();
-    // {
-    //     let market_acc = solana.get_account::<Market>(market).await;
-    //     let event_queue = solana.get_account::<EventQueue>(market_acc.event_queue).await;
-    //     assert_eq!(event_queue.header.count(), 1);
-
-    // }
+    {
+        let market_acc = solana.get_account_boxed::<Market>(market).await;
+        let event_queue = solana
+            .get_account_boxed::<EventQueue>(market_acc.event_queue)
+            .await;
+        assert_eq!(event_queue.header.count(), 1);
+    }
     {
         let open_orders_account_0 = solana.get_account::<OpenOrdersAccount>(account_0).await;
         let open_orders_account_1 = solana.get_account::<OpenOrdersAccount>(account_1).await;

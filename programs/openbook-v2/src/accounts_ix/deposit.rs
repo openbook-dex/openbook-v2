@@ -12,7 +12,7 @@ pub struct Deposit<'info> {
     #[account(mut,
         has_one = market,
     )]
-    pub open_orders_account: AccountLoader<'info, OpenOrdersAccountFixed>,
+    pub open_orders_account: AccountLoader<'info, OpenOrdersAccount>,
     #[account(mut)]
     pub market: AccountLoader<'info, Market>,
 
