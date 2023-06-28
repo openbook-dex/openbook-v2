@@ -469,7 +469,7 @@ impl<'a> Orderbook<'a> {
         mut limit: u8,
         side_to_cancel_option: Option<Side>,
     ) -> Result<()> {
-        for i in 0..=MAX_OPEN_ORDERS {
+        for i in 0..MAX_OPEN_ORDERS {
             let oo = open_orders_acc.open_orders[i];
             if oo.is_free() {
                 continue;
