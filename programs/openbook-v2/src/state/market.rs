@@ -201,14 +201,6 @@ impl Market {
             .unwrap()
     }
 
-    pub fn referrer_taker_rebate(&self, taker_fee: u64) -> u64 {
-        if self.maker_fee.is_positive() {
-            taker_fee
-        } else {
-            taker_fee - taker_fee * self.maker_fee.unsigned_abs() / self.taker_fee.unsigned_abs()
-        }
-    }
-
     pub fn taker_fees_floor(self, amount: u64) -> u64 {
         (i128::from(amount) * i128::from(self.taker_fee) / FEES_SCALE_FACTOR)
             .try_into()
