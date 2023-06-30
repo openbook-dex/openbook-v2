@@ -346,6 +346,9 @@ impl<'a> Orderbook<'a> {
         let mut posted_quote_native = 0;
 
         if let Some(order_tree_target) = post_target {
+            // Open orders always exists in this case
+            let open_orders = open_orders_acc.as_mut().unwrap();
+
             posted_base_native = book_base_quantity_lots
                 .checked_mul(market.base_lot_size)
                 .ok_or(OpenBookError::InvalidOrderSize)?;
@@ -361,6 +364,8 @@ impl<'a> Orderbook<'a> {
                     .maker_fees_ceil(posted_quote_native)
                     .try_into()
                     .unwrap();
+
+                open_orders.position.locked_maker_fees += maker_fees;
             }
 
             let bookside = self.bookside_mut(side);
@@ -378,7 +383,7 @@ impl<'a> Orderbook<'a> {
                     event,
                     market,
                     event_queue,
-                    open_orders_acc.as_deref_mut(),
+                    Some(open_orders),
                     owner,
                     remaining_accs,
                 )?;
@@ -405,14 +410,12 @@ impl<'a> Orderbook<'a> {
                     event,
                     market,
                     event_queue,
-                    open_orders_acc.as_deref_mut(),
+                    Some(open_orders),
                     owner,
                     remaining_accs,
                 )?;
             }
 
-            // Open orders always exists in this case, unwrap
-            let open_orders = open_orders_acc.unwrap();
             let owner_slot = open_orders.next_order_slot()?;
             let new_order = LeafNode::new(
                 owner_slot as u8,

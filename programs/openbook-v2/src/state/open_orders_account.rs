@@ -50,7 +50,7 @@ const_assert_eq!(
         + size_of::<Position>()
         + MAX_OPEN_ORDERS * size_of::<OpenOrder>()
 );
-const_assert_eq!(size_of::<OpenOrdersAccount>(), 9512);
+const_assert_eq!(size_of::<OpenOrdersAccount>(), 9520);
 const_assert_eq!(size_of::<OpenOrdersAccount>() % 8, 0);
 
 impl OpenOrdersAccount {
@@ -119,23 +119,21 @@ impl OpenOrdersAccount {
             )
         };
 
-        let locked_amount_above_fill_price = if fill.peg_limit != -1 && side == Side::Bid {
+        let mut locked_maker_fees = maker_fees;
+        let mut locked_amount_above_fill_price = 0;
+
+        if fill.peg_limit != -1 && side == Side::Bid {
             let quote_at_lock_price =
                 (fill.quantity * fill.peg_limit * market.quote_lot_size) as u64;
             let quote_to_free = quote_at_lock_price - quote_native;
 
-            let maker_fees_to_free = if market.maker_fee.is_positive() {
-                let fees_at_lock_price = market.maker_fees_floor(quote_at_lock_price);
-                let fees_at_fill_price = maker_fees;
-                fees_at_lock_price - fees_at_fill_price
-            } else {
-                0
-            };
+            let fees_at_lock_price = market.maker_fees_floor(quote_at_lock_price);
+            let fees_at_fill_price = maker_fees;
+            let maker_fees_to_free = fees_at_lock_price - fees_at_fill_price;
 
-            quote_to_free + maker_fees_to_free
-        } else {
-            0
-        };
+            locked_maker_fees = fees_at_lock_price;
+            locked_amount_above_fill_price = quote_to_free + maker_fees_to_free;
+        }
 
         let pa = &mut self.position;
         pa.maker_volume += quote_native;
@@ -144,6 +142,7 @@ impl OpenOrdersAccount {
             Side::Bid => {
                 pa.base_free_native += (fill.quantity * market.base_lot_size) as u64;
                 pa.quote_free_native += maker_rebate + locked_amount_above_fill_price;
+                pa.locked_maker_fees -= locked_maker_fees;
             }
             Side::Ask => {
                 pa.quote_free_native += quote_native + maker_rebate - maker_fees;
@@ -261,15 +260,20 @@ impl OpenOrdersAccount {
             let order_side = oo.side_and_tree().side();
 
             let base_quantity_native = (base_quantity * market.base_lot_size) as u64;
-            let mut quote_quantity_native = (base_quantity * price * market.quote_lot_size) as u64;
+            let quote_quantity_native = (base_quantity * price * market.quote_lot_size) as u64;
 
-            if market.maker_fee.is_positive() {
-                quote_quantity_native += market.maker_fees_ceil(quote_quantity_native);
-            }
+            let fees = if market.maker_fee.is_positive() {
+                market.maker_fees_ceil(quote_quantity_native)
+            } else {
+                0
+            };
 
             let position = &mut self.position;
             match order_side {
-                Side::Bid => position.quote_free_native += quote_quantity_native,
+                Side::Bid => {
+                    position.quote_free_native += quote_quantity_native + fees;
+                    position.locked_maker_fees -= fees;
+                }
                 Side::Ask => position.base_free_native += base_quantity_native,
             }
         }
