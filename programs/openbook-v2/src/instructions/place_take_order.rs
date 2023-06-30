@@ -63,6 +63,12 @@ pub fn place_take_order<'info>(
         ctx.remaining_accounts,
     )?;
 
+    if !ctx.remaining_accounts.is_empty() {
+        market.fees_to_referrers += referrer_amount;
+    } else {
+        market.quote_fees_accrued += referrer_amount;
+    }
+
     let (from_vault, to_vault, deposit_amount, withdraw_amount) = match side {
         Side::Bid => {
             // Update market deposit total
