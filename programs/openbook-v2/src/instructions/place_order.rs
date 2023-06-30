@@ -67,22 +67,20 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<
     )?;
 
     let position = &mut open_orders_account.position;
-    let (to_vault, deposit_amount) = match order.side {
+    let deposit_amount = match order.side {
         Side::Bid => {
             let free_quote = position.quote_free_native;
-
             let max_quote_including_fees =
                 total_quote_taken_native + posted_quote_native as u64 + maker_fees;
 
             let free_qty_to_lock = cmp::min(max_quote_including_fees, free_quote);
-            position.quote_free_native -= free_qty_to_lock;
-
             let deposit_amount = max_quote_including_fees - free_qty_to_lock;
 
             // Update market deposit total
+            position.quote_free_native -= free_qty_to_lock;
             market.quote_deposit_total += deposit_amount;
 
-            (ctx.accounts.quote_vault.to_account_info(), deposit_amount)
+            deposit_amount
         }
 
         Side::Ask => {
@@ -90,27 +88,27 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<
             let max_base_native = total_base_taken_native + posted_base_native as u64;
 
             let free_qty_to_lock = cmp::min(max_base_native, free_assets_native);
-            position.base_free_native -= free_qty_to_lock;
-
             let deposit_amount = max_base_native - free_qty_to_lock;
+
             // Update market deposit total
+            position.base_free_native -= free_qty_to_lock;
             market.base_deposit_total += deposit_amount;
 
-            (ctx.accounts.base_vault.to_account_info(), deposit_amount)
+            deposit_amount
         }
     };
 
-    // Transfer funds
     if deposit_amount > 0 {
         let cpi_context = CpiContext::new(
             ctx.accounts.token_program.to_account_info(),
             Transfer {
                 from: ctx.accounts.token_deposit_account.to_account_info(),
-                to: to_vault,
+                to: ctx.accounts.market_vault.to_account_info(),
                 authority: ctx.accounts.owner_or_delegate.to_account_info(),
             },
         );
         token::transfer(cpi_context, deposit_amount)?;
     }
+
     Ok(order_id)
 }
