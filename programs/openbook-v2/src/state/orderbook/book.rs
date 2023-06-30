@@ -103,7 +103,9 @@ impl<'a> Orderbook<'a> {
         let mut remaining_base_lots = order.max_base_lots;
         let mut remaining_quote_lots = order_max_quote_lots;
         let mut decremented_quote_lots = 0_i64;
+
         let mut referrer_amount = 0_u64;
+        let mut maker_rebates_acc = 0_u64;
 
         let mut matched_order_changes: Vec<(BookSideOrderHandle, i64)> = vec![];
         let mut matched_order_deletes: Vec<(BookSideOrderTree, u128)> = vec![];
@@ -192,6 +194,9 @@ impl<'a> Orderbook<'a> {
                     }
                 }
                 assert!(order.self_trade_behavior == SelfTradeBehavior::DecrementTake);
+            } else {
+                maker_rebates_acc +=
+                    market.maker_rebate_floor((match_quote_lots * market.quote_lot_size) as u64);
             }
 
             remaining_base_lots -= match_base_lots;
@@ -251,9 +256,10 @@ impl<'a> Orderbook<'a> {
 
             if total_quote_taken_native_wo_self > 0 {
                 taker_fees = market.taker_fees_ceil(total_quote_taken_native_wo_self);
+
                 // Only account taker fees now. Maker fees accounted once processing the event
-                market.fees_accrued += taker_fees as i64;
-                referrer_amount = market.referrer_taker_rebate(total_quote_taken_native_wo_self);
+                referrer_amount = taker_fees - maker_rebates_acc;
+                market.fees_accrued += referrer_amount;
             };
 
             if let Some(open_orders_acc) = &mut open_orders_acc {
@@ -323,11 +329,9 @@ impl<'a> Orderbook<'a> {
             price_lots
         };
         // If there are still quantity unmatched, place on the book
-        let book_base_quantity_lots = if market.maker_fee.is_positive() {
-            // Subtract fees
+        let book_base_quantity_lots = {
+            // Subtract maker fees (if any)
             remaining_quote_lots -= market.maker_fees_ceil(remaining_quote_lots);
-            remaining_base_lots.min(remaining_quote_lots / price)
-        } else {
             remaining_base_lots.min(remaining_quote_lots / price)
         };
 
@@ -340,6 +344,9 @@ impl<'a> Orderbook<'a> {
         let mut posted_quote_native = 0;
 
         if let Some(order_tree_target) = post_target {
+            // Open orders always exists in this case
+            let open_orders = open_orders_acc.as_mut().unwrap();
+
             posted_base_native = book_base_quantity_lots
                 .checked_mul(market.base_lot_size)
                 .ok_or(OpenBookError::InvalidOrderSize)?;
@@ -350,11 +357,13 @@ impl<'a> Orderbook<'a> {
                 .ok_or(OpenBookError::InvalidOrderSize)?;
 
             // Subtract maker fees in bid.
-            if market.maker_fee.is_positive() && side == Side::Bid {
+            if side == Side::Bid {
                 maker_fees = market
                     .maker_fees_ceil(posted_quote_native)
                     .try_into()
                     .unwrap();
+
+                open_orders.position.locked_maker_fees += maker_fees;
             }
 
             let bookside = self.bookside_mut(side);
@@ -372,7 +381,7 @@ impl<'a> Orderbook<'a> {
                     event,
                     market,
                     event_queue,
-                    open_orders_acc.as_deref_mut(),
+                    Some(open_orders),
                     owner,
                     remaining_accs,
                 )?;
@@ -399,14 +408,12 @@ impl<'a> Orderbook<'a> {
                     event,
                     market,
                     event_queue,
-                    open_orders_acc.as_deref_mut(),
+                    Some(open_orders),
                     owner,
                     remaining_accs,
                 )?;
             }
 
-            // Open orders always exists in this case, unwrap
-            let open_orders = open_orders_acc.unwrap();
             let owner_slot = open_orders.next_order_slot()?;
             let new_order = LeafNode::new(
                 owner_slot as u8,

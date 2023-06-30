@@ -1159,3 +1159,137 @@ async fn test_fees_half() -> Result<(), TransportError> {
 
     Ok(())
 }
+
+#[tokio::test]
+async fn test_locked_maker_fees() -> Result<(), TransportError> {
+    let maker_fee = 350;
+    let taker_fee = 0;
+
+    let TestInitialize {
+        context,
+        owner,
+        owner_token_0: owner_base_ata,
+        owner_token_1: owner_quote_ata,
+        market,
+        base_vault,
+        quote_vault,
+        account_0: maker,
+        account_1: taker,
+        ..
+    } = TestContext::new_with_market(TestNewMarketInitialize {
+        maker_fee,
+        taker_fee,
+        ..TestNewMarketInitialize::default()
+    })
+    .await?;
+    let solana = &context.solana.clone();
+
+    let place_maker_bid = PlaceOrderInstruction {
+        open_orders_account: maker,
+        open_orders_admin: None,
+        market,
+        owner,
+        token_deposit_account: owner_quote_ata,
+        base_vault,
+        quote_vault,
+        side: Side::Bid,
+        price_lots: 1_000,
+        max_base_lots: 5,
+        max_quote_lots_including_fees: 1_000_000_000,
+        client_order_id: 0,
+        expiry_timestamp: 0,
+        order_type: PlaceOrderType::Limit,
+        self_trade_behavior: SelfTradeBehavior::default(),
+        remainings: vec![],
+    };
+
+    let place_taker_ask = PlaceOrderInstruction {
+        side: Side::Ask,
+        open_orders_account: taker,
+        token_deposit_account: owner_base_ata,
+        max_base_lots: 3,
+        ..place_maker_bid.clone()
+    };
+
+    let cancel_maker_orders_ix = CancelAllOrdersInstruction {
+        open_orders_account: maker,
+        owner,
+        market,
+    };
+
+    let settle_maker_funds_ix = SettleFundsInstruction {
+        owner,
+        market,
+        open_orders_account: maker,
+        base_vault,
+        quote_vault,
+        token_base_account: owner_base_ata,
+        token_quote_account: owner_quote_ata,
+        referrer: None,
+    };
+
+    send_tx(solana, place_maker_bid.clone()).await.unwrap();
+    {
+        let oo = solana.get_account::<OpenOrdersAccount>(maker).await;
+        assert_eq!(oo.position.locked_maker_fees, 18);
+    }
+
+    send_tx(solana, place_taker_ask).await.unwrap();
+    send_tx(
+        solana,
+        ConsumeEventsInstruction {
+            consume_events_admin: None,
+            market,
+            open_orders_accounts: vec![maker],
+        },
+    )
+    .await
+    .unwrap();
+
+    {
+        let oo = solana.get_account::<OpenOrdersAccount>(maker).await;
+        assert_eq!(oo.position.locked_maker_fees, 8);
+    }
+
+    send_tx(solana, cancel_maker_orders_ix.clone())
+        .await
+        .unwrap();
+
+    // one lamport is still locked due rounding
+    {
+        let oo = solana.get_account::<OpenOrdersAccount>(maker).await;
+        assert_eq!(oo.position.locked_maker_fees, 1);
+    }
+
+    send_tx(solana, place_maker_bid.clone()).await.unwrap();
+    send_tx(solana, settle_maker_funds_ix.clone())
+        .await
+        .unwrap();
+
+    // which cannot be claimed yet because there're still bids on the book
+    {
+        let oo = solana.get_account::<OpenOrdersAccount>(maker).await;
+        assert_eq!(oo.position.locked_maker_fees, 1 + 18);
+    }
+
+    // but now if we don't have any pending bid order
+    send_tx(solana, cancel_maker_orders_ix.clone())
+        .await
+        .unwrap();
+
+    {
+        let oo = solana.get_account::<OpenOrdersAccount>(maker).await;
+        assert_eq!(oo.position.locked_maker_fees, 1);
+    }
+
+    // it's gone!
+    send_tx(solana, settle_maker_funds_ix.clone())
+        .await
+        .unwrap();
+    {
+        let oo = solana.get_account::<OpenOrdersAccount>(maker).await;
+        assert_eq!(oo.position.locked_maker_fees, 0);
+    }
+
+    Ok(())
+}
