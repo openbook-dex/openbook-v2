@@ -592,6 +592,7 @@ impl ClientInstruction for CancelOrderByClientOrderIdInstruction {
     }
 }
 
+#[derive(Clone)]
 pub struct CancelAllOrdersInstruction {
     pub open_orders_account: Pubkey,
     pub market: Pubkey,
