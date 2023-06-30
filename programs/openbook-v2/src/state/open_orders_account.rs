@@ -261,12 +261,7 @@ impl OpenOrdersAccount {
 
             let base_quantity_native = (base_quantity * market.base_lot_size) as u64;
             let quote_quantity_native = (base_quantity * price * market.quote_lot_size) as u64;
-
-            let fees = if market.maker_fee.is_positive() {
-                market.maker_fees_ceil(quote_quantity_native)
-            } else {
-                0
-            };
+            let fees = market.maker_fees_ceil(quote_quantity_native);
 
             let position = &mut self.position;
             match order_side {

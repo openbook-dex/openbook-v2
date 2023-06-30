@@ -329,11 +329,9 @@ impl<'a> Orderbook<'a> {
             price_lots
         };
         // If there are still quantity unmatched, place on the book
-        let book_base_quantity_lots = if market.maker_fee.is_positive() {
-            // Subtract fees
+        let book_base_quantity_lots = {
+            // Subtract maker fees (if any)
             remaining_quote_lots -= market.maker_fees_ceil(remaining_quote_lots);
-            remaining_base_lots.min(remaining_quote_lots / price)
-        } else {
             remaining_base_lots.min(remaining_quote_lots / price)
         };
 
@@ -359,7 +357,7 @@ impl<'a> Orderbook<'a> {
                 .ok_or(OpenBookError::InvalidOrderSize)?;
 
             // Subtract maker fees in bid.
-            if market.maker_fee.is_positive() && side == Side::Bid {
+            if side == Side::Bid {
                 maker_fees = market
                     .maker_fees_ceil(posted_quote_native)
                     .try_into()

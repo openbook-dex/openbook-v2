@@ -189,6 +189,12 @@ impl Market {
         )
     }
 
+    /// Update the market's quote fees acrued and returns the penalty fee
+    pub fn apply_penalty(&mut self) -> u64 {
+        self.quote_fees_accrued += self.fee_penalty;
+        self.fee_penalty
+    }
+
     pub fn subtract_taker_fees(&self, quote: i64) -> i64 {
         ((quote as i128) * FEES_SCALE_FACTOR / (FEES_SCALE_FACTOR + (self.taker_fee as i128)))
             .try_into()
@@ -225,21 +231,18 @@ impl Market {
         }
     }
 
-    fn unsigned_maker_fees_floor(self, amount: u64) -> u64 {
-        (i128::from(amount) * i128::from(self.maker_fee.abs()) / FEES_SCALE_FACTOR)
-            .try_into()
-            .unwrap()
-    }
-
     pub fn maker_fees_ceil<T>(self, amount: T) -> T
     where
-        T: Into<i128> + TryFrom<i128>,
+        T: Into<i128> + TryFrom<i128> + From<u8>,
         <T as TryFrom<i128>>::Error: std::fmt::Debug,
     {
-        ((amount.into() * (self.maker_fee.abs() as i128) + (FEES_SCALE_FACTOR - 1_i128))
-            / FEES_SCALE_FACTOR)
-            .try_into()
-            .unwrap()
+        if self.maker_fee.is_positive() {
+            self.ceil_fee_division(amount.into() * (self.maker_fee.abs() as i128))
+                .try_into()
+                .unwrap()
+        } else {
+            T::from(0)
+        }
     }
 
     pub fn taker_fees_ceil<T>(self, amount: T) -> T
@@ -247,16 +250,19 @@ impl Market {
         T: Into<i128> + TryFrom<i128>,
         <T as TryFrom<i128>>::Error: std::fmt::Debug,
     {
-        ((amount.into() * (self.taker_fee as i128) + (FEES_SCALE_FACTOR - 1_i128))
-            / FEES_SCALE_FACTOR)
+        self.ceil_fee_division(amount.into() * (self.taker_fee as i128))
             .try_into()
             .unwrap()
     }
 
-    /// Update the market's quote fees acrued and returns the penalty fee
-    pub fn apply_penalty(&mut self) -> u64 {
-        self.quote_fees_accrued += self.fee_penalty;
-        self.fee_penalty
+    fn ceil_fee_division(self, numerator: i128) -> i128 {
+        (numerator + (FEES_SCALE_FACTOR - 1_i128)) / FEES_SCALE_FACTOR
+    }
+
+    fn unsigned_maker_fees_floor(self, amount: u64) -> u64 {
+        (i128::from(amount) * i128::from(self.maker_fee.abs()) / FEES_SCALE_FACTOR)
+            .try_into()
+            .unwrap()
     }
 }
 
