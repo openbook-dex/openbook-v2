@@ -89,8 +89,7 @@ pub struct Market {
     pub fee_penalty: u64,
 
     // Total (maker + taker) fees accrued in native quote.
-    // i64 due there is a case where maker fees are subtracted (process_fill_event) before taker fees
-    pub fees_accrued: i64,
+    pub fees_accrued: u64,
     // Total fees settled in native quote
     pub fees_to_referrers: u64,
 
@@ -196,13 +195,40 @@ impl Market {
             .unwrap()
     }
 
-    pub fn referrer_taker_rebate(&self, quote: u64) -> u64 {
+    pub fn referrer_taker_rebate(&self, taker_fee: u64) -> u64 {
         if self.maker_fee.is_positive() {
-            // Nothing goes to maker, all to referrer
-            self.taker_fees_ceil(quote)
+            taker_fee
         } else {
-            self.taker_fees_ceil(quote) - self.maker_fees_ceil(quote)
+            taker_fee - taker_fee * self.maker_fee.unsigned_abs() / self.taker_fee.unsigned_abs()
         }
+    }
+
+    pub fn taker_fees_floor(self, amount: u64) -> u64 {
+        (i128::from(amount) * i128::from(self.taker_fee) / FEES_SCALE_FACTOR)
+            .try_into()
+            .unwrap()
+    }
+
+    pub fn maker_fees_floor(self, amount: u64) -> u64 {
+        if self.maker_fee.is_positive() {
+            self.unsigned_maker_fees_floor(amount)
+        } else {
+            0
+        }
+    }
+
+    pub fn maker_rebate_floor(self, amount: u64) -> u64 {
+        if self.maker_fee.is_positive() {
+            0
+        } else {
+            self.unsigned_maker_fees_floor(amount)
+        }
+    }
+
+    fn unsigned_maker_fees_floor(self, amount: u64) -> u64 {
+        (i128::from(amount) * i128::from(self.maker_fee.abs()) / FEES_SCALE_FACTOR)
+            .try_into()
+            .unwrap()
     }
 
     pub fn maker_fees_ceil<T>(self, amount: T) -> T

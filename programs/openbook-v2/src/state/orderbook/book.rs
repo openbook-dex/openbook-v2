@@ -103,7 +103,9 @@ impl<'a> Orderbook<'a> {
         let mut remaining_base_lots = order.max_base_lots;
         let mut remaining_quote_lots = order_max_quote_lots;
         let mut decremented_quote_lots = 0_i64;
+
         let mut referrer_amount = 0_u64;
+        let mut maker_rebates_acc = 0_u64;
 
         let mut matched_order_changes: Vec<(BookSideOrderHandle, i64)> = vec![];
         let mut matched_order_deletes: Vec<(BookSideOrderTree, u128)> = vec![];
@@ -192,6 +194,9 @@ impl<'a> Orderbook<'a> {
                     }
                 }
                 assert!(order.self_trade_behavior == SelfTradeBehavior::DecrementTake);
+            } else {
+                maker_rebates_acc +=
+                    market.maker_rebate_floor((match_quote_lots * market.quote_lot_size) as u64);
             }
 
             remaining_base_lots -= match_base_lots;
@@ -251,9 +256,10 @@ impl<'a> Orderbook<'a> {
 
             if total_quote_taken_native_wo_self > 0 {
                 taker_fees = market.taker_fees_ceil(total_quote_taken_native_wo_self);
+
                 // Only account taker fees now. Maker fees accounted once processing the event
-                market.fees_accrued += taker_fees as i64;
-                referrer_amount = market.referrer_taker_rebate(total_quote_taken_native_wo_self);
+                referrer_amount = taker_fees - maker_rebates_acc;
+                market.fees_accrued += referrer_amount;
             };
 
             if let Some(open_orders_acc) = &mut open_orders_acc {
