@@ -150,7 +150,7 @@ impl FuzzContext {
                 .add_account_with_lamports(owner, 1_000_000)
                 .add_token_account_with_lamports(base_vault, owner, self.base_mint, 1_000_000)
                 .add_token_account_with_lamports(quote_vault, owner, self.quote_mint, 1_000_000)
-                .add_open_orders_account(open_orders, 8);
+                .add_openbook_account::<OpenOrdersAccount>(open_orders);
 
             let accounts = openbook_v2::accounts::InitOpenOrders {
                 open_orders_account: open_orders,
@@ -160,10 +160,7 @@ impl FuzzContext {
                 market: self.market,
                 system_program: system_program::ID,
             };
-            let data = openbook_v2::instruction::InitOpenOrders {
-                account_num,
-                open_orders_count: 8,
-            };
+            let data = openbook_v2::instruction::InitOpenOrders { account_num };
             process_instruction(&mut self.state, &data, &accounts, &[]).unwrap();
 
             UserAccounts {
