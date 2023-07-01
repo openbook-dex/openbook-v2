@@ -7,10 +7,10 @@ use crate::state::*;
 pub fn cancel_order(ctx: Context<CancelOrder>, order_id: u128) -> Result<()> {
     require_gt!(order_id, 0, OpenBookError::InvalidInputOrderId);
 
-    let mut account = ctx.accounts.open_orders_account.load_full_mut()?;
+    let mut account = ctx.accounts.open_orders_account.load_mut()?;
     // account constraint #1
     require!(
-        account.fixed.is_owner_or_delegate(ctx.accounts.owner.key()),
+        account.is_owner_or_delegate(ctx.accounts.owner.key()),
         OpenBookError::NoOwnerOrDelegate
     );
 
@@ -28,7 +28,7 @@ pub fn cancel_order(ctx: Context<CancelOrder>, order_id: u128) -> Result<()> {
     let order_side_and_tree = oo.side_and_tree();
 
     book.cancel_order(
-        &mut account.borrow_mut(),
+        &mut account,
         order_id,
         order_side_and_tree,
         *market,

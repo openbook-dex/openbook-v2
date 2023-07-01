@@ -13,7 +13,7 @@ use solana_client::nonblocking::rpc_client::RpcClient as RpcClientAsync;
 use solana_sdk::account::{AccountSharedData, ReadableAccount};
 use solana_sdk::pubkey::Pubkey;
 
-use openbook_v2::state::OpenOrdersAccountValue;
+use openbook_v2::state::OpenOrdersAccount;
 
 #[async_trait::async_trait]
 pub trait AccountFetcher: Sync + Send {
@@ -46,11 +46,11 @@ pub async fn account_fetcher_fetch_anchor_account<T: AccountDeserialize>(
 pub async fn account_fetcher_fetch_openbook_account(
     fetcher: &dyn AccountFetcher,
     address: &Pubkey,
-) -> anyhow::Result<OpenOrdersAccountValue> {
+) -> anyhow::Result<OpenOrdersAccount> {
     let account = fetcher.fetch_raw_account(address).await?;
-    let data: &[u8] = account.data();
-    OpenOrdersAccountValue::from_bytes(&data[8..])
-        .with_context(|| format!("deserializing openorders account {}", address))
+    let mut data: &[u8] = account.data();
+    OpenOrdersAccount::try_deserialize(&mut data)
+        .with_context(|| format!("deserializing open orders account {}", address))
 }
 
 pub struct RpcAccountFetcher {

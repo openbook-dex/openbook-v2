@@ -1,12 +1,11 @@
 use crate::accounts_ix::Deposit;
 use crate::error::*;
 use crate::logs::DepositLog;
-use crate::state::*;
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Transfer};
 
 pub fn deposit(ctx: Context<Deposit>, base_amount_lots: u64, quote_amount_lots: u64) -> Result<()> {
-    let mut open_orders_account = ctx.accounts.open_orders_account.load_full_mut()?;
+    let mut open_orders_account = ctx.accounts.open_orders_account.load_mut()?;
     let mut market = ctx.accounts.market.load_mut()?;
     require!(
         market.time_expiry == 0 || market.time_expiry > Clock::get()?.unix_timestamp,
@@ -24,7 +23,7 @@ pub fn deposit(ctx: Context<Deposit>, base_amount_lots: u64, quote_amount_lots: 
             },
         );
         token::transfer(cpi_context, base_amount_native)?;
-        open_orders_account.fixed.position.base_free_native += base_amount_native;
+        open_orders_account.position.base_free_native += base_amount_native;
         market.base_deposit_total += base_amount_native;
 
         emit!(DepositLog {
@@ -46,7 +45,7 @@ pub fn deposit(ctx: Context<Deposit>, base_amount_lots: u64, quote_amount_lots: 
         );
         token::transfer(cpi_context, quote_amount_native)?;
 
-        open_orders_account.fixed.position.quote_free_native += quote_amount_native;
+        open_orders_account.position.quote_free_native += quote_amount_native;
         market.quote_deposit_total += quote_amount_native;
 
         emit!(DepositLog {

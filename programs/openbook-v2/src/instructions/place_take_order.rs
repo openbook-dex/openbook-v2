@@ -52,7 +52,7 @@ pub fn place_take_order<'info>(
         &mut market,
         &mut event_queue,
         oracle_price,
-        &mut None,
+        None,
         &ctx.accounts.signer.key(),
         now_ts,
         limit,
@@ -62,6 +62,12 @@ pub fn place_take_order<'info>(
             .map(|signer| signer.key()),
         ctx.remaining_accounts,
     )?;
+
+    if !ctx.remaining_accounts.is_empty() {
+        market.fees_to_referrers += referrer_amount;
+    } else {
+        market.quote_fees_accrued += referrer_amount;
+    }
 
     let (from_vault, to_vault, deposit_amount, withdraw_amount) = match side {
         Side::Bid => {

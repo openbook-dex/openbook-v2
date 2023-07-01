@@ -152,13 +152,13 @@ impl Order {
                 )
             }
         };
+        require_gte!(price_lots, 1, OpenBookError::InvalidPriceLots);
         let price_data = match self.params {
             OrderParams::OraclePegged { .. } => {
                 oracle_pegged_price_data(price_lots - oracle_price_lots)
             }
             _ => fixed_price_data(price_lots)?,
         };
-        require_gte!(price_lots, 1, OpenBookError::InvalidPriceLots);
         Ok((price_lots, price_data))
     }
 

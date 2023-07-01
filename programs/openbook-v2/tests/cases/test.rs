@@ -71,8 +71,7 @@ async fn test_simple_settle() -> Result<(), TransportError> {
             market,
             owner,
             token_deposit_account: owner_token_1,
-            base_vault,
-            quote_vault,
+            market_vault: quote_vault,
             side: Side::Bid,
             price_lots,
             max_base_lots: 1,
@@ -96,8 +95,7 @@ async fn test_simple_settle() -> Result<(), TransportError> {
             market,
             owner,
             token_deposit_account: owner_token_0,
-            base_vault,
-            quote_vault,
+            market_vault: base_vault,
             side: Side::Ask,
             price_lots,
             max_base_lots: 1,
@@ -247,8 +245,7 @@ async fn test_cancel_orders() -> Result<(), TransportError> {
             market,
             owner,
             token_deposit_account: owner_token_1,
-            base_vault,
-            quote_vault,
+            market_vault: quote_vault,
             side: Side::Bid,
             price_lots,
             max_base_lots: 1,
@@ -272,8 +269,7 @@ async fn test_cancel_orders() -> Result<(), TransportError> {
             market,
             owner,
             token_deposit_account: owner_token_0,
-            base_vault,
-            quote_vault,
+            market_vault: base_vault,
             side: Side::Ask,
             price_lots,
             max_base_lots: 1,
@@ -362,8 +358,7 @@ async fn test_cancel_orders() -> Result<(), TransportError> {
             market,
             owner,
             token_deposit_account: owner_token_0,
-            base_vault,
-            quote_vault,
+            market_vault: base_vault,
             side: Side::Ask,
             price_lots,
             max_base_lots: 1,
@@ -456,8 +451,7 @@ async fn test_cancel_orders() -> Result<(), TransportError> {
             market,
             owner,
             token_deposit_account: owner_token_1,
-            base_vault,
-            quote_vault,
+            market_vault: quote_vault,
             side: Side::Bid,
             price_lots,
             max_base_lots: 1,
@@ -537,8 +531,7 @@ async fn test_expired_orders() -> Result<(), TransportError> {
             market,
             owner,
             token_deposit_account: owner_token_1,
-            base_vault,
-            quote_vault,
+            market_vault: quote_vault,
             side: Side::Bid,
             price_lots,
             max_base_lots: 1,
@@ -574,8 +567,7 @@ async fn test_expired_orders() -> Result<(), TransportError> {
             market,
             owner,
             token_deposit_account: owner_token_0,
-            base_vault,
-            quote_vault,
+            market_vault: base_vault,
             side: Side::Ask,
             price_lots,
             max_base_lots: 1,
@@ -590,12 +582,13 @@ async fn test_expired_orders() -> Result<(), TransportError> {
     )
     .await
     .unwrap();
-    // {
-    //     let market_acc = solana.get_account::<Market>(market).await;
-    //     let event_queue = solana.get_account::<EventQueue>(market_acc.event_queue).await;
-    //     assert_eq!(event_queue.header.count(), 1);
-
-    // }
+    {
+        let market_acc = solana.get_account_boxed::<Market>(market).await;
+        let event_queue = solana
+            .get_account_boxed::<EventQueue>(market_acc.event_queue)
+            .await;
+        assert_eq!(event_queue.header.count(), 1);
+    }
     {
         let open_orders_account_0 = solana.get_account::<OpenOrdersAccount>(account_0).await;
         let open_orders_account_1 = solana.get_account::<OpenOrdersAccount>(account_1).await;

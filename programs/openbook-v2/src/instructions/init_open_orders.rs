@@ -3,12 +3,8 @@ use crate::pod_option::PodOption;
 use crate::state::*;
 use anchor_lang::prelude::*;
 
-pub fn init_open_orders(
-    ctx: Context<InitOpenOrders>,
-    account_num: u32,
-    open_orders_count: u8,
-) -> Result<()> {
-    let mut account = ctx.accounts.open_orders_account.load_full_init()?;
+pub fn init_open_orders(ctx: Context<InitOpenOrders>, account_num: u32) -> Result<()> {
+    let mut account = ctx.accounts.open_orders_account.load_init()?;
 
     let delegate_account: PodOption<Pubkey> = ctx
         .accounts
@@ -17,13 +13,12 @@ pub fn init_open_orders(
         .map(|account| account.key())
         .into();
 
-    account.fixed.account_num = account_num;
-    account.fixed.market = ctx.accounts.market.key();
-    account.fixed.bump = *ctx.bumps.get("open_orders_account").unwrap();
-    account.fixed.owner = ctx.accounts.owner.key();
-    account.fixed.delegate = delegate_account;
-
-    account.expand_dynamic_content(open_orders_count)?;
+    account.account_num = account_num;
+    account.market = ctx.accounts.market.key();
+    account.bump = *ctx.bumps.get("open_orders_account").unwrap();
+    account.owner = ctx.accounts.owner.key();
+    account.delegate = delegate_account;
+    account.open_orders = [OpenOrder::default(); MAX_OPEN_ORDERS];
 
     Ok(())
 }
