@@ -1,5 +1,6 @@
 use super::*;
 
+#[tokio::test]
 async fn test_oracle_peg() -> Result<(), TransportError> {
     let market_base_lot_size = 10000;
     let market_quote_lot_size = 10;
