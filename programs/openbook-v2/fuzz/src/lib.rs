@@ -226,8 +226,12 @@ impl FuzzContext {
         user_id: &UserId,
         data: &openbook_v2::instruction::PlaceOrder,
     ) -> ProgramResult {
-        let user = self.user(user_id);
+        let market_vault = match data.side {
+            Side::Ask => self.base_vault,
+            Side::Bid => self.quote_vault,
+        };
 
+        let user = self.user(user_id);
         let token_deposit_account = match data.side {
             Side::Ask => user.base_vault,
             Side::Bid => user.quote_vault,
@@ -236,14 +240,13 @@ impl FuzzContext {
         let accounts = openbook_v2::accounts::PlaceOrder {
             open_orders_account: user.open_orders,
             owner_or_delegate: user.owner,
+            token_deposit_account,
             open_orders_admin: None,
             market: self.market,
             bids: self.bids,
             asks: self.asks,
-            token_deposit_account,
-            base_vault: self.base_vault,
-            quote_vault: self.quote_vault,
             event_queue: self.event_queue,
+            market_vault,
             oracle: self.oracle,
             token_program: spl_token::ID,
             system_program: system_program::ID,
@@ -257,8 +260,12 @@ impl FuzzContext {
         user_id: &UserId,
         data: &openbook_v2::instruction::PlaceOrderPegged,
     ) -> ProgramResult {
-        let user = self.user(user_id);
+        let market_vault = match data.side {
+            Side::Ask => self.base_vault,
+            Side::Bid => self.quote_vault,
+        };
 
+        let user = self.user(user_id);
         let token_deposit_account = match data.side {
             Side::Ask => user.base_vault,
             Side::Bid => user.quote_vault,
@@ -267,14 +274,13 @@ impl FuzzContext {
         let accounts = openbook_v2::accounts::PlaceOrder {
             open_orders_account: user.open_orders,
             owner_or_delegate: user.owner,
+            token_deposit_account,
             open_orders_admin: None,
             market: self.market,
             bids: self.bids,
             asks: self.asks,
-            token_deposit_account,
-            base_vault: self.base_vault,
-            quote_vault: self.quote_vault,
             event_queue: self.event_queue,
+            market_vault,
             oracle: self.oracle,
             token_program: spl_token::ID,
             system_program: system_program::ID,
