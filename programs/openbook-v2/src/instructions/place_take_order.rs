@@ -68,7 +68,6 @@ pub fn place_take_order<'info>(
     } else {
         market.quote_fees_accrued += referrer_amount;
     }
-    market.taker_volume_wo_oo += total_quote_taken_native;
 
     let (from_vault, to_vault, deposit_amount, withdraw_amount) = match side {
         Side::Bid => {
