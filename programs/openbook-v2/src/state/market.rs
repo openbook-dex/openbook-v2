@@ -93,6 +93,9 @@ pub struct Market {
     // Total fees settled in native quote
     pub fees_to_referrers: u64,
 
+    /// Cumulative taker volume in quote native units due to take orders
+    pub taker_volume_wo_oo: u64,
+
     // Fields related to MarketSate, related to the tokenAccounts
     pub vault_signer_nonce: u64,
 
@@ -136,6 +139,7 @@ const_assert_eq!(
     8 + // size of fee_penalty
     8 + // size of fees_accrued
     8 + // size of fees_to_referrers
+    8 + // size of taker_volume_wo_oo
     8 + // size of vault_signer_nonce
     4 * 32 + // size of base_mint, quote_mint, base_vault, and quote_vault
     8 + // size of base_deposit_total
@@ -145,7 +149,7 @@ const_assert_eq!(
     8 + // size of referrer_rebates_accrued
     1768 // size of reserved
 );
-const_assert_eq!(size_of::<Market>(), 2424);
+const_assert_eq!(size_of::<Market>(), 2432);
 const_assert_eq!(size_of::<Market>() % 8, 0);
 
 impl Market {
