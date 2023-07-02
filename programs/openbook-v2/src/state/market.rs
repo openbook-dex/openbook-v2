@@ -88,7 +88,7 @@ pub struct Market {
     /// Fee (in quote native) to charge for ioc orders that don't match to avoid spam
     pub fee_penalty: u64,
 
-    // Total (maker + taker) fees accrued in native quote.
+    /// Total fees accrued in native quote
     pub fees_accrued: u64,
     // Total fees settled in native quote
     pub fees_to_referrers: u64,
