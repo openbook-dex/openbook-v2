@@ -192,6 +192,7 @@ impl Market {
     /// Update the market's quote fees acrued and returns the penalty fee
     pub fn apply_penalty(&mut self) -> u64 {
         self.quote_fees_accrued += self.fee_penalty;
+        self.fees_accrued += self.fee_penalty;
         self.fee_penalty
     }
 
