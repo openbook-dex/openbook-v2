@@ -93,7 +93,7 @@ pub struct Market {
     // Total fees settled in native quote
     pub fees_to_referrers: u64,
 
-    /// Cumulative taker volume in quote native units due to take orders
+    /// Cumulative taker volume in quote native units due to place take orders
     pub taker_volume_wo_oo: u64,
 
     // Fields related to MarketSate, related to the tokenAccounts
