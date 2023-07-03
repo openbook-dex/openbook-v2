@@ -14,6 +14,7 @@ use spl_associated_token_account::get_associated_token_address;
 use std::collections::{HashMap, HashSet};
 
 pub const NUM_USERS: u8 = 8;
+pub const INITIAL_BALANCE: u64 = 1_000_000_000;
 
 #[derive(Debug, Clone, Copy, Eq, Hash, PartialEq)]
 pub struct UserId(u8);
@@ -99,9 +100,9 @@ impl FuzzContext {
 
     pub fn initialize(&mut self) -> &mut Self {
         self.state
-            .add_account_with_lamports(self.admin, 1_000_000)
+            .add_account_with_lamports(self.admin, INITIAL_BALANCE)
             .add_account_with_lamports(self.collect_fee_admin, 0)
-            .add_account_with_lamports(self.payer, 1_000_000)
+            .add_account_with_lamports(self.payer, INITIAL_BALANCE)
             .add_mint(self.base_mint)
             .add_mint(self.quote_mint)
             .add_openbook_account::<BookSide>(self.asks)
@@ -146,10 +147,15 @@ impl FuzzContext {
             .0;
 
             self.state
-                .add_account_with_lamports(owner, 1_000_000)
-                .add_account_with_lamports(owner, 1_000_000)
-                .add_token_account_with_lamports(base_vault, owner, self.base_mint, 1_000_000)
-                .add_token_account_with_lamports(quote_vault, owner, self.quote_mint, 1_000_000)
+                .add_account_with_lamports(owner, INITIAL_BALANCE)
+                .add_account_with_lamports(owner, INITIAL_BALANCE)
+                .add_token_account_with_lamports(base_vault, owner, self.base_mint, INITIAL_BALANCE)
+                .add_token_account_with_lamports(
+                    quote_vault,
+                    owner,
+                    self.quote_mint,
+                    INITIAL_BALANCE,
+                )
                 .add_openbook_account::<OpenOrdersAccount>(open_orders);
 
             let accounts = openbook_v2::accounts::InitOpenOrders {
