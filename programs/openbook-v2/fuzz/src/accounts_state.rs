@@ -41,6 +41,12 @@ impl AccountsState {
             .and_then(|acc| AccountDeserialize::try_deserialize(&mut &acc.data[..]).ok())
     }
 
+    pub fn get_balance(&self, pubkey: &Pubkey) -> u64 {
+        self.get_account::<anchor_spl::token::TokenAccount>(pubkey)
+            .unwrap()
+            .amount
+    }
+
     pub fn account_infos<'a, 'b: 'a>(
         &'a self,
         bump: &'b Bump,
