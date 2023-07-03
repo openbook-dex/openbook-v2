@@ -151,6 +151,7 @@ mod error_parser {
             e if e == OpenBookError::InvalidInputPriceLots.into() => Corpus::Reject,
             e if e == OpenBookError::InvalidOraclePrice.into() => Corpus::Keep,
             e if e == OpenBookError::InvalidOrderSize.into() => Corpus::Keep,
+            e if e == OpenBookError::InvalidPriceLots.into() => Corpus::Keep,
             e if e == OpenBookError::OpenOrdersFull.into() => Corpus::Keep,
             e if e == OpenBookError::WouldSelfTrade.into() => Corpus::Keep,
             e if e == TokenError::InsufficientFunds.into() => Corpus::Keep,
@@ -209,6 +210,7 @@ mod error_parser {
     pub fn cancel_order_by_client_order_id(err: ProgramError) -> Corpus {
         match err {
             e if e == OpenBookError::OpenOrdersOrderNotFound.into() => Corpus::Keep,
+            e if e == OpenBookError::OrderIdNotFound.into() => Corpus::Keep,
             _ => panic!("{}", err),
         }
     }
