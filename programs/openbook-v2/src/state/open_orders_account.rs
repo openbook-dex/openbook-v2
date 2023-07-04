@@ -50,7 +50,7 @@ const_assert_eq!(
         + size_of::<Position>()
         + MAX_OPEN_ORDERS * size_of::<OpenOrder>()
 );
-const_assert_eq!(size_of::<OpenOrdersAccount>(), 9520);
+const_assert_eq!(size_of::<OpenOrdersAccount>(), 9512);
 const_assert_eq!(size_of::<OpenOrdersAccount>() % 8, 0);
 
 impl OpenOrdersAccount {
