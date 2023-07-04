@@ -82,6 +82,7 @@ pub fn create_market(
 
         fees_accrued: 0,
         fees_to_referrers: 0,
+        taker_volume_wo_oo: 0,
         vault_signer_nonce: 0,
         base_mint: ctx.accounts.base_mint.key(),
         quote_mint: ctx.accounts.quote_mint.key(),
