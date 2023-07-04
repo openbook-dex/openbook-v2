@@ -30,10 +30,7 @@ pub struct Position {
     pub reserved: [u8; 88],
 }
 
-const_assert_eq!(
-    size_of::<Position>(),
-    8 + 8 + 8 + 8 + 8 + 8 + 8 + 8 + 88
-);
+const_assert_eq!(size_of::<Position>(), 8 + 8 + 8 + 8 + 8 + 8 + 8 + 8 + 88);
 const_assert_eq!(size_of::<Position>(), 152);
 const_assert_eq!(size_of::<Position>() % 8, 0);
 
