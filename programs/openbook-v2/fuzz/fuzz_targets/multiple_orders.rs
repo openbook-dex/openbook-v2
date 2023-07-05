@@ -3,7 +3,8 @@
 use arbitrary::Arbitrary;
 use libfuzzer_sys::{fuzz_target, Corpus};
 use log::info;
-use openbook_v2_fuzz::{processor::TestSyscallStubs, FuzzContext, UserId};
+use openbook_v2::instructions::MAX_EVENTS_CONSUME;
+use openbook_v2_fuzz::{processor::TestSyscallStubs, FuzzContext, UserId, INITIAL_BALANCE};
 use std::{collections::HashSet, sync::Once};
 
 #[derive(Debug, Arbitrary, Clone)]
@@ -126,15 +127,176 @@ fn run_fuzz(fuzz_data: FuzzData) -> Corpus {
         return Corpus::Reject;
     }
 
+    info!("initializing");
     let mut ctx = FuzzContext::new();
     ctx.initialize();
 
+    info!("fuzzing");
     if fuzz_data.instructions.iter().any(|ix| match ctx.run(ix) {
         Corpus::Keep => false,
         Corpus::Reject => true,
     }) {
         return Corpus::Reject;
     };
+
+    info!("validating");
+    {
+        let referrer_rebates: u64 = ctx
+            .users
+            .values()
+            .map(|user| {
+                let oo = ctx
+                    .state
+                    .get_account::<openbook_v2::state::OpenOrdersAccount>(&user.open_orders)
+                    .unwrap();
+                oo.position.referrer_rebates_accrued
+            })
+            .sum();
+
+        let market = ctx
+            .state
+            .get_account::<openbook_v2::state::Market>(&ctx.market)
+            .unwrap();
+
+        assert_eq!(market.referrer_rebates_accrued, referrer_rebates);
+    }
+
+    {
+        info!("cleaning event_queue");
+        let consume_events_fuzz = FuzzInstruction::ConsumeEvents {
+            user_ids: HashSet::from_iter(ctx.users.keys().cloned()),
+            data: openbook_v2::instruction::ConsumeEvents {
+                limit: MAX_EVENTS_CONSUME,
+            },
+        };
+
+        let event_queue_len = |ctx: &FuzzContext| -> usize {
+            let event_queue = ctx
+                .state
+                .get_account::<openbook_v2::state::EventQueue>(&ctx.event_queue)
+                .unwrap();
+            event_queue.len()
+        };
+
+        for _ in (0..event_queue_len(&ctx)).step_by(MAX_EVENTS_CONSUME) {
+            ctx.run(&consume_events_fuzz);
+        }
+
+        assert_eq!(event_queue_len(&ctx), 0);
+    }
+
+    {
+        let positions = ctx
+            .users
+            .values()
+            .map(|user| {
+                let oo = ctx
+                    .state
+                    .get_account::<openbook_v2::state::OpenOrdersAccount>(&user.open_orders)
+                    .unwrap();
+                oo.position
+            })
+            .collect::<Vec<_>>();
+
+        let maker_volume_in_oo: u64 = positions.iter().map(|pos| pos.maker_volume).sum();
+        let taker_volume_in_oo: u64 = positions.iter().map(|pos| pos.taker_volume).sum();
+
+        let market = ctx
+            .state
+            .get_account::<openbook_v2::state::Market>(&ctx.market)
+            .unwrap();
+
+        assert_eq!(
+            maker_volume_in_oo,
+            taker_volume_in_oo + market.taker_volume_wo_oo
+        );
+    }
+
+    ctx.users
+        .keys()
+        .cloned()
+        .collect::<Vec<_>>()
+        .into_iter()
+        .for_each(|user_id| {
+            info!("cleaning {:?}", user_id);
+            ctx.run(&FuzzInstruction::CancelAllOrders {
+                user_id,
+                data: openbook_v2::instruction::CancelAllOrders {
+                    limit: u8::MAX,
+                    side_option: None,
+                },
+            });
+            ctx.run(&FuzzInstruction::SettleFunds {
+                user_id,
+                data: openbook_v2::instruction::SettleFunds {},
+            });
+
+            let position = {
+                let user = ctx.users.get(&user_id).unwrap();
+                let open_orders = ctx
+                    .state
+                    .get_account::<openbook_v2::state::OpenOrdersAccount>(&user.open_orders)
+                    .unwrap();
+                open_orders.position
+            };
+
+            assert_eq!(position.bids_base_lots, 0);
+            assert_eq!(position.asks_base_lots, 0);
+            assert_eq!(position.base_free_native, 0);
+            assert_eq!(position.quote_free_native, 0);
+            assert_eq!(position.locked_maker_fees, 0);
+            assert_eq!(position.referrer_rebates_accrued, 0);
+        });
+
+    {
+        let is_empty = |pubkey| -> bool {
+            let book_side = ctx
+                .state
+                .get_account::<openbook_v2::state::BookSide>(pubkey)
+                .unwrap();
+            book_side.is_empty()
+        };
+
+        assert!(is_empty(&ctx.asks));
+        assert!(is_empty(&ctx.bids));
+    }
+
+    {
+        info!("cleaning market");
+        ctx.run(&FuzzInstruction::SweepFees {
+            data: openbook_v2::instruction::SweepFees {},
+        });
+
+        let market = ctx
+            .state
+            .get_account::<openbook_v2::state::Market>(&ctx.market)
+            .unwrap();
+
+        assert_eq!(ctx.state.get_balance(&ctx.base_vault), 0);
+        assert_eq!(ctx.state.get_balance(&ctx.quote_vault), 0);
+        assert_eq!(market.quote_fees_accrued, 0);
+    }
+
+    {
+        let base_balances: u64 = ctx
+            .users
+            .values()
+            .map(|user| ctx.state.get_balance(&user.base_vault))
+            .sum();
+
+        let quote_balances: u64 = ctx
+            .users
+            .values()
+            .map(|user| ctx.state.get_balance(&user.quote_vault))
+            .sum();
+
+        let n_users = ctx.users.len() as u64;
+        assert_eq!(INITIAL_BALANCE * n_users, base_balances);
+        assert_eq!(
+            INITIAL_BALANCE * n_users,
+            quote_balances + ctx.state.get_balance(&ctx.collect_fee_admin_quote_vault)
+        );
+    }
 
     Corpus::Keep
 }
