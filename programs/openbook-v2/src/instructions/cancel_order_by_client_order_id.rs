@@ -9,6 +9,10 @@ pub fn cancel_order_by_client_order_id(
     client_order_id: u64,
 ) -> Result<()> {
     let mut account = ctx.accounts.open_orders_account.load_mut()?;
+    require!(
+        account.is_owner_or_delegate(ctx.accounts.owner.key()),
+        OpenBookError::SomeError
+    );
 
     let market = ctx.accounts.market.load()?;
     let mut book = Orderbook {

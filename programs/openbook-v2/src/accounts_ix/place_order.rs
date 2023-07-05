@@ -1,4 +1,3 @@
-use crate::error::OpenBookError;
 use crate::state::*;
 use anchor_lang::prelude::*;
 use anchor_spl::token::{Token, TokenAccount};
@@ -8,7 +7,7 @@ pub struct PlaceOrder<'info> {
     #[account(
         mut,
         has_one = market,
-        constraint = open_orders_account.load()?.is_owner_or_delegate(owner_or_delegate.key()) @ OpenBookError::NoOwnerOrDelegate,
+        // also is_owner_or_delegate check inside ix
     )]
     pub open_orders_account: AccountLoader<'info, OpenOrdersAccount>,
     pub owner_or_delegate: Signer<'info>,

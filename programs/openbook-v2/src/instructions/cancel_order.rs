@@ -8,6 +8,10 @@ pub fn cancel_order(ctx: Context<CancelOrder>, order_id: u128) -> Result<()> {
     require_gt!(order_id, 0, OpenBookError::InvalidInputOrderId);
 
     let mut account = ctx.accounts.open_orders_account.load_mut()?;
+    require!(
+        account.is_owner_or_delegate(ctx.accounts.owner.key()),
+        OpenBookError::NoOwnerOrDelegate
+    );
 
     let market = ctx.accounts.market.load()?;
     let mut book = Orderbook {
