@@ -1,16 +1,23 @@
+use crate::error::OpenBookError;
 use crate::state::*;
 use anchor_lang::prelude::*;
 use anchor_spl::token::{Token, TokenAccount};
 
 #[derive(Accounts)]
 pub struct PlaceOrder<'info> {
-    #[account(mut,
+    #[account(
+        mut,
         has_one = market,
+        constraint = open_orders_account.load()?.is_owner_or_delegate(owner_or_delegate.key()) @ OpenBookError::NoOwnerOrDelegate,
     )]
     pub open_orders_account: AccountLoader<'info, OpenOrdersAccount>,
     pub owner_or_delegate: Signer<'info>,
     pub open_orders_admin: Option<Signer<'info>>,
-    #[account(mut)]
+
+    #[account(
+        mut,
+        constraint = token_deposit_account.mint == market_vault.mint
+    )]
     pub token_deposit_account: Account<'info, TokenAccount>,
 
     #[account(
@@ -27,7 +34,10 @@ pub struct PlaceOrder<'info> {
     pub asks: AccountLoader<'info, BookSide>,
     #[account(mut)]
     pub event_queue: AccountLoader<'info, EventQueue>,
-    #[account(mut)]
+    #[account(
+        mut,
+        constraint = market.load()?.is_market_vault(market_vault.key())
+    )]
     pub market_vault: Account<'info, TokenAccount>,
 
     /// CHECK: The oracle can be one of several different account types and the pubkey is checked above

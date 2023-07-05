@@ -1,16 +1,16 @@
+use crate::error::OpenBookError;
 use crate::state::{BookSide, Market, OpenOrdersAccount};
 use anchor_lang::prelude::*;
 
 #[derive(Accounts)]
 pub struct CancelOrderByClientOrderId<'info> {
+    pub owner: Signer<'info>,
     #[account(
         mut,
-        // owner is checked at #1
         has_one = market,
+        constraint = open_orders_account.load()?.is_owner_or_delegate(owner.key()) @ OpenBookError::NoOwnerOrDelegate,
     )]
     pub open_orders_account: AccountLoader<'info, OpenOrdersAccount>,
-    pub owner: Signer<'info>,
-
     #[account(
         has_one = bids,
         has_one = asks,
