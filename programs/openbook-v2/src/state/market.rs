@@ -154,6 +154,10 @@ impl Market {
             .trim_matches(char::from(0))
     }
 
+    pub fn is_market_vault(&self, pubkey: Pubkey) -> bool {
+        pubkey == self.quote_vault || pubkey == self.base_vault
+    }
+
     pub fn gen_order_id(&mut self, side: Side, price_data: u64) -> u128 {
         self.seq_num += 1;
         orderbook::new_node_key(side, price_data, self.seq_num)

@@ -3,12 +3,13 @@ use anchor_lang::prelude::*;
 
 #[derive(Accounts)]
 pub struct CancelOrder<'info> {
-    #[account(mut,
-        has_one = market,
+    #[account(
+        mut,
+        has_one = market
+        // also is_owner_or_delegate check inside ix
     )]
     pub open_orders_account: AccountLoader<'info, OpenOrdersAccount>,
     pub owner: Signer<'info>,
-
     #[account(
         has_one = bids,
         has_one = asks,
