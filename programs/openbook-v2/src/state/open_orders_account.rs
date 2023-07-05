@@ -50,7 +50,7 @@ const_assert_eq!(
         + size_of::<Position>()
         + MAX_OPEN_ORDERS * size_of::<OpenOrder>()
 );
-const_assert_eq!(size_of::<OpenOrdersAccount>(), 9520);
+const_assert_eq!(size_of::<OpenOrdersAccount>(), 9512);
 const_assert_eq!(size_of::<OpenOrdersAccount>() % 8, 0);
 
 impl OpenOrdersAccount {
@@ -136,7 +136,6 @@ impl OpenOrdersAccount {
         }
 
         let pa = &mut self.position;
-        pa.maker_volume += quote_native;
 
         match side {
             Side::Bid => {
@@ -149,6 +148,7 @@ impl OpenOrdersAccount {
             }
         };
 
+        pa.maker_volume += quote_native;
         pa.referrer_rebates_accrued += maker_fees;
         market.referrer_rebates_accrued += maker_fees;
         market.fees_accrued += maker_fees;
@@ -194,16 +194,11 @@ impl OpenOrdersAccount {
     ) {
         let pa = &mut self.position;
         match taker_side {
-            Side::Bid => {
-                pa.base_free_native += base_native;
-                pa.taker_volume += quote_native + taker_fees;
-            }
-            Side::Ask => {
-                pa.quote_free_native += quote_native - taker_fees;
-                pa.taker_volume += quote_native;
-            }
+            Side::Bid => pa.base_free_native += base_native,
+            Side::Ask => pa.quote_free_native += quote_native - taker_fees,
         };
 
+        pa.taker_volume += quote_native;
         pa.referrer_rebates_accrued += referrer_amount;
         market.referrer_rebates_accrued += referrer_amount;
     }

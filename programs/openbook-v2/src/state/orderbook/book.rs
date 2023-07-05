@@ -271,6 +271,8 @@ impl<'a> Orderbook<'a> {
                     taker_fees,
                     referrer_amount,
                 );
+            } else {
+                market.taker_volume_wo_oo += total_quote_taken_native;
             }
 
             let total_quantity_paid: u64;
