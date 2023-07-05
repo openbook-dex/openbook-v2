@@ -560,7 +560,7 @@ pub struct CancelOrderByClientOrderIdInstruction {
 }
 #[async_trait::async_trait(?Send)]
 impl ClientInstruction for CancelOrderByClientOrderIdInstruction {
-    type Accounts = openbook_v2::accounts::CancelOrderByClientOrderId;
+    type Accounts = openbook_v2::accounts::CancelOrder;
     type Instruction = openbook_v2::instruction::CancelOrderByClientOrderId;
     async fn to_instruction(
         &self,
@@ -596,7 +596,7 @@ pub struct CancelAllOrdersInstruction {
 }
 #[async_trait::async_trait(?Send)]
 impl ClientInstruction for CancelAllOrdersInstruction {
-    type Accounts = openbook_v2::accounts::CancelAllOrders;
+    type Accounts = openbook_v2::accounts::CancelOrder;
     type Instruction = openbook_v2::instruction::CancelAllOrders;
     async fn to_instruction(
         &self,

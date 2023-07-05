@@ -3,7 +3,7 @@ use crate::state::*;
 use anchor_lang::prelude::*;
 
 pub fn cancel_all_orders(
-    ctx: Context<CancelAllOrders>,
+    ctx: Context<CancelOrder>,
     side_option: Option<Side>,
     limit: u8,
 ) -> Result<()> {

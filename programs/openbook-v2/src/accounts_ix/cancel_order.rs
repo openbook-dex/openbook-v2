@@ -11,7 +11,6 @@ pub struct CancelOrder<'info> {
     )]
     pub open_orders_account: AccountLoader<'info, OpenOrdersAccount>,
     pub owner: Signer<'info>,
-
     #[account(
         has_one = bids,
         has_one = asks,

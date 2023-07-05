@@ -305,7 +305,7 @@ pub mod openbook_v2 {
     /// Note that this doesn't emit an [`OutEvent`](crate::state::OutEvent) because a
     /// maker knows that they will be passing in their own [`OpenOrdersAccount`](crate::state::OpenOrdersAccount).
     pub fn cancel_order_by_client_order_id(
-        ctx: Context<CancelOrderByClientOrderId>,
+        ctx: Context<CancelOrder>,
         client_order_id: u64,
     ) -> Result<()> {
         #[cfg(feature = "enable-gpl")]
@@ -315,7 +315,7 @@ pub mod openbook_v2 {
 
     /// Cancel up to `limit` orders, optionally filtering by side
     pub fn cancel_all_orders(
-        ctx: Context<CancelAllOrders>,
+        ctx: Context<CancelOrder>,
         side_option: Option<Side>,
         limit: u8,
     ) -> Result<()> {
