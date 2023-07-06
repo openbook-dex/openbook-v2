@@ -163,6 +163,14 @@ impl Market {
         orderbook::new_node_key(side, price_data, self.seq_num)
     }
 
+    pub fn max_base_lots(&self) -> i64 {
+        i64::MAX / self.base_lot_size
+    }
+
+    pub fn max_quote_lots(&self) -> i64 {
+        i64::MAX / self.quote_lot_size
+    }
+
     /// Convert from the price stored on the book to the price used in value calculations
     pub fn lot_to_native_price(&self, price: i64) -> I80F48 {
         I80F48::from_num(price) * I80F48::from_num(self.quote_lot_size)
