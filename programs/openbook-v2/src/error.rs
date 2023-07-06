@@ -14,6 +14,8 @@ pub enum OpenBookError {
     InvalidInputMarketFees,
     #[msg("Lots cannot be negative")]
     InvalidInputLots,
+    #[msg("Lots size above market limits")]
+    InvalidInputLotsSize,
     #[msg("Price lots should be greater than zero")]
     InvalidInputPriceLots,
     #[msg("Peg limit should be greater than zero")]
@@ -65,8 +67,6 @@ pub enum OpenBookError {
     MarketHasExpired,
     #[msg("Price lots should be greater than zero")]
     InvalidPriceLots,
-    #[msg("Order size above market limits")]
-    InvalidOrderSize,
     #[msg("Oracle price above market limits")]
     InvalidOraclePrice,
     #[msg("The Market has not expired yet.")]
