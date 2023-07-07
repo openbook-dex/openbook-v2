@@ -399,7 +399,7 @@ impl FuzzContext {
     ) -> ProgramResult {
         let user = self.user(user_id);
 
-        let accounts = openbook_v2::accounts::CancelOrderByClientOrderId {
+        let accounts = openbook_v2::accounts::CancelOrder {
             owner: user.owner,
             open_orders_account: user.open_orders,
             market: self.market,
@@ -417,7 +417,7 @@ impl FuzzContext {
     ) -> ProgramResult {
         let user = self.user(user_id);
 
-        let accounts = openbook_v2::accounts::CancelAllOrders {
+        let accounts = openbook_v2::accounts::CancelOrder {
             owner: user.owner,
             open_orders_account: user.open_orders,
             market: self.market,
