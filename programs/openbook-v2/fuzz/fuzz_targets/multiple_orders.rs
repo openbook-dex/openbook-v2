@@ -310,9 +310,9 @@ mod error_parser {
     pub fn place_order(err: ProgramError) -> Corpus {
         match err {
             e if e == OpenBookError::InvalidInputLots.into() => Corpus::Reject,
+            e if e == OpenBookError::InvalidInputLotsSize.into() => Corpus::Reject,
             e if e == OpenBookError::InvalidInputPriceLots.into() => Corpus::Reject,
             e if e == OpenBookError::InvalidOraclePrice.into() => Corpus::Keep,
-            e if e == OpenBookError::InvalidOrderSize.into() => Corpus::Keep,
             e if e == OpenBookError::InvalidPriceLots.into() => Corpus::Keep,
             e if e == OpenBookError::OpenOrdersFull.into() => Corpus::Keep,
             e if e == OpenBookError::WouldSelfTrade.into() => Corpus::Keep,
@@ -324,13 +324,13 @@ mod error_parser {
     pub fn place_order_pegged(err: ProgramError) -> Corpus {
         match err {
             e if e == OpenBookError::InvalidInputLots.into() => Corpus::Reject,
+            e if e == OpenBookError::InvalidInputLotsSize.into() => Corpus::Reject,
             e if e == OpenBookError::InvalidInputPegLimit.into() => Corpus::Reject,
             e if e == OpenBookError::InvalidInputPriceLots.into() => Corpus::Reject,
             e if e == OpenBookError::InvalidInputStaleness.into() => Corpus::Reject,
             e if e == OpenBookError::InvalidOraclePrice.into() => Corpus::Keep,
             e if e == OpenBookError::InvalidOrderPostIOC.into() => Corpus::Keep,
             e if e == OpenBookError::InvalidOrderPostMarket.into() => Corpus::Keep,
-            e if e == OpenBookError::InvalidOrderSize.into() => Corpus::Keep,
             e if e == OpenBookError::InvalidPriceLots.into() => Corpus::Keep,
             e if e == OpenBookError::WouldSelfTrade.into() => Corpus::Keep,
             e if e == TokenError::InsufficientFunds.into() => Corpus::Keep,
@@ -341,10 +341,10 @@ mod error_parser {
     pub fn place_take_order(err: ProgramError) -> Corpus {
         match err {
             e if e == OpenBookError::InvalidInputLots.into() => Corpus::Reject,
+            e if e == OpenBookError::InvalidInputLotsSize.into() => Corpus::Reject,
             e if e == OpenBookError::InvalidInputOrderType.into() => Corpus::Reject,
             e if e == OpenBookError::InvalidInputPriceLots.into() => Corpus::Reject,
             e if e == OpenBookError::InvalidOraclePrice.into() => Corpus::Keep,
-            e if e == OpenBookError::InvalidOrderSize.into() => Corpus::Keep,
             e if e == TokenError::InsufficientFunds.into() => Corpus::Keep,
             _ => panic!("{}", err),
         }
