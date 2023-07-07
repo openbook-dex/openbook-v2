@@ -18,7 +18,6 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<
     );
 
     let mut open_orders_account = ctx.accounts.open_orders_account.load_mut()?;
-    // account constraint #1
     require!(
         open_orders_account.is_owner_or_delegate(ctx.accounts.owner_or_delegate.key()),
         OpenBookError::NoOwnerOrDelegate

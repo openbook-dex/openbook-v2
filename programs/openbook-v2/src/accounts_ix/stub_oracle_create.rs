@@ -4,6 +4,8 @@ use anchor_spl::token::Mint;
 
 #[derive(Accounts)]
 pub struct StubOracleCreate<'info> {
+    #[account(mut)]
+    pub payer: Signer<'info>,
     #[account(
         init,
         seeds = [b"StubOracle".as_ref(), mint.key().as_ref()],
@@ -12,13 +14,7 @@ pub struct StubOracleCreate<'info> {
         space = 8 + std::mem::size_of::<StubOracle>(),
     )]
     pub oracle: AccountLoader<'info, StubOracle>,
-
     pub admin: Signer<'info>,
-
     pub mint: Account<'info, Mint>,
-
-    #[account(mut)]
-    pub payer: Signer<'info>,
-
     pub system_program: Program<'info, System>,
 }

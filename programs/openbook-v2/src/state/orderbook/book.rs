@@ -95,12 +95,25 @@ impl<'a> Orderbook<'a> {
         // Any changes to matching orders on the other side of the book are collected in
         // matched_changes/matched_deletes and then applied after this loop.
 
+        let order_max_base_lots = order.max_base_lots;
         let order_max_quote_lots = match side {
             Side::Bid => market.subtract_taker_fees(order.max_quote_lots_including_fees),
             Side::Ask => order.max_quote_lots_including_fees,
         };
 
-        let mut remaining_base_lots = order.max_base_lots;
+        require_gte!(
+            market.max_base_lots(),
+            order_max_base_lots,
+            OpenBookError::InvalidInputLotsSize
+        );
+
+        require_gte!(
+            market.max_quote_lots(),
+            order_max_quote_lots,
+            OpenBookError::InvalidInputLotsSize
+        );
+
+        let mut remaining_base_lots = order_max_base_lots;
         let mut remaining_quote_lots = order_max_quote_lots;
         let mut decremented_quote_lots = 0_i64;
 
@@ -238,14 +251,8 @@ impl<'a> Orderbook<'a> {
         assert!(total_quote_lots_taken >= 0);
         assert!(total_base_lots_taken >= 0);
 
-        let total_base_taken_native = total_base_lots_taken
-            .checked_mul(market.base_lot_size)
-            .ok_or(OpenBookError::InvalidOrderSize)? as u64;
-
-        let mut total_quote_taken_native = total_quote_lots_taken
-            .checked_mul(market.quote_lot_size)
-            .ok_or(OpenBookError::InvalidOrderSize)?
-            as u64;
+        let total_base_taken_native = (total_base_lots_taken * market.base_lot_size) as u64;
+        let mut total_quote_taken_native = (total_quote_lots_taken * market.quote_lot_size) as u64;
 
         // Record the taker trade in the account already, even though it will only be
         // realized when the fill event gets executed
@@ -349,14 +356,8 @@ impl<'a> Orderbook<'a> {
             // Open orders always exists in this case
             let open_orders = open_orders_acc.as_mut().unwrap();
 
-            posted_base_native = book_base_quantity_lots
-                .checked_mul(market.base_lot_size)
-                .ok_or(OpenBookError::InvalidOrderSize)?;
-
-            posted_quote_native = book_base_quantity_lots
-                .checked_mul(price)
-                .and_then(|book_quote_lots| book_quote_lots.checked_mul(market.quote_lot_size))
-                .ok_or(OpenBookError::InvalidOrderSize)?;
+            posted_base_native = book_base_quantity_lots * market.base_lot_size;
+            posted_quote_native = book_base_quantity_lots * price * market.quote_lot_size;
 
             // Subtract maker fees in bid.
             if side == Side::Bid {

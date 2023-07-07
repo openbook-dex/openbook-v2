@@ -9,7 +9,6 @@ pub struct ConsumeEvents<'info> {
         has_one = event_queue,
     )]
     pub market: AccountLoader<'info, Market>,
-
     #[account(mut)]
     pub event_queue: AccountLoader<'info, EventQueue>,
 }
