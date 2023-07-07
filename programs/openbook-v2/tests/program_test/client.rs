@@ -807,8 +807,8 @@ pub struct DepositInstruction {
     pub token_base_account: Pubkey,
     pub token_quote_account: Pubkey,
     pub owner: TestKeypair,
-    pub base_amount_lots: u64,
-    pub quote_amount_lots: u64,
+    pub base_amount: u64,
+    pub quote_amount: u64,
 }
 #[async_trait::async_trait(?Send)]
 impl ClientInstruction for DepositInstruction {
@@ -820,8 +820,8 @@ impl ClientInstruction for DepositInstruction {
     ) -> (Self::Accounts, instruction::Instruction) {
         let program_id = openbook_v2::id();
         let instruction = Self::Instruction {
-            base_amount_lots: self.base_amount_lots,
-            quote_amount_lots: self.quote_amount_lots,
+            base_amount: self.base_amount,
+            quote_amount: self.quote_amount,
         };
 
         let accounts = Self::Accounts {
