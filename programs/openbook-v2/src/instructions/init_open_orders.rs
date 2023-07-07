@@ -1,12 +1,12 @@
 use crate::accounts_ix::InitOpenOrders;
-use crate::pod_option::PodOption;
+use crate::pubkey_option::NonZeroPubkeyOption;
 use crate::state::*;
 use anchor_lang::prelude::*;
 
 pub fn init_open_orders(ctx: Context<InitOpenOrders>, account_num: u32) -> Result<()> {
     let mut account = ctx.accounts.open_orders_account.load_init()?;
 
-    let delegate_account: PodOption<Pubkey> = ctx
+    let delegate_account: NonZeroPubkeyOption = ctx
         .accounts
         .delegate_account
         .as_ref()
