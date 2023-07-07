@@ -4,7 +4,7 @@ use std::mem::size_of;
 
 use crate::error::*;
 use crate::logs::FillLog;
-use crate::pod_option::PodOption;
+use crate::pubkey_option::NonZeroPubkeyOption;
 
 use super::FillEvent;
 use super::LeafNode;
@@ -26,7 +26,7 @@ pub struct OpenOrdersAccount {
     pub name: [u8; 32],
 
     // Alternative authority/signer of transactions for a openbook account
-    pub delegate: PodOption<Pubkey>,
+    pub delegate: NonZeroPubkeyOption,
 
     pub account_num: u32,
 
@@ -43,14 +43,14 @@ const_assert_eq!(
     size_of::<OpenOrdersAccount>(),
     size_of::<Pubkey>() * 2
         + 32
-        + 40
+        + 32
         + 4
         + 1
         + 3
         + size_of::<Position>()
         + MAX_OPEN_ORDERS * size_of::<OpenOrder>()
 );
-const_assert_eq!(size_of::<OpenOrdersAccount>(), 9512);
+const_assert_eq!(size_of::<OpenOrdersAccount>(), 9504);
 const_assert_eq!(size_of::<OpenOrdersAccount>() % 8, 0);
 
 impl OpenOrdersAccount {

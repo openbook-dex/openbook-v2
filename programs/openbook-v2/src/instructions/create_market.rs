@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 
 use crate::error::*;
-use crate::pod_option::PodOption;
+use crate::pubkey_option::NonZeroPubkeyOption;
 use crate::state::*;
 use crate::util::fill_from_str;
 
@@ -32,21 +32,21 @@ pub fn create_market(
         OpenBookError::InvalidInputMarketExpired
     );
 
-    let open_orders_admin: PodOption<Pubkey> = ctx
+    let open_orders_admin: NonZeroPubkeyOption = ctx
         .accounts
         .open_orders_admin
         .as_ref()
         .map(|account| account.key())
         .into();
 
-    let consume_events_admin: PodOption<Pubkey> = ctx
+    let consume_events_admin: NonZeroPubkeyOption = ctx
         .accounts
         .consume_events_admin
         .as_ref()
         .map(|account| account.key())
         .into();
 
-    let close_market_admin: PodOption<Pubkey> = ctx
+    let close_market_admin: NonZeroPubkeyOption = ctx
         .accounts
         .close_market_admin
         .as_ref()
