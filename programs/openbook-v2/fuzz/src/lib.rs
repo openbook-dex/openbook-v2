@@ -128,7 +128,7 @@ impl FuzzContext {
         self
     }
 
-    fn user(&mut self, user_id: &UserId) -> &UserAccounts {
+    fn get_or_create_new_user(&mut self, user_id: &UserId) -> &UserAccounts {
         let create_new_user = || -> UserAccounts {
             let account_num = 0_u32;
 
@@ -237,7 +237,7 @@ impl FuzzContext {
             Side::Bid => self.quote_vault,
         };
 
-        let user = self.user(user_id);
+        let user = self.get_or_create_new_user(user_id);
         let token_deposit_account = match data.side {
             Side::Ask => user.base_vault,
             Side::Bid => user.quote_vault,
@@ -271,7 +271,7 @@ impl FuzzContext {
             Side::Bid => self.quote_vault,
         };
 
-        let user = self.user(user_id);
+        let user = self.get_or_create_new_user(user_id);
         let token_deposit_account = match data.side {
             Side::Ask => user.base_vault,
             Side::Bid => user.quote_vault,
@@ -300,7 +300,7 @@ impl FuzzContext {
         user_id: &UserId,
         data: &openbook_v2::instruction::PlaceTakeOrder,
     ) -> ProgramResult {
-        let user = self.user(user_id);
+        let user = self.get_or_create_new_user(user_id);
 
         let (token_deposit_account, token_receiver_account) = match data.side {
             Side::Ask => (user.base_vault, user.quote_vault),
@@ -379,7 +379,9 @@ impl FuzzContext {
         user_id: &UserId,
         data: &openbook_v2::instruction::CancelOrder,
     ) -> ProgramResult {
-        let user = self.user(user_id);
+        let Some(user) = self.users.get(user_id) else {
+            return Ok(());
+        };
 
         let accounts = openbook_v2::accounts::CancelOrder {
             owner: user.owner,
@@ -397,7 +399,9 @@ impl FuzzContext {
         user_id: &UserId,
         data: &openbook_v2::instruction::CancelOrderByClientOrderId,
     ) -> ProgramResult {
-        let user = self.user(user_id);
+        let Some(user) = self.users.get(user_id) else {
+            return Ok(());
+        };
 
         let accounts = openbook_v2::accounts::CancelOrder {
             owner: user.owner,
@@ -415,7 +419,9 @@ impl FuzzContext {
         user_id: &UserId,
         data: &openbook_v2::instruction::CancelAllOrders,
     ) -> ProgramResult {
-        let user = self.user(user_id);
+        let Some(user) = self.users.get(user_id) else {
+            return Ok(());
+        };
 
         let accounts = openbook_v2::accounts::CancelOrder {
             owner: user.owner,
@@ -433,7 +439,9 @@ impl FuzzContext {
         user_id: &UserId,
         data: &openbook_v2::instruction::SettleFunds,
     ) -> ProgramResult {
-        let user = self.user(user_id);
+        let Some(user) = self.users.get(user_id) else {
+            return Ok(());
+        };
 
         let accounts = openbook_v2::accounts::SettleFunds {
             owner: user.owner,
