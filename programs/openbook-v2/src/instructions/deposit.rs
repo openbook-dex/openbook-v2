@@ -24,12 +24,6 @@ pub fn deposit(ctx: Context<Deposit>, base_amount: u64, quote_amount: u64) -> Re
         token::transfer(cpi_context, base_amount)?;
         open_orders_account.position.base_free_native += base_amount;
         market.base_deposit_total += base_amount;
-
-        emit!(DepositLog {
-            open_orders_acc: ctx.accounts.open_orders_account.key(),
-            signer: ctx.accounts.owner.key(),
-            quantity: base_amount,
-        });
     }
 
     if quote_amount > 0 {
@@ -45,11 +39,14 @@ pub fn deposit(ctx: Context<Deposit>, base_amount: u64, quote_amount: u64) -> Re
 
         open_orders_account.position.quote_free_native += quote_amount;
         market.quote_deposit_total += quote_amount;
+    }
 
+    if base_amount > 0 || quote_amount > 0 {
         emit!(DepositLog {
             open_orders_acc: ctx.accounts.open_orders_account.key(),
             signer: ctx.accounts.owner.key(),
-            quantity: quote_amount,
+            base_amount,
+            quote_amount,
         });
     }
 
