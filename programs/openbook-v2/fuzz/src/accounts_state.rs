@@ -52,11 +52,14 @@ impl AccountsState {
         bump: &'b Bump,
         metas: Vec<AccountMeta>,
     ) -> Vec<AccountInfo<'b>> {
-        metas
-            .iter()
-            .map(|meta| {
+        let mut infos: Vec<AccountInfo> = vec![];
+
+        metas.iter().for_each(|meta| {
+            if let Some(info) = infos.iter().find(|info| info.key == &meta.pubkey) {
+                infos.push(info.clone());
+            } else {
                 let account = self.0.get(&meta.pubkey).unwrap();
-                AccountInfo::new(
+                infos.push(AccountInfo::new(
                     bump.alloc(meta.pubkey),
                     meta.is_signer,
                     meta.is_writable,
@@ -65,9 +68,11 @@ impl AccountsState {
                     bump.alloc(account.owner),
                     account.executable,
                     account.rent_epoch,
-                )
-            })
-            .collect()
+                ));
+            }
+        });
+
+        infos
     }
 
     pub fn update(&mut self, infos: Vec<AccountInfo>) {
@@ -76,7 +81,7 @@ impl AccountsState {
             let new_data = info.data.borrow();
             let new_lamports = **info.lamports.borrow();
             if new_lamports != account.lamports || *new_data != account.data {
-                account.data = (*new_data).to_vec();
+                account.data.copy_from_slice(*new_data);
                 account.lamports = new_lamports;
             }
         });
