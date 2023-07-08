@@ -31,16 +31,17 @@ impl program_stubs::SyscallStubs for TestSyscallStubs {
     ) -> ProgramResult {
         let mut new_account_infos = vec![];
 
+        let pdas = signers_seeds
+            .iter()
+            .map(|seeds| Pubkey::create_program_address(seeds, &openbook_v2::id()).unwrap())
+            .collect::<Vec<_>>();
+
         for meta in instruction.accounts.iter() {
             for account_info in account_infos.iter() {
                 if meta.pubkey == *account_info.key {
                     let mut new_account_info = account_info.clone();
-                    for seeds in signers_seeds.iter() {
-                        let signer =
-                            Pubkey::create_program_address(seeds, &openbook_v2::id()).unwrap();
-                        if *account_info.key == signer {
-                            new_account_info.is_signer = true;
-                        }
+                    if pdas.iter().any(|pda| pda == account_info.key) {
+                        new_account_info.is_signer = true;
                     }
                     new_account_infos.push(new_account_info);
                 }
