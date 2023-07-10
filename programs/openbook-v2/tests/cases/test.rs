@@ -338,8 +338,8 @@ async fn test_cancel_orders() -> Result<(), TransportError> {
             quote_vault,
             token_base_account: owner_token_0,
             token_quote_account: owner_token_1,
-            base_amount_lots: 100,
-            quote_amount_lots: 0,
+            base_amount: 10000,
+            quote_amount: 0,
         },
     )
     .await

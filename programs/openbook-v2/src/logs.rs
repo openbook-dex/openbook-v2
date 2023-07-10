@@ -13,7 +13,8 @@ pub struct BalanceLog {
 pub struct DepositLog {
     pub open_orders_acc: Pubkey,
     pub signer: Pubkey,
-    pub quantity: u64,
+    pub base_amount: u64,
+    pub quote_amount: u64,
 }
 
 #[event]

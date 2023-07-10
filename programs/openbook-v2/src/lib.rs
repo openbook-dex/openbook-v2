@@ -324,18 +324,14 @@ pub mod openbook_v2 {
         Ok(())
     }
 
-    /// Desposit a certain amount of `base_amount_lots` and `quote_amount_lots`
-    /// into one's [`Position`](crate::state::Position).
+    /// Desposit a certain amount of `base` and `quote` lamports into one's
+    /// [`Position`](crate::state::Position).
     ///
     /// Makers might wish to `deposit`, rather than have actual tokens moved for
     /// each trade, in order to reduce CUs.
-    pub fn deposit(
-        ctx: Context<Deposit>,
-        base_amount_lots: u64,
-        quote_amount_lots: u64,
-    ) -> Result<()> {
+    pub fn deposit(ctx: Context<Deposit>, base_amount: u64, quote_amount: u64) -> Result<()> {
         #[cfg(feature = "enable-gpl")]
-        instructions::deposit(ctx, base_amount_lots, quote_amount_lots)?;
+        instructions::deposit(ctx, base_amount, quote_amount)?;
         Ok(())
     }
 
