@@ -8,6 +8,8 @@ pub enum OpenBookError {
     #[msg("")]
     SomeError,
 
+    #[msg("Name lenght above limit")]
+    InvalidInputNameLength,
     #[msg("Market cannot be created as expired")]
     InvalidInputMarketExpired,
     #[msg("Taker fees should be positive and if maker fees are negative, greater or equal to their abs value")]

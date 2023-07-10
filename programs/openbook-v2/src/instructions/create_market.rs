@@ -24,13 +24,25 @@ pub fn create_market(
     let now_ts: u64 = Clock::get()?.unix_timestamp.try_into().unwrap();
 
     require!(
+        maker_fee.unsigned_abs() as i128 <= FEES_SCALE_FACTOR,
+        OpenBookError::InvalidInputMarketFees
+    );
+    require!(
+        taker_fee.unsigned_abs() as i128 <= FEES_SCALE_FACTOR,
+        OpenBookError::InvalidInputMarketFees
+    );
+    require!(
         taker_fee >= 0 && (maker_fee >= 0 || maker_fee.abs() <= taker_fee),
         OpenBookError::InvalidInputMarketFees
     );
+
     require!(
         time_expiry == 0 || time_expiry > Clock::get()?.unix_timestamp,
         OpenBookError::InvalidInputMarketExpired
     );
+
+    require_gt!(quote_lot_size, 0, OpenBookError::InvalidInputLots);
+    require_gt!(base_lot_size, 0, OpenBookError::InvalidInputLots);
 
     let open_orders_admin: NonZeroPubkeyOption = ctx
         .accounts
