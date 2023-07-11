@@ -1,14 +1,28 @@
+use anchor_lang::AccountDeserialize;
+use anchor_lang::__private::bytemuck::Zeroable;
 use anyhow::Result;
-use openbook_v2::state::{SelfTradeBehavior::DecrementTake, Order, OrderWithAmounts, Orderbook, PlaceOrderType, Side, EventQueue, Market};
+use fixed::types::I80F48;
+use openbook_v2::state::{BookSide, OrderParams};
+use openbook_v2::state::{
+    EventQueue, Market, Order, OrderWithAmounts, Orderbook, SelfTradeBehavior::DecrementTake, Side,
+};
 
+use rust_decimal::Decimal;
 /// An abstraction in order to share reserve mints and necessary data
-use solana_sdk::{account::Account, instruction::AccountMeta, pubkey::Pubkey};
+use solana_sdk::{account::Account, pubkey::Pubkey};
+use std::cell::RefCell;
 use std::collections::HashMap;
 use std::str;
 
+#[derive(Clone)]
+pub struct KeyedAccount {
+    pub key: Pubkey,
+    pub account: Account,
+}
+
 pub struct QuoteParams {
-    pub max_base_lots: u64,
-    pub max_quote_lots_including_fees: u64,
+    pub max_base_lots: i64,
+    pub max_quote_lots_including_fees: i64,
     pub input_mint: Pubkey,
     pub output_mint: Pubkey,
 }
@@ -38,11 +52,14 @@ pub trait Amm {
     // Picks data necessary to update it's internal state
     fn update(&mut self, accounts_map: &HashMap<Pubkey, Vec<u8>>) -> Result<()>;
     // Compute the quote from internal state
-    fn quote(&self, quote_params: &QuoteParams) -> Result<Quote>;
+    fn quote(&mut self, quote_params: &QuoteParams) -> Result<Quote>;
 }
 
 pub struct OpenBookMarket {
     market: Market,
+    event_queue: EventQueue,
+    bids: BookSide,
+    asks: BookSide,
     key: Pubkey,
     label: String,
     related_accounts: [Pubkey; 6],
@@ -52,11 +69,15 @@ pub struct OpenBookMarket {
 }
 
 impl OpenBookMarket {
-    pub fn new_from_market(key: Pubkey, market: Market) -> OpenBookMarket {
-        OpenBookMarket {
+    pub fn from_keyed_account(keyed_account: &KeyedAccount) -> Result<Self> {
+        let market = Market::try_deserialize(&mut (&keyed_account.account.data as &[u8]))?;
+
+        Ok(OpenBookMarket {
             market,
-            key,
-            label: str::from_utf8(&market.name).unwrap_or_else(|d| "").to_string(),
+            key: keyed_account.key,
+            label: str::from_utf8(&market.name)
+                .unwrap_or_else(|d| "")
+                .to_string(),
             related_accounts: [
                 market.bids,
                 market.asks,
@@ -68,7 +89,10 @@ impl OpenBookMarket {
             reserve_mints: [market.base_mint, market.quote_mint],
             reserves: [0, 0],
             program_id: openbook_v2::ID,
-        }
+            event_queue: EventQueue::zeroed(),
+            bids: BookSide::zeroed(),
+            asks: BookSide::zeroed(),
+        })
     }
 }
 
@@ -90,14 +114,19 @@ impl Amm for OpenBookMarket {
     }
 
     fn update(&mut self, accounts_map: &HashMap<Pubkey, Vec<u8>>) -> Result<()> {
+        let bids_data: &Vec<u8> = accounts_map.get(&self.market.bids).unwrap();
+        self.bids = BookSide::try_deserialize(&mut bids_data.as_slice()).unwrap();
+
+        let asks_data = accounts_map.get(&self.market.asks).unwrap();
+        self.asks = BookSide::try_deserialize(&mut asks_data.as_slice()).unwrap();
+
+        let event_queue_data = accounts_map.get(&self.market.event_queue).unwrap();
+        self.event_queue = EventQueue::try_deserialize(&mut event_queue_data.as_slice()).unwrap();
+
         Ok(())
     }
 
-    fn quote(&self, quote_params: &QuoteParams) -> Result<Quote> {
-        let mut book = Orderbook {
-            bids: self.market.bids,
-            asks: self.market.asks,
-        };
+    fn quote(&mut self, quote_params: &QuoteParams) -> Result<Quote> {
         let side = if quote_params.input_mint == self.market.quote_mint {
             Side::Bid
         } else {
@@ -111,25 +140,27 @@ impl Amm for OpenBookMarket {
             client_order_id: 0,
             time_in_force: 0,
             self_trade_behavior: DecrementTake,
-            params: match order_type {
-                PlaceOrderType::Market => OrderParams::Market,
-                _ => unreachable!(),
-            },
+            params: OrderParams::Market,
         };
         let owner = &Pubkey::default();
-        let mut event_queue = &EventQueue{header: , nodes: , reserved:};
-        event_queue.init();
+
+        let bids_ref = RefCell::new(self.bids);
+        let asks_ref = RefCell::new(self.asks);
+        let mut book = Orderbook {
+            bids: bids_ref.borrow_mut(),
+            asks: asks_ref.borrow_mut(),
+        };
         let order_amounts: OrderWithAmounts = book.new_order(
             order,
             &mut self.market,
-            event_queue,
-            0,
+            &mut self.event_queue,
+            I80F48::from_num(0),
             None,
             owner,
             0,
             8,
             None,
-            [],
+            &[],
         )?;
         let out_amount = if side == Side::Bid {
             order_amounts.total_base_taken_native

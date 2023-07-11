@@ -3199,6 +3199,7 @@ dependencies = [
  "openbook-v2",
  "pyth-sdk-solana",
  "reqwest",
+ "rust_decimal",
  "serde",
  "serde_json",
  "shellexpand",

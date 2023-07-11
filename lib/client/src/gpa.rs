@@ -82,10 +82,7 @@ pub async fn fetch_market_by_index(
 ) -> anyhow::Result<Vec<(Pubkey, Market)>> {
     let config = RpcProgramAccountsConfig {
         filters: Some(vec![
-            RpcFilterType::Memcmp(Memcmp::new_raw_bytes(
-                0,
-                Market::discriminator().to_vec(),
-            )),
+            RpcFilterType::Memcmp(Memcmp::new_raw_bytes(0, Market::discriminator().to_vec())),
             RpcFilterType::Memcmp(Memcmp::new_raw_bytes(4, index.to_le_bytes().to_vec())),
         ]),
         account_config: RpcAccountInfoConfig {
@@ -97,11 +94,6 @@ pub async fn fetch_market_by_index(
     rpc.get_program_accounts_with_config(&program, config)
         .await?
         .into_iter()
-        .map(|(key, account)| {
-            Ok((
-                key,
-                Market::try_deserialize(&mut (&account.data as &[u8]))?,
-            ))
-        })
+        .map(|(key, account)| Ok((key, Market::try_deserialize(&mut (&account.data as &[u8]))?)))
         .collect()
 }
