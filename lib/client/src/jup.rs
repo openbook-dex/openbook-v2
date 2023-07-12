@@ -52,7 +52,7 @@ pub trait Amm {
     // Picks data necessary to update it's internal state
     fn update(&mut self, accounts_map: &HashMap<Pubkey, Vec<u8>>) -> Result<()>;
     // Compute the quote from internal state
-    fn quote(&mut self, quote_params: &QuoteParams) -> Result<Quote>;
+    fn quote(&self, quote_params: &QuoteParams) -> Result<Quote>;
 }
 
 pub struct OpenBookMarket {
@@ -76,7 +76,7 @@ impl OpenBookMarket {
             market,
             key: keyed_account.key,
             label: str::from_utf8(&market.name)
-                .unwrap_or_else(|d| "")
+                .unwrap_or_else(|_| "")
                 .to_string(),
             related_accounts: [
                 market.bids,
@@ -126,7 +126,7 @@ impl Amm for OpenBookMarket {
         Ok(())
     }
 
-    fn quote(&mut self, quote_params: &QuoteParams) -> Result<Quote> {
+    fn quote(&self, quote_params: &QuoteParams) -> Result<Quote> {
         let side = if quote_params.input_mint == self.market.quote_mint {
             Side::Bid
         } else {
@@ -150,10 +150,11 @@ impl Amm for OpenBookMarket {
             bids: bids_ref.borrow_mut(),
             asks: asks_ref.borrow_mut(),
         };
+
         let order_amounts: OrderWithAmounts = book.new_order(
             order,
-            &mut self.market,
-            &mut self.event_queue,
+            &mut self.market.clone(),
+            &mut self.event_queue.clone(),
             I80F48::from_num(0),
             None,
             owner,
@@ -162,14 +163,27 @@ impl Amm for OpenBookMarket {
             None,
             &[],
         )?;
-        let out_amount = if side == Side::Bid {
-            order_amounts.total_base_taken_native
+        let (in_amount, out_amount) = if side == Side::Bid {
+            (
+                order_amounts.total_quote_taken_native,
+                order_amounts.total_base_taken_native,
+            )
         } else {
-            order_amounts.total_quote_taken_native
+            (
+                order_amounts.total_base_taken_native,
+                order_amounts.total_quote_taken_native,
+            )
         };
 
+        let taker_fees = self
+            .market
+            .taker_fees_ceil(order_amounts.total_quote_taken_native);
+
         Ok(Quote {
+            in_amount,
             out_amount,
+            fee_mint: self.market.quote_mint,
+            fee_amount: taker_fees,
             ..Quote::default()
         })
     }
