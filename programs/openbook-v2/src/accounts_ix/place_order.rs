@@ -15,7 +15,7 @@ pub struct PlaceOrder<'info> {
 
     #[account(
         mut,
-        constraint = token_deposit_account.mint == base_vault.mint || token_deposit_account.mint == quote_vault.mint
+        constraint = token_deposit_account.mint == market_vault.mint
     )]
     pub token_deposit_account: Account<'info, TokenAccount>,
 
@@ -25,8 +25,6 @@ pub struct PlaceOrder<'info> {
         has_one = asks,
         has_one = event_queue,
         has_one = oracle,
-        has_one = base_vault,
-        has_one = quote_vault,
     )]
     pub market: AccountLoader<'info, Market>,
     #[account(mut)]
@@ -35,10 +33,11 @@ pub struct PlaceOrder<'info> {
     pub asks: AccountLoader<'info, BookSide>,
     #[account(mut)]
     pub event_queue: AccountLoader<'info, EventQueue>,
-    #[account(mut)]
-    pub base_vault: Account<'info, TokenAccount>,
-    #[account(mut)]
-    pub quote_vault: Account<'info, TokenAccount>,
+    #[account(
+        mut,
+        constraint = market.load()?.is_market_vault(market_vault.key())
+    )]
+    pub market_vault: Account<'info, TokenAccount>,
 
     /// CHECK: The oracle can be one of several different account types and the pubkey is checked above
     pub oracle: UncheckedAccount<'info>,
