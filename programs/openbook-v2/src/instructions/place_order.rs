@@ -7,7 +7,6 @@ use crate::accounts_zerocopy::*;
 use crate::error::*;
 use crate::state::*;
 
-// TODO
 #[allow(clippy::too_many_arguments)]
 pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<Option<u128>> {
     require_gte!(order.max_base_lots, 0, OpenBookError::InvalidInputLots);
@@ -29,6 +28,20 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<
         market.time_expiry == 0 || market.time_expiry > Clock::get()?.unix_timestamp,
         OpenBookError::MarketHasExpired
     );
+    if let Some(open_orders_admin) = Option::<Pubkey>::from(market.open_orders_admin) {
+        let open_orders_admin_signer = ctx
+            .accounts
+            .open_orders_admin
+            .as_ref()
+            .map(|signer| signer.key())
+            .ok_or(OpenBookError::MissingOpenOrdersAdmin)?;
+        require_eq!(
+            open_orders_admin,
+            open_orders_admin_signer,
+            OpenBookError::InvalidOpenOrdersAdmin
+        );
+    }
+
     let mut book = Orderbook {
         bids: ctx.accounts.bids.load_mut()?,
         asks: ctx.accounts.asks.load_mut()?,
@@ -58,10 +71,6 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<
         &open_orders_account_pk,
         now_ts,
         limit,
-        ctx.accounts
-            .open_orders_admin
-            .as_ref()
-            .map(|signer| signer.key()),
         ctx.remaining_accounts,
     )?;
 
