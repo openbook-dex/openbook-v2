@@ -2,10 +2,10 @@ use anchor_lang::AccountDeserialize;
 use anchor_lang::__private::bytemuck::Zeroable;
 use anyhow::Result;
 use fixed::types::I80F48;
-use openbook_v2::error::OpenBookError;
+use openbook_v2::accounts_zerocopy::{AccountReader, KeyedAccountReader};
 use openbook_v2::state::{BookSide, OrderParams};
 use openbook_v2::state::{
-    EventQueue, Market, Order, OrderWithAmounts, Orderbook, SelfTradeBehavior::DecrementTake, Side,
+    EventQueue, Market, Order, Orderbook, SelfTradeBehavior::DecrementTake, Side,
 };
 
 use rust_decimal::Decimal;
@@ -15,6 +15,8 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 use std::str;
 use std::time::{SystemTime, UNIX_EPOCH};
+
+const MAXIUM_TAKEN_ORDERS: u8 = 8;
 
 #[derive(Clone)]
 pub struct KeyedAccount {
@@ -68,6 +70,7 @@ pub struct OpenBookMarket {
     reserve_mints: [Pubkey; 2],
     reserves: [u128; 2],
     program_id: Pubkey,
+    oracle_price: I80F48,
 }
 
 impl OpenBookMarket {
@@ -92,6 +95,7 @@ impl OpenBookMarket {
             event_queue: EventQueue::zeroed(),
             bids: BookSide::zeroed(),
             asks: BookSide::zeroed(),
+            oracle_price: I80F48::ZERO,
         })
     }
 }
@@ -123,6 +127,18 @@ impl Amm for OpenBookMarket {
         let event_queue_data = accounts_map.get(&self.market.event_queue).unwrap();
         self.event_queue = EventQueue::try_deserialize(&mut event_queue_data.as_slice()).unwrap();
 
+        let oracle_data = accounts_map.get(&self.market.oracle).unwrap();
+        let oracle_acc = &AccountOracle {
+            data: oracle_data,
+            key: self.market.oracle,
+        };
+
+        let timestamp: u64 = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .expect("Failed to get system time")
+            .as_secs();
+        self.oracle_price = self.market.oracle_price(oracle_acc, timestamp)?;
+
         Ok(())
     }
 
@@ -142,11 +158,10 @@ impl Amm for OpenBookMarket {
             self_trade_behavior: DecrementTake,
             params: OrderParams::Market,
         };
-        let owner = &Pubkey::default();
 
         let bids_ref = RefCell::new(self.bids);
         let asks_ref = RefCell::new(self.asks);
-        let mut book = Orderbook {
+        let book = Orderbook {
             bids: bids_ref.borrow_mut(),
             asks: asks_ref.borrow_mut(),
         };
@@ -157,7 +172,7 @@ impl Amm for OpenBookMarket {
             .as_secs();
 
         let order_amounts: Amounts =
-            iterate_book(book, order, &self.market, I80F48::from_num(0), timestamp, 8)?;
+            iterate_book(book, order, &self.market, self.oracle_price, timestamp)?;
         let (in_amount, out_amount) = if side == Side::Bid {
             (
                 order_amounts.total_quote_taken_native,
@@ -175,6 +190,7 @@ impl Amm for OpenBookMarket {
             out_amount,
             fee_mint: self.market.quote_mint,
             fee_amount: order_amounts.fee,
+            price_impact_pct: order_amounts.price_impact.into(),
             ..Quote::default()
         })
     }
@@ -184,6 +200,7 @@ pub struct Amounts {
     pub total_base_taken_native: u64,
     pub total_quote_taken_native: u64,
     pub fee: u64,
+    pub price_impact: i64,
 }
 
 fn iterate_book(
@@ -192,9 +209,9 @@ fn iterate_book(
     market: &Market,
     oracle_price: I80F48,
     now_ts: u64,
-    mut limit: u8,
 ) -> Result<Amounts> {
     let side = order.side;
+    let mut limit = MAXIUM_TAKEN_ORDERS;
 
     let other_side = side.invert_side();
     let oracle_price_lots = market.native_price_to_lot(oracle_price)?;
@@ -208,14 +225,25 @@ fn iterate_book(
     let mut remaining_base_lots = order.max_base_lots;
     let mut remaining_quote_lots = order_max_quote_lots;
 
+    let mut first_price = 0_i64;
+    let mut last_price = 0_i64;
+
     let opposing_bookside = book.bookside(other_side);
-    for best_opposing in opposing_bookside.iter_all_including_invalid(now_ts, oracle_price_lots) {
+    for (index, best_opposing) in opposing_bookside
+        .iter_valid(now_ts, oracle_price_lots)
+        .enumerate()
+    {
         if remaining_base_lots == 0 || remaining_quote_lots == 0 {
             break;
         }
 
         if !best_opposing.is_valid() {
             continue;
+        }
+        if index == 0 {
+            first_price = best_opposing.price_lots;
+        } else {
+            last_price = best_opposing.price_lots;
         }
 
         let best_opposing_price = best_opposing.price_lots;
@@ -275,5 +303,27 @@ fn iterate_book(
         total_base_taken_native,
         total_quote_taken_native,
         fee: taker_fees,
+        price_impact: (first_price - last_price).abs(),
     })
+}
+
+pub struct AccountOracle<'a> {
+    data: &'a Vec<u8>,
+    key: Pubkey,
+}
+
+impl AccountReader for AccountOracle<'_> {
+    fn owner(&self) -> &Pubkey {
+        return &self.key;
+    }
+
+    fn data(&self) -> &[u8] {
+        return &self.data;
+    }
+}
+
+impl KeyedAccountReader for AccountOracle<'_> {
+    fn key(&self) -> &Pubkey {
+        return &self.key;
+    }
 }
