@@ -414,6 +414,7 @@ impl OpenBookClient {
         token_quote_account: Pubkey,
         base_vault: Pubkey,
         quote_vault: Pubkey,
+        referrer: Option<Pubkey>,
     ) -> anyhow::Result<Signature> {
         let market = self.context.context(market_index);
 
@@ -429,6 +430,7 @@ impl OpenBookClient {
                         token_quote_account,
                         base_vault,
                         quote_vault,
+                        referrer,
                         system_program: System::id(),
                         token_program: Token::id(),
                     },

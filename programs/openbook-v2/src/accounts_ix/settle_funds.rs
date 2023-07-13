@@ -33,6 +33,11 @@ pub struct SettleFunds<'info> {
         token::mint = quote_vault.mint
     )]
     pub token_quote_account: Account<'info, TokenAccount>,
+    #[account(
+        mut,
+        token::mint = quote_vault.mint
+    )]
+    pub referrer: Option<Box<Account<'info, TokenAccount>>>,
 
     pub token_program: Program<'info, Token>,
     pub system_program: Program<'info, System>,
