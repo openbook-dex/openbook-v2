@@ -22,10 +22,10 @@ pub fn settle_funds<'info>(ctx: Context<'_, '_, '_, 'info, SettleFunds<'info>>) 
     let pa = &mut open_orders_account.position;
     let referrer_rebate = pa.referrer_rebates_accrued + roundoff_maker_fees;
 
-    if ctx.remaining_accounts.is_empty() {
-        market.quote_fees_accrued += referrer_rebate;
-    } else {
+    if ctx.accounts.referrer.is_some() {
         market.fees_to_referrers += referrer_rebate;
+    } else {
+        market.quote_fees_accrued += referrer_rebate;
     }
 
     market.base_deposit_total -= pa.base_free_native;
@@ -37,17 +37,18 @@ pub fn settle_funds<'info>(ctx: Context<'_, '_, '_, 'info, SettleFunds<'info>>) 
 
     drop(market);
 
-    if !ctx.remaining_accounts.is_empty() && referrer_rebate > 0 {
-        let referrer = ctx.remaining_accounts[0].to_account_info();
-        let cpi_context = CpiContext::new(
-            ctx.accounts.token_program.to_account_info(),
-            Transfer {
-                from: ctx.accounts.quote_vault.to_account_info(),
-                to: referrer,
-                authority: ctx.accounts.market.to_account_info(),
-            },
-        );
-        token::transfer(cpi_context.with_signer(signer), referrer_rebate)?;
+    if let Some(referrer) = &ctx.accounts.referrer {
+        if referrer_rebate > 0 {
+            let cpi_context = CpiContext::new(
+                ctx.accounts.token_program.to_account_info(),
+                Transfer {
+                    from: ctx.accounts.quote_vault.to_account_info(),
+                    to: referrer.to_account_info(),
+                    authority: ctx.accounts.market.to_account_info(),
+                },
+            );
+            token::transfer(cpi_context.with_signer(signer), referrer_rebate)?;
+        }
     }
 
     if pa.base_free_native > 0 {

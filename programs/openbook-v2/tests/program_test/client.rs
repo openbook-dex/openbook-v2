@@ -736,19 +736,12 @@ impl ClientInstruction for SettleFundsInstruction {
             quote_vault: self.quote_vault,
             token_base_account: self.token_base_account,
             token_quote_account: self.token_quote_account,
+            referrer: self.referrer,
             token_program: Token::id(),
             system_program: System::id(),
         };
-        let mut instruction = make_instruction(program_id, &accounts, instruction);
-        if let Some(ref3) = self.referrer {
-            let remaining = &mut vec![AccountMeta {
-                pubkey: ref3,
-                is_signer: false,
-                is_writable: true,
-            }];
-            instruction.accounts.append(remaining);
-        }
 
+        let instruction = make_instruction(program_id, &accounts, instruction);
         (accounts, instruction)
     }
 

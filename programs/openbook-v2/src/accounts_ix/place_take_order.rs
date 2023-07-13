@@ -39,7 +39,11 @@ pub struct PlaceTakeOrder<'info> {
     )]
     pub token_receiver_account: Box<Account<'info, TokenAccount>>,
 
-    pub referrer: Option<UncheckedAccount<'info>>,
+    #[account(
+        mut,
+        token::mint = quote_vault.mint
+    )]
+    pub referrer: Option<Account<'info, TokenAccount>>,
 
     /// CHECK: The oracle can be one of several different account types and the pubkey is checked above
     pub oracle: UncheckedAccount<'info>,
