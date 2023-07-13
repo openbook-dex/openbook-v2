@@ -294,14 +294,12 @@ impl OrderTreeNodes {
         let key = self.free_list_head;
         let node = &mut self.nodes[key as usize];
 
-        // TODO OPT possibly unnecessary require here - remove if we need compute
         match NodeTag::try_from(node.tag) {
             Ok(NodeTag::FreeNode) => assert!(self.free_list_len > 1),
             Ok(NodeTag::LastFreeNode) => assert_eq!(self.free_list_len, 1),
             _ => unreachable!(),
         };
 
-        // TODO - test borrow requireer
         self.free_list_head = cast_ref::<AnyNode, FreeNode>(node).next;
         self.free_list_len -= 1;
         *node = *val;

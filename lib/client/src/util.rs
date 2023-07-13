@@ -9,21 +9,6 @@ use solana_sdk::{
 
 use std::{thread, time};
 
-// #[allow(dead_code)]
-// pub fn retry<T>(request: impl Fn() -> Result<T, anchor_client::ClientError>) -> anyhow::Result<T> {
-//     for _i in 0..5 {
-//         match request() {
-//             Ok(res) => return Ok(res),
-//             Err(err) => {
-//                 // TODO: only retry for recoverable errors
-//                 log::error!("{:#?}", err);
-//                 continue;
-//             }
-//         }
-//     }
-//     Err(anyhow!("Retry failed"))
-// }
-
 /// Some Result<> types don't convert to anyhow::Result nicely. Force them through stringification.
 pub trait AnyhowWrap {
     type Value;
