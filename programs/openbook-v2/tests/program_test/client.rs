@@ -256,7 +256,6 @@ impl ClientInstruction for CreateMarketInstruction {
             base_lot_size: self.base_lot_size,
             maker_fee: self.maker_fee,
             taker_fee: self.taker_fee,
-            fee_penalty: self.fee_penalty,
             time_expiry: self.time_expiry,
         };
 

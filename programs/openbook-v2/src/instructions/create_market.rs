@@ -18,7 +18,6 @@ pub fn create_market(
     base_lot_size: i64,
     maker_fee: i64,
     taker_fee: i64,
-    fee_penalty: u64,
     time_expiry: i64,
 ) -> Result<()> {
     let now_ts: u64 = Clock::get()?.unix_timestamp.try_into().unwrap();
@@ -87,11 +86,8 @@ pub fn create_market(
         base_lot_size,
         seq_num: 0,
         registration_time: now_ts,
-
         maker_fee,
         taker_fee,
-        fee_penalty,
-
         fees_accrued: 0,
         fees_to_referrers: 0,
         taker_volume_wo_oo: 0,
