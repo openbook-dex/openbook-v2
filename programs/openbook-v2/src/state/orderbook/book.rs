@@ -22,8 +22,8 @@ pub struct Orderbook<'a> {
 
 pub struct OrderWithAmounts {
     pub order_id: Option<u128>,
-    pub posted_base_native: i64,
-    pub posted_quote_native: i64,
+    pub posted_base_native: u64,
+    pub posted_quote_native: u64,
     pub total_base_taken_native: u64,
     pub total_quote_taken_native: u64,
     pub maker_fees: u64,
@@ -450,8 +450,8 @@ impl<'a> Orderbook<'a> {
 
         Ok(OrderWithAmounts {
             order_id: placed_order_id,
-            posted_base_native,
-            posted_quote_native,
+            posted_base_native: posted_base_native as u64,
+            posted_quote_native: posted_quote_native as u64,
             total_base_taken_native,
             total_quote_taken_native,
             referrer_amount,

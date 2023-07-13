@@ -79,7 +79,7 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<
         Side::Bid => {
             let free_quote = position.quote_free_native;
             let max_quote_including_fees =
-                total_quote_taken_native + posted_quote_native as u64 + maker_fees;
+                total_quote_taken_native + posted_quote_native + maker_fees;
 
             let free_qty_to_lock = cmp::min(max_quote_including_fees, free_quote);
             let deposit_amount = max_quote_including_fees - free_qty_to_lock;
@@ -93,7 +93,7 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<
 
         Side::Ask => {
             let free_assets_native = position.base_free_native;
-            let max_base_native = total_base_taken_native + posted_base_native as u64;
+            let max_base_native = total_base_taken_native + posted_base_native;
 
             let free_qty_to_lock = cmp::min(max_base_native, free_assets_native);
             let deposit_amount = max_base_native - free_qty_to_lock;
