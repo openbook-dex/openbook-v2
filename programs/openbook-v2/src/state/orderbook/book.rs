@@ -294,9 +294,6 @@ impl<'a> Orderbook<'a> {
                 total_quantity_received,
                 fees: taker_fees,
             });
-        } else if order.needs_penalty_fee() {
-            // IOC orders have a fee penalty applied if not match to avoid spam
-            total_quote_taken_native += market.apply_penalty();
         }
 
         // Update remaining based on quote_lots taken. If nothing taken, same as the beginning

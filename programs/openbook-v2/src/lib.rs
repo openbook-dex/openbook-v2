@@ -43,7 +43,6 @@ pub mod openbook_v2 {
         base_lot_size: i64,
         maker_fee: i64,
         taker_fee: i64,
-        fee_penalty: u64,
         time_expiry: i64,
     ) -> Result<()> {
         #[cfg(feature = "enable-gpl")]
@@ -56,7 +55,6 @@ pub mod openbook_v2 {
             base_lot_size,
             maker_fee,
             taker_fee,
-            fee_penalty,
             time_expiry,
         )?;
         Ok(())

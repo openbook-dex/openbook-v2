@@ -85,8 +85,6 @@ pub struct Market {
     pub maker_fee: i64,
     /// Fee (in 10^-6) for taker orders, always >= 0.
     pub taker_fee: i64,
-    /// Fee (in quote native) to charge for ioc orders that don't match to avoid spam
-    pub fee_penalty: u64,
 
     /// Total fees accrued in native quote
     pub fees_accrued: u64,
@@ -133,7 +131,6 @@ const_assert_eq!(
     8 +                         // registration_time
     8 +                         // maker_fee
     8 +                         // taker_fee
-    8 +                         // fee_penalty
     8 +                         // fees_accrued
     8 +                         // fees_to_referrers
     8 +                         // taker_volume_wo_oo
@@ -144,7 +141,7 @@ const_assert_eq!(
     8 +                         // referrer_rebates_accrued
     1768 // reserved
 );
-const_assert_eq!(size_of::<Market>(), 2392);
+const_assert_eq!(size_of::<Market>(), 2384);
 const_assert_eq!(size_of::<Market>() % 8, 0);
 
 impl Market {
@@ -198,13 +195,6 @@ impl Market {
             self.quote_decimals,
             staleness_slot,
         )
-    }
-
-    /// Update the market's quote fees acrued and returns the penalty fee
-    pub fn apply_penalty(&mut self) -> u64 {
-        self.quote_fees_accrued += self.fee_penalty;
-        self.fees_accrued += self.fee_penalty;
-        self.fee_penalty
     }
 
     pub fn subtract_taker_fees(&self, quote: i64) -> i64 {
