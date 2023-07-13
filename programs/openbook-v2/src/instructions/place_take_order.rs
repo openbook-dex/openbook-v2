@@ -63,7 +63,7 @@ pub fn place_take_order<'info>(
         ctx.remaining_accounts,
     )?;
 
-    if !ctx.remaining_accounts.is_empty() {
+    if ctx.accounts.referrer.is_some() {
         market.fees_to_referrers += referrer_amount;
     } else {
         market.quote_fees_accrued += referrer_amount;
@@ -124,17 +124,18 @@ pub fn place_take_order<'info>(
     }
 
     // Transfer to referrer
-    if !ctx.remaining_accounts.is_empty() && referrer_amount > 0 {
-        let referrer = ctx.remaining_accounts[0].to_account_info();
-        let cpi_context = CpiContext::new(
-            ctx.accounts.token_program.to_account_info(),
-            Transfer {
-                from: ctx.accounts.quote_vault.to_account_info(),
-                to: referrer,
-                authority: ctx.accounts.market.to_account_info(),
-            },
-        );
-        token::transfer(cpi_context.with_signer(signer), referrer_amount)?;
+    if let Some(referrer) = &ctx.accounts.referrer {
+        if referrer_amount > 0 {
+            let cpi_context = CpiContext::new(
+                ctx.accounts.token_program.to_account_info(),
+                Transfer {
+                    from: ctx.accounts.quote_vault.to_account_info(),
+                    to: referrer.to_account_info(),
+                    authority: ctx.accounts.market.to_account_info(),
+                },
+            );
+            token::transfer(cpi_context.with_signer(signer), referrer_amount)?;
+        }
     }
 
     Ok(order_id)
