@@ -65,6 +65,20 @@ impl OpenOrdersAccount {
             .trim_matches(char::from(0))
     }
 
+    pub fn default_for_tests() -> OpenOrdersAccount {
+        OpenOrdersAccount {
+            owner: Pubkey::default(),
+            market: Pubkey::default(),
+            name: [0; 32],
+            delegate: NonZeroPubkeyOption::default(),
+            account_num: 0,
+            bump: 0,
+            padding: [0; 3],
+            position: Position::default(),
+            open_orders: [OpenOrder::default(); MAX_OPEN_ORDERS],
+        }
+    }
+
     pub fn is_owner_or_delegate(&self, ix_signer: Pubkey) -> bool {
         let delegate_option: Option<Pubkey> = Option::from(self.delegate);
         if let Some(delegate) = delegate_option {
