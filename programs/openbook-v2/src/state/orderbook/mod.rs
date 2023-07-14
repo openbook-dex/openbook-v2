@@ -112,7 +112,7 @@ mod tests {
                 &Order {
                     side,
                     max_base_lots,
-                    max_quote_lots_including_fees: i64::MAX,
+                    max_quote_lots_including_fees: i64::MAX / openbook_market.quote_lot_size,
                     client_order_id: 0,
                     time_in_force,
                     params: OrderParams::Fixed {
@@ -125,7 +125,7 @@ mod tests {
                 event_queue,
                 oracle_price,
                 Some(&mut account),
-                &Pubkey::default(),
+                &Pubkey::new_unique(),
                 now_ts,
                 u8::MAX,
                 &[],
