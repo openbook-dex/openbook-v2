@@ -6,7 +6,6 @@ use crate::accounts_zerocopy::*;
 use crate::error::*;
 use crate::state::*;
 
-// TODO
 #[allow(clippy::too_many_arguments)]
 pub fn place_take_order<'info>(
     ctx: Context<'_, '_, '_, 'info, PlaceTakeOrder<'info>>,
@@ -25,6 +24,19 @@ pub fn place_take_order<'info>(
         market.time_expiry == 0 || market.time_expiry > Clock::get()?.unix_timestamp,
         OpenBookError::MarketHasExpired
     );
+    if let Some(open_orders_admin) = Option::<Pubkey>::from(market.open_orders_admin) {
+        let open_orders_admin_signer = ctx
+            .accounts
+            .open_orders_admin
+            .as_ref()
+            .map(|signer| signer.key())
+            .ok_or(OpenBookError::MissingOpenOrdersAdmin)?;
+        require_eq!(
+            open_orders_admin,
+            open_orders_admin_signer,
+            OpenBookError::InvalidOpenOrdersAdmin
+        );
+    }
 
     let mut book = Orderbook {
         bids: ctx.accounts.bids.load_mut()?,
@@ -56,14 +68,10 @@ pub fn place_take_order<'info>(
         &ctx.accounts.signer.key(),
         now_ts,
         limit,
-        ctx.accounts
-            .open_orders_admin
-            .as_ref()
-            .map(|signer| signer.key()),
         ctx.remaining_accounts,
     )?;
 
-    if !ctx.remaining_accounts.is_empty() {
+    if ctx.accounts.referrer.is_some() {
         market.fees_to_referrers += referrer_amount;
     } else {
         market.quote_fees_accrued += referrer_amount;
@@ -124,17 +132,18 @@ pub fn place_take_order<'info>(
     }
 
     // Transfer to referrer
-    if !ctx.remaining_accounts.is_empty() && referrer_amount > 0 {
-        let referrer = ctx.remaining_accounts[0].to_account_info();
-        let cpi_context = CpiContext::new(
-            ctx.accounts.token_program.to_account_info(),
-            Transfer {
-                from: ctx.accounts.quote_vault.to_account_info(),
-                to: referrer,
-                authority: ctx.accounts.market.to_account_info(),
-            },
-        );
-        token::transfer(cpi_context.with_signer(signer), referrer_amount)?;
+    if let Some(referrer) = &ctx.accounts.referrer {
+        if referrer_amount > 0 {
+            let cpi_context = CpiContext::new(
+                ctx.accounts.token_program.to_account_info(),
+                Transfer {
+                    from: ctx.accounts.quote_vault.to_account_info(),
+                    to: referrer.to_account_info(),
+                    authority: ctx.accounts.market.to_account_info(),
+                },
+            );
+            token::transfer(cpi_context.with_signer(signer), referrer_amount)?;
+        }
     }
 
     Ok(order_id)

@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 
 use crate::error::*;
-use crate::pod_option::PodOption;
+use crate::pubkey_option::NonZeroPubkeyOption;
 use crate::state::*;
 use crate::util::fill_from_str;
 
@@ -18,35 +18,46 @@ pub fn create_market(
     base_lot_size: i64,
     maker_fee: i64,
     taker_fee: i64,
-    fee_penalty: u64,
     time_expiry: i64,
 ) -> Result<()> {
     let now_ts: u64 = Clock::get()?.unix_timestamp.try_into().unwrap();
 
     require!(
+        maker_fee.unsigned_abs() as i128 <= FEES_SCALE_FACTOR,
+        OpenBookError::InvalidInputMarketFees
+    );
+    require!(
+        taker_fee.unsigned_abs() as i128 <= FEES_SCALE_FACTOR,
+        OpenBookError::InvalidInputMarketFees
+    );
+    require!(
         taker_fee >= 0 && (maker_fee >= 0 || maker_fee.abs() <= taker_fee),
         OpenBookError::InvalidInputMarketFees
     );
+
     require!(
         time_expiry == 0 || time_expiry > Clock::get()?.unix_timestamp,
         OpenBookError::InvalidInputMarketExpired
     );
 
-    let open_orders_admin: PodOption<Pubkey> = ctx
+    require_gt!(quote_lot_size, 0, OpenBookError::InvalidInputLots);
+    require_gt!(base_lot_size, 0, OpenBookError::InvalidInputLots);
+
+    let open_orders_admin: NonZeroPubkeyOption = ctx
         .accounts
         .open_orders_admin
         .as_ref()
         .map(|account| account.key())
         .into();
 
-    let consume_events_admin: PodOption<Pubkey> = ctx
+    let consume_events_admin: NonZeroPubkeyOption = ctx
         .accounts
         .consume_events_admin
         .as_ref()
         .map(|account| account.key())
         .into();
 
-    let close_market_admin: PodOption<Pubkey> = ctx
+    let close_market_admin: NonZeroPubkeyOption = ctx
         .accounts
         .close_market_admin
         .as_ref()
@@ -75,11 +86,8 @@ pub fn create_market(
         base_lot_size,
         seq_num: 0,
         registration_time: now_ts,
-
         maker_fee,
         taker_fee,
-        fee_penalty,
-
         fees_accrued: 0,
         fees_to_referrers: 0,
         taker_volume_wo_oo: 0,

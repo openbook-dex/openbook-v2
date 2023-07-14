@@ -74,7 +74,7 @@ pub struct OracleConfigParams {
 impl OracleConfigParams {
     pub fn to_oracle_config(&self) -> OracleConfig {
         OracleConfig {
-            conf_filter: I80F48::from_num(self.conf_filter),
+            conf_filter: I80F48::checked_from_num(self.conf_filter).unwrap_or(I80F48::MAX),
             max_staleness_slots: self.max_staleness_slots.map(|v| v as i64).unwrap_or(-1),
             reserved: [0; 72],
         }
@@ -91,16 +91,14 @@ pub enum OracleType {
 
 #[account(zero_copy)]
 pub struct StubOracle {
-    // ABI: Clients rely on this being at offset 8
-    pub group: Pubkey,
     // ABI: Clients rely on this being at offset 40
     pub mint: Pubkey,
     pub price: I80F48,
     pub last_updated: i64,
     pub reserved: [u8; 128],
 }
-const_assert_eq!(size_of::<StubOracle>(), 32 + 32 + 16 + 8 + 128);
-const_assert_eq!(size_of::<StubOracle>(), 216);
+const_assert_eq!(size_of::<StubOracle>(), 32 + 16 + 8 + 128);
+const_assert_eq!(size_of::<StubOracle>(), 184);
 const_assert_eq!(size_of::<StubOracle>() % 8, 0);
 
 pub fn determine_oracle_type(acc_info: &impl KeyedAccountReader) -> Result<OracleType> {

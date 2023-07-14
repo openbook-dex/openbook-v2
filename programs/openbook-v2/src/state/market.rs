@@ -5,7 +5,7 @@ use std::convert::{TryFrom, TryInto};
 use std::mem::size_of;
 
 use crate::error::OpenBookError;
-use crate::pod_option::PodOption;
+use crate::pubkey_option::NonZeroPubkeyOption;
 use crate::state::oracle;
 use crate::{accounts_zerocopy::KeyedAccountReader, state::orderbook::Side};
 
@@ -36,11 +36,11 @@ pub struct Market {
     /// Admin who can collect fees from the market
     pub collect_fee_admin: Pubkey,
     /// Admin who must sign off on all order creations
-    pub open_orders_admin: PodOption<Pubkey>,
+    pub open_orders_admin: NonZeroPubkeyOption,
     /// Admin who must sign off on all event consumptions
-    pub consume_events_admin: PodOption<Pubkey>,
+    pub consume_events_admin: NonZeroPubkeyOption,
     /// Admin who can set market expired, prune orders and close the market
-    pub close_market_admin: PodOption<Pubkey>,
+    pub close_market_admin: NonZeroPubkeyOption,
 
     /// Name. Trailing zero bytes are ignored.
     pub name: [u8; 16],
@@ -85,8 +85,6 @@ pub struct Market {
     pub maker_fee: i64,
     /// Fee (in 10^-6) for taker orders, always >= 0.
     pub taker_fee: i64,
-    /// Fee (in quote native) to charge for ioc orders that don't match to avoid spam
-    pub fee_penalty: u64,
 
     /// Total fees accrued in native quote
     pub fees_accrued: u64,
@@ -114,9 +112,9 @@ pub struct Market {
 const_assert_eq!(
     size_of::<Market>(),
     32 +                        // collect_fee_admin
-    40 +                        // open_order_admin
-    40 +                        // consume_event_admin
-    40 +                        // close_market_admin
+    32 +                        // open_order_admin
+    32 +                        // consume_event_admin
+    32 +                        // close_market_admin
     size_of::<MarketIndex>() +  // MarketIndex
     1 +                         // bump
     1 +                         // base_decimals
@@ -133,7 +131,6 @@ const_assert_eq!(
     8 +                         // registration_time
     8 +                         // maker_fee
     8 +                         // taker_fee
-    8 +                         // fee_penalty
     8 +                         // fees_accrued
     8 +                         // fees_to_referrers
     8 +                         // taker_volume_wo_oo
@@ -144,7 +141,7 @@ const_assert_eq!(
     8 +                         // referrer_rebates_accrued
     1768 // reserved
 );
-const_assert_eq!(size_of::<Market>(), 2416);
+const_assert_eq!(size_of::<Market>(), 2384);
 const_assert_eq!(size_of::<Market>() % 8, 0);
 
 impl Market {
@@ -198,13 +195,6 @@ impl Market {
             self.quote_decimals,
             staleness_slot,
         )
-    }
-
-    /// Update the market's quote fees acrued and returns the penalty fee
-    pub fn apply_penalty(&mut self) -> u64 {
-        self.quote_fees_accrued += self.fee_penalty;
-        self.fees_accrued += self.fee_penalty;
-        self.fee_penalty
     }
 
     pub fn subtract_taker_fees(&self, quote: i64) -> i64 {

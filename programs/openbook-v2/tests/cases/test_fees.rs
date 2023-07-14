@@ -2,7 +2,6 @@ use super::*;
 
 #[tokio::test]
 async fn test_fees_accrued() -> Result<(), TransportError> {
-    let fee_penalty = 1000;
     let TestInitialize {
         context,
         collect_fee_admin,
@@ -19,7 +18,6 @@ async fn test_fees_accrued() -> Result<(), TransportError> {
         account_1,
         ..
     } = TestContext::new_with_market(TestNewMarketInitialize {
-        fee_penalty,
         maker_fee: -100,
         taker_fee: 200,
         ..TestNewMarketInitialize::default()
@@ -159,43 +157,6 @@ async fn test_fees_accrued() -> Result<(), TransportError> {
         assert_eq!(market.quote_fees_accrued, 0);
         assert_eq!(market.fees_accrued, 10);
         assert_eq!(market.fees_to_referrers, 0);
-    }
-
-    let balance_quote = solana.token_account_balance(owner_token_1).await;
-
-    // Order with penalty fees
-    send_tx(
-        solana,
-        PlaceOrderInstruction {
-            open_orders_account: account_1,
-            open_orders_admin: None,
-            market,
-            owner,
-            token_deposit_account: owner_token_1,
-            market_vault: quote_vault,
-            side: Side::Bid,
-            price_lots: price_lots - 1000,
-            max_base_lots: 1,
-            max_quote_lots_including_fees: 10000,
-            client_order_id: 0,
-            expiry_timestamp: 0,
-            order_type: PlaceOrderType::ImmediateOrCancel,
-            self_trade_behavior: SelfTradeBehavior::default(),
-            remainings: vec![],
-        },
-    )
-    .await
-    .unwrap();
-
-    {
-        let market = solana.get_account::<Market>(market).await;
-        assert_eq!(market.quote_fees_accrued, 1000);
-        assert_eq!(market.fees_accrued, 10 + market.fee_penalty);
-        assert_eq!(market.fees_to_referrers, 0);
-        assert_eq!(
-            balance_quote - fee_penalty,
-            solana.token_account_balance(owner_token_1).await
-        );
     }
 
     Ok(())

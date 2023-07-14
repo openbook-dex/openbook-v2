@@ -19,7 +19,6 @@ async fn test_ioc() -> Result<(), TransportError> {
         account_1,
         ..
     } = TestContext::new_with_market(TestNewMarketInitialize {
-        fee_penalty,
         maker_fee: 200,
         taker_fee: 200,
         ..TestNewMarketInitialize::default()
