@@ -21,14 +21,17 @@ enum FuzzInstruction {
     PlaceOrder {
         user_id: UserId,
         data: openbook_v2::instruction::PlaceOrder,
+        makers: HashSet<UserId>,
     },
     PlaceOrderPegged {
         user_id: UserId,
         data: openbook_v2::instruction::PlaceOrderPegged,
+        makers: HashSet<UserId>,
     },
     PlaceTakeOrder {
         user_id: UserId,
         data: openbook_v2::instruction::PlaceTakeOrder,
+        makers: HashSet<UserId>,
     },
     ConsumeEvents {
         user_ids: HashSet<UserId>,
@@ -76,16 +79,28 @@ impl FuzzRunner for FuzzContext {
                 .deposit(user_id, data)
                 .map_or_else(error_parser::deposit, keep),
 
-            FuzzInstruction::PlaceOrder { user_id, data } => self
-                .place_order(user_id, data)
+            FuzzInstruction::PlaceOrder {
+                user_id,
+                data,
+                makers,
+            } => self
+                .place_order(user_id, data, makers)
                 .map_or_else(error_parser::place_order, keep),
 
-            FuzzInstruction::PlaceOrderPegged { user_id, data } => self
-                .place_order_pegged(user_id, data)
+            FuzzInstruction::PlaceOrderPegged {
+                user_id,
+                data,
+                makers,
+            } => self
+                .place_order_pegged(user_id, data, makers)
                 .map_or_else(error_parser::place_order_pegged, keep),
 
-            FuzzInstruction::PlaceTakeOrder { user_id, data } => self
-                .place_take_order(user_id, data)
+            FuzzInstruction::PlaceTakeOrder {
+                user_id,
+                data,
+                makers,
+            } => self
+                .place_take_order(user_id, data, makers)
                 .map_or_else(error_parser::place_take_order, keep),
 
             FuzzInstruction::ConsumeEvents { user_ids, data } => self

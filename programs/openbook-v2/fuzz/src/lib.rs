@@ -252,6 +252,7 @@ impl FuzzContext {
         &mut self,
         user_id: &UserId,
         data: &openbook_v2::instruction::PlaceOrder,
+        makers: &HashSet<UserId>,
     ) -> ProgramResult {
         let market_vault = match data.side {
             Side::Ask => self.base_vault,
@@ -279,13 +280,25 @@ impl FuzzContext {
             system_program: system_program::ID,
         };
 
-        process_instruction(&mut self.state, data, &accounts, &[])
+        let remaining = makers
+            .iter()
+            .filter(|id| id != &user_id)
+            .filter_map(|id| self.users.get(id))
+            .map(|user| AccountMeta {
+                pubkey: user.open_orders,
+                is_signer: false,
+                is_writable: true,
+            })
+            .collect::<Vec<_>>();
+
+        process_instruction(&mut self.state, data, &accounts, &remaining)
     }
 
     pub fn place_order_pegged(
         &mut self,
         user_id: &UserId,
         data: &openbook_v2::instruction::PlaceOrderPegged,
+        makers: &HashSet<UserId>,
     ) -> ProgramResult {
         let market_vault = match data.side {
             Side::Ask => self.base_vault,
@@ -313,13 +326,25 @@ impl FuzzContext {
             system_program: system_program::ID,
         };
 
-        process_instruction(&mut self.state, data, &accounts, &[])
+        let remaining = makers
+            .iter()
+            .filter(|id| id != &user_id)
+            .filter_map(|id| self.users.get(id))
+            .map(|user| AccountMeta {
+                pubkey: user.open_orders,
+                is_signer: false,
+                is_writable: true,
+            })
+            .collect::<Vec<_>>();
+
+        process_instruction(&mut self.state, data, &accounts, &remaining)
     }
 
     pub fn place_take_order(
         &mut self,
         user_id: &UserId,
         data: &openbook_v2::instruction::PlaceTakeOrder,
+        makers: &HashSet<UserId>,
     ) -> ProgramResult {
         let user = self.get_or_create_new_user(user_id);
 
@@ -345,7 +370,18 @@ impl FuzzContext {
             referrer: None,
         };
 
-        process_instruction(&mut self.state, data, &accounts, &[])
+        let remaining = makers
+            .iter()
+            .filter(|id| id != &user_id)
+            .filter_map(|id| self.users.get(id))
+            .map(|user| AccountMeta {
+                pubkey: user.open_orders,
+                is_signer: false,
+                is_writable: true,
+            })
+            .collect::<Vec<_>>();
+
+        process_instruction(&mut self.state, data, &accounts, &remaining)
     }
 
     pub fn consume_events(
