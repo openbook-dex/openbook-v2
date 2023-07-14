@@ -293,10 +293,6 @@ fn iterate_book(
                 total_quote_taken_native -= taker_fees;
             }
         };
-    } else if order.needs_penalty_fee() {
-        total_base_taken_native = 0;
-        total_quote_taken_native = 0;
-        taker_fees = market.fee_penalty;
     }
 
     Ok(Amounts {
