@@ -9,6 +9,7 @@ use std::{collections::HashSet, sync::Once};
 
 #[derive(Debug, Arbitrary, Clone)]
 struct FuzzData {
+    market: openbook_v2::instruction::CreateMarket,
     instructions: Vec<FuzzInstruction>,
 }
 
@@ -151,8 +152,17 @@ fn run_fuzz(fuzz_data: FuzzData) -> Corpus {
     }
 
     info!("initializing");
-    let mut ctx = FuzzContext::new();
-    ctx.initialize();
+    info!("{:#?}", fuzz_data.market);
+
+    let mut ctx = FuzzContext::new(fuzz_data.market.market_index);
+    match ctx
+        .initialize()
+        .create_market(fuzz_data.market)
+        .map_or_else(error_parser::create_market, |_| Corpus::Keep)
+    {
+        Corpus::Keep => {}
+        Corpus::Reject => return Corpus::Reject,
+    }
 
     info!("fuzzing");
     if fuzz_data.instructions.iter().any(|ix| match ctx.run(ix) {
@@ -329,6 +339,16 @@ mod error_parser {
     use libfuzzer_sys::Corpus;
     use openbook_v2::error::OpenBookError;
     use solana_program::program_error::ProgramError;
+
+    pub fn create_market(err: ProgramError) -> Corpus {
+        match err {
+            e if e == OpenBookError::InvalidInputLots.into() => Corpus::Reject,
+            e if e == OpenBookError::InvalidInputNameLength.into() => Corpus::Reject,
+            e if e == OpenBookError::InvalidInputMarketExpired.into() => Corpus::Reject,
+            e if e == OpenBookError::InvalidInputMarketFees.into() => Corpus::Reject,
+            _ => panic!("{}", err),
+        }
+    }
 
     pub fn deposit(err: ProgramError) -> Corpus {
         match err {

@@ -49,13 +49,12 @@ pub struct FuzzContext {
 }
 
 impl FuzzContext {
-    pub fn new() -> Self {
+    pub fn new(market_index: MarketIndex) -> Self {
         let payer = Pubkey::new_unique();
         let admin = Pubkey::new_unique();
         let base_mint = Pubkey::new_unique();
         let quote_mint = Pubkey::new_unique();
 
-        let market_index: MarketIndex = 0;
         let market = Pubkey::find_program_address(
             &[b"Market".as_ref(), market_index.to_le_bytes().as_ref()],
             &openbook_v2::ID,
@@ -123,8 +122,6 @@ impl FuzzContext {
             );
 
         self.stub_oracle_create().unwrap();
-        self.create_market().unwrap();
-
         self
     }
 
@@ -192,7 +189,7 @@ impl FuzzContext {
         process_instruction(&mut self.state, &data, &accounts, &[])
     }
 
-    fn create_market(&mut self) -> ProgramResult {
+    pub fn create_market(&mut self, data: openbook_v2::instruction::CreateMarket) -> ProgramResult {
         let accounts = openbook_v2::accounts::CreateMarket {
             market: self.market,
             bids: self.bids,
@@ -209,19 +206,6 @@ impl FuzzContext {
             open_orders_admin: None,
             consume_events_admin: None,
             close_market_admin: None,
-        };
-        let data = openbook_v2::instruction::CreateMarket {
-            market_index: 0,
-            name: "fuzz_market".to_string(),
-            oracle_config: OracleConfigParams {
-                conf_filter: 0.1,
-                max_staleness_slots: None,
-            },
-            quote_lot_size: 10,
-            base_lot_size: 100,
-            maker_fee: -200,
-            taker_fee: 400,
-            time_expiry: 0,
         };
         process_instruction(&mut self.state, &data, &accounts, &[])
     }
