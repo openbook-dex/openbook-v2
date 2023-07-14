@@ -10,11 +10,7 @@ pub fn settle_funds<'info>(ctx: Context<'_, '_, '_, 'info, SettleFunds<'info>>) 
 
     let mut roundoff_maker_fees = 0;
 
-    if market.maker_fee.is_positive()
-        && !open_orders_account
-            .all_orders_in_use()
-            .any(|oo| oo.side_and_tree().side() == Side::Bid)
-    {
+    if market.maker_fee.is_positive() && open_orders_account.position.bids_base_lots == 0 {
         roundoff_maker_fees = open_orders_account.position.locked_maker_fees;
         open_orders_account.position.locked_maker_fees = 0;
     }
