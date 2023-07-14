@@ -234,8 +234,8 @@ mod tests {
         // Add lots and fees to make sure to exercise unit conversion
         market.base_lot_size = 10;
         market.quote_lot_size = 100;
-        let maker_fee = 100; // I80F48::from_num(-0.001f32);
-        let taker_fee = 1000; // I80F48::from_num(0.01f32);
+        let maker_fee = 100;
+        let taker_fee = 1000;
         market.maker_fee = maker_fee;
         market.taker_fee = taker_fee;
 
