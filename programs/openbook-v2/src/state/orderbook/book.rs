@@ -173,7 +173,7 @@ impl<'a> Orderbook<'a> {
             let match_quote_lots = match_base_lots * best_opposing_price;
 
             // Self-trade behaviour
-            if owner == &best_opposing.node.owner {
+            if open_orders_acc.is_some() && owner == &best_opposing.node.owner {
                 match order.self_trade_behavior {
                     SelfTradeBehavior::DecrementTake => {
                         // remember all decremented quote lots to only charge fees on not-self-trades
