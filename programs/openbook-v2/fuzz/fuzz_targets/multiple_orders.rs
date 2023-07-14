@@ -13,6 +13,19 @@ struct FuzzData {
     instructions: Vec<FuzzInstruction>,
 }
 
+impl FuzzData {
+    fn contains_place_order_ixs(&self) -> bool {
+        self.instructions.iter().any(|ix| {
+            matches!(
+                ix,
+                FuzzInstruction::PlaceOrder { .. }
+                    | FuzzInstruction::PlaceOrderPegged { .. }
+                    | FuzzInstruction::PlaceTakeOrder { .. }
+            )
+        })
+    }
+}
+
 #[derive(Debug, Arbitrary, Clone)]
 enum FuzzInstruction {
     Deposit {
@@ -147,7 +160,7 @@ fuzz_target!(|fuzz_data: FuzzData| -> Corpus {
 });
 
 fn run_fuzz(fuzz_data: FuzzData) -> Corpus {
-    if fuzz_data.instructions.is_empty() {
+    if !fuzz_data.contains_place_order_ixs() {
         return Corpus::Reject;
     }
 
@@ -155,20 +168,21 @@ fn run_fuzz(fuzz_data: FuzzData) -> Corpus {
     info!("{:#?}", fuzz_data.market);
 
     let mut ctx = FuzzContext::new(fuzz_data.market.market_index);
-    match ctx
-        .initialize()
-        .create_market(fuzz_data.market)
-        .map_or_else(error_parser::create_market, |_| Corpus::Keep)
-    {
-        Corpus::Keep => {}
-        Corpus::Reject => return Corpus::Reject,
+    if matches!(
+        ctx.initialize()
+            .create_market(fuzz_data.market)
+            .map_or_else(error_parser::create_market, |_| Corpus::Keep),
+        Corpus::Reject
+    ) {
+        return Corpus::Reject;
     }
 
     info!("fuzzing");
-    if fuzz_data.instructions.iter().any(|ix| match ctx.run(ix) {
-        Corpus::Keep => false,
-        Corpus::Reject => true,
-    }) {
+    if fuzz_data
+        .instructions
+        .iter()
+        .any(|ix| matches!(ctx.run(ix), Corpus::Reject))
+    {
         return Corpus::Reject;
     };
 
