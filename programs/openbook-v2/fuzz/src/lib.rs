@@ -226,6 +226,28 @@ impl FuzzContext {
         process_instruction(&mut self.state, &data, &accounts, &[])
     }
 
+    pub fn deposit(
+        &mut self,
+        user_id: &UserId,
+        data: &openbook_v2::instruction::Deposit,
+    ) -> ProgramResult {
+        let user = self.get_or_create_new_user(user_id);
+
+        let accounts = openbook_v2::accounts::Deposit {
+            owner: user.owner,
+            token_base_account: user.base_vault,
+            token_quote_account: user.quote_vault,
+            open_orders_account: user.open_orders,
+            market: self.market,
+            base_vault: self.base_vault,
+            quote_vault: self.quote_vault,
+            token_program: spl_token::ID,
+            system_program: system_program::ID,
+        };
+
+        process_instruction(&mut self.state, data, &accounts, &[])
+    }
+
     pub fn place_order(
         &mut self,
         user_id: &UserId,

@@ -14,6 +14,10 @@ struct FuzzData {
 
 #[derive(Debug, Arbitrary, Clone)]
 enum FuzzInstruction {
+    Deposit {
+        user_id: UserId,
+        data: openbook_v2::instruction::Deposit,
+    },
     PlaceOrder {
         user_id: UserId,
         data: openbook_v2::instruction::PlaceOrder,
@@ -68,6 +72,10 @@ impl FuzzRunner for FuzzContext {
         let keep = |_| Corpus::Keep;
 
         match fuzz_ix {
+            FuzzInstruction::Deposit { user_id, data } => self
+                .deposit(user_id, data)
+                .map_or_else(error_parser::deposit, keep),
+
             FuzzInstruction::PlaceOrder { user_id, data } => self
                 .place_order(user_id, data)
                 .map_or_else(error_parser::place_order, keep),
@@ -306,6 +314,13 @@ mod error_parser {
     use libfuzzer_sys::Corpus;
     use openbook_v2::error::OpenBookError;
     use solana_program::program_error::ProgramError;
+
+    pub fn deposit(err: ProgramError) -> Corpus {
+        match err {
+            e if e == TokenError::InsufficientFunds.into() => Corpus::Keep,
+            _ => panic!("{}", err),
+        }
+    }
 
     pub fn place_order(err: ProgramError) -> Corpus {
         match err {
