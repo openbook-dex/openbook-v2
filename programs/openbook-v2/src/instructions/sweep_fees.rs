@@ -16,15 +16,17 @@ pub fn sweep_fees(ctx: Context<SweepFees>) -> Result<()> {
 
     drop(market);
 
-    let cpi_context = CpiContext::new(
-        ctx.accounts.token_program.to_account_info(),
-        Transfer {
-            from: ctx.accounts.quote_vault.to_account_info(),
-            to: ctx.accounts.token_receiver_account.to_account_info(),
-            authority: ctx.accounts.market.to_account_info(),
-        },
-    );
-    token::transfer(cpi_context.with_signer(signer), amount)?;
+    if amount > 0 {
+        let cpi_context = CpiContext::new(
+            ctx.accounts.token_program.to_account_info(),
+            Transfer {
+                from: ctx.accounts.quote_vault.to_account_info(),
+                to: ctx.accounts.token_receiver_account.to_account_info(),
+                authority: ctx.accounts.market.to_account_info(),
+            },
+        );
+        token::transfer(cpi_context.with_signer(signer), amount)?;
+    }
 
     Ok(())
 }
