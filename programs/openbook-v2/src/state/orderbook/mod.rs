@@ -275,6 +275,7 @@ mod tests {
         let order = order_tree_leaf_by_key(&book.bids, maker.order_by_raw_index(0).id).unwrap();
         assert_eq!(order.client_order_id, 42);
         assert_eq!(order.quantity, bid_quantity);
+        assert!(maker.open_order_mut_by_raw_index(1).is_free());
         assert_ne!(maker.open_order_mut_by_raw_index(0).id, 0);
         assert_eq!(maker.open_order_mut_by_raw_index(0).client_id, 42);
         assert_eq!(
@@ -329,6 +330,7 @@ mod tests {
         );
 
         // the taker account is updated
+        assert!(taker.open_order_mut_by_raw_index(1).is_free());
         assert_eq!(taker.position.bids_base_lots, 0);
         assert_eq!(taker.position.asks_base_lots, 0);
         // the fill gets added to the event queue
