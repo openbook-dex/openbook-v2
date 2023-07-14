@@ -221,7 +221,6 @@ impl FuzzContext {
             base_lot_size: 100,
             maker_fee: -200,
             taker_fee: 400,
-            fee_penalty: 0,
             time_expiry: 0,
         };
         process_instruction(&mut self.state, &data, &accounts, &[])
@@ -321,6 +320,7 @@ impl FuzzContext {
             token_program: spl_token::ID,
             system_program: system_program::ID,
             open_orders_admin: None,
+            referrer: None,
         };
 
         process_instruction(&mut self.state, data, &accounts, &[])
@@ -453,6 +453,7 @@ impl FuzzContext {
             quote_vault: self.quote_vault,
             token_program: spl_token::ID,
             system_program: system_program::ID,
+            referrer: None,
         };
 
         process_instruction(&mut self.state, data, &accounts, &[])
