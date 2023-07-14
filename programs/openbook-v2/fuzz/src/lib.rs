@@ -252,7 +252,7 @@ impl FuzzContext {
         &mut self,
         user_id: &UserId,
         data: &openbook_v2::instruction::PlaceOrder,
-        makers: &HashSet<UserId>,
+        makers: Option<&HashSet<UserId>>,
     ) -> ProgramResult {
         let market_vault = match data.side {
             Side::Ask => self.base_vault,
@@ -280,16 +280,18 @@ impl FuzzContext {
             system_program: system_program::ID,
         };
 
-        let remaining = makers
-            .iter()
-            .filter(|id| id != &user_id)
-            .filter_map(|id| self.users.get(id))
-            .map(|user| AccountMeta {
-                pubkey: user.open_orders,
-                is_signer: false,
-                is_writable: true,
-            })
-            .collect::<Vec<_>>();
+        let remaining = makers.map_or_else(Vec::new, |makers| {
+            makers
+                .iter()
+                .filter(|id| id != &user_id)
+                .filter_map(|id| self.users.get(id))
+                .map(|user| AccountMeta {
+                    pubkey: user.open_orders,
+                    is_signer: false,
+                    is_writable: true,
+                })
+                .collect::<Vec<_>>()
+        });
 
         process_instruction(&mut self.state, data, &accounts, &remaining)
     }
@@ -298,7 +300,7 @@ impl FuzzContext {
         &mut self,
         user_id: &UserId,
         data: &openbook_v2::instruction::PlaceOrderPegged,
-        makers: &HashSet<UserId>,
+        makers: Option<&HashSet<UserId>>,
     ) -> ProgramResult {
         let market_vault = match data.side {
             Side::Ask => self.base_vault,
@@ -326,16 +328,18 @@ impl FuzzContext {
             system_program: system_program::ID,
         };
 
-        let remaining = makers
-            .iter()
-            .filter(|id| id != &user_id)
-            .filter_map(|id| self.users.get(id))
-            .map(|user| AccountMeta {
-                pubkey: user.open_orders,
-                is_signer: false,
-                is_writable: true,
-            })
-            .collect::<Vec<_>>();
+        let remaining = makers.map_or_else(Vec::new, |makers| {
+            makers
+                .iter()
+                .filter(|id| id != &user_id)
+                .filter_map(|id| self.users.get(id))
+                .map(|user| AccountMeta {
+                    pubkey: user.open_orders,
+                    is_signer: false,
+                    is_writable: true,
+                })
+                .collect::<Vec<_>>()
+        });
 
         process_instruction(&mut self.state, data, &accounts, &remaining)
     }
@@ -344,7 +348,7 @@ impl FuzzContext {
         &mut self,
         user_id: &UserId,
         data: &openbook_v2::instruction::PlaceTakeOrder,
-        makers: &HashSet<UserId>,
+        makers: Option<&HashSet<UserId>>,
     ) -> ProgramResult {
         let user = self.get_or_create_new_user(user_id);
 
@@ -370,16 +374,18 @@ impl FuzzContext {
             referrer: None,
         };
 
-        let remaining = makers
-            .iter()
-            .filter(|id| id != &user_id)
-            .filter_map(|id| self.users.get(id))
-            .map(|user| AccountMeta {
-                pubkey: user.open_orders,
-                is_signer: false,
-                is_writable: true,
-            })
-            .collect::<Vec<_>>();
+        let remaining = makers.map_or_else(Vec::new, |makers| {
+            makers
+                .iter()
+                .filter(|id| id != &user_id)
+                .filter_map(|id| self.users.get(id))
+                .map(|user| AccountMeta {
+                    pubkey: user.open_orders,
+                    is_signer: false,
+                    is_writable: true,
+                })
+                .collect::<Vec<_>>()
+        });
 
         process_instruction(&mut self.state, data, &accounts, &remaining)
     }
