@@ -21,7 +21,7 @@ mod queue;
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::state::{Market, OpenOrdersAccount};
+    use crate::state::{Market, OpenOrdersAccount, FEES_SCALE_FACTOR};
     use bytemuck::Zeroable;
     use fixed::types::I80F48;
     use solana_program::pubkey::Pubkey;
@@ -253,7 +253,7 @@ mod tests {
             &Order {
                 side: Side::Bid,
                 max_base_lots: bid_quantity,
-                max_quote_lots_including_fees: i64::MAX,
+                max_quote_lots_including_fees: i64::MAX / market.quote_lot_size,
                 client_order_id: 42,
                 time_in_force: 0,
                 params: OrderParams::Fixed {
@@ -296,7 +296,7 @@ mod tests {
             &Order {
                 side: Side::Ask,
                 max_base_lots: match_quantity,
-                max_quote_lots_including_fees: i64::MAX,
+                max_quote_lots_including_fees: i64::MAX / market.quote_lot_size,
                 client_order_id: 43,
                 time_in_force: 0,
                 params: OrderParams::Fixed {
@@ -325,7 +325,7 @@ mod tests {
         let match_quote = match_quantity * price_lots * market.quote_lot_size;
         assert_eq!(
             market.fees_accrued as i64,
-            match_quote * (maker_fee + taker_fee)
+            match_quote * (taker_fee) / (FEES_SCALE_FACTOR as i64)
         );
 
         // the taker account is updated
@@ -351,6 +351,11 @@ mod tests {
 
         assert_eq!(taker.position.bids_base_lots, 0);
         assert_eq!(taker.position.asks_base_lots, 0);
+        // Maker fee is accrued now
+        assert_eq!(
+            market.fees_accrued as i64,
+            match_quote * (maker_fee + taker_fee) / (FEES_SCALE_FACTOR as i64)
+        );
     }
 
     // Check that there are no zero-quantity fills when max_quote_lots is not
@@ -358,6 +363,7 @@ mod tests {
     #[test]
     fn book_max_quote_lots() {
         let (mut market, oracle_price, mut event_queue, book_accs) = test_setup(5000.0);
+        let quote_lot_size = market.quote_lot_size;
         let mut book = book_accs.orderbook();
 
         let mut new_order = |book: &mut Orderbook,
@@ -396,9 +402,30 @@ mod tests {
         };
 
         // Setup
-        new_order(&mut book, &mut event_queue, Side::Ask, 5000, 5, i64::MAX);
-        new_order(&mut book, &mut event_queue, Side::Ask, 5001, 5, i64::MAX);
-        new_order(&mut book, &mut event_queue, Side::Ask, 5002, 5, i64::MAX);
+        new_order(
+            &mut book,
+            &mut event_queue,
+            Side::Ask,
+            5000,
+            5,
+            i64::MAX / quote_lot_size,
+        );
+        new_order(
+            &mut book,
+            &mut event_queue,
+            Side::Ask,
+            5001,
+            5,
+            i64::MAX / quote_lot_size,
+        );
+        new_order(
+            &mut book,
+            &mut event_queue,
+            Side::Ask,
+            5002,
+            5,
+            i64::MAX / quote_lot_size,
+        );
 
         // Try taking: the quote limit allows only one base lot to be taken.
         new_order(&mut book, &mut event_queue, Side::Bid, 5005, 30, 6000);
