@@ -1,6 +1,6 @@
 use anchor_lang::{AccountDeserialize, Discriminator};
 
-use openbook_v2::state::{Market, OpenOrdersAccount};
+use openbook_v2::state::{Market, MarketIndex, OpenOrdersAccount};
 
 use solana_account_decoder::UiAccountEncoding;
 use solana_client::nonblocking::rpc_client::RpcClient as RpcClientAsync;
@@ -76,14 +76,14 @@ pub async fn fetch_markets(
 }
 
 pub async fn fetch_market_by_index(
-    index: u32,
+    index: MarketIndex,
     rpc: &RpcClientAsync,
     program: Pubkey,
 ) -> anyhow::Result<Vec<(Pubkey, Market)>> {
     let config = RpcProgramAccountsConfig {
         filters: Some(vec![
             RpcFilterType::Memcmp(Memcmp::new_raw_bytes(0, Market::discriminator().to_vec())),
-            RpcFilterType::Memcmp(Memcmp::new_raw_bytes(4, index.to_le_bytes().to_vec())),
+            RpcFilterType::Memcmp(Memcmp::new_raw_bytes(8, index.to_le_bytes().to_vec())),
         ]),
         account_config: RpcAccountInfoConfig {
             encoding: Some(UiAccountEncoding::Base64),

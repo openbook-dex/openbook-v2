@@ -9,6 +9,7 @@ use openbook_v2::state::{
 };
 
 use rust_decimal::Decimal;
+use solana_sdk::sysvar::clock::Clock;
 /// An abstraction in order to share reserve mints and necessary data
 use solana_sdk::{account::Account, pubkey::Pubkey};
 use std::cell::RefCell;
@@ -16,6 +17,7 @@ use std::collections::HashMap;
 use std::str;
 use std::time::{SystemTime, UNIX_EPOCH};
 
+// TODO Adjust this number after doing some calculations
 const MAXIUM_TAKEN_ORDERS: u8 = 8;
 
 #[derive(Clone)]
@@ -75,12 +77,12 @@ pub struct OpenBookMarket {
 
 impl OpenBookMarket {
     pub fn from_keyed_account(keyed_account: &KeyedAccount) -> Result<Self> {
-        let market = Market::try_deserialize(&mut (&keyed_account.account.data as &[u8]))?;
+        let market = Market::try_deserialize(&mut keyed_account.account.data.as_slice())?;
 
         Ok(OpenBookMarket {
             market,
             key: keyed_account.key,
-            label: str::from_utf8(&market.name).unwrap_or("").to_string(),
+            label: str::from_utf8(&market.name).unwrap().to_string(),
             related_accounts: [
                 market.bids,
                 market.asks,
@@ -133,11 +135,8 @@ impl Amm for OpenBookMarket {
             key: self.market.oracle,
         };
 
-        let timestamp: u64 = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .expect("Failed to get system time")
-            .as_secs();
-        self.oracle_price = self.market.oracle_price(oracle_acc, timestamp)?;
+        let timestamp = Clock::default().unix_timestamp;
+        self.oracle_price = self.market.oracle_price(oracle_acc, timestamp as u64)?;
 
         Ok(())
     }
@@ -166,23 +165,24 @@ impl Amm for OpenBookMarket {
             asks: asks_ref.borrow_mut(),
         };
 
-        let timestamp: u64 = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .expect("Failed to get system time")
-            .as_secs();
+        let timestamp = Clock::default().unix_timestamp;
 
-        let order_amounts: Amounts =
-            iterate_book(book, order, &self.market, self.oracle_price, timestamp)?;
-        let (in_amount, out_amount) = if side == Side::Bid {
-            (
+        let order_amounts: Amounts = iterate_book(
+            book,
+            order,
+            &self.market,
+            self.oracle_price,
+            timestamp as u64,
+        )?;
+        let (in_amount, out_amount) = match side {
+            Side::Bid => (
                 order_amounts.total_quote_taken_native,
                 order_amounts.total_base_taken_native,
-            )
-        } else {
-            (
+            ),
+            Side::Ask => (
                 order_amounts.total_base_taken_native,
                 order_amounts.total_quote_taken_native,
-            )
+            ),
         };
 
         Ok(Quote {
@@ -201,6 +201,7 @@ pub struct Amounts {
     pub total_quote_taken_native: u64,
     pub fee: u64,
     pub price_impact: i64,
+    pub not_enough_liquidity: bool,
 }
 
 fn iterate_book(
@@ -237,9 +238,6 @@ fn iterate_book(
             break;
         }
 
-        if !best_opposing.is_valid() {
-            continue;
-        }
         if index == 0 {
             first_price = best_opposing.price_lots;
         } else {
@@ -279,9 +277,8 @@ fn iterate_book(
 
     let mut total_quote_taken_native = (total_quote_lots_taken * market.quote_lot_size) as u64;
 
-    // Record the taker trade in the account already, even though it will only be
-    // realized when the fill event gets executed
     let mut taker_fees = 0_u64;
+    let mut not_enough_liquidity = false;
     if total_quote_lots_taken > 0 || total_base_lots_taken > 0 {
         taker_fees = market.taker_fees_ceil(total_quote_taken_native);
 
@@ -293,6 +290,8 @@ fn iterate_book(
                 total_quote_taken_native -= taker_fees;
             }
         };
+    } else {
+        not_enough_liquidity = true;
     }
 
     Ok(Amounts {
@@ -300,6 +299,7 @@ fn iterate_book(
         total_quote_taken_native,
         fee: taker_fees,
         price_impact: (first_price - last_price).abs(),
+        not_enough_liquidity,
     })
 }
 
