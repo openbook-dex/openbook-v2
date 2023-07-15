@@ -339,7 +339,7 @@ impl TestContext {
 
         // Create a market
 
-        let market = get_market_address(1);
+        let market = get_market_address(1, collect_fee_admin_acc.pubkey());
         let base_vault = solana
             .create_associated_token_account(&market, mints[0].pubkey)
             .await;

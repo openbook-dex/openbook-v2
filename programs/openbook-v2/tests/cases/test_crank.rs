@@ -17,7 +17,7 @@ async fn test_skip_missing_accounts() -> Result<(), TransportError> {
 
     let tokens = Token::create(mints.to_vec(), solana, collect_fee_admin, payer).await;
 
-    let market = get_market_address(1);
+    let market = get_market_address(1, collect_fee_admin.pubkey());
     let base_vault = solana
         .create_associated_token_account(&market, mints[0].pubkey)
         .await;
@@ -202,7 +202,7 @@ async fn test_crank_given_events() -> Result<(), TransportError> {
 
     let tokens = Token::create(mints.to_vec(), solana, collect_fee_admin, payer).await;
 
-    let market = get_market_address(1);
+    let market = get_market_address(1, collect_fee_admin.pubkey());
     let base_vault = solana
         .create_associated_token_account(&market, mints[0].pubkey)
         .await;

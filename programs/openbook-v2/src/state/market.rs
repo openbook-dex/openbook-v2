@@ -266,6 +266,7 @@ macro_rules! market_seeds {
         &[
             b"Market".as_ref(),
             &$market.market_index.to_le_bytes(),
+            &$market.collect_fee_admin.to_bytes(),
             &[$market.bump],
         ]
     };

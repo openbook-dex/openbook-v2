@@ -30,7 +30,7 @@ async fn test_simple_settle() -> Result<(), TransportError> {
     // TEST: Create another market
     //
 
-    let market_2 = get_market_address(2);
+    let market_2 = get_market_address(2, collect_fee_admin.pubkey());
     let base_vault_2 = solana
         .create_associated_token_account(&market_2, mints[0].pubkey)
         .await;

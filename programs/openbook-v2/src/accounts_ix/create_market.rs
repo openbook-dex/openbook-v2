@@ -7,7 +7,7 @@ use anchor_spl::token::{Mint, TokenAccount};
 pub struct CreateMarket<'info> {
     #[account(
         init,
-        seeds = [b"Market".as_ref(), &market_index.to_le_bytes()],
+        seeds = [b"Market".as_ref(), &market_index.to_le_bytes(), collect_fee_admin.key().to_bytes().as_ref()],
         bump,
         payer = payer,
         space = 8 + std::mem::size_of::<Market>(),
