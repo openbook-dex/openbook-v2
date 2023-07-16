@@ -60,6 +60,7 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<
         total_quote_taken_native,
         posted_base_native,
         posted_quote_native,
+        taker_fees,
         maker_fees,
         ..
     } = book.new_order(
@@ -79,7 +80,7 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<
         Side::Bid => {
             let free_quote = position.quote_free_native;
             let max_quote_including_fees =
-                total_quote_taken_native + posted_quote_native + maker_fees;
+                total_quote_taken_native + posted_quote_native + taker_fees + maker_fees;
 
             let free_qty_to_lock = cmp::min(max_quote_including_fees, free_quote);
             let deposit_amount = max_quote_including_fees - free_qty_to_lock;
