@@ -106,7 +106,7 @@ fn make_instruction(
     }
 }
 
-pub fn get_market_address(market_index: MarketIndex, signer_creator: Pubkey) -> Pubkey {
+pub fn get_market_address(signer_creator: Pubkey, market_index: MarketIndex) -> Pubkey {
     Pubkey::find_program_address(
         &[
             b"Market".as_ref(),
