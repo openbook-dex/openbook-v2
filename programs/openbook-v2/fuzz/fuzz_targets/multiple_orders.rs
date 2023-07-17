@@ -200,11 +200,16 @@ fn run_fuzz(fuzz_data: FuzzData) -> Corpus {
             })
             .sum();
 
+        let base_amount = ctx.state.get_balance(&ctx.base_vault);
+        let quote_amount = ctx.state.get_balance(&ctx.quote_vault);
+
         let market = ctx
             .state
             .get_account::<openbook_v2::state::Market>(&ctx.market)
             .unwrap();
 
+        assert_eq!(market.base_deposit_total, base_amount);
+        assert_eq!(market.quote_deposit_total, quote_amount);
         assert_eq!(market.referrer_rebates_accrued, referrer_rebates);
     }
 
@@ -321,6 +326,8 @@ fn run_fuzz(fuzz_data: FuzzData) -> Corpus {
 
         assert_eq!(ctx.state.get_balance(&ctx.base_vault), 0);
         assert_eq!(ctx.state.get_balance(&ctx.quote_vault), 0);
+        assert_eq!(market.base_deposit_total, 0);
+        assert_eq!(market.quote_deposit_total, 0);
         assert_eq!(market.quote_fees_accrued, 0);
     }
 
