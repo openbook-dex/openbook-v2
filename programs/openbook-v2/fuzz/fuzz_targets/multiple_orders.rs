@@ -4,7 +4,9 @@ use arbitrary::Arbitrary;
 use libfuzzer_sys::{fuzz_target, Corpus};
 use log::info;
 use openbook_v2::instructions::MAX_EVENTS_CONSUME;
-use openbook_v2_fuzz::{processor::TestSyscallStubs, FuzzContext, UserId, INITIAL_BALANCE};
+use openbook_v2_fuzz::{
+    processor::TestSyscallStubs, FuzzContext, ReferrerId, UserId, INITIAL_BALANCE,
+};
 use std::{collections::HashSet, sync::Once};
 
 #[derive(Debug, Arbitrary, Clone)]
@@ -45,6 +47,7 @@ enum FuzzInstruction {
     PlaceTakeOrder {
         user_id: UserId,
         data: openbook_v2::instruction::PlaceTakeOrder,
+        referrer_id: Option<ReferrerId>,
         makers: Option<HashSet<UserId>>,
     },
     ConsumeEvents {
@@ -70,6 +73,7 @@ enum FuzzInstruction {
     SettleFunds {
         user_id: UserId,
         data: openbook_v2::instruction::SettleFunds,
+        referrer_id: Option<ReferrerId>,
     },
     SweepFees {
         data: openbook_v2::instruction::SweepFees,
@@ -112,9 +116,10 @@ impl FuzzRunner for FuzzContext {
             FuzzInstruction::PlaceTakeOrder {
                 user_id,
                 data,
+                referrer_id,
                 makers,
             } => self
-                .place_take_order(user_id, data, makers.as_ref())
+                .place_take_order(user_id, data, referrer_id.as_ref(), makers.as_ref())
                 .map_or_else(error_parser::place_take_order, keep),
 
             FuzzInstruction::ConsumeEvents { user_ids, data } => self
@@ -137,8 +142,12 @@ impl FuzzRunner for FuzzContext {
                 .cancel_all_orders(user_id, data)
                 .map_or_else(error_parser::cancel_all_orders, keep),
 
-            FuzzInstruction::SettleFunds { user_id, data } => self
-                .settle_funds(user_id, data)
+            FuzzInstruction::SettleFunds {
+                user_id,
+                data,
+                referrer_id,
+            } => self
+                .settle_funds(user_id, data, referrer_id.as_ref())
                 .map_or_else(error_parser::settle_funds, keep),
 
             FuzzInstruction::SweepFees { data } => self
@@ -281,6 +290,7 @@ fn run_fuzz(fuzz_data: FuzzData) -> Corpus {
             ctx.run(&FuzzInstruction::SettleFunds {
                 user_id,
                 data: openbook_v2::instruction::SettleFunds {},
+                referrer_id: None,
             });
 
             let position = {

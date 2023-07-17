@@ -30,6 +30,20 @@ impl Arbitrary<'_> for UserId {
     }
 }
 
+#[derive(Debug, Clone, Copy, Eq, Hash, PartialEq)]
+pub struct ReferrerId(u8);
+
+impl Arbitrary<'_> for ReferrerId {
+    fn arbitrary(u: &mut Unstructured<'_>) -> arbitrary::Result<Self> {
+        let i: u8 = u.arbitrary()?;
+        Ok(Self(i % NUM_USERS))
+    }
+
+    fn size_hint(_: usize) -> (usize, Option<usize>) {
+        (1, Some(1))
+    }
+}
+
 pub struct FuzzContext {
     pub payer: Pubkey,
     pub admin: Pubkey,
@@ -45,6 +59,7 @@ pub struct FuzzContext {
     pub collect_fee_admin: Pubkey,
     pub collect_fee_admin_quote_vault: Pubkey,
     pub users: HashMap<UserId, UserAccounts>,
+    pub referrers: HashMap<ReferrerId, Pubkey>,
     pub state: AccountsState,
 }
 
@@ -93,6 +108,7 @@ impl FuzzContext {
             collect_fee_admin,
             collect_fee_admin_quote_vault,
             users: HashMap::new(),
+            referrers: HashMap::new(),
             state: AccountsState::new(),
         }
     }
@@ -175,6 +191,25 @@ impl FuzzContext {
         };
 
         self.users.entry(*user_id).or_insert_with(create_new_user)
+    }
+
+    fn get_or_create_new_referrer(&mut self, referrer_id: &ReferrerId) -> &Pubkey {
+        let create_new_referrer = || -> Pubkey {
+            let quote_vault = Pubkey::new_unique();
+
+            self.state.add_token_account_with_lamports(
+                quote_vault,
+                Pubkey::new_unique(),
+                self.quote_mint,
+                0,
+            );
+
+            quote_vault
+        };
+
+        self.referrers
+            .entry(*referrer_id)
+            .or_insert_with(create_new_referrer)
     }
 
     fn stub_oracle_create(&mut self) -> ProgramResult {
@@ -332,8 +367,10 @@ impl FuzzContext {
         &mut self,
         user_id: &UserId,
         data: &openbook_v2::instruction::PlaceTakeOrder,
+        referrer_id: Option<&ReferrerId>,
         makers: Option<&HashSet<UserId>>,
     ) -> ProgramResult {
+        let referrer = referrer_id.map(|id| *self.get_or_create_new_referrer(id));
         let user = self.get_or_create_new_user(user_id);
 
         let (token_deposit_account, token_receiver_account) = match data.side {
@@ -355,7 +392,7 @@ impl FuzzContext {
             token_program: spl_token::ID,
             system_program: system_program::ID,
             open_orders_admin: None,
-            referrer: None,
+            referrer,
         };
 
         let remaining = makers.map_or_else(Vec::new, |makers| {
@@ -486,7 +523,9 @@ impl FuzzContext {
         &mut self,
         user_id: &UserId,
         data: &openbook_v2::instruction::SettleFunds,
+        referrer_id: Option<&ReferrerId>,
     ) -> ProgramResult {
+        let referrer = referrer_id.map(|id| *self.get_or_create_new_referrer(id));
         let Some(user) = self.users.get(user_id) else {
             return Ok(());
         };
@@ -501,7 +540,7 @@ impl FuzzContext {
             quote_vault: self.quote_vault,
             token_program: spl_token::ID,
             system_program: system_program::ID,
-            referrer: None,
+            referrer,
         };
 
         process_instruction(&mut self.state, data, &accounts, &[])
