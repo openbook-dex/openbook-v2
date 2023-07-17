@@ -66,6 +66,7 @@ pub fn create_market(
 
     let mut openbook_market = ctx.accounts.market.load_init()?;
     *openbook_market = Market {
+        signer_creator: ctx.accounts.payer.key(),
         collect_fee_admin: ctx.accounts.collect_fee_admin.key(),
         open_orders_admin,
         consume_events_admin,
