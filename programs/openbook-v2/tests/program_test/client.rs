@@ -106,12 +106,12 @@ fn make_instruction(
     }
 }
 
-pub fn get_market_address(market_index: MarketIndex, collect_fee_admin: Pubkey) -> Pubkey {
+pub fn get_market_address(market_index: MarketIndex, signer_creator: Pubkey) -> Pubkey {
     Pubkey::find_program_address(
         &[
             b"Market".as_ref(),
             &market_index.to_le_bytes(),
-            collect_fee_admin.to_bytes().as_ref(),
+            signer_creator.to_bytes().as_ref(),
         ],
         &openbook_v2::id(),
     )
@@ -267,7 +267,7 @@ impl ClientInstruction for CreateMarketInstruction {
             &[
                 b"Market".as_ref(),
                 self.market_index.to_le_bytes().as_ref(),
-                self.collect_fee_admin.to_bytes().as_ref(),
+                self.payer.pubkey().to_bytes().as_ref(),
             ],
             &program_id,
         )
