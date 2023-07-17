@@ -71,7 +71,11 @@ impl FuzzContext {
         let quote_mint = Pubkey::new_unique();
 
         let market = Pubkey::find_program_address(
-            &[b"Market".as_ref(), market_index.to_le_bytes().as_ref()],
+            &[
+                b"Market".as_ref(),
+                payer.as_ref(),
+                market_index.to_le_bytes().as_ref(),
+            ],
             &openbook_v2::ID,
         )
         .0;
