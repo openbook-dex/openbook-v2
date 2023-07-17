@@ -323,6 +323,12 @@ fn run_fuzz(fuzz_data: FuzzData) -> Corpus {
         assert!(is_empty(&ctx.bids));
     }
 
+    let referrers_balances: u64 = ctx
+        .referrers
+        .values()
+        .map(|quote_vault| ctx.state.get_balance(quote_vault))
+        .sum();
+
     {
         info!("cleaning market");
         ctx.run(&FuzzInstruction::SweepFees {
@@ -339,6 +345,7 @@ fn run_fuzz(fuzz_data: FuzzData) -> Corpus {
         assert_eq!(market.base_deposit_total, 0);
         assert_eq!(market.quote_deposit_total, 0);
         assert_eq!(market.quote_fees_accrued, 0);
+        assert_eq!(market.fees_to_referrers, referrers_balances);
     }
 
     {
@@ -358,7 +365,9 @@ fn run_fuzz(fuzz_data: FuzzData) -> Corpus {
         assert_eq!(INITIAL_BALANCE * n_users, base_balances);
         assert_eq!(
             INITIAL_BALANCE * n_users,
-            quote_balances + ctx.state.get_balance(&ctx.collect_fee_admin_quote_vault)
+            quote_balances
+                + referrers_balances
+                + ctx.state.get_balance(&ctx.collect_fee_admin_quote_vault)
         );
     }
 
