@@ -223,9 +223,12 @@ fn iterate_book(
     let other_side = side.invert_side();
     let oracle_price_lots = market.native_price_to_lot(oracle_price)?;
 
-    let order_max_quote_lots = match side {
-        Side::Bid => market.subtract_taker_fees(max_quote_lots_including_fees),
-        Side::Ask => max_quote_lots_including_fees,
+    let (order_max_quote_lots, order_max_base_lots) = match side {
+        Side::Bid => (
+            market.subtract_taker_fees(max_quote_lots_including_fees),
+            i64::MAX,
+        ),
+        Side::Ask => (i64::MAX, max_base_lots),
     };
 
     let mut remaining_base_lots = max_base_lots;
@@ -267,7 +270,6 @@ fn iterate_book(
 
         remaining_base_lots -= match_base_lots;
         remaining_quote_lots -= match_quote_lots;
-        assert!(remaining_quote_lots >= 0);
 
         limit -= 1;
     }
@@ -287,9 +289,15 @@ fn iterate_book(
         match side {
             Side::Bid => {
                 total_quote_taken_native += taker_fees;
+                if total_quote_taken_native < max_quote_lots_including_fees as u64 {
+                    not_enough_liquidity = true
+                }
             }
             Side::Ask => {
                 total_quote_taken_native -= taker_fees;
+                if total_base_taken_native < max_quote_lots_including_fees as u64 {
+                    not_enough_liquidity = true
+                }
             }
         };
     } else {
