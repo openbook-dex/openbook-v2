@@ -72,15 +72,10 @@ pub fn place_take_order<'info>(
         ctx.remaining_accounts,
     )?;
 
-    if ctx.accounts.referrer.is_some() {
-        market.fees_to_referrers += referrer_amount;
-    } else {
-        market.quote_fees_accrued += referrer_amount;
-    }
-
     let (from_vault, to_vault, deposit_amount, withdraw_amount) = match side {
         Side::Bid => {
             let total_quote_including_fees = total_quote_taken_native + taker_fees;
+            market.base_deposit_total -= total_base_taken_native;
             market.quote_deposit_total += total_quote_including_fees;
             (
                 ctx.accounts.base_vault.to_account_info(),
@@ -92,6 +87,7 @@ pub fn place_take_order<'info>(
         Side::Ask => {
             let total_quote_discounting_fees = total_quote_taken_native - taker_fees;
             market.base_deposit_total += total_base_taken_native;
+            market.quote_deposit_total -= total_quote_discounting_fees;
             (
                 ctx.accounts.quote_vault.to_account_info(),
                 ctx.accounts.base_vault.to_account_info(),
@@ -100,6 +96,17 @@ pub fn place_take_order<'info>(
             )
         }
     };
+
+    if ctx.accounts.referrer.is_some() {
+        market.fees_to_referrers += referrer_amount;
+        market.quote_deposit_total -= referrer_amount;
+    } else {
+        market.quote_fees_accrued += referrer_amount;
+    }
+
+    let seeds = market_seeds!(market);
+    let signer = &[&seeds[..]];
+    drop(market);
 
     // Transfer funds from token_deposit_account to vault
     if deposit_amount > 0 {
@@ -113,11 +120,6 @@ pub fn place_take_order<'info>(
         );
         token::transfer(cpi_context, deposit_amount)?;
     }
-
-    let seeds = market_seeds!(market);
-    let signer = &[&seeds[..]];
-
-    drop(market);
 
     if withdraw_amount > 0 {
         let cpi_context = CpiContext::new(
