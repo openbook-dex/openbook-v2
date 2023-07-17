@@ -107,26 +107,15 @@ impl Amm for OpenBookMarket {
     }
 
     fn quote(&self, quote_params: &QuoteParams) -> Result<Quote> {
-        let order = if quote_params.input_mint == self.market.quote_mint {
-            Order {
-                side: Side::Bid,
-                max_base_lots: 0,
-                max_quote_lots_including_fees: quote_params.in_amount.try_into().unwrap(),
-                client_order_id: 0,
-                time_in_force: 0,
-                self_trade_behavior: DecrementTake,
-                params: OrderParams::Market,
-            }
+        let side = if quote_params.input_mint == self.market.quote_mint {
+            Side::Bid
         } else {
-            Order {
-                side: Side::Ask,
-                max_base_lots: quote_params.in_amount.try_into().unwrap(),
-                max_quote_lots_including_fees: 0,
-                client_order_id: 0,
-                time_in_force: 0,
-                self_trade_behavior: DecrementTake,
-                params: OrderParams::Market,
-            }
+            Side::Ask
+        };
+        let (max_base_lots, max_quote_lots_including_fees) = match side {
+            Side::Bid => (0, quote_params.in_amount.try_into().unwrap()),
+
+            Side::Ask => (quote_params.in_amount.try_into().unwrap(), 0),
         };
 
         let bids_ref = RefCell::new(self.bids);
@@ -138,12 +127,14 @@ impl Amm for OpenBookMarket {
 
         let order_amounts: Amounts = iterate_book(
             book,
-            &order,
+            side,
+            max_base_lots,
+            max_quote_lots_including_fees,
             &self.market,
             self.oracle_price,
             self.timestamp,
         )?;
-        let (in_amount, out_amount) = match order.side {
+        let (in_amount, out_amount) = match side {
             Side::Bid => (
                 order_amounts.total_quote_taken_native,
                 order_amounts.total_base_taken_native,
@@ -159,7 +150,6 @@ impl Amm for OpenBookMarket {
             out_amount,
             fee_mint: self.market.quote_mint,
             fee_amount: order_amounts.fee,
-            // price_impact_pct: order_amounts.price_impact.into(),
             ..Quote::default()
         })
     }
@@ -221,24 +211,24 @@ pub struct Amounts {
 
 fn iterate_book(
     book: Orderbook,
-    order: &Order,
+    side: Side,
+    max_base_lots: i64,
+    max_quote_lots_including_fees: i64,
     market: &Market,
     oracle_price: I80F48,
     now_ts: u64,
 ) -> Result<Amounts> {
-    let side = order.side;
     let mut limit = MAXIUM_TAKEN_ORDERS;
 
     let other_side = side.invert_side();
     let oracle_price_lots = market.native_price_to_lot(oracle_price)?;
-    let (price_lots, _) = order.price(now_ts, oracle_price_lots, &book)?;
 
     let order_max_quote_lots = match side {
-        Side::Bid => market.subtract_taker_fees(order.max_quote_lots_including_fees),
-        Side::Ask => order.max_quote_lots_including_fees,
+        Side::Bid => market.subtract_taker_fees(max_quote_lots_including_fees),
+        Side::Ask => max_quote_lots_including_fees,
     };
 
-    let mut remaining_base_lots = order.max_base_lots;
+    let mut remaining_base_lots = max_base_lots;
     let mut remaining_quote_lots = order_max_quote_lots;
 
     let mut first_price = 0_i64;
@@ -283,9 +273,9 @@ fn iterate_book(
     }
 
     let total_quote_lots_taken = order_max_quote_lots - remaining_quote_lots;
-    let total_base_lots_taken = order.max_base_lots - remaining_base_lots;
+    let total_base_lots_taken = max_base_lots - remaining_base_lots;
 
-    let mut total_base_taken_native = (total_base_lots_taken * market.base_lot_size) as u64;
+    let total_base_taken_native = (total_base_lots_taken * market.base_lot_size) as u64;
 
     let mut total_quote_taken_native = (total_quote_lots_taken * market.quote_lot_size) as u64;
 
