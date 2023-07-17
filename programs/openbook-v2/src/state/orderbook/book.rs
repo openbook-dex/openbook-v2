@@ -340,11 +340,17 @@ impl<'a> Orderbook<'a> {
         let mut posted_quote_native = 0;
 
         if let Some(order_tree_target) = post_target {
-            // Open orders always exists in this case
-            let open_orders = open_orders_acc.as_mut().unwrap();
+            require_gte!(
+                market.max_quote_lots(),
+                book_base_quantity_lots * price,
+                OpenBookError::InvalidPostAmount
+            );
 
             posted_base_native = book_base_quantity_lots * market.base_lot_size;
             posted_quote_native = book_base_quantity_lots * price * market.quote_lot_size;
+
+            // Open orders always exists in this case
+            let open_orders = open_orders_acc.as_mut().unwrap();
 
             // Subtract maker fees in bid.
             if side == Side::Bid {
