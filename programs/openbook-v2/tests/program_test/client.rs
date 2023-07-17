@@ -110,8 +110,8 @@ pub fn get_market_address(market_index: MarketIndex, signer_creator: Pubkey) -> 
     Pubkey::find_program_address(
         &[
             b"Market".as_ref(),
-            &market_index.to_le_bytes(),
             signer_creator.to_bytes().as_ref(),
+            &market_index.to_le_bytes(),
         ],
         &openbook_v2::id(),
     )
@@ -266,8 +266,8 @@ impl ClientInstruction for CreateMarketInstruction {
         let market = Pubkey::find_program_address(
             &[
                 b"Market".as_ref(),
-                self.market_index.to_le_bytes().as_ref(),
                 self.payer.pubkey().to_bytes().as_ref(),
+                self.market_index.to_le_bytes().as_ref(),
             ],
             &program_id,
         )
