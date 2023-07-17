@@ -3,23 +3,20 @@ use anchor_lang::__private::bytemuck::Zeroable;
 use anchor_lang::prelude::Clock;
 use anyhow::Result;
 use fixed::types::I80F48;
-use jupiter::Side as JupiterSide;
 use openbook_v2::accounts_zerocopy::{AccountReader, KeyedAccountReader};
 use openbook_v2::state::{BookSide, OrderParams};
 use openbook_v2::state::{
     EventQueue, Market, Order, Orderbook, SelfTradeBehavior::DecrementTake, Side,
 };
 
+use jupiter_amm_interface::{
+    AccountMap, Amm, KeyedAccount, Quote, QuoteParams, Side as JupiterSide, Swap,
+    SwapAndAccountMetas, SwapParams,
+};
 /// An abstraction in order to share reserve mints and necessary data
 use solana_sdk::{instruction::AccountMeta, pubkey::Pubkey, sysvar::clock};
 use std::cell::RefCell;
-use std::collections::HashMap;
 use std::str;
-
-use jupiter::jupiter_override::{Swap, SwapLeg};
-use jupiter_core::amm::{
-    Amm, KeyedAccount, Quote, QuoteParams, SwapLegAndAccountMetas, SwapParams,
-};
 
 // TODO Adjust this number after doing some calculations
 const MAXIUM_TAKEN_ORDERS: u8 = 8;
@@ -38,8 +35,28 @@ pub struct OpenBookMarket {
     oracle_price: I80F48,
 }
 
-impl OpenBookMarket {
-    pub fn from_keyed_account(keyed_account: &KeyedAccount) -> Result<Self> {
+impl Amm for OpenBookMarket {
+    fn label(&self) -> String {
+        self.label.clone()
+    }
+
+    fn key(&self) -> Pubkey {
+        self.key
+    }
+
+    fn program_id(&self) -> Pubkey {
+        openbook_v2::id()
+    }
+
+    fn get_reserve_mints(&self) -> Vec<Pubkey> {
+        self.reserve_mints.to_vec()
+    }
+
+    fn get_accounts_to_update(&self) -> Vec<Pubkey> {
+        self.related_accounts.to_vec()
+    }
+
+    fn from_keyed_account(keyed_account: &KeyedAccount) -> Result<Self> {
         let market = Market::try_deserialize(&mut keyed_account.account.data.as_slice())?;
 
         Ok(OpenBookMarket {
@@ -63,43 +80,26 @@ impl OpenBookMarket {
             timestamp: 0,
         })
     }
-}
 
-impl Amm for OpenBookMarket {
-    fn label(&self) -> String {
-        self.label.clone()
-    }
+    fn update(&mut self, account_map: &AccountMap) -> Result<()> {
+        let bids_data = account_map.get(&self.market.bids).unwrap();
+        self.bids = BookSide::try_deserialize(&mut bids_data.data.as_slice()).unwrap();
 
-    fn key(&self) -> Pubkey {
-        self.key
-    }
+        let asks_data = account_map.get(&self.market.asks).unwrap();
+        self.asks = BookSide::try_deserialize(&mut asks_data.data.as_slice()).unwrap();
 
-    fn get_reserve_mints(&self) -> Vec<Pubkey> {
-        self.reserve_mints.to_vec()
-    }
+        let event_queue_data = account_map.get(&self.market.event_queue).unwrap();
+        self.event_queue =
+            EventQueue::try_deserialize(&mut event_queue_data.data.as_slice()).unwrap();
 
-    fn get_accounts_to_update(&self) -> Vec<Pubkey> {
-        self.related_accounts.to_vec()
-    }
-
-    fn update(&mut self, accounts_map: &HashMap<Pubkey, Vec<u8>>) -> Result<()> {
-        let bids_data: &Vec<u8> = accounts_map.get(&self.market.bids).unwrap();
-        self.bids = BookSide::try_deserialize(&mut bids_data.as_slice()).unwrap();
-
-        let asks_data = accounts_map.get(&self.market.asks).unwrap();
-        self.asks = BookSide::try_deserialize(&mut asks_data.as_slice()).unwrap();
-
-        let event_queue_data = accounts_map.get(&self.market.event_queue).unwrap();
-        self.event_queue = EventQueue::try_deserialize(&mut event_queue_data.as_slice()).unwrap();
-
-        let oracle_data = accounts_map.get(&self.market.oracle).unwrap();
+        let oracle_data = account_map.get(&self.market.oracle).unwrap();
         let oracle_acc = &AccountOracle {
-            data: oracle_data,
+            data: &oracle_data.data,
             key: self.market.oracle,
         };
 
-        let clock_data: &Vec<u8> = accounts_map.get(&clock::ID).unwrap();
-        let clock: Clock = bincode::deserialize(&clock_data.as_slice())?;
+        let clock_data = account_map.get(&clock::ID).unwrap();
+        let clock: Clock = bincode::deserialize(&clock_data.data.as_slice())?;
         self.timestamp = clock.unix_timestamp as u64;
         self.oracle_price = self.market.oracle_price(oracle_acc, self.timestamp)?;
 
@@ -159,15 +159,12 @@ impl Amm for OpenBookMarket {
             out_amount,
             fee_mint: self.market.quote_mint,
             fee_amount: order_amounts.fee,
-            price_impact_pct: order_amounts.price_impact.into(),
+            // price_impact_pct: order_amounts.price_impact.into(),
             ..Quote::default()
         })
     }
 
-    fn get_swap_leg_and_account_metas(
-        &self,
-        swap_params: &SwapParams,
-    ) -> Result<SwapLegAndAccountMetas> {
+    fn get_swap_and_account_metas(&self, swap_params: &SwapParams) -> Result<SwapAndAccountMetas> {
         let SwapParams {
             destination_mint,
             source_mint,
@@ -203,10 +200,8 @@ impl Amm for OpenBookMarket {
             AccountMeta::new(self.market.oracle, false),
         ];
 
-        Ok(SwapLegAndAccountMetas {
-            swap_leg: SwapLeg::Swap {
-                swap: Swap::Serum { side },
-            },
+        Ok(SwapAndAccountMetas {
+            swap: Swap::Openbook { side: { side } },
             account_metas,
         })
     }
