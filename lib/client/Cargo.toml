@@ -39,3 +39,5 @@ spl-associated-token-account = {workspace = true}
 thiserror = "1.0.31"
 tokio = {version = "1", features = ["full"]}
 tokio-stream = {version = "0.1.9"}
+jupiter-core = { git = "https://github.com/jup-ag/rust-amm-implementation.git", branch = "main" }
+jupiter = { git = "https://github.com/jup-ag/rust-amm-implementation.git", branch = "main" }

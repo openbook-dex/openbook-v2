@@ -1,77 +1,40 @@
 use anchor_lang::AccountDeserialize;
 use anchor_lang::__private::bytemuck::Zeroable;
+use anchor_lang::prelude::Clock;
 use anyhow::Result;
 use fixed::types::I80F48;
+use jupiter::Side as JupiterSide;
 use openbook_v2::accounts_zerocopy::{AccountReader, KeyedAccountReader};
 use openbook_v2::state::{BookSide, OrderParams};
 use openbook_v2::state::{
     EventQueue, Market, Order, Orderbook, SelfTradeBehavior::DecrementTake, Side,
 };
 
-use rust_decimal::Decimal;
-use solana_sdk::sysvar::clock::Clock;
 /// An abstraction in order to share reserve mints and necessary data
-use solana_sdk::{account::Account, pubkey::Pubkey};
+use solana_sdk::{instruction::AccountMeta, pubkey::Pubkey, sysvar::clock};
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::str;
-use std::time::{SystemTime, UNIX_EPOCH};
+
+use jupiter::jupiter_override::{Swap, SwapLeg};
+use jupiter_core::amm::{
+    Amm, KeyedAccount, Quote, QuoteParams, SwapLegAndAccountMetas, SwapParams,
+};
 
 // TODO Adjust this number after doing some calculations
 const MAXIUM_TAKEN_ORDERS: u8 = 8;
 
 #[derive(Clone)]
-pub struct KeyedAccount {
-    pub key: Pubkey,
-    pub account: Account,
-}
-
-pub struct QuoteParams {
-    pub max_base_lots: i64,
-    pub max_quote_lots_including_fees: i64,
-    pub input_mint: Pubkey,
-    pub output_mint: Pubkey,
-}
-
-#[derive(Debug, Default, Clone, Copy)]
-pub struct Quote {
-    pub not_enough_liquidity: bool,
-    pub min_in_amount: Option<u64>,
-    pub min_out_amount: Option<u64>,
-    pub in_amount: u64,
-    pub out_amount: u64,
-    pub fee_amount: u64,
-    pub fee_mint: Pubkey,
-    pub fee_pct: Decimal,
-    pub price_impact_pct: Decimal,
-}
-
-pub trait Amm {
-    // Label of your Amm
-    fn label(&self) -> String;
-    // Identifier for your amm, should be your pool id
-    fn key(&self) -> Pubkey;
-    // The token mints that the pool support for swapping
-    fn get_reserve_mints(&self) -> Vec<Pubkey>;
-    // Related accounts to get the quote for swapping and creating ix
-    fn get_accounts_to_update(&self) -> Vec<Pubkey>;
-    // Picks data necessary to update it's internal state
-    fn update(&mut self, accounts_map: &HashMap<Pubkey, Vec<u8>>) -> Result<()>;
-    // Compute the quote from internal state
-    fn quote(&self, quote_params: &QuoteParams) -> Result<Quote>;
-}
-
 pub struct OpenBookMarket {
     market: Market,
     event_queue: EventQueue,
     bids: BookSide,
     asks: BookSide,
+    timestamp: u64,
     key: Pubkey,
     label: String,
-    related_accounts: [Pubkey; 6],
+    related_accounts: [Pubkey; 7],
     reserve_mints: [Pubkey; 2],
-    reserves: [u128; 2],
-    program_id: Pubkey,
     oracle_price: I80F48,
 }
 
@@ -90,14 +53,14 @@ impl OpenBookMarket {
                 market.oracle,
                 market.base_vault,
                 market.quote_vault,
+                clock::ID,
             ],
             reserve_mints: [market.base_mint, market.quote_mint],
-            reserves: [0, 0],
-            program_id: openbook_v2::ID,
             event_queue: EventQueue::zeroed(),
             bids: BookSide::zeroed(),
             asks: BookSide::zeroed(),
             oracle_price: I80F48::ZERO,
+            timestamp: 0,
         })
     }
 }
@@ -135,27 +98,35 @@ impl Amm for OpenBookMarket {
             key: self.market.oracle,
         };
 
-        let timestamp = Clock::default().unix_timestamp;
-        self.oracle_price = self.market.oracle_price(oracle_acc, timestamp as u64)?;
+        let clock_data: &Vec<u8> = accounts_map.get(&clock::ID).unwrap();
+        let clock: Clock = bincode::deserialize(&clock_data.as_slice())?;
+        self.timestamp = clock.unix_timestamp as u64;
+        self.oracle_price = self.market.oracle_price(oracle_acc, self.timestamp)?;
 
         Ok(())
     }
 
     fn quote(&self, quote_params: &QuoteParams) -> Result<Quote> {
-        let side = if quote_params.input_mint == self.market.quote_mint {
-            Side::Bid
+        let order = if quote_params.input_mint == self.market.quote_mint {
+            Order {
+                side: Side::Bid,
+                max_base_lots: 0,
+                max_quote_lots_including_fees: quote_params.in_amount.try_into().unwrap(),
+                client_order_id: 0,
+                time_in_force: 0,
+                self_trade_behavior: DecrementTake,
+                params: OrderParams::Market,
+            }
         } else {
-            Side::Ask
-        };
-
-        let order = &Order {
-            side,
-            max_base_lots: quote_params.max_base_lots,
-            max_quote_lots_including_fees: quote_params.max_quote_lots_including_fees,
-            client_order_id: 0,
-            time_in_force: 0,
-            self_trade_behavior: DecrementTake,
-            params: OrderParams::Market,
+            Order {
+                side: Side::Ask,
+                max_base_lots: quote_params.in_amount.try_into().unwrap(),
+                max_quote_lots_including_fees: 0,
+                client_order_id: 0,
+                time_in_force: 0,
+                self_trade_behavior: DecrementTake,
+                params: OrderParams::Market,
+            }
         };
 
         let bids_ref = RefCell::new(self.bids);
@@ -165,16 +136,14 @@ impl Amm for OpenBookMarket {
             asks: asks_ref.borrow_mut(),
         };
 
-        let timestamp = Clock::default().unix_timestamp;
-
         let order_amounts: Amounts = iterate_book(
             book,
-            order,
+            &order,
             &self.market,
             self.oracle_price,
-            timestamp as u64,
+            self.timestamp,
         )?;
-        let (in_amount, out_amount) = match side {
+        let (in_amount, out_amount) = match order.side {
             Side::Bid => (
                 order_amounts.total_quote_taken_native,
                 order_amounts.total_base_taken_native,
@@ -193,6 +162,57 @@ impl Amm for OpenBookMarket {
             price_impact_pct: order_amounts.price_impact.into(),
             ..Quote::default()
         })
+    }
+
+    fn get_swap_leg_and_account_metas(
+        &self,
+        swap_params: &SwapParams,
+    ) -> Result<SwapLegAndAccountMetas> {
+        let SwapParams {
+            destination_mint,
+            source_mint,
+            user_destination_token_account,
+            user_source_token_account,
+            user_transfer_authority,
+            ..
+        } = swap_params;
+
+        let (side, base_account, quote_account) = if source_mint == &self.market.quote_mint {
+            (
+                JupiterSide::Bid,
+                user_destination_token_account,
+                user_source_token_account,
+            )
+        } else {
+            (
+                JupiterSide::Ask,
+                user_source_token_account,
+                user_destination_token_account,
+            )
+        };
+
+        let account_metas = vec![
+            AccountMeta::new(self.key, true),
+            AccountMeta::new(self.market.bids, true),
+            AccountMeta::new(self.market.asks, true),
+            AccountMeta::new(self.market.event_queue, true),
+            AccountMeta::new(self.market.base_vault, true),
+            AccountMeta::new(self.market.quote_vault, true),
+            AccountMeta::new(*base_account, true),
+            AccountMeta::new(*quote_account, true),
+            AccountMeta::new(self.market.oracle, false),
+        ];
+
+        Ok(SwapLegAndAccountMetas {
+            swap_leg: SwapLeg::Swap {
+                swap: Swap::Serum { side },
+            },
+            account_metas,
+        })
+    }
+
+    fn clone_amm(&self) -> Box<dyn Amm + Send + Sync> {
+        Box::new(self.clone())
     }
 }
 
@@ -246,7 +266,7 @@ fn iterate_book(
 
         let best_opposing_price = best_opposing.price_lots;
 
-        if !side.is_price_within_limit(best_opposing_price, price_lots) || limit == 0 {
+        if limit == 0 {
             break;
         }
 
@@ -269,9 +289,6 @@ fn iterate_book(
 
     let total_quote_lots_taken = order_max_quote_lots - remaining_quote_lots;
     let total_base_lots_taken = order.max_base_lots - remaining_base_lots;
-
-    assert!(total_quote_lots_taken >= 0);
-    assert!(total_base_lots_taken >= 0);
 
     let mut total_base_taken_native = (total_base_lots_taken * market.base_lot_size) as u64;
 
