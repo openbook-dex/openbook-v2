@@ -26,6 +26,7 @@ pub struct OrderWithAmounts {
     pub posted_quote_native: u64,
     pub total_base_taken_native: u64,
     pub total_quote_taken_native: u64,
+    pub taker_fees: u64,
     pub maker_fees: u64,
     pub referrer_amount: u64,
 }
@@ -242,7 +243,7 @@ impl<'a> Orderbook<'a> {
         assert!(total_base_lots_taken >= 0);
 
         let total_base_taken_native = (total_base_lots_taken * market.base_lot_size) as u64;
-        let mut total_quote_taken_native = (total_quote_lots_taken * market.quote_lot_size) as u64;
+        let total_quote_taken_native = (total_quote_lots_taken * market.quote_lot_size) as u64;
 
         // Record the taker trade in the account already, even though it will only be
         // realized when the fill event gets executed
@@ -272,19 +273,15 @@ impl<'a> Orderbook<'a> {
                 market.taker_volume_wo_oo += total_quote_taken_native;
             }
 
-            let total_quantity_paid: u64;
-            let total_quantity_received: u64;
-            match side {
-                Side::Bid => {
-                    total_quote_taken_native += taker_fees;
-                    total_quantity_paid = total_quote_taken_native;
-                    total_quantity_received = total_base_taken_native;
-                }
-                Side::Ask => {
-                    total_quote_taken_native -= taker_fees;
-                    total_quantity_paid = total_base_taken_native;
-                    total_quantity_received = total_quote_taken_native;
-                }
+            let (total_quantity_paid, total_quantity_received) = match side {
+                Side::Bid => (
+                    total_quote_taken_native + taker_fees,
+                    total_base_taken_native,
+                ),
+                Side::Ask => (
+                    total_base_taken_native,
+                    total_quote_taken_native - taker_fees,
+                ),
             };
 
             emit!(TotalOrderFillEvent {
@@ -458,6 +455,7 @@ impl<'a> Orderbook<'a> {
             total_base_taken_native,
             total_quote_taken_native,
             referrer_amount,
+            taker_fees,
             maker_fees,
         })
     }

@@ -58,6 +58,7 @@ pub fn place_take_order<'info>(
         total_base_taken_native,
         total_quote_taken_native,
         referrer_amount,
+        taker_fees,
         ..
     } = book.new_order(
         &order,
@@ -79,24 +80,23 @@ pub fn place_take_order<'info>(
 
     let (from_vault, to_vault, deposit_amount, withdraw_amount) = match side {
         Side::Bid => {
-            // Update market deposit total
-            market.quote_deposit_total += total_quote_taken_native;
+            let total_quote_including_fees = total_quote_taken_native + taker_fees;
+            market.quote_deposit_total += total_quote_including_fees;
             (
                 ctx.accounts.base_vault.to_account_info(),
                 ctx.accounts.quote_vault.to_account_info(),
-                total_quote_taken_native,
+                total_quote_including_fees,
                 total_base_taken_native,
             )
         }
-
         Side::Ask => {
-            // Update market deposit total
+            let total_quote_discounting_fees = total_quote_taken_native - taker_fees;
             market.base_deposit_total += total_base_taken_native;
             (
                 ctx.accounts.quote_vault.to_account_info(),
                 ctx.accounts.base_vault.to_account_info(),
                 total_base_taken_native,
-                total_quote_taken_native,
+                total_quote_discounting_fees,
             )
         }
     };
