@@ -81,6 +81,8 @@ pub enum OpenBookError {
     BookContainsElements,
     #[msg("Could not find order in user account")]
     OpenOrdersOrderNotFound,
+    #[msg("Amount to post above book limits")]
+    InvalidPostAmount,
 }
 
 impl From<OpenBookError> for ProgramError {

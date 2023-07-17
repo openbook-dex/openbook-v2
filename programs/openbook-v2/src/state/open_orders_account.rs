@@ -65,16 +65,26 @@ impl OpenOrdersAccount {
             .trim_matches(char::from(0))
     }
 
+    pub fn default_for_tests() -> Box<OpenOrdersAccount> {
+        Box::new(OpenOrdersAccount {
+            owner: Pubkey::default(),
+            market: Pubkey::default(),
+            name: [0; 32],
+            delegate: NonZeroPubkeyOption::default(),
+            account_num: 0,
+            bump: 0,
+            padding: [0; 3],
+            position: Position::default(),
+            open_orders: [OpenOrder::default(); MAX_OPEN_ORDERS],
+        })
+    }
+
     pub fn is_owner_or_delegate(&self, ix_signer: Pubkey) -> bool {
         let delegate_option: Option<Pubkey> = Option::from(self.delegate);
         if let Some(delegate) = delegate_option {
             return self.owner == ix_signer || delegate == ix_signer;
         }
         self.owner == ix_signer
-    }
-
-    pub fn order_by_raw_index(&self, raw_index: usize) -> &OpenOrder {
-        &self.open_orders[raw_index]
     }
 
     pub fn all_orders(&self) -> impl Iterator<Item = &OpenOrder> {
@@ -98,6 +108,10 @@ impl OpenOrdersAccount {
 
     pub fn find_order_with_order_id(&self, order_id: u128) -> Option<&OpenOrder> {
         self.all_orders_in_use().find(|&oo| oo.id == order_id)
+    }
+
+    pub fn open_order_by_raw_index(&self, raw_index: usize) -> &OpenOrder {
+        &self.open_orders[raw_index]
     }
 
     pub fn open_order_mut_by_raw_index(&mut self, raw_index: usize) -> &mut OpenOrder {
@@ -228,18 +242,16 @@ impl OpenOrdersAccount {
     }
 
     pub fn remove_order(&mut self, slot: usize, base_quantity: i64) -> Result<()> {
-        {
-            let oo = self.open_order_mut_by_raw_index(slot);
-            assert!(!oo.is_free());
+        let oo = self.open_order_by_raw_index(slot);
+        assert!(!oo.is_free());
 
-            let order_side = oo.side_and_tree().side();
-            let position = &mut self.position;
+        let order_side = oo.side_and_tree().side();
+        let position = &mut self.position;
 
-            // accounting
-            match order_side {
-                Side::Bid => position.bids_base_lots -= base_quantity,
-                Side::Ask => position.asks_base_lots -= base_quantity,
-            }
+        // accounting
+        match order_side {
+            Side::Bid => position.bids_base_lots -= base_quantity,
+            Side::Ask => position.asks_base_lots -= base_quantity,
         }
 
         // release space
@@ -249,23 +261,21 @@ impl OpenOrdersAccount {
     }
 
     pub fn cancel_order(&mut self, slot: usize, base_quantity: i64, market: Market) -> Result<()> {
-        {
-            let oo = self.open_order_mut_by_raw_index(slot);
-            let price = oo.locked_price;
-            let order_side = oo.side_and_tree().side();
+        let oo = self.open_order_by_raw_index(slot);
+        let price = oo.locked_price;
+        let order_side = oo.side_and_tree().side();
 
-            let base_quantity_native = (base_quantity * market.base_lot_size) as u64;
-            let quote_quantity_native = (base_quantity * price * market.quote_lot_size) as u64;
-            let fees = market.maker_fees_ceil(quote_quantity_native);
+        let base_quantity_native = (base_quantity * market.base_lot_size) as u64;
+        let quote_quantity_native = (base_quantity * price * market.quote_lot_size) as u64;
+        let fees = market.maker_fees_ceil(quote_quantity_native);
 
-            let position = &mut self.position;
-            match order_side {
-                Side::Bid => {
-                    position.quote_free_native += quote_quantity_native + fees;
-                    position.locked_maker_fees -= fees;
-                }
-                Side::Ask => position.base_free_native += base_quantity_native,
+        let position = &mut self.position;
+        match order_side {
+            Side::Bid => {
+                position.quote_free_native += quote_quantity_native + fees;
+                position.locked_maker_fees -= fees;
             }
+            Side::Ask => position.base_free_native += base_quantity_native,
         }
 
         self.remove_order(slot, base_quantity)
