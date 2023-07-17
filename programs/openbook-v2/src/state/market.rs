@@ -30,6 +30,9 @@ pub struct Market {
 
     pub padding1: [u8; 1],
 
+    // Signer of the create market transaction
+    pub signer_creator: Pubkey,
+
     /// No expiry = 0. Market will expire and no trading allowed after time_expiry
     pub time_expiry: i64,
 
@@ -111,6 +114,7 @@ pub struct Market {
 
 const_assert_eq!(
     size_of::<Market>(),
+    32 +                        // signer_creator
     32 +                        // collect_fee_admin
     32 +                        // open_order_admin
     32 +                        // consume_event_admin
@@ -141,7 +145,7 @@ const_assert_eq!(
     8 +                         // referrer_rebates_accrued
     1768 // reserved
 );
-const_assert_eq!(size_of::<Market>(), 2384);
+const_assert_eq!(size_of::<Market>(), 2416);
 const_assert_eq!(size_of::<Market>() % 8, 0);
 
 impl Market {
@@ -265,6 +269,7 @@ macro_rules! market_seeds {
     ($market:expr) => {
         &[
             b"Market".as_ref(),
+            &$market.signer_creator.to_bytes(),
             &$market.market_index.to_le_bytes(),
             &[$market.bump],
         ]

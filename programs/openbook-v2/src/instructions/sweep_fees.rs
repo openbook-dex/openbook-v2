@@ -7,13 +7,12 @@ use crate::accounts_ix::*;
 pub fn sweep_fees(ctx: Context<SweepFees>) -> Result<()> {
     let mut market = ctx.accounts.market.load_mut()?;
 
-    // get/update all values from market and drop reference to it before cpi
     let amount = market.quote_fees_accrued;
     market.quote_fees_accrued = 0;
+    market.quote_deposit_total -= amount;
 
     let seeds = market_seeds!(market);
     let signer = &[&seeds[..]];
-
     drop(market);
 
     if amount > 0 {

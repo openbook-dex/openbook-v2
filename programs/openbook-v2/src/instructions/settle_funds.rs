@@ -20,6 +20,7 @@ pub fn settle_funds<'info>(ctx: Context<'_, '_, '_, 'info, SettleFunds<'info>>) 
 
     if ctx.accounts.referrer.is_some() {
         market.fees_to_referrers += referrer_rebate;
+        market.quote_deposit_total -= referrer_rebate;
     } else {
         market.quote_fees_accrued += referrer_rebate;
     }
