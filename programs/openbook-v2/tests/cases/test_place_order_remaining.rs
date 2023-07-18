@@ -177,14 +177,14 @@ async fn test_place_cancel_order_remaining() -> Result<(), TransportError> {
     }
 
     // No events on event_queue
-    // {
-    //     let market_acc = solana.get_account::<Market>(market).await;
-    //     let event_queue = solana
-    //         .get_account::<EventQueue>(market_acc.event_queue)
-    //         .await;
+    {
+        let market_acc = solana.get_account_boxed::<Market>(market).await;
+        let event_queue = solana
+            .get_account_boxed::<EventQueue>(market_acc.event_queue)
+            .await;
 
-    //     assert_eq!(event_queue.header.count(), 0);
-    // }
+        assert_eq!(event_queue.header.count(), 0);
+    }
 
     Ok(())
 }

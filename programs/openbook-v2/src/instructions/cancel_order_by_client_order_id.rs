@@ -5,11 +5,10 @@ use crate::error::*;
 use crate::state::*;
 
 pub fn cancel_order_by_client_order_id(
-    ctx: Context<CancelOrderByClientOrderId>,
+    ctx: Context<CancelOrder>,
     client_order_id: u64,
 ) -> Result<()> {
     let mut account = ctx.accounts.open_orders_account.load_mut()?;
-    // account constraint #1
     require!(
         account.is_owner_or_delegate(ctx.accounts.owner.key()),
         OpenBookError::SomeError

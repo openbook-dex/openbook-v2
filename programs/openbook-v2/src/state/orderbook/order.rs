@@ -62,14 +62,6 @@ impl Order {
         }
     }
 
-    /// Should this order be penalized with an extra fee?
-    ///
-    /// Some programs opportunistically call ioc orders, wasting lots of compute. This
-    /// is intended to encourage people to be smarter about it.
-    pub fn needs_penalty_fee(&self) -> bool {
-        matches!(self.params, OrderParams::ImmediateOrCancel { .. })
-    }
-
     /// Is this order required to be posted to the orderbook? It will fail if it would take.
     pub fn is_post_only(&self) -> bool {
         let order_type = match self.params {

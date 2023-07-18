@@ -21,28 +21,17 @@ pub struct Position {
     pub locked_maker_fees: u64,
     pub referrer_rebates_accrued: u64,
 
-    /// Cumulative maker volume in quote native units
-    ///
-    /// (Display only)
+    /// Cumulative maker volume in quote native units (display only)
     pub maker_volume: u64,
-    /// Cumulative taker volume in quote native units
-    ///
-    /// (Display only)
+    /// Cumulative taker volume in quote native units (display only)
     pub taker_volume: u64,
-
-    /// The native average entry price for the base lots of the current position.
-    /// Reset to 0 when the base position reaches or crosses 0.
-    pub avg_entry_price_per_base_lot: f64,
 
     #[derivative(Debug = "ignore")]
     pub reserved: [u8; 88],
 }
 
-const_assert_eq!(
-    size_of::<Position>(),
-    8 + 8 + 8 + 8 + 8 + 8 + 8 + 8 + 8 + 88
-);
-const_assert_eq!(size_of::<Position>(), 160);
+const_assert_eq!(size_of::<Position>(), 8 + 8 + 8 + 8 + 8 + 8 + 8 + 8 + 88);
+const_assert_eq!(size_of::<Position>(), 152);
 const_assert_eq!(size_of::<Position>() % 8, 0);
 
 impl Default for Position {
@@ -56,7 +45,6 @@ impl Default for Position {
             referrer_rebates_accrued: 0,
             maker_volume: 0,
             taker_volume: 0,
-            avg_entry_price_per_base_lot: 0.0,
             reserved: [0; 88],
         }
     }

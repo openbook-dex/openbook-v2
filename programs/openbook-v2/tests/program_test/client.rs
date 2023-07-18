@@ -106,9 +106,13 @@ fn make_instruction(
     }
 }
 
-pub fn get_market_address(market_index: MarketIndex) -> Pubkey {
+pub fn get_market_address(signer_creator: Pubkey, market_index: MarketIndex) -> Pubkey {
     Pubkey::find_program_address(
-        &[b"Market".as_ref(), &market_index.to_le_bytes()],
+        &[
+            b"Market".as_ref(),
+            signer_creator.to_bytes().as_ref(),
+            &market_index.to_le_bytes(),
+        ],
         &openbook_v2::id(),
     )
     .0
@@ -256,12 +260,15 @@ impl ClientInstruction for CreateMarketInstruction {
             base_lot_size: self.base_lot_size,
             maker_fee: self.maker_fee,
             taker_fee: self.taker_fee,
-            fee_penalty: self.fee_penalty,
             time_expiry: self.time_expiry,
         };
 
         let market = Pubkey::find_program_address(
-            &[b"Market".as_ref(), self.market_index.to_le_bytes().as_ref()],
+            &[
+                b"Market".as_ref(),
+                self.payer.pubkey().to_bytes().as_ref(),
+                self.market_index.to_le_bytes().as_ref(),
+            ],
             &program_id,
         )
         .0;
@@ -490,19 +497,12 @@ impl ClientInstruction for PlaceTakeOrderInstruction {
             token_receiver_account: self.token_receiver_account,
             base_vault: self.base_vault,
             quote_vault: self.quote_vault,
+            referrer: self.referrer,
             token_program: Token::id(),
             system_program: System::id(),
         };
 
-        let mut instruction = make_instruction(program_id, &accounts, instruction);
-        if let Some(ref3) = self.referrer {
-            let remaining = &mut vec![AccountMeta {
-                pubkey: ref3,
-                is_signer: false,
-                is_writable: true,
-            }];
-            instruction.accounts.append(remaining);
-        }
+        let instruction = make_instruction(program_id, &accounts, instruction);
         (accounts, instruction)
     }
 
@@ -560,7 +560,7 @@ pub struct CancelOrderByClientOrderIdInstruction {
 }
 #[async_trait::async_trait(?Send)]
 impl ClientInstruction for CancelOrderByClientOrderIdInstruction {
-    type Accounts = openbook_v2::accounts::CancelOrderByClientOrderId;
+    type Accounts = openbook_v2::accounts::CancelOrder;
     type Instruction = openbook_v2::instruction::CancelOrderByClientOrderId;
     async fn to_instruction(
         &self,
@@ -596,7 +596,7 @@ pub struct CancelAllOrdersInstruction {
 }
 #[async_trait::async_trait(?Send)]
 impl ClientInstruction for CancelAllOrdersInstruction {
-    type Accounts = openbook_v2::accounts::CancelAllOrders;
+    type Accounts = openbook_v2::accounts::CancelOrder;
     type Instruction = openbook_v2::instruction::CancelAllOrders;
     async fn to_instruction(
         &self,
@@ -743,19 +743,12 @@ impl ClientInstruction for SettleFundsInstruction {
             quote_vault: self.quote_vault,
             token_base_account: self.token_base_account,
             token_quote_account: self.token_quote_account,
+            referrer: self.referrer,
             token_program: Token::id(),
             system_program: System::id(),
         };
-        let mut instruction = make_instruction(program_id, &accounts, instruction);
-        if let Some(ref3) = self.referrer {
-            let remaining = &mut vec![AccountMeta {
-                pubkey: ref3,
-                is_signer: false,
-                is_writable: true,
-            }];
-            instruction.accounts.append(remaining);
-        }
 
+        let instruction = make_instruction(program_id, &accounts, instruction);
         (accounts, instruction)
     }
 
@@ -807,8 +800,8 @@ pub struct DepositInstruction {
     pub token_base_account: Pubkey,
     pub token_quote_account: Pubkey,
     pub owner: TestKeypair,
-    pub base_amount_lots: u64,
-    pub quote_amount_lots: u64,
+    pub base_amount: u64,
+    pub quote_amount: u64,
 }
 #[async_trait::async_trait(?Send)]
 impl ClientInstruction for DepositInstruction {
@@ -820,8 +813,8 @@ impl ClientInstruction for DepositInstruction {
     ) -> (Self::Accounts, instruction::Instruction) {
         let program_id = openbook_v2::id();
         let instruction = Self::Instruction {
-            base_amount_lots: self.base_amount_lots,
-            quote_amount_lots: self.quote_amount_lots,
+            base_amount: self.base_amount,
+            quote_amount: self.quote_amount,
         };
 
         let accounts = Self::Accounts {

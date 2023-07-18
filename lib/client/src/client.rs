@@ -370,8 +370,8 @@ impl OpenBookClient {
     pub async fn deposit(
         &self,
         market_index: MarketIndex,
-        base_amount_lots: u64,
-        quote_amount_lots: u64,
+        base_amount: u64,
+        quote_amount: u64,
         token_base_account: Pubkey,
         token_quote_account: Pubkey,
         base_vault: Pubkey,
@@ -398,8 +398,8 @@ impl OpenBookClient {
                 )
             },
             data: anchor_lang::InstructionData::data(&openbook_v2::instruction::Deposit {
-                base_amount_lots,
-                quote_amount_lots,
+                base_amount,
+                quote_amount,
             }),
         };
         self.send_and_confirm_owner_tx(vec![ix]).await
@@ -413,6 +413,7 @@ impl OpenBookClient {
         token_quote_account: Pubkey,
         base_vault: Pubkey,
         quote_vault: Pubkey,
+        referrer: Option<Pubkey>,
     ) -> anyhow::Result<Signature> {
         let market = self.context.context(market_index);
 
@@ -428,6 +429,7 @@ impl OpenBookClient {
                         token_quote_account,
                         base_vault,
                         quote_vault,
+                        referrer,
                         system_program: System::id(),
                         token_program: Token::id(),
                     },

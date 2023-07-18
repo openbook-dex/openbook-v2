@@ -4,7 +4,7 @@ use crate::logs::DepositLog;
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Transfer};
 
-pub fn deposit(ctx: Context<Deposit>, base_amount_lots: u64, quote_amount_lots: u64) -> Result<()> {
+pub fn deposit(ctx: Context<Deposit>, base_amount: u64, quote_amount: u64) -> Result<()> {
     let mut open_orders_account = ctx.accounts.open_orders_account.load_mut()?;
     let mut market = ctx.accounts.market.load_mut()?;
     require!(
@@ -12,8 +12,7 @@ pub fn deposit(ctx: Context<Deposit>, base_amount_lots: u64, quote_amount_lots: 
         OpenBookError::MarketHasExpired
     );
 
-    if base_amount_lots != 0 {
-        let base_amount_native = base_amount_lots * (market.base_lot_size as u64);
+    if base_amount > 0 {
         let cpi_context = CpiContext::new(
             ctx.accounts.token_program.to_account_info(),
             Transfer {
@@ -22,19 +21,12 @@ pub fn deposit(ctx: Context<Deposit>, base_amount_lots: u64, quote_amount_lots: 
                 authority: ctx.accounts.owner.to_account_info(),
             },
         );
-        token::transfer(cpi_context, base_amount_native)?;
-        open_orders_account.position.base_free_native += base_amount_native;
-        market.base_deposit_total += base_amount_native;
-
-        emit!(DepositLog {
-            open_orders_acc: ctx.accounts.open_orders_account.key(),
-            signer: ctx.accounts.owner.key(),
-            quantity: base_amount_native,
-        });
+        token::transfer(cpi_context, base_amount)?;
+        open_orders_account.position.base_free_native += base_amount;
+        market.base_deposit_total += base_amount;
     }
 
-    if quote_amount_lots != 0 {
-        let quote_amount_native = quote_amount_lots * (market.quote_lot_size as u64);
+    if quote_amount > 0 {
         let cpi_context = CpiContext::new(
             ctx.accounts.token_program.to_account_info(),
             Transfer {
@@ -43,15 +35,18 @@ pub fn deposit(ctx: Context<Deposit>, base_amount_lots: u64, quote_amount_lots: 
                 authority: ctx.accounts.owner.to_account_info(),
             },
         );
-        token::transfer(cpi_context, quote_amount_native)?;
+        token::transfer(cpi_context, quote_amount)?;
 
-        open_orders_account.position.quote_free_native += quote_amount_native;
-        market.quote_deposit_total += quote_amount_native;
+        open_orders_account.position.quote_free_native += quote_amount;
+        market.quote_deposit_total += quote_amount;
+    }
 
+    if base_amount > 0 || quote_amount > 0 {
         emit!(DepositLog {
             open_orders_acc: ctx.accounts.open_orders_account.key(),
             signer: ctx.accounts.owner.key(),
-            quantity: quote_amount_native,
+            base_amount,
+            quote_amount,
         });
     }
 

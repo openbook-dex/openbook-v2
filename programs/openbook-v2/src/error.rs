@@ -8,12 +8,16 @@ pub enum OpenBookError {
     #[msg("")]
     SomeError,
 
+    #[msg("Name lenght above limit")]
+    InvalidInputNameLength,
     #[msg("Market cannot be created as expired")]
     InvalidInputMarketExpired,
     #[msg("Taker fees should be positive and if maker fees are negative, greater or equal to their abs value")]
     InvalidInputMarketFees,
     #[msg("Lots cannot be negative")]
     InvalidInputLots,
+    #[msg("Lots size above market limits")]
+    InvalidInputLotsSize,
     #[msg("Price lots should be greater than zero")]
     InvalidInputPriceLots,
     #[msg("Peg limit should be greater than zero")]
@@ -65,8 +69,6 @@ pub enum OpenBookError {
     MarketHasExpired,
     #[msg("Price lots should be greater than zero")]
     InvalidPriceLots,
-    #[msg("Order size above market limits")]
-    InvalidOrderSize,
     #[msg("Oracle price above market limits")]
     InvalidOraclePrice,
     #[msg("The Market has not expired yet.")]
@@ -79,6 +81,8 @@ pub enum OpenBookError {
     BookContainsElements,
     #[msg("Could not find order in user account")]
     OpenOrdersOrderNotFound,
+    #[msg("Amount to post above book limits")]
+    InvalidPostAmount,
 }
 
 impl From<OpenBookError> for ProgramError {

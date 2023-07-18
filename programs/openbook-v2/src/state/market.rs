@@ -5,7 +5,7 @@ use std::convert::{TryFrom, TryInto};
 use std::mem::size_of;
 
 use crate::error::OpenBookError;
-use crate::pod_option::PodOption;
+use crate::pubkey_option::NonZeroPubkeyOption;
 use crate::state::oracle;
 use crate::{accounts_zerocopy::KeyedAccountReader, state::orderbook::Side};
 
@@ -30,17 +30,20 @@ pub struct Market {
 
     pub padding1: [u8; 1],
 
+    // Signer of the create market transaction
+    pub signer_creator: Pubkey,
+
     /// No expiry = 0. Market will expire and no trading allowed after time_expiry
     pub time_expiry: i64,
 
     /// Admin who can collect fees from the market
     pub collect_fee_admin: Pubkey,
     /// Admin who must sign off on all order creations
-    pub open_orders_admin: PodOption<Pubkey>,
+    pub open_orders_admin: NonZeroPubkeyOption,
     /// Admin who must sign off on all event consumptions
-    pub consume_events_admin: PodOption<Pubkey>,
+    pub consume_events_admin: NonZeroPubkeyOption,
     /// Admin who can set market expired, prune orders and close the market
-    pub close_market_admin: PodOption<Pubkey>,
+    pub close_market_admin: NonZeroPubkeyOption,
 
     /// Name. Trailing zero bytes are ignored.
     pub name: [u8; 16],
@@ -85,8 +88,6 @@ pub struct Market {
     pub maker_fee: i64,
     /// Fee (in 10^-6) for taker orders, always >= 0.
     pub taker_fee: i64,
-    /// Fee (in quote native) to charge for ioc orders that don't match to avoid spam
-    pub fee_penalty: u64,
 
     /// Total fees accrued in native quote
     pub fees_accrued: u64,
@@ -96,18 +97,15 @@ pub struct Market {
     /// Cumulative taker volume in quote native units due to place take orders
     pub taker_volume_wo_oo: u64,
 
-    // Fields related to MarketSate, related to the tokenAccounts
-    pub vault_signer_nonce: u64,
-
     pub base_mint: Pubkey,
     pub quote_mint: Pubkey,
 
     pub base_vault: Pubkey,
     pub base_deposit_total: u64,
-    pub base_fees_accrued: u64,
 
     pub quote_vault: Pubkey,
     pub quote_deposit_total: u64,
+
     pub quote_fees_accrued: u64,
     pub referrer_rebates_accrued: u64,
 
@@ -116,40 +114,38 @@ pub struct Market {
 
 const_assert_eq!(
     size_of::<Market>(),
-    32 + // size of collect_fee_admin
-    40 + // size of open_order_admin
-    40 + // size of consume_event_admin
-    40 + // size of close_market_admin
-    size_of::<MarketIndex>() + // size of MarketIndex
-    1 + // size of bump
-    1 + // size of base_decimals
-    1 + // size of quote_decimals
-    1 + // size of padding1
-    8 + // size of time_expiry
-    16 + // size of name
-    3 * 32 + // size of bids, asks, and event_queue
-    32 + // size of oracle
-    size_of::<OracleConfig>() + // size of oracle_config
-    8 + // size of quote_lot_size
-    8 + // size of base_lot_size
-    8 + // size of seq_num
-    8 + // size of registration_time
-    8 + // size of maker_fee 
-    8 + // size of taker_fee
-    8 + // size of fee_penalty
-    8 + // size of fees_accrued
-    8 + // size of fees_to_referrers
-    8 + // size of taker_volume_wo_oo
-    8 + // size of vault_signer_nonce
-    4 * 32 + // size of base_mint, quote_mint, base_vault, and quote_vault
-    8 + // size of base_deposit_total
-    8 + // size of base_fees_accrued
-    8 + // size of quote_deposit_total
-    8 + // size of quote_fees_accrued
-    8 + // size of referrer_rebates_accrued
-    1768 // size of reserved
+    32 +                        // signer_creator
+    32 +                        // collect_fee_admin
+    32 +                        // open_order_admin
+    32 +                        // consume_event_admin
+    32 +                        // close_market_admin
+    size_of::<MarketIndex>() +  // MarketIndex
+    1 +                         // bump
+    1 +                         // base_decimals
+    1 +                         // quote_decimals
+    1 +                         // padding1
+    8 +                         // time_expiry
+    16 +                        // name
+    3 * 32 +                    // bids, asks, and event_queue
+    32 +                        // oracle
+    size_of::<OracleConfig>() + // oracle_config
+    8 +                         // quote_lot_size
+    8 +                         // base_lot_size
+    8 +                         // seq_num
+    8 +                         // registration_time
+    8 +                         // maker_fee
+    8 +                         // taker_fee
+    8 +                         // fees_accrued
+    8 +                         // fees_to_referrers
+    8 +                         // taker_volume_wo_oo
+    4 * 32 +                    // base_mint, quote_mint, base_vault, and quote_vault
+    8 +                         // base_deposit_total
+    8 +                         // quote_deposit_total
+    8 +                         // base_fees_accrued
+    8 +                         // referrer_rebates_accrued
+    1768 // reserved
 );
-const_assert_eq!(size_of::<Market>(), 2432);
+const_assert_eq!(size_of::<Market>(), 2416);
 const_assert_eq!(size_of::<Market>() % 8, 0);
 
 impl Market {
@@ -159,9 +155,21 @@ impl Market {
             .trim_matches(char::from(0))
     }
 
+    pub fn is_market_vault(&self, pubkey: Pubkey) -> bool {
+        pubkey == self.quote_vault || pubkey == self.base_vault
+    }
+
     pub fn gen_order_id(&mut self, side: Side, price_data: u64) -> u128 {
         self.seq_num += 1;
         orderbook::new_node_key(side, price_data, self.seq_num)
+    }
+
+    pub fn max_base_lots(&self) -> i64 {
+        i64::MAX / self.base_lot_size
+    }
+
+    pub fn max_quote_lots(&self) -> i64 {
+        i64::MAX / self.quote_lot_size
     }
 
     /// Convert from the price stored on the book to the price used in value calculations
@@ -191,13 +199,6 @@ impl Market {
             self.quote_decimals,
             staleness_slot,
         )
-    }
-
-    /// Update the market's quote fees acrued and returns the penalty fee
-    pub fn apply_penalty(&mut self) -> u64 {
-        self.quote_fees_accrued += self.fee_penalty;
-        self.fees_accrued += self.fee_penalty;
-        self.fee_penalty
     }
 
     pub fn subtract_taker_fees(&self, quote: i64) -> i64 {
@@ -268,6 +269,7 @@ macro_rules! market_seeds {
     ($market:expr) => {
         &[
             b"Market".as_ref(),
+            &$market.signer_creator.to_bytes(),
             &$market.market_index.to_le_bytes(),
             &[$market.bump],
         ]

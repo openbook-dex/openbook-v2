@@ -14,7 +14,7 @@ pub mod accounts_zerocopy;
 pub mod error;
 pub mod i80f48;
 pub mod logs;
-pub mod pod_option;
+pub mod pubkey_option;
 pub mod state;
 pub mod types;
 
@@ -43,7 +43,6 @@ pub mod openbook_v2 {
         base_lot_size: i64,
         maker_fee: i64,
         taker_fee: i64,
-        fee_penalty: u64,
         time_expiry: i64,
     ) -> Result<()> {
         #[cfg(feature = "enable-gpl")]
@@ -56,7 +55,6 @@ pub mod openbook_v2 {
             base_lot_size,
             maker_fee,
             taker_fee,
-            fee_penalty,
             time_expiry,
         )?;
         Ok(())
@@ -305,7 +303,7 @@ pub mod openbook_v2 {
     /// Note that this doesn't emit an [`OutEvent`](crate::state::OutEvent) because a
     /// maker knows that they will be passing in their own [`OpenOrdersAccount`](crate::state::OpenOrdersAccount).
     pub fn cancel_order_by_client_order_id(
-        ctx: Context<CancelOrderByClientOrderId>,
+        ctx: Context<CancelOrder>,
         client_order_id: u64,
     ) -> Result<()> {
         #[cfg(feature = "enable-gpl")]
@@ -315,7 +313,7 @@ pub mod openbook_v2 {
 
     /// Cancel up to `limit` orders, optionally filtering by side
     pub fn cancel_all_orders(
-        ctx: Context<CancelAllOrders>,
+        ctx: Context<CancelOrder>,
         side_option: Option<Side>,
         limit: u8,
     ) -> Result<()> {
@@ -324,18 +322,14 @@ pub mod openbook_v2 {
         Ok(())
     }
 
-    /// Desposit a certain amount of `base_amount_lots` and `quote_amount_lots`
-    /// into one's [`Position`](crate::state::Position).
+    /// Desposit a certain amount of `base` and `quote` lamports into one's
+    /// [`Position`](crate::state::Position).
     ///
     /// Makers might wish to `deposit`, rather than have actual tokens moved for
     /// each trade, in order to reduce CUs.
-    pub fn deposit(
-        ctx: Context<Deposit>,
-        base_amount_lots: u64,
-        quote_amount_lots: u64,
-    ) -> Result<()> {
+    pub fn deposit(ctx: Context<Deposit>, base_amount: u64, quote_amount: u64) -> Result<()> {
         #[cfg(feature = "enable-gpl")]
-        instructions::deposit(ctx, base_amount_lots, quote_amount_lots)?;
+        instructions::deposit(ctx, base_amount, quote_amount)?;
         Ok(())
     }
 
