@@ -5,7 +5,7 @@ use bytemuck::{cast_mut, cast_ref};
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 use static_assertions::const_assert_eq;
 
-use super::order_type::{PostOrderType, Side};
+use super::order_type::Side;
 
 pub type NodeHandle = u32;
 const NODE_SIZE: usize = 120;
@@ -150,10 +150,7 @@ pub struct LeafNode {
     /// Index into the owning OpenOrdersAccount's OpenOrders
     pub owner_slot: u8,
 
-    /// PostOrderType, this was added for TradingView move order
-    pub order_type: u8,
-
-    pub padding: [u8; 1],
+    pub padding: [u8; 2],
 
     /// Time in seconds after `timestamp` at which the order expires.
     /// A value of 0 means no expiry.
@@ -199,7 +196,6 @@ impl LeafNode {
         owner: Pubkey,
         quantity: i64,
         timestamp: u64,
-        order_type: PostOrderType,
         time_in_force: u16,
         peg_limit: i64,
         client_order_id: u64,
@@ -207,7 +203,6 @@ impl LeafNode {
         Self {
             tag: NodeTag::LeafNode.into(),
             owner_slot,
-            order_type: order_type.into(),
             padding: Default::default(),
             time_in_force,
             padding2: Default::default(),
