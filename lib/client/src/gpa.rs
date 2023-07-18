@@ -10,7 +10,6 @@ use solana_sdk::pubkey::Pubkey;
 
 pub async fn fetch_openbook_accounts(
     rpc: &RpcClientAsync,
-    program: Pubkey,
     owner: Pubkey,
 ) -> anyhow::Result<Vec<(Pubkey, OpenOrdersAccount)>> {
     let config = RpcProgramAccountsConfig {
@@ -27,7 +26,7 @@ pub async fn fetch_openbook_accounts(
         },
         ..RpcProgramAccountsConfig::default()
     };
-    rpc.get_program_accounts_with_config(&program, config)
+    rpc.get_program_accounts_with_config(&openbook_v2::id(), config)
         .await?
         .into_iter()
         .map(|(key, account)| {
@@ -68,32 +67,25 @@ async fn fetch_anchor_accounts<T: AccountDeserialize + Discriminator>(
         .collect()
 }
 
-pub async fn fetch_markets(
-    rpc: &RpcClientAsync,
-    program: Pubkey,
-) -> anyhow::Result<Vec<(Pubkey, Market)>> {
-    fetch_anchor_accounts::<Market>(rpc, program).await
+pub async fn fetch_markets(rpc: &RpcClientAsync) -> anyhow::Result<Vec<(Pubkey, Market)>> {
+    fetch_anchor_accounts::<Market>(rpc, openbook_v2::id()).await
 }
 
-pub async fn fetch_market_by_index(
+pub async fn fetch_market_by_payer_and_index(
     index: MarketIndex,
+    payer: Pubkey,
     rpc: &RpcClientAsync,
-    program: Pubkey,
-) -> anyhow::Result<Vec<(Pubkey, Market)>> {
-    let config = RpcProgramAccountsConfig {
-        filters: Some(vec![
-            RpcFilterType::Memcmp(Memcmp::new_raw_bytes(0, Market::discriminator().to_vec())),
-            RpcFilterType::Memcmp(Memcmp::new_raw_bytes(8, index.to_le_bytes().to_vec())),
-        ]),
-        account_config: RpcAccountInfoConfig {
-            encoding: Some(UiAccountEncoding::Base64),
-            ..RpcAccountInfoConfig::default()
-        },
-        ..RpcProgramAccountsConfig::default()
-    };
-    rpc.get_program_accounts_with_config(&program, config)
-        .await?
-        .into_iter()
-        .map(|(key, account)| Ok((key, Market::try_deserialize(&mut (&account.data as &[u8]))?)))
-        .collect()
+) -> anyhow::Result<Market> {
+    let market_pubkey: Pubkey = Pubkey::find_program_address(
+        &[
+            b"Market".as_ref(),
+            payer.to_bytes().as_ref(),
+            &index.to_le_bytes(),
+        ],
+        &openbook_v2::id(),
+    )
+    .0;
+    let account = rpc.get_account_data(&market_pubkey).await?;
+    let market = Market::try_deserialize(&mut (&account as &[u8]))?;
+    Ok(market)
 }
