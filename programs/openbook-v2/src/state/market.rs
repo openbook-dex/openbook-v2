@@ -56,7 +56,7 @@ pub struct Market {
     pub event_queue: Pubkey,
 
     /// Oracle account address
-    pub oracle: Pubkey,
+    pub oracle: NonZeroPubkeyOption,
     /// Oracle configuration
     pub oracle_config: OracleConfig,
 
@@ -191,7 +191,6 @@ impl Market {
         oracle_acc: &impl KeyedAccountReader,
         staleness_slot: u64,
     ) -> Result<I80F48> {
-        require_keys_eq!(self.oracle, *oracle_acc.key());
         oracle::oracle_price(
             oracle_acc,
             &self.oracle_config,

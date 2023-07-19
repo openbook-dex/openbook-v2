@@ -36,7 +36,7 @@ pub struct CreateMarket<'info> {
 
     pub system_program: Program<'info, System>,
     /// CHECK: The oracle can be one of several different account types and the pubkey is checked above
-    pub oracle: UncheckedAccount<'info>,
+    pub oracle: Option<UncheckedAccount<'info>>,
 
     /// CHECK:
     pub collect_fee_admin: UncheckedAccount<'info>,

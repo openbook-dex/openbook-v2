@@ -64,6 +64,13 @@ pub fn create_market(
         .map(|account| account.key())
         .into();
 
+    let oracle: NonZeroPubkeyOption = ctx
+        .accounts
+        .oracle
+        .as_ref()
+        .map(|account| account.key())
+        .into();
+
     let mut openbook_market = ctx.accounts.market.load_init()?;
     *openbook_market = Market {
         signer_creator: ctx.accounts.payer.key(),
@@ -81,7 +88,7 @@ pub fn create_market(
         bids: ctx.accounts.bids.key(),
         asks: ctx.accounts.asks.key(),
         event_queue: ctx.accounts.event_queue.key(),
-        oracle: ctx.accounts.oracle.key(),
+        oracle,
         oracle_config: oracle_config.to_oracle_config(),
         quote_lot_size,
         base_lot_size,
@@ -120,7 +127,7 @@ pub fn create_market(
         quote_decimals: ctx.accounts.quote_mint.decimals,
         base_lot_size,
         quote_lot_size,
-        oracle: ctx.accounts.oracle.key(),
+        oracle: oracle.into(),
     });
 
     Ok(())
