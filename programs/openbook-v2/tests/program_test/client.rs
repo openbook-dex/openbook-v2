@@ -121,9 +121,9 @@ pub fn get_market_address(signer_creator: Pubkey, market_index: MarketIndex) -> 
 async fn get_oracle_address_from_market_address(
     account_loader: &impl ClientAccountLoader,
     market_address: &Pubkey,
-) -> Pubkey {
+) -> Option<Pubkey> {
     let market: Market = account_loader.load(market_address).await.unwrap();
-    market.oracle
+    market.oracle.into()
 }
 
 pub async fn set_stub_oracle_price(
@@ -199,7 +199,7 @@ pub struct CreateMarketInstruction {
     pub open_orders_admin: Option<Pubkey>,
     pub consume_events_admin: Option<Pubkey>,
     pub close_market_admin: Option<Pubkey>,
-    pub oracle: Pubkey,
+    pub oracle: Option<Pubkey>,
     pub base_mint: Pubkey,
     pub quote_mint: Pubkey,
     pub base_vault: Pubkey,
@@ -234,7 +234,7 @@ impl CreateMarketInstruction {
             event_queue: solana
                 .create_account_for_type::<EventQueue>(&openbook_v2::id())
                 .await,
-            oracle: base.oracle,
+            oracle: Some(base.oracle),
             ..CreateMarketInstruction::default()
         }
     }
@@ -354,7 +354,7 @@ impl ClientInstruction for PlaceOrderInstruction {
             bids: market.bids,
             asks: market.asks,
             event_queue: market.event_queue,
-            oracle: market.oracle,
+            oracle: market.oracle.into(),
             owner_or_delegate: self.owner.pubkey(),
             token_deposit_account: self.token_deposit_account,
             market_vault: self.market_vault,
@@ -430,7 +430,7 @@ impl ClientInstruction for PlaceOrderPeggedInstruction {
             bids: market.bids,
             asks: market.asks,
             event_queue: market.event_queue,
-            oracle: market.oracle,
+            oracle: market.oracle.into(),
             owner_or_delegate: self.owner.pubkey(),
             token_deposit_account: self.token_deposit_account,
             market_vault: self.market_vault,
@@ -491,7 +491,7 @@ impl ClientInstruction for PlaceTakeOrderInstruction {
             bids: market.bids,
             asks: market.asks,
             event_queue: market.event_queue,
-            oracle: market.oracle,
+            oracle: market.oracle.into(),
             signer: self.owner.pubkey(),
             token_deposit_account: self.token_deposit_account,
             token_receiver_account: self.token_receiver_account,
