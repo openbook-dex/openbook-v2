@@ -414,24 +414,12 @@ impl<'a> Orderbook<'a> {
                 *owner,
                 book_base_quantity_lots,
                 now_ts,
-                PostOrderType::Limit, // TODO: Support order types? needed?
+                PostOrderType::Limit,
                 order.time_in_force,
                 order.peg_limit(),
                 order.client_order_id,
             );
             let _result = bookside.insert_leaf(order_tree_target, &new_order)?;
-
-            // TODO OPT remove if PlaceOrder needs more compute
-            msg!(
-                "{} on book order_id={} quantity={} price_lots={}",
-                match side {
-                    Side::Bid => "bid",
-                    Side::Ask => "ask",
-                },
-                order_id,
-                book_base_quantity_lots,
-                price_lots
-            );
 
             open_orders.add_order(
                 side,
