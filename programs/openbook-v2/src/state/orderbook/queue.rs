@@ -242,21 +242,18 @@ pub struct FillEvent {
     pub seq_num: u64,
 
     pub maker: Pubkey,
-    pub padding2: [u8; 32],
 
     // Timestamp of when the maker order was placed; copied over from the LeafNode
     pub maker_timestamp: u64,
 
     pub taker: Pubkey,
-    pub padding3: [u8; 16],
     pub taker_client_order_id: u64,
-    pub padding4: [u8; 8],
 
     pub price: i64,
     pub peg_limit: i64,
     pub quantity: i64, // number of quote lots
     pub maker_client_order_id: u64,
-    pub reserved: [u8; 8],
+    pub reserved: [u8; 64],
 }
 const_assert_eq!(size_of::<FillEvent>() % 8, 0);
 const_assert_eq!(size_of::<FillEvent>(), EVENT_SIZE);
@@ -294,10 +291,7 @@ impl FillEvent {
             peg_limit,
             quantity,
             padding: Default::default(),
-            padding2: Default::default(),
-            padding3: Default::default(),
-            padding4: Default::default(),
-            reserved: [0; 8],
+            reserved: [0; 64],
         }
     }
 

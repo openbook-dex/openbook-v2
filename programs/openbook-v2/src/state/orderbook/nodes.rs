@@ -150,13 +150,11 @@ pub struct LeafNode {
     /// Index into the owning OpenOrdersAccount's OpenOrders
     pub owner_slot: u8,
 
-    pub padding: [u8; 2],
-
     /// Time in seconds after `timestamp` at which the order expires.
     /// A value of 0 means no expiry.
     pub time_in_force: u16,
 
-    pub padding2: [u8; 2],
+    pub padding: [u8; 4],
 
     /// The binary tree key, see new_node_key()
     pub key: u128,
@@ -203,9 +201,8 @@ impl LeafNode {
         Self {
             tag: NodeTag::LeafNode.into(),
             owner_slot,
-            padding: Default::default(),
             time_in_force,
-            padding2: Default::default(),
+            padding: Default::default(),
             key,
             owner,
             quantity,
