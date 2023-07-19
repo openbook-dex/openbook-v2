@@ -20,8 +20,8 @@ pub struct EventQueue {
     pub nodes: [EventNode; MAX_NUM_EVENTS as usize],
     pub reserved: [u8; 64],
 }
-const_assert_eq!(std::mem::size_of::<EventQueue>(), 16 + 488 * 208 + 64);
-const_assert_eq!(std::mem::size_of::<EventQueue>(), 101584);
+const_assert_eq!(std::mem::size_of::<EventQueue>(), 16 + 488 * 168 + 64);
+const_assert_eq!(std::mem::size_of::<EventQueue>(), 82064);
 const_assert_eq!(std::mem::size_of::<EventQueue>() % 8, 0);
 
 impl EventQueue {
@@ -202,7 +202,7 @@ pub struct EventNode {
     _pad: [u8; 4],
     pub event: AnyEvent,
 }
-const_assert_eq!(std::mem::size_of::<EventNode>(), 8 + 200);
+const_assert_eq!(std::mem::size_of::<EventNode>(), 8 + EVENT_SIZE);
 const_assert_eq!(std::mem::size_of::<EventNode>() % 8, 0);
 
 impl EventNode {
@@ -211,12 +211,12 @@ impl EventNode {
     }
 }
 
-const EVENT_SIZE: usize = 200;
+const EVENT_SIZE: usize = 160;
 #[zero_copy]
 #[derive(Debug, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct AnyEvent {
     pub event_type: u8,
-    pub padding: [u8; 199],
+    pub padding: [u8; 159],
 }
 
 const_assert_eq!(size_of::<AnyEvent>(), EVENT_SIZE);
@@ -253,7 +253,7 @@ pub struct FillEvent {
     pub peg_limit: i64,
     pub quantity: i64, // number of quote lots
     pub maker_client_order_id: u64,
-    pub reserved: [u8; 64],
+    pub reserved: [u8; 24],
 }
 const_assert_eq!(size_of::<FillEvent>() % 8, 0);
 const_assert_eq!(size_of::<FillEvent>(), EVENT_SIZE);
@@ -291,7 +291,7 @@ impl FillEvent {
             peg_limit,
             quantity,
             padding: Default::default(),
-            reserved: [0; 64],
+            reserved: [0; 24],
         }
     }
 
@@ -316,7 +316,7 @@ pub struct OutEvent {
     pub seq_num: u64,
     pub owner: Pubkey,
     pub quantity: i64,
-    padding1: [u8; 136],
+    padding1: [u8; 96],
 }
 const_assert_eq!(size_of::<OutEvent>() % 8, 0);
 const_assert_eq!(size_of::<OutEvent>(), EVENT_SIZE);
