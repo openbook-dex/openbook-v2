@@ -414,7 +414,6 @@ impl<'a> Orderbook<'a> {
                 *owner,
                 book_base_quantity_lots,
                 now_ts,
-                PostOrderType::Limit,
                 order.time_in_force,
                 order.peg_limit(),
                 order.client_order_id,

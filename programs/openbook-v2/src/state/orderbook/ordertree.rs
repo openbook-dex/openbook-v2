@@ -542,17 +542,7 @@ mod tests {
     fn order_tree_expiry_manual() {
         let mut bids = new_order_tree(OrderTreeType::Bids);
         let new_expiring_leaf = |key: u128, expiry: u64| {
-            LeafNode::new(
-                0,
-                key,
-                Pubkey::default(),
-                0,
-                expiry - 1,
-                PostOrderType::Limit,
-                1,
-                -1,
-                0,
-            )
+            LeafNode::new(0, key, Pubkey::default(), 0, expiry - 1, 1, -1, 0)
         };
 
         let mut root = OrderTreeRoot::zeroed();
@@ -635,17 +625,7 @@ mod tests {
         let mut root = OrderTreeRoot::zeroed();
         let mut bids = new_order_tree(OrderTreeType::Bids);
         let new_expiring_leaf = |key: u128, expiry: u64| {
-            LeafNode::new(
-                0,
-                key,
-                Pubkey::default(),
-                0,
-                expiry - 1,
-                PostOrderType::Limit,
-                1,
-                -1,
-                0,
-            )
+            LeafNode::new(0, key, Pubkey::default(), 0, expiry - 1, 1, -1, 0)
         };
 
         // add 200 random leaves
