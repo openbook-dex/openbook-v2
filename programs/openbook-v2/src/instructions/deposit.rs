@@ -43,7 +43,7 @@ pub fn deposit(ctx: Context<Deposit>, base_amount: u64, quote_amount: u64) -> Re
 
     if base_amount > 0 || quote_amount > 0 {
         emit!(DepositLog {
-            open_orders_acc: ctx.accounts.open_orders_account.key(),
+            open_orders_account: ctx.accounts.open_orders_account.key(),
             signer: ctx.accounts.owner.key(),
             base_amount,
             quote_amount,

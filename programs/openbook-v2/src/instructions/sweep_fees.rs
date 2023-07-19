@@ -3,6 +3,7 @@ use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Transfer};
 
 use crate::accounts_ix::*;
+use crate::logs::SweepFeesLog;
 
 pub fn sweep_fees(ctx: Context<SweepFees>) -> Result<()> {
     let mut market = ctx.accounts.market.load_mut()?;
@@ -26,6 +27,12 @@ pub fn sweep_fees(ctx: Context<SweepFees>) -> Result<()> {
         );
         token::transfer(cpi_context.with_signer(signer), amount)?;
     }
+
+    emit!(SweepFeesLog {
+        market: ctx.accounts.market.key(),
+        amount,
+        receiver: ctx.accounts.token_receiver_account.key(),
+    });
 
     Ok(())
 }
