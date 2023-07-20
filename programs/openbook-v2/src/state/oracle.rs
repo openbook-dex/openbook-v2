@@ -146,49 +146,39 @@ pub fn determine_oracle_type(acc_info: &impl KeyedAccountReader) -> Result<Oracl
 
     Err(OpenBookError::UnknownOracleType.into())
 }
-
-/// Returns the price of one native base token, in native quote tokens
-///
-/// Example: The for SOL at 40 USDC/SOL it would return 0.04 (the unit is USDC-native/SOL-native)
-/// given that quote decimals is 6 and native decimals is 9.
 pub fn oracle_price(
-    acc_info: &impl KeyedAccountReader,
-    config: &OracleConfig,
-    base_decimals: u8,
-    quote_decimals: u8,
-    staleness_slot: u64,
+    _acc_info: &impl KeyedAccountReader,
+    _config: &OracleConfig,
+    _base_decimals: u8,
+    _quote_decimals: u8,
+    _staleness_slot: u64,
 ) -> Result<I80F48> {
+    todo!()
+}
+
+/// Read the price & uncertainty of the given oracle
+pub fn oracle_price_data(
+    acc_info: &impl KeyedAccountReader,
+    max_staleness_slots: i64,
+    staleness_slot: u64,
+) -> Result<(I80F48, I80F48)> {
     let data = &acc_info.data();
     let oracle_type = determine_oracle_type(acc_info)?;
 
     Ok(match oracle_type {
-        OracleType::Stub => acc_info.load::<StubOracle>()?.price,
+        OracleType::Stub => (acc_info.load::<StubOracle>()?.price, fixed::FixedI128::ZERO),
         OracleType::Pyth => {
             let price_account = pyth_sdk_solana::state::load_price_account(data).unwrap();
             let price_data = price_account.to_price();
             let price = I80F48::from_num(price_data.price);
-
-            // Filter out bad prices
-            if I80F48::from_num(price_data.conf) > (config.conf_filter * price) {
-                msg!(
-                    "Pyth conf interval too high; pubkey {} price: {} price_data.conf: {}",
-                    acc_info.key(),
-                    price.to_num::<f64>(),
-                    price_data.conf
-                );
-
-                // future: in v3, we had pricecache, and in case of luna, when there were no updates, we used last known value from cache
-                // we'll have to add a CachedOracle that is based on one of the oracle types, needs a separate keeper and supports
-                // maintaining this "last known good value"
-                return Err(OpenBookError::OracleConfidence.into());
-            }
+            let error = I80F48::from_num(price_data.conf);
 
             // The last_slot is when the price was actually updated
             let last_slot = price_account.last_slot;
-            if config.max_staleness_slots >= 0
+            if max_staleness_slots >= 0
                 && price_account
                     .last_slot
-                    .saturating_add(config.max_staleness_slots as u64)
+                    .saturating_add(max_staleness_slots as u64)
                     < staleness_slot
             {
                 msg!(
@@ -201,10 +191,7 @@ pub fn oracle_price(
                 return Err(OpenBookError::OracleStale.into());
             }
 
-            let decimals =
-                (price_account.expo as i8) + (quote_decimals as i8) - (base_decimals as i8);
-            let decimal_adj = power_of_ten(decimals);
-            price * decimal_adj
+            (price, error)
         }
         OracleType::SwitchboardV2 => {
             fn from_foreign_error(e: impl std::fmt::Display) -> Error {
@@ -215,29 +202,16 @@ pub fn oracle_price(
             let feed_result = feed.get_result().map_err(from_foreign_error)?;
             let price_decimal: f64 = feed_result.try_into().map_err(from_foreign_error)?;
             let price = I80F48::from_num(price_decimal);
-
-            // Filter out bad prices
-            let std_deviation_decimal: f64 = feed
-                .latest_confirmed_round
-                .std_deviation
-                .try_into()
-                .map_err(from_foreign_error)?;
-            if I80F48::from_num(std_deviation_decimal) > (config.conf_filter * price) {
-                msg!(
-                    "Switchboard v2 std deviation too high; pubkey {} price: {} latest_confirmed_round.std_deviation: {}",
-                    acc_info.key(),
-                    price.to_num::<f64>(),
-                    std_deviation_decimal
-                );
-                return Err(OpenBookError::OracleConfidence.into());
-            }
+            let error = I80F48::from_num(
+                TryInto::<f64>::try_into(feed.latest_confirmed_round.std_deviation)
+                    .map_err(from_foreign_error)?,
+            );
 
             // The round_open_slot is an overestimate of the oracle staleness: Reporters will see
             // the round opening and only then start executing the price tasks.
             let round_open_slot = feed.latest_confirmed_round.round_open_slot;
-            if config.max_staleness_slots >= 0
-                && round_open_slot.saturating_add(config.max_staleness_slots as u64)
-                    < staleness_slot
+            if max_staleness_slots >= 0
+                && round_open_slot.saturating_add(max_staleness_slots as u64) < staleness_slot
             {
                 msg!(
                     "Switchboard v2 price too stale; pubkey {} price: {} latest_confirmed_round.round_open_slot: {}",
@@ -248,32 +222,17 @@ pub fn oracle_price(
                 return Err(OpenBookError::OracleConfidence.into());
             }
 
-            let decimals = (quote_decimals as i8) - (base_decimals as i8);
-            let decimal_adj = power_of_ten(decimals);
-            price * decimal_adj
+            (price, error)
         }
         OracleType::SwitchboardV1 => {
             let result = FastRoundResultAccountData::deserialize(data).unwrap();
             let price = I80F48::from_num(result.result.result);
-
-            // Filter out bad prices
             let min_response = I80F48::from_num(result.result.min_response);
             let max_response = I80F48::from_num(result.result.max_response);
-            if (max_response - min_response) > (config.conf_filter * price) {
-                msg!(
-                    "Switchboard v1 min-max response gap too wide; pubkey {} price: {} min_response: {} max_response {}",
-                    acc_info.key(),
-                    price.to_num::<f64>(),
-                    min_response,
-                    max_response
-                );
-                return Err(OpenBookError::OracleConfidence.into());
-            }
 
             let round_open_slot = result.result.round_open_slot;
-            if config.max_staleness_slots >= 0
-                && round_open_slot.saturating_add(config.max_staleness_slots as u64)
-                    < staleness_slot
+            if max_staleness_slots >= 0
+                && round_open_slot.saturating_add(max_staleness_slots as u64) < staleness_slot
             {
                 msg!(
                     "Switchboard v1 price too stale; pubkey {} price: {} round_open_slot: {}",
@@ -284,9 +243,7 @@ pub fn oracle_price(
                 return Err(OpenBookError::OracleConfidence.into());
             }
 
-            let decimals = (quote_decimals as i8) - (base_decimals as i8);
-            let decimal_adj = power_of_ten(decimals);
-            price * decimal_adj
+            (price, max_response - min_response)
         }
     })
 }
