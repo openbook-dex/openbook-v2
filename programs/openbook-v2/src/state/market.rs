@@ -188,20 +188,6 @@ impl Market {
             .ok_or_else(|| OpenBookError::InvalidOraclePrice.into())
     }
 
-    pub fn oracle_price(
-        &self,
-        oracle_acc: &impl KeyedAccountReader,
-        staleness_slot: u64,
-    ) -> Result<I80F48> {
-        oracle::oracle_price(
-            oracle_acc,
-            &self.oracle_config,
-            self.base_decimals,
-            self.quote_decimals,
-            staleness_slot,
-        )
-    }
-
     pub fn oracle_price_from_a(
         &self,
         oracle_acc: &impl KeyedAccountReader,
