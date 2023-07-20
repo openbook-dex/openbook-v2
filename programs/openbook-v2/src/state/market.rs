@@ -208,8 +208,8 @@ impl Market {
         oracle_b_acc: &impl KeyedAccountReader,
         staleness_slot: u64,
     ) -> Result<I80F48> {
-        assert_eq!(*oracle_a_acc.key(), self.oracle_a);
-        assert_eq!(*oracle_b_acc.key(), self.oracle_b);
+        assert_eq!(self.oracle_a, *oracle_a_acc.key());
+        assert_eq!(self.oracle_b, *oracle_b_acc.key());
 
         let (price_a, err_a) =
             oracle::oracle_price_data(oracle_a_acc, &self.oracle_config, staleness_slot)?;
