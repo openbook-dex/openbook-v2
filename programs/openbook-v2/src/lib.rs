@@ -167,7 +167,7 @@ pub mod openbook_v2 {
         max_oracle_staleness_slots: i32,
     ) -> Result<Option<u128>> {
         require!(
-            ctx.accounts.oracle.is_some(),
+            ctx.accounts.oracle_a.is_some(),
             OpenBookError::DisabledOraclePeg
         );
 

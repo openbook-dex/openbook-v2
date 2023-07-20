@@ -49,7 +49,7 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<
     let mut event_queue = ctx.accounts.event_queue.load_mut()?;
 
     let now_ts: u64 = Clock::get()?.unix_timestamp.try_into().unwrap();
-    let oracle_price = if let Some(oracle_acc) = &ctx.accounts.oracle {
+    let oracle_price = if let Some(oracle_acc) = &ctx.accounts.oracle_a {
         Some(market.oracle_price(&AccountInfoRef::borrow(oracle_acc)?, Clock::get()?.slot)?)
     } else {
         None
