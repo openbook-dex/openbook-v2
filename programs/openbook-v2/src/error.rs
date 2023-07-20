@@ -83,6 +83,9 @@ pub enum OpenBookError {
     OpenOrdersOrderNotFound,
     #[msg("Amount to post above book limits")]
     InvalidPostAmount,
+
+    #[msg("Oracle peg orders are not enabled for this market")]
+    DisabledOraclePeg,
 }
 
 impl From<OpenBookError> for ProgramError {

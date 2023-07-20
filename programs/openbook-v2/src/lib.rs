@@ -166,6 +166,11 @@ pub mod openbook_v2 {
         // WARNING: Not currently implemented.
         max_oracle_staleness_slots: i32,
     ) -> Result<Option<u128>> {
+        require!(
+            ctx.accounts.oracle.is_some(),
+            OpenBookError::DisabledOraclePeg
+        );
+
         require_gt!(peg_limit, 0, OpenBookError::InvalidInputPegLimit);
         require_eq!(
             max_oracle_staleness_slots,
