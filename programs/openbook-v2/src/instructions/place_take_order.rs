@@ -47,9 +47,9 @@ pub fn place_take_order<'info>(
 
     let now_ts: u64 = Clock::get()?.unix_timestamp.try_into().unwrap();
     let oracle_price = if let Some(oracle_acc) = &ctx.accounts.oracle {
-        market.oracle_price(&AccountInfoRef::borrow(oracle_acc)?, Clock::get()?.slot)?
+        Some(market.oracle_price(&AccountInfoRef::borrow(oracle_acc)?, Clock::get()?.slot)?)
     } else {
-        fixed::types::I80F48::ZERO
+        None
     };
 
     let side = order.side;
