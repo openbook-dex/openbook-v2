@@ -202,6 +202,63 @@ impl Market {
         )
     }
 
+    pub fn oracle_price_from_a(
+        &self,
+        oracle_acc: &impl KeyedAccountReader,
+        staleness_slot: u64,
+    ) -> Result<I80F48> {
+        assert_eq!(self.oracle_a, *oracle_acc.key());
+        let (price, _err) =
+            oracle::oracle_price_data(oracle_acc, &self.oracle_config, staleness_slot)?;
+
+        let decimals = (self.quote_decimals as i8) - (self.base_decimals as i8);
+        let decimal_adj = oracle::power_of_ten(decimals);
+        Ok(price * decimal_adj)
+    }
+
+    pub fn oracle_price_from_a_and_b(
+        &self,
+        oracle_a_acc: &impl KeyedAccountReader,
+        oracle_b_acc: &impl KeyedAccountReader,
+        staleness_slot: u64,
+    ) -> Result<I80F48> {
+        assert_eq!(*oracle_a_acc.key(), self.oracle_a);
+        assert_eq!(*oracle_b_acc.key(), self.oracle_b);
+
+        let (price_a, err_a) =
+            oracle::oracle_price_data(oracle_a_acc, &self.oracle_config, staleness_slot)?;
+
+        let (price_b, err_b) =
+            oracle::oracle_price_data(oracle_b_acc, &self.oracle_config, staleness_slot)?;
+
+        let price = match self.oracle_config.price_relation.try_into().unwrap() {
+            oracle::PriceRelation::Multiplication => price_a * price_b,
+            oracle::PriceRelation::Division => price_a / price_b,
+            _ => unreachable!(),
+        };
+
+        // no sqrt impl in fixed so we compare the squares
+        let target_var = self.oracle_config.conf_filter * self.oracle_config.conf_filter;
+        let var = {
+            let relative_err_a = price_a / err_a;
+            let relative_err_b = price_b / err_b;
+            price * price * (relative_err_a * relative_err_a + relative_err_b * relative_err_b)
+        };
+
+        if var > target_var {
+            msg!(
+                "Combined variance too high; value {}, target {}",
+                var,
+                target_var
+            );
+            return Err(OpenBookError::OracleConfidence.into());
+        }
+
+        let decimals = (self.quote_decimals as i8) - (self.base_decimals as i8);
+        let decimal_adj = oracle::power_of_ten(decimals);
+        Ok(price * decimal_adj)
+    }
+
     pub fn subtract_taker_fees(&self, quote: i64) -> i64 {
         ((quote as i128) * FEES_SCALE_FACTOR / (FEES_SCALE_FACTOR + (self.taker_fee as i128)))
             .try_into()
