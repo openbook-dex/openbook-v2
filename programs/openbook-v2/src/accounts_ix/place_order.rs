@@ -38,7 +38,8 @@ pub struct PlaceOrder<'info> {
     )]
     pub market_vault: Account<'info, TokenAccount>,
 
-    /// CHECK: The oracle can be one of several different account types and the pubkey is checked above
+    /// CHECK: The oracle can be one of several different account types and the pubkey is checked
+    #[account(constraint = market.load()?.oracle == oracle.key())]
     pub oracle: Option<UncheckedAccount<'info>>,
     pub token_program: Program<'info, Token>,
     pub system_program: Program<'info, System>,
