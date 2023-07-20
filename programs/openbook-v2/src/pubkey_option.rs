@@ -9,9 +9,15 @@ pub struct NonZeroPubkeyOption {
     key: Pubkey,
 }
 
+impl PartialEq<NonZeroPubkeyOption> for Pubkey {
+    fn eq(&self, other: &NonZeroPubkeyOption) -> bool {
+        other.is_some() && *self == other.key
+    }
+}
+
 impl PartialEq<Pubkey> for NonZeroPubkeyOption {
     fn eq(&self, other: &Pubkey) -> bool {
-        *self != Self::zeroed() && self.key == *other
+        self.is_some() && self.key == *other
     }
 }
 
@@ -74,5 +80,8 @@ mod tests {
         let bar: NonZeroPubkeyOption = None.into();
         assert_eq!(foo, crate::ID);
         assert_ne!(bar, Pubkey::zeroed());
+
+        assert_eq!(crate::ID, foo);
+        assert_ne!(Pubkey::zeroed(), bar);
     }
 }
