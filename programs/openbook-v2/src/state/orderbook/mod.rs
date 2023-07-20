@@ -77,12 +77,12 @@ mod tests {
         }
     }
 
-    fn test_setup(price: f64) -> (Market, I80F48, EventQueue, OrderbookAccounts) {
+    fn test_setup(price: f64) -> (Market, Option<I80F48>, EventQueue, OrderbookAccounts) {
         let book = OrderbookAccounts::new();
 
         let event_queue = EventQueue::zeroed();
 
-        let oracle_price = I80F48::from_num(price);
+        let oracle_price = Some(I80F48::from_num(price));
 
         let mut openbook_market = Market::zeroed();
         openbook_market.quote_lot_size = 1;
