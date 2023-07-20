@@ -118,14 +118,6 @@ pub fn get_market_address(signer_creator: Pubkey, market_index: MarketIndex) -> 
     .0
 }
 
-async fn get_oracle_address_from_market_address(
-    account_loader: &impl ClientAccountLoader,
-    market_address: &Pubkey,
-) -> Option<Pubkey> {
-    let market: Market = account_loader.load(market_address).await.unwrap();
-    market.oracle_a.into()
-}
-
 pub async fn set_stub_oracle_price(
     solana: &SolanaCookie,
     token: &super::setup::Token,
@@ -359,7 +351,8 @@ impl ClientInstruction for PlaceOrderInstruction {
             bids: market.bids,
             asks: market.asks,
             event_queue: market.event_queue,
-            oracle: market.oracle_a.into(),
+            oracle_a: market.oracle_a.into(),
+            oracle_b: market.oracle_b.into(),
             owner_or_delegate: self.owner.pubkey(),
             token_deposit_account: self.token_deposit_account,
             market_vault: self.market_vault,
@@ -435,7 +428,8 @@ impl ClientInstruction for PlaceOrderPeggedInstruction {
             bids: market.bids,
             asks: market.asks,
             event_queue: market.event_queue,
-            oracle: market.oracle_a.into(),
+            oracle_a: market.oracle_a.into(),
+            oracle_b: market.oracle_b.into(),
             owner_or_delegate: self.owner.pubkey(),
             token_deposit_account: self.token_deposit_account,
             market_vault: self.market_vault,
@@ -496,7 +490,8 @@ impl ClientInstruction for PlaceTakeOrderInstruction {
             bids: market.bids,
             asks: market.asks,
             event_queue: market.event_queue,
-            oracle: market.oracle_a.into(),
+            oracle_a: market.oracle_a.into(),
+            oracle_b: market.oracle_b.into(),
             signer: self.owner.pubkey(),
             token_deposit_account: self.token_deposit_account,
             token_receiver_account: self.token_receiver_account,
