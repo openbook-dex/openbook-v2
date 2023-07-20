@@ -220,10 +220,7 @@ pub struct CreateMarketInstruction {
     pub time_expiry: i64,
 }
 impl CreateMarketInstruction {
-    pub async fn with_new_book_and_queue(
-        solana: &SolanaCookie,
-        base: &super::setup::Token,
-    ) -> Self {
+    pub async fn with_new_book_and_queue(solana: &SolanaCookie, oracle: Option<Pubkey>) -> Self {
         CreateMarketInstruction {
             bids: solana
                 .create_account_for_type::<BookSide>(&openbook_v2::id())
@@ -234,7 +231,7 @@ impl CreateMarketInstruction {
             event_queue: solana
                 .create_account_for_type::<EventQueue>(&openbook_v2::id())
                 .await,
-            oracle: Some(base.oracle),
+            oracle,
             ..CreateMarketInstruction::default()
         }
     }

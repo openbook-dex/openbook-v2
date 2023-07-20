@@ -1,6 +1,45 @@
 use super::*;
 
 #[tokio::test]
+async fn test_oracle_peg_enabled() -> Result<(), TransportError> {
+    let TestInitialize {
+        context,
+        owner,
+        owner_token_1,
+        market,
+        quote_vault,
+        account_0,
+        ..
+    } = TestContext::new_with_market(TestNewMarketInitialize {
+        with_oracle: false,
+        ..TestNewMarketInitialize::default()
+    })
+    .await?;
+    let solana = &context.solana.clone();
+
+    assert!(send_tx(
+        solana,
+        PlaceOrderPeggedInstruction {
+            open_orders_account: account_0,
+            market,
+            owner,
+            token_deposit_account: owner_token_1,
+            market_vault: quote_vault,
+            side: Side::Bid,
+            price_offset: -1,
+            peg_limit: 1,
+            max_base_lots: 1,
+            max_quote_lots_including_fees: 100_000,
+            client_order_id: 0,
+        },
+    )
+    .await
+    .is_err());
+
+    Ok(())
+}
+
+#[tokio::test]
 async fn test_oracle_peg() -> Result<(), TransportError> {
     let market_base_lot_size = 10000;
     let market_quote_lot_size = 10;
