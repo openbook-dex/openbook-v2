@@ -54,7 +54,7 @@ async fn test_simple_settle() -> Result<(), TransportError> {
             quote_mint: mints[1].pubkey,
             base_vault: base_vault_2,
             quote_vault: quote_vault_2,
-            ..CreateMarketInstruction::with_new_book_and_queue(solana, Some(tokens[2].oracle)).await
+            ..CreateMarketInstruction::with_new_book_and_queue(solana, None, None).await
         },
     )
     .await

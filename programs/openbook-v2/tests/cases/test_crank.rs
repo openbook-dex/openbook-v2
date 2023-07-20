@@ -47,7 +47,8 @@ async fn test_skip_missing_accounts() -> Result<(), TransportError> {
             quote_mint: mints[1].pubkey,
             base_vault,
             quote_vault,
-            ..CreateMarketInstruction::with_new_book_and_queue(solana, Some(tokens[1].oracle)).await
+            ..CreateMarketInstruction::with_new_book_and_queue(solana, Some(tokens[1].oracle), None)
+                .await
         },
     )
     .await
@@ -232,7 +233,8 @@ async fn test_crank_given_events() -> Result<(), TransportError> {
             quote_mint: mints[1].pubkey,
             base_vault,
             quote_vault,
-            ..CreateMarketInstruction::with_new_book_and_queue(solana, Some(tokens[0].oracle)).await
+            ..CreateMarketInstruction::with_new_book_and_queue(solana, Some(tokens[0].oracle), None)
+                .await
         },
     )
     .await
