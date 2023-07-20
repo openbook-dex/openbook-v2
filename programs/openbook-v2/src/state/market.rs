@@ -55,8 +55,9 @@ pub struct Market {
     /// Address of the EventQueue account
     pub event_queue: Pubkey,
 
-    /// Oracle account address
-    pub oracle: NonZeroPubkeyOption,
+    /// Oracles account address
+    pub oracle_a: NonZeroPubkeyOption,
+    pub oracle_b: NonZeroPubkeyOption,
     /// Oracle configuration
     pub oracle_config: OracleConfig,
 
@@ -127,7 +128,8 @@ const_assert_eq!(
     8 +                         // time_expiry
     16 +                        // name
     3 * 32 +                    // bids, asks, and event_queue
-    32 +                        // oracle
+    32 +                        // oracle_a
+    32 +                        // oracle_b
     size_of::<OracleConfig>() + // oracle_config
     8 +                         // quote_lot_size
     8 +                         // base_lot_size
@@ -145,7 +147,7 @@ const_assert_eq!(
     8 +                         // referrer_rebates_accrued
     1768 // reserved
 );
-const_assert_eq!(size_of::<Market>(), 2416);
+const_assert_eq!(size_of::<Market>(), 2448);
 const_assert_eq!(size_of::<Market>() % 8, 0);
 
 impl Market {
