@@ -22,7 +22,7 @@ pub struct EventQueue {
 }
 const_assert_eq!(
     std::mem::size_of::<EventQueue>(),
-    16 + MAX_NUM_EVENTS as usize * (EVENT_SIZE as usize + 8) + 64
+    16 + MAX_NUM_EVENTS as usize * (EVENT_SIZE + 8) + 64
 );
 const_assert_eq!(std::mem::size_of::<EventQueue>(), 91280);
 const_assert_eq!(std::mem::size_of::<EventQueue>() % 8, 0);
