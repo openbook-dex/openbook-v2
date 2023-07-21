@@ -129,6 +129,57 @@ pub mod openbook_v2 {
     }
 
     #[allow(clippy::too_many_arguments)]
+    pub fn place_multiple_orders(
+        ctx: Context<PlaceMultipleOrders>,
+        limit: u8,
+        self_trade_behavior: SelfTradeBehavior,
+        side: Vec<Side>,
+        price_lots: Vec<i64>,
+        max_base_lots: Vec<i64>,
+        max_quote_lots_including_fees: Vec<i64>,
+        client_order_id: Vec<u64>,
+        order_type: Vec<PlaceOrderType>,
+        expiry_timestamp: Vec<u64>,
+    ) -> Result<Vec<Option<u128>>> {
+        let mut orders = Vec::new();
+        for (i, _) in side.iter().enumerate() {
+            require_gte!(price_lots[i], 1, OpenBookError::InvalidInputPriceLots);
+
+            use crate::state::{Order, OrderParams};
+            let time_in_force = match Order::tif_from_expiry(expiry_timestamp[i]) {
+                Some(t) => t,
+                None => {
+                    msg!("Order is already expired");
+                    continue;
+                }
+            };
+            orders.push(Order {
+                side: side[i],
+                max_base_lots: max_base_lots[i],
+                max_quote_lots_including_fees: max_quote_lots_including_fees[i],
+                client_order_id: client_order_id[i],
+                time_in_force,
+                self_trade_behavior,
+                params: match order_type[i] {
+                    PlaceOrderType::Market => OrderParams::Market,
+                    PlaceOrderType::ImmediateOrCancel => OrderParams::ImmediateOrCancel {
+                        price_lots: price_lots[i],
+                    },
+                    _ => OrderParams::Fixed {
+                        price_lots: price_lots[i],
+                        order_type: order_type[i].to_post_order_type()?,
+                    },
+                },
+            });
+        }
+        #[cfg(feature = "enable-gpl")]
+        return instructions::place_multiple_orders(ctx, orders, limit);
+
+        #[cfg(not(feature = "enable-gpl"))]
+        Ok(None)
+    }
+
+    #[allow(clippy::too_many_arguments)]
     pub fn place_order_pegged(
         ctx: Context<PlaceOrder>,
         side: Side,
