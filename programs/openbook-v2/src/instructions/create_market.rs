@@ -1,12 +1,12 @@
 use anchor_lang::prelude::*;
 
+use crate::accounts_ix::*;
+use crate::accounts_zerocopy::*;
 use crate::error::*;
+use crate::logs::MarketMetaDataLog;
 use crate::pubkey_option::NonZeroPubkeyOption;
 use crate::state::*;
 use crate::util::fill_from_str;
-
-use crate::accounts_ix::*;
-use crate::logs::MarketMetaDataLog;
 
 #[allow(clippy::too_many_arguments)]
 pub fn create_market(
@@ -77,6 +77,16 @@ pub fn create_market(
         .as_ref()
         .map(|account| account.key())
         .into();
+
+    if oracle_a.is_some() && oracle_b.is_some() {
+        let oracle_a = AccountInfoRef::borrow(ctx.accounts.oracle_a.as_ref().unwrap())?;
+        let oracle_b = AccountInfoRef::borrow(ctx.accounts.oracle_a.as_ref().unwrap())?;
+
+        require!(
+            oracle::determine_oracle_type(&oracle_a) == oracle::determine_oracle_type(&oracle_b),
+            OpenBookError::InvalidOracleTypes
+        );
+    }
 
     let mut openbook_market = ctx.accounts.market.load_init()?;
     *openbook_market = Market {
