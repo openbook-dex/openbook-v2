@@ -21,6 +21,7 @@ pub mod types;
 use error::*;
 use fixed::types::I80F48;
 use state::{MarketIndex, OracleConfigParams, PlaceOrderType, SelfTradeBehavior, Side};
+use std::cmp;
 
 #[cfg(feature = "enable-gpl")]
 pub mod instructions;
@@ -334,6 +335,25 @@ pub mod openbook_v2 {
     /// each trade, in order to reduce CUs.
     pub fn deposit(ctx: Context<Deposit>, base_amount: u64, quote_amount: u64) -> Result<()> {
         #[cfg(feature = "enable-gpl")]
+        instructions::deposit(ctx, base_amount, quote_amount)?;
+        Ok(())
+    }
+
+    /// Refill a certain amount of `base` and `quote` lamports. The amount being passed is the
+    /// total lamports that the [`Position`](crate::state::Position) will have.
+    ///
+    /// Makers might wish to `refill`, rather than have actual tokens moved for
+    /// each trade, in order to reduce CUs.
+    pub fn refill(ctx: Context<Deposit>, base_amount: u64, quote_amount: u64) -> Result<()> {
+        #[cfg(feature = "enable-gpl")]
+        let (quote_amount, base_amount) = {
+            let open_orders_account = ctx.accounts.open_orders_account.load()?;
+            (
+                quote_amount
+                    - cmp::min(quote_amount, open_orders_account.position.quote_free_native),
+                base_amount - cmp::min(base_amount, open_orders_account.position.base_free_native),
+            )
+        };
         instructions::deposit(ctx, base_amount, quote_amount)?;
         Ok(())
     }
