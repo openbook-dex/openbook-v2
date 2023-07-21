@@ -4,7 +4,6 @@ use anchor_lang::prelude::*;
 use anchor_lang::Discriminator;
 use fixed::types::I80F48;
 
-use num_enum::{IntoPrimitive, TryFromPrimitive};
 use static_assertions::const_assert_eq;
 use switchboard_program::FastRoundResultAccountData;
 use switchboard_v2::AggregatorAccountData;
@@ -59,38 +58,16 @@ pub mod switchboard_v2_mainnet_oracle {
 pub struct OracleConfig {
     pub conf_filter: I80F48,
     pub max_staleness_slots: i64,
-    pub price_relation: u8,
-    pub reserved: [u8; 71],
+    pub reserved: [u8; 72],
 }
-const_assert_eq!(size_of::<OracleConfig>(), 16 + 8 + 1 + 71);
+const_assert_eq!(size_of::<OracleConfig>(), 16 + 8 + 72);
 const_assert_eq!(size_of::<OracleConfig>(), 96);
 const_assert_eq!(size_of::<OracleConfig>() % 8, 0);
-
-#[derive(
-    Eq,
-    PartialEq,
-    Copy,
-    Clone,
-    Default,
-    TryFromPrimitive,
-    IntoPrimitive,
-    Debug,
-    AnchorSerialize,
-    AnchorDeserialize,
-)]
-#[repr(u8)]
-pub enum PriceRelation {
-    #[default]
-    Unavailable = 0,
-    Multiplication = 1,
-    Division = 2,
-}
 
 #[derive(AnchorDeserialize, AnchorSerialize, Debug)]
 pub struct OracleConfigParams {
     pub conf_filter: f32,
     pub max_staleness_slots: Option<u32>,
-    pub price_relation: PriceRelation,
 }
 
 impl OracleConfigParams {
@@ -98,8 +75,7 @@ impl OracleConfigParams {
         OracleConfig {
             conf_filter: I80F48::checked_from_num(self.conf_filter).unwrap_or(I80F48::MAX),
             max_staleness_slots: self.max_staleness_slots.map(|v| v as i64).unwrap_or(-1),
-            price_relation: self.price_relation.into(),
-            reserved: [0; 71],
+            reserved: [0; 72],
         }
     }
 }

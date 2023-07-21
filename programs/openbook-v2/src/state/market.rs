@@ -6,7 +6,7 @@ use std::mem::size_of;
 
 use crate::error::OpenBookError;
 use crate::pubkey_option::NonZeroPubkeyOption;
-use crate::state::oracle::{self, PriceRelation};
+use crate::state::oracle;
 use crate::{accounts_zerocopy::KeyedAccountReader, state::orderbook::Side};
 
 use super::{orderbook, OracleConfig};
@@ -217,11 +217,7 @@ impl Market {
         let (price_b, err_b) =
             oracle::oracle_price_data(oracle_b_acc, &self.oracle_config, staleness_slot)?;
 
-        let price = match self.oracle_config.price_relation.try_into().unwrap() {
-            PriceRelation::Multiplication => price_a * price_b,
-            PriceRelation::Division => price_a / price_b,
-            _ => unreachable!(),
-        };
+        let price = price_a / price_b;
 
         // no sqrt impl in fixed so we compare the squares
         let target_var = self.oracle_config.conf_filter * self.oracle_config.conf_filter;

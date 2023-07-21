@@ -250,7 +250,6 @@ impl ClientInstruction for CreateMarketInstruction {
             oracle_config: OracleConfigParams {
                 conf_filter: 0.1,
                 max_staleness_slots: None,
-                price_relation: PriceRelation::default(),
             },
             quote_lot_size: self.quote_lot_size,
             base_lot_size: self.base_lot_size,
