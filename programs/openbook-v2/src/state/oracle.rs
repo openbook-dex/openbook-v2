@@ -146,15 +146,6 @@ pub fn determine_oracle_type(acc_info: &impl KeyedAccountReader) -> Result<Oracl
 
     Err(OpenBookError::UnknownOracleType.into())
 }
-pub fn oracle_price(
-    _acc_info: &impl KeyedAccountReader,
-    _config: &OracleConfig,
-    _base_decimals: u8,
-    _quote_decimals: u8,
-    _staleness_slot: u64,
-) -> Result<I80F48> {
-    todo!()
-}
 
 /// Read the price & uncertainty of the given oracle
 pub fn oracle_price_data(
