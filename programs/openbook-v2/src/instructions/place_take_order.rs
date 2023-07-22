@@ -11,7 +11,7 @@ pub fn place_take_order<'info>(
     ctx: Context<'_, '_, '_, 'info, PlaceTakeOrder<'info>>,
     order: Order,
     limit: u8,
-) -> Result<Option<u128>> {
+) -> Result<()> {
     require_gte!(order.max_base_lots, 0, OpenBookError::InvalidInputLots);
     require_gte!(
         order.max_quote_lots_including_fees,
@@ -55,7 +55,6 @@ pub fn place_take_order<'info>(
     let side = order.side;
 
     let OrderWithAmounts {
-        order_id,
         total_base_taken_native,
         total_quote_taken_native,
         referrer_amount,
@@ -149,5 +148,5 @@ pub fn place_take_order<'info>(
         }
     }
 
-    Ok(order_id)
+    Ok(())
 }

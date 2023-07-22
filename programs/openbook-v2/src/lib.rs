@@ -223,7 +223,7 @@ pub mod openbook_v2 {
         order_type: PlaceOrderType,
         self_trade_behavior: SelfTradeBehavior,
         limit: u8,
-    ) -> Result<Option<u128>> {
+    ) -> Result<()> {
         require_gte!(price_lots, 1, OpenBookError::InvalidInputPriceLots);
 
         use crate::state::{Order, OrderParams};
@@ -244,11 +244,10 @@ pub mod openbook_v2 {
                 _ => unreachable!(),
             },
         };
-        #[cfg(feature = "enable-gpl")]
-        return instructions::place_take_order(ctx, order, limit);
 
-        #[cfg(not(feature = "enable-gpl"))]
-        Ok(None)
+        #[cfg(feature = "enable-gpl")]
+        instructions::place_take_order(ctx, order, limit)?;
+        Ok(())
     }
 
     /// Process up to `limit` [events](crate::state::AnyEvent).
