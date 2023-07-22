@@ -227,10 +227,6 @@ pub mod openbook_v2 {
         require_gte!(price_lots, 1, OpenBookError::InvalidInputPriceLots);
 
         use crate::state::{Order, OrderParams};
-        require!(
-            order_type == PlaceOrderType::Market || order_type == PlaceOrderType::ImmediateOrCancel,
-            OpenBookError::InvalidInputOrderType
-        );
         let order = Order {
             side,
             max_base_lots,
@@ -241,7 +237,7 @@ pub mod openbook_v2 {
             params: match order_type {
                 PlaceOrderType::Market => OrderParams::Market,
                 PlaceOrderType::ImmediateOrCancel => OrderParams::ImmediateOrCancel { price_lots },
-                _ => unreachable!(),
+                _ => return Err(OpenBookError::InvalidInputOrderType.into()),
             },
         };
 
