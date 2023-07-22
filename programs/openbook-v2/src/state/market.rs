@@ -5,6 +5,7 @@ use std::convert::{TryFrom, TryInto};
 use std::mem::size_of;
 
 use crate::error::OpenBookError;
+use crate::i80f48::Power;
 use crate::pubkey_option::NonZeroPubkeyOption;
 use crate::state::oracle;
 use crate::{accounts_zerocopy::KeyedAccountReader, state::orderbook::Side};
@@ -220,11 +221,11 @@ impl Market {
         let price = price_a / price_b;
 
         // no sqrt impl in fixed so we compare the squares
-        let target_var = self.oracle_config.conf_filter * self.oracle_config.conf_filter;
+        let target_var = self.oracle_config.conf_filter.square();
         let var = {
             let relative_err_a = price_a / err_a;
             let relative_err_b = price_b / err_b;
-            price * price * (relative_err_a * relative_err_a + relative_err_b * relative_err_b)
+            (relative_err_a.square() + relative_err_b.square()) * price.square()
         };
 
         if var > target_var {
