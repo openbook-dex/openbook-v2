@@ -86,6 +86,8 @@ pub fn create_market(
             oracle::determine_oracle_type(&oracle_a) == oracle::determine_oracle_type(&oracle_b),
             OpenBookError::InvalidOracleTypes
         );
+    } else if oracle_b.is_some() {
+        return Err(OpenBookError::InvalidSecondOracle.into());
     }
 
     let mut openbook_market = ctx.accounts.market.load_init()?;
