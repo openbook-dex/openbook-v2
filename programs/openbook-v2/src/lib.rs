@@ -220,7 +220,6 @@ pub mod openbook_v2 {
         price_lots: i64,
         max_base_lots: i64,
         max_quote_lots_including_fees: i64,
-        client_order_id: u64,
         order_type: PlaceOrderType,
         self_trade_behavior: SelfTradeBehavior,
         limit: u8,
@@ -236,7 +235,7 @@ pub mod openbook_v2 {
             side,
             max_base_lots,
             max_quote_lots_including_fees,
-            client_order_id,
+            client_order_id: 0,
             time_in_force: 0,
             self_trade_behavior,
             params: match order_type {

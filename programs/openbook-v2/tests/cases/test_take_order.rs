@@ -62,9 +62,6 @@ async fn test_take_ask_order() -> Result<(), TransportError> {
             price_lots,
             max_base_lots: 1,
             max_quote_lots_including_fees: 10000,
-
-            client_order_id: 0,
-            expiry_timestamp: 0,
             referrer: None,
             open_orders_admin: None,
         },
@@ -206,7 +203,6 @@ async fn test_take_bid_order() -> Result<(), TransportError> {
     send_tx(
         solana,
         PlaceTakeOrderInstruction {
-            open_orders_admin: None,
             market,
             owner,
             token_deposit_account: owner_token_1,
@@ -217,10 +213,8 @@ async fn test_take_bid_order() -> Result<(), TransportError> {
             price_lots,
             max_base_lots: 1,
             max_quote_lots_including_fees: 10040,
-
-            client_order_id: 0,
-            expiry_timestamp: 0,
             referrer: Some(admin_token_1),
+            open_orders_admin: None,
         },
     )
     .await
