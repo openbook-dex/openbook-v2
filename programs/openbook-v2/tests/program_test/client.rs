@@ -456,8 +456,6 @@ pub struct PlaceTakeOrderInstruction {
     pub price_lots: i64,
     pub max_base_lots: i64,
     pub max_quote_lots_including_fees: i64,
-    pub client_order_id: u64,
-    pub expiry_timestamp: u64,
     pub referrer: Option<Pubkey>,
 }
 #[async_trait::async_trait(?Send)]
@@ -474,7 +472,6 @@ impl ClientInstruction for PlaceTakeOrderInstruction {
             price_lots: self.price_lots,
             max_base_lots: self.max_base_lots,
             max_quote_lots_including_fees: self.max_quote_lots_including_fees,
-            client_order_id: self.client_order_id,
             order_type: PlaceOrderType::ImmediateOrCancel,
             self_trade_behavior: SelfTradeBehavior::default(),
             limit: 10,

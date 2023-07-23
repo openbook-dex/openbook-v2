@@ -220,36 +220,30 @@ pub mod openbook_v2 {
         price_lots: i64,
         max_base_lots: i64,
         max_quote_lots_including_fees: i64,
-        client_order_id: u64,
         order_type: PlaceOrderType,
         self_trade_behavior: SelfTradeBehavior,
         limit: u8,
-    ) -> Result<Option<u128>> {
+    ) -> Result<()> {
         require_gte!(price_lots, 1, OpenBookError::InvalidInputPriceLots);
 
         use crate::state::{Order, OrderParams};
-        require!(
-            order_type == PlaceOrderType::Market || order_type == PlaceOrderType::ImmediateOrCancel,
-            OpenBookError::InvalidInputOrderType
-        );
         let order = Order {
             side,
             max_base_lots,
             max_quote_lots_including_fees,
-            client_order_id,
+            client_order_id: 0,
             time_in_force: 0,
             self_trade_behavior,
             params: match order_type {
                 PlaceOrderType::Market => OrderParams::Market,
                 PlaceOrderType::ImmediateOrCancel => OrderParams::ImmediateOrCancel { price_lots },
-                _ => unreachable!(),
+                _ => return Err(OpenBookError::InvalidInputOrderType.into()),
             },
         };
-        #[cfg(feature = "enable-gpl")]
-        return instructions::place_take_order(ctx, order, limit);
 
-        #[cfg(not(feature = "enable-gpl"))]
-        Ok(None)
+        #[cfg(feature = "enable-gpl")]
+        instructions::place_take_order(ctx, order, limit)?;
+        Ok(())
     }
 
     /// Process up to `limit` [events](crate::state::AnyEvent).
