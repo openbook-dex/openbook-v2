@@ -85,3 +85,10 @@ To drill down on a specific test (e.g., test_expired_order), run:
 ```bash
 just test test_expired_order
 ```
+
+If you want to have tests that automatically re-run when you edit a file, install
+[entr](https://github.com/eradman/entr) and run:
+
+```bash
+just test-dev
+```

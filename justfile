@@ -10,6 +10,9 @@ test TEST_NAME:
 test-all:
     (cd ./programs/openbook-v2 && RUST_LOG=ERROR cargo test-sbf --features enable-gpl)
 
+test-dev:
+    (find programs) | entr -s 'just test-all'
+
 idl:
     anchor build --arch sbf -- --features enable-gpl
     bash {{ justfile_directory() }}/idl-fixup.sh
