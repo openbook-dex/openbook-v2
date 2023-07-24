@@ -54,7 +54,7 @@ async fn test_simple_settle() -> Result<(), TransportError> {
             quote_mint: mints[1].pubkey,
             base_vault: base_vault_2,
             quote_vault: quote_vault_2,
-            ..CreateMarketInstruction::with_new_book_and_queue(solana, &tokens[2]).await
+            ..CreateMarketInstruction::with_new_book_and_queue(solana, None, None).await
         },
     )
     .await
@@ -69,7 +69,7 @@ async fn test_simple_settle() -> Result<(), TransportError> {
             open_orders_account: account_0,
             open_orders_admin: None,
             market,
-            owner,
+            signer: owner,
             token_deposit_account: owner_token_1,
             market_vault: quote_vault,
             side: Side::Bid,
@@ -93,7 +93,7 @@ async fn test_simple_settle() -> Result<(), TransportError> {
             open_orders_account: account_1,
             open_orders_admin: None,
             market,
-            owner,
+            signer: owner,
             token_deposit_account: owner_token_0,
             market_vault: base_vault,
             side: Side::Ask,
@@ -243,7 +243,7 @@ async fn test_cancel_orders() -> Result<(), TransportError> {
             open_orders_account: account_0,
             open_orders_admin: None,
             market,
-            owner,
+            signer: owner,
             token_deposit_account: owner_token_1,
             market_vault: quote_vault,
             side: Side::Bid,
@@ -267,7 +267,7 @@ async fn test_cancel_orders() -> Result<(), TransportError> {
             open_orders_account: account_1,
             open_orders_admin: None,
             market,
-            owner,
+            signer: owner,
             token_deposit_account: owner_token_0,
             market_vault: base_vault,
             side: Side::Ask,
@@ -356,7 +356,7 @@ async fn test_cancel_orders() -> Result<(), TransportError> {
             open_orders_account: account_0,
             open_orders_admin: None,
             market,
-            owner,
+            signer: owner,
             token_deposit_account: owner_token_0,
             market_vault: base_vault,
             side: Side::Ask,
@@ -425,7 +425,7 @@ async fn test_cancel_orders() -> Result<(), TransportError> {
     send_tx(
         solana,
         CancelOrderInstruction {
-            owner,
+            signer: owner,
             market,
             open_orders_account: account_0,
             order_id: order_id_to_cancel,
@@ -449,7 +449,7 @@ async fn test_cancel_orders() -> Result<(), TransportError> {
             open_orders_account: account_0,
             open_orders_admin: None,
             market,
-            owner,
+            signer: owner,
             token_deposit_account: owner_token_1,
             market_vault: quote_vault,
             side: Side::Bid,
@@ -485,7 +485,7 @@ async fn test_cancel_orders() -> Result<(), TransportError> {
     send_tx(
         solana,
         CancelOrderInstruction {
-            owner,
+            signer: owner,
             market,
             open_orders_account: account_0,
             order_id: order_id_to_cancel,
@@ -529,7 +529,7 @@ async fn test_expired_orders() -> Result<(), TransportError> {
             open_orders_account: account_0,
             open_orders_admin: None,
             market,
-            owner,
+            signer: owner,
             token_deposit_account: owner_token_1,
             market_vault: quote_vault,
             side: Side::Bid,
@@ -565,7 +565,7 @@ async fn test_expired_orders() -> Result<(), TransportError> {
             open_orders_account: account_1,
             open_orders_admin: None,
             market,
-            owner,
+            signer: owner,
             token_deposit_account: owner_token_0,
             market_vault: base_vault,
             side: Side::Ask,

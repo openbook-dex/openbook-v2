@@ -21,6 +21,7 @@ pub mod types;
 use error::*;
 use fixed::types::I80F48;
 use state::{MarketIndex, OracleConfigParams, PlaceOrderType, SelfTradeBehavior, Side};
+use std::cmp;
 
 #[cfg(feature = "enable-gpl")]
 pub mod instructions;
@@ -166,6 +167,11 @@ pub mod openbook_v2 {
         // WARNING: Not currently implemented.
         max_oracle_staleness_slots: i32,
     ) -> Result<Option<u128>> {
+        require!(
+            ctx.accounts.oracle_a.is_some(),
+            OpenBookError::DisabledOraclePeg
+        );
+
         require_gt!(peg_limit, 0, OpenBookError::InvalidInputPegLimit);
         require_eq!(
             max_oracle_staleness_slots,
@@ -214,36 +220,30 @@ pub mod openbook_v2 {
         price_lots: i64,
         max_base_lots: i64,
         max_quote_lots_including_fees: i64,
-        client_order_id: u64,
         order_type: PlaceOrderType,
         self_trade_behavior: SelfTradeBehavior,
         limit: u8,
-    ) -> Result<Option<u128>> {
+    ) -> Result<()> {
         require_gte!(price_lots, 1, OpenBookError::InvalidInputPriceLots);
 
         use crate::state::{Order, OrderParams};
-        require!(
-            order_type == PlaceOrderType::Market || order_type == PlaceOrderType::ImmediateOrCancel,
-            OpenBookError::InvalidInputOrderType
-        );
         let order = Order {
             side,
             max_base_lots,
             max_quote_lots_including_fees,
-            client_order_id,
+            client_order_id: 0,
             time_in_force: 0,
             self_trade_behavior,
             params: match order_type {
                 PlaceOrderType::Market => OrderParams::Market,
                 PlaceOrderType::ImmediateOrCancel => OrderParams::ImmediateOrCancel { price_lots },
-                _ => unreachable!(),
+                _ => return Err(OpenBookError::InvalidInputOrderType.into()),
             },
         };
-        #[cfg(feature = "enable-gpl")]
-        return instructions::place_take_order(ctx, order, limit);
 
-        #[cfg(not(feature = "enable-gpl"))]
-        Ok(None)
+        #[cfg(feature = "enable-gpl")]
+        instructions::place_take_order(ctx, order, limit)?;
+        Ok(())
     }
 
     /// Process up to `limit` [events](crate::state::AnyEvent).
@@ -333,6 +333,25 @@ pub mod openbook_v2 {
         Ok(())
     }
 
+    /// Refill a certain amount of `base` and `quote` lamports. The amount being passed is the
+    /// total lamports that the [`Position`](crate::state::Position) will have.
+    ///
+    /// Makers might wish to `refill`, rather than have actual tokens moved for
+    /// each trade, in order to reduce CUs.
+    pub fn refill(ctx: Context<Deposit>, base_amount: u64, quote_amount: u64) -> Result<()> {
+        #[cfg(feature = "enable-gpl")]
+        let (quote_amount, base_amount) = {
+            let open_orders_account = ctx.accounts.open_orders_account.load()?;
+            (
+                quote_amount
+                    - cmp::min(quote_amount, open_orders_account.position.quote_free_native),
+                base_amount - cmp::min(base_amount, open_orders_account.position.base_free_native),
+            )
+        };
+        instructions::deposit(ctx, base_amount, quote_amount)?;
+        Ok(())
+    }
+
     /// Withdraw any available tokens.
     pub fn settle_funds<'info>(ctx: Context<'_, '_, '_, 'info, SettleFunds<'info>>) -> Result<()> {
         #[cfg(feature = "enable-gpl")]
@@ -373,11 +392,6 @@ pub mod openbook_v2 {
         Ok(())
     }
 
-    // todo:
-    // ckamm: generally, using an I80F48 arg will make it harder to call
-    // because generic anchor clients won't know how to deal with it
-    // and it's tricky to use in typescript generally
-    // lets do an interface pass later
     pub fn stub_oracle_create(ctx: Context<StubOracleCreate>, price: I80F48) -> Result<()> {
         #[cfg(feature = "enable-gpl")]
         instructions::stub_oracle_create(ctx, price)?;

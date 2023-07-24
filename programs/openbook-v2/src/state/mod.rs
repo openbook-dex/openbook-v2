@@ -7,5 +7,6 @@ pub use orderbook::*;
 mod market;
 mod open_orders_account;
 mod open_orders_components;
-mod oracle;
 mod orderbook;
+
+pub mod oracle;

@@ -11,7 +11,7 @@ pub fn place_take_order<'info>(
     ctx: Context<'_, '_, '_, 'info, PlaceTakeOrder<'info>>,
     order: Order,
     limit: u8,
-) -> Result<Option<u128>> {
+) -> Result<()> {
     require_gte!(order.max_base_lots, 0, OpenBookError::InvalidInputLots);
     require_gte!(
         order.max_quote_lots_including_fees,
@@ -46,15 +46,24 @@ pub fn place_take_order<'info>(
     let mut event_queue = ctx.accounts.event_queue.load_mut()?;
 
     let now_ts: u64 = Clock::get()?.unix_timestamp.try_into().unwrap();
-    let oracle_price = market.oracle_price(
-        &AccountInfoRef::borrow(ctx.accounts.oracle.as_ref())?,
-        Clock::get()?.slot,
-    )?;
+    let oracle_price = if market.oracle_a.is_some() && market.oracle_b.is_some() {
+        Some(market.oracle_price_from_a_and_b(
+            &AccountInfoRef::borrow(ctx.accounts.oracle_a.as_ref().unwrap())?,
+            &AccountInfoRef::borrow(ctx.accounts.oracle_b.as_ref().unwrap())?,
+            Clock::get()?.slot,
+        )?)
+    } else if market.oracle_a.is_some() {
+        Some(market.oracle_price_from_a(
+            &AccountInfoRef::borrow(ctx.accounts.oracle_a.as_ref().unwrap())?,
+            Clock::get()?.slot,
+        )?)
+    } else {
+        None
+    };
 
     let side = order.side;
 
     let OrderWithAmounts {
-        order_id,
         total_base_taken_native,
         total_quote_taken_native,
         referrer_amount,
@@ -148,5 +157,5 @@ pub fn place_take_order<'info>(
         }
     }
 
-    Ok(order_id)
+    Ok(())
 }

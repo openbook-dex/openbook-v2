@@ -17,10 +17,6 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<
     );
 
     let mut open_orders_account = ctx.accounts.open_orders_account.load_mut()?;
-    require!(
-        open_orders_account.is_owner_or_delegate(ctx.accounts.owner_or_delegate.key()),
-        OpenBookError::NoOwnerOrDelegate
-    );
     let open_orders_account_pk = ctx.accounts.open_orders_account.key();
 
     let mut market = ctx.accounts.market.load_mut()?;
@@ -49,10 +45,20 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<
     let mut event_queue = ctx.accounts.event_queue.load_mut()?;
 
     let now_ts: u64 = Clock::get()?.unix_timestamp.try_into().unwrap();
-    let oracle_price = market.oracle_price(
-        &AccountInfoRef::borrow(ctx.accounts.oracle.as_ref())?,
-        Clock::get()?.slot,
-    )?;
+    let oracle_price = if market.oracle_a.is_some() && market.oracle_b.is_some() {
+        Some(market.oracle_price_from_a_and_b(
+            &AccountInfoRef::borrow(ctx.accounts.oracle_a.as_ref().unwrap())?,
+            &AccountInfoRef::borrow(ctx.accounts.oracle_b.as_ref().unwrap())?,
+            Clock::get()?.slot,
+        )?)
+    } else if market.oracle_a.is_some() {
+        Some(market.oracle_price_from_a(
+            &AccountInfoRef::borrow(ctx.accounts.oracle_a.as_ref().unwrap())?,
+            Clock::get()?.slot,
+        )?)
+    } else {
+        None
+    };
 
     let OrderWithAmounts {
         order_id,
@@ -113,7 +119,7 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<
             Transfer {
                 from: ctx.accounts.token_deposit_account.to_account_info(),
                 to: ctx.accounts.market_vault.to_account_info(),
-                authority: ctx.accounts.owner_or_delegate.to_account_info(),
+                authority: ctx.accounts.signer.to_account_info(),
             },
         );
         token::transfer(cpi_context, deposit_amount)?;

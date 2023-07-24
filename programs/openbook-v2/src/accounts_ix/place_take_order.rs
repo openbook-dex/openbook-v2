@@ -11,7 +11,6 @@ pub struct PlaceTakeOrder<'info> {
         has_one = bids,
         has_one = asks,
         has_one = event_queue,
-        has_one = oracle,
         has_one = base_vault,
         has_one = quote_vault,
     )]
@@ -45,8 +44,13 @@ pub struct PlaceTakeOrder<'info> {
     )]
     pub referrer: Option<Box<Account<'info, TokenAccount>>>,
 
-    /// CHECK: The oracle can be one of several different account types and the pubkey is checked above
-    pub oracle: UncheckedAccount<'info>,
+    /// CHECK: The oracle can be one of several different account types and the pubkey is checked
+    #[account(constraint = market.load()?.oracle_a == oracle_a.key())]
+    pub oracle_a: Option<UncheckedAccount<'info>>,
+    /// CHECK: The oracle can be one of several different account types and the pubkey is checked
+    #[account(constraint = market.load()?.oracle_b == oracle_b.key())]
+    pub oracle_b: Option<UncheckedAccount<'info>>,
+
     pub token_program: Program<'info, Token>,
     pub system_program: Program<'info, System>,
     pub open_orders_admin: Option<Signer<'info>>,

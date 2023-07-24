@@ -2,6 +2,7 @@ use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Transfer};
 
 use crate::accounts_ix::*;
+use crate::logs::SettleFundsLog;
 use crate::state::*;
 
 pub fn settle_funds<'info>(ctx: Context<'_, '_, '_, 'info, SettleFunds<'info>>) -> Result<()> {
@@ -71,6 +72,14 @@ pub fn settle_funds<'info>(ctx: Context<'_, '_, '_, 'info, SettleFunds<'info>>) 
         );
         token::transfer(cpi_context.with_signer(signer), pa.quote_free_native)?;
     }
+
+    emit!(SettleFundsLog {
+        open_orders_account: ctx.accounts.open_orders_account.key(),
+        base_native: pa.base_free_native,
+        quote_native: pa.quote_free_native,
+        referrer_rebate,
+        referrer: ctx.accounts.referrer.as_ref().map(|acc| acc.key())
+    });
 
     pa.base_free_native = 0;
     pa.quote_free_native = 0;

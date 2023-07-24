@@ -280,6 +280,7 @@ pub struct TestNewMarketInitialize {
     pub close_market_admin_bool: bool,
     pub consume_events_admin_bool: bool,
     pub time_expiry: i64,
+    pub with_oracle: bool,
 }
 
 impl Default for TestNewMarketInitialize {
@@ -294,6 +295,7 @@ impl Default for TestNewMarketInitialize {
             close_market_admin_bool: false,
             consume_events_admin_bool: false,
             time_expiry: 0,
+            with_oracle: true,
         }
     }
 }
@@ -347,6 +349,12 @@ impl TestContext {
             .create_associated_token_account(&market, mints[1].pubkey)
             .await;
 
+        let oracle = if args.with_oracle {
+            Some(tokens[0].oracle)
+        } else {
+            None
+        };
+
         let openbook_v2::accounts::CreateMarket {
             market,
             base_vault,
@@ -372,7 +380,7 @@ impl TestContext {
                 quote_vault,
                 fee_penalty: args.fee_penalty,
                 time_expiry: args.time_expiry,
-                ..CreateMarketInstruction::with_new_book_and_queue(solana, &tokens[0]).await
+                ..CreateMarketInstruction::with_new_book_and_queue(solana, oracle, None).await
             },
         )
         .await
