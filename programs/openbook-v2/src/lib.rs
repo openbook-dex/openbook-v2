@@ -392,11 +392,6 @@ pub mod openbook_v2 {
         Ok(())
     }
 
-    // todo:
-    // ckamm: generally, using an I80F48 arg will make it harder to call
-    // because generic anchor clients won't know how to deal with it
-    // and it's tricky to use in typescript generally
-    // lets do an interface pass later
     pub fn stub_oracle_create(ctx: Context<StubOracleCreate>, price: I80F48) -> Result<()> {
         #[cfg(feature = "enable-gpl")]
         instructions::stub_oracle_create(ctx, price)?;

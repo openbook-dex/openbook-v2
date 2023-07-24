@@ -5,9 +5,10 @@ use crate::state::*;
 
 #[derive(Accounts)]
 pub struct StubOracleClose<'info> {
-    pub admin: Signer<'info>,
+    pub owner: Signer<'info>,
     #[account(
         mut,
+        has_one = owner,
         close = sol_destination
     )]
     pub oracle: AccountLoader<'info, StubOracle>,
