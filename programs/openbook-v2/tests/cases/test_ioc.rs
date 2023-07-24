@@ -31,7 +31,7 @@ async fn test_ioc() -> Result<(), TransportError> {
         PlaceOrderInstruction {
             open_orders_account: account_0,
             market,
-            owner,
+            signer: owner,
             token_deposit_account: owner_token_1,
             market_vault: quote_vault,
             side: Side::Bid,
@@ -53,7 +53,7 @@ async fn test_ioc() -> Result<(), TransportError> {
         PlaceOrderInstruction {
             open_orders_account: account_1,
             market,
-            owner,
+            signer: owner,
             token_deposit_account: owner_token_0,
             market_vault: base_vault,
             side: Side::Ask,
