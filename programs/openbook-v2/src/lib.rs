@@ -16,6 +16,7 @@ pub mod i80f48;
 pub mod logs;
 pub mod pubkey_option;
 pub mod state;
+pub mod token_utils;
 pub mod types;
 
 use error::*;

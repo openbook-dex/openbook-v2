@@ -1,10 +1,10 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token::{self, Transfer};
 
 use crate::accounts_ix::*;
 use crate::accounts_zerocopy::*;
 use crate::error::*;
 use crate::state::*;
+use crate::token_utils::*;
 
 #[allow(clippy::too_many_arguments)]
 pub fn place_take_order<'info>(
@@ -87,8 +87,8 @@ pub fn place_take_order<'info>(
             market.base_deposit_total -= total_base_taken_native;
             market.quote_deposit_total += total_quote_including_fees;
             (
-                ctx.accounts.base_vault.to_account_info(),
-                ctx.accounts.quote_vault.to_account_info(),
+                &ctx.accounts.base_vault,
+                &ctx.accounts.quote_vault,
                 total_quote_including_fees,
                 total_base_taken_native,
             )
@@ -98,8 +98,8 @@ pub fn place_take_order<'info>(
             market.base_deposit_total += total_base_taken_native;
             market.quote_deposit_total -= total_quote_discounting_fees;
             (
-                ctx.accounts.quote_vault.to_account_info(),
-                ctx.accounts.base_vault.to_account_info(),
+                &ctx.accounts.quote_vault,
+                &ctx.accounts.base_vault,
                 total_base_taken_native,
                 total_quote_discounting_fees,
             )
@@ -114,47 +114,36 @@ pub fn place_take_order<'info>(
     }
 
     let seeds = market_seeds!(market);
-    let signer = &[&seeds[..]];
     drop(market);
 
     // Transfer funds from token_deposit_account to vault
-    if deposit_amount > 0 {
-        let cpi_context = CpiContext::new(
-            ctx.accounts.token_program.to_account_info(),
-            Transfer {
-                from: ctx.accounts.token_deposit_account.to_account_info(),
-                to: to_vault,
-                authority: ctx.accounts.signer.to_account_info(),
-            },
-        );
-        token::transfer(cpi_context, deposit_amount)?;
-    }
+    token_transfer(
+        deposit_amount,
+        &ctx.accounts.token_program,
+        ctx.accounts.token_deposit_account.as_ref(),
+        to_vault,
+        &ctx.accounts.signer,
+    )?;
 
-    if withdraw_amount > 0 {
-        let cpi_context = CpiContext::new(
-            ctx.accounts.token_program.to_account_info(),
-            Transfer {
-                from: from_vault,
-                to: ctx.accounts.token_receiver_account.to_account_info(),
-                authority: ctx.accounts.market.to_account_info(),
-            },
-        );
-        token::transfer(cpi_context.with_signer(signer), withdraw_amount)?;
-    }
+    token_transfer_signed(
+        withdraw_amount,
+        &ctx.accounts.token_program,
+        from_vault,
+        ctx.accounts.token_receiver_account.as_ref(),
+        &ctx.accounts.market,
+        seeds,
+    )?;
 
     // Transfer to referrer
     if let Some(referrer) = &ctx.accounts.referrer {
-        if referrer_amount > 0 {
-            let cpi_context = CpiContext::new(
-                ctx.accounts.token_program.to_account_info(),
-                Transfer {
-                    from: ctx.accounts.quote_vault.to_account_info(),
-                    to: referrer.to_account_info(),
-                    authority: ctx.accounts.market.to_account_info(),
-                },
-            );
-            token::transfer(cpi_context.with_signer(signer), referrer_amount)?;
-        }
+        token_transfer_signed(
+            referrer_amount,
+            &ctx.accounts.token_program,
+            &ctx.accounts.quote_vault,
+            &referrer,
+            &ctx.accounts.market,
+            seeds,
+        )?;
     }
 
     Ok(())

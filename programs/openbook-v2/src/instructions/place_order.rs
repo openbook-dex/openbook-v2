@@ -1,11 +1,11 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token::{self, Transfer};
 use std::cmp;
 
 use crate::accounts_ix::*;
 use crate::accounts_zerocopy::*;
 use crate::error::*;
 use crate::state::*;
+use crate::token_utils::*;
 
 #[allow(clippy::too_many_arguments)]
 pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<Option<u128>> {
@@ -113,17 +113,13 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<
         }
     };
 
-    if deposit_amount > 0 {
-        let cpi_context = CpiContext::new(
-            ctx.accounts.token_program.to_account_info(),
-            Transfer {
-                from: ctx.accounts.token_deposit_account.to_account_info(),
-                to: ctx.accounts.market_vault.to_account_info(),
-                authority: ctx.accounts.signer.to_account_info(),
-            },
-        );
-        token::transfer(cpi_context, deposit_amount)?;
-    }
+    token_transfer(
+        deposit_amount,
+        &ctx.accounts.token_program,
+        &ctx.accounts.token_deposit_account,
+        &ctx.accounts.market_vault,
+        &ctx.accounts.signer,
+    )?;
 
     Ok(order_id)
 }
