@@ -380,7 +380,7 @@ impl TestContext {
                 quote_vault,
                 fee_penalty: args.fee_penalty,
                 time_expiry: args.time_expiry,
-                ..CreateMarketInstruction::with_new_book_and_queue(solana, oracle).await
+                ..CreateMarketInstruction::with_new_book_and_queue(solana, oracle, None).await
             },
         )
         .await

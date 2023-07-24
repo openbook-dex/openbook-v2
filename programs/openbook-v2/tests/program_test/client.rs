@@ -118,14 +118,6 @@ pub fn get_market_address(signer_creator: Pubkey, market_index: MarketIndex) -> 
     .0
 }
 
-async fn get_oracle_address_from_market_address(
-    account_loader: &impl ClientAccountLoader,
-    market_address: &Pubkey,
-) -> Option<Pubkey> {
-    let market: Market = account_loader.load(market_address).await.unwrap();
-    market.oracle.into()
-}
-
 pub async fn set_stub_oracle_price(
     solana: &SolanaCookie,
     token: &super::setup::Token,
@@ -199,7 +191,8 @@ pub struct CreateMarketInstruction {
     pub open_orders_admin: Option<Pubkey>,
     pub consume_events_admin: Option<Pubkey>,
     pub close_market_admin: Option<Pubkey>,
-    pub oracle: Option<Pubkey>,
+    pub oracle_a: Option<Pubkey>,
+    pub oracle_b: Option<Pubkey>,
     pub base_mint: Pubkey,
     pub quote_mint: Pubkey,
     pub base_vault: Pubkey,
@@ -220,7 +213,11 @@ pub struct CreateMarketInstruction {
     pub time_expiry: i64,
 }
 impl CreateMarketInstruction {
-    pub async fn with_new_book_and_queue(solana: &SolanaCookie, oracle: Option<Pubkey>) -> Self {
+    pub async fn with_new_book_and_queue(
+        solana: &SolanaCookie,
+        oracle_a: Option<Pubkey>,
+        oracle_b: Option<Pubkey>,
+    ) -> Self {
         CreateMarketInstruction {
             bids: solana
                 .create_account_for_type::<BookSide>(&openbook_v2::id())
@@ -231,7 +228,8 @@ impl CreateMarketInstruction {
             event_queue: solana
                 .create_account_for_type::<EventQueue>(&openbook_v2::id())
                 .await,
-            oracle,
+            oracle_a,
+            oracle_b,
             ..CreateMarketInstruction::default()
         }
     }
@@ -276,7 +274,6 @@ impl ClientInstruction for CreateMarketInstruction {
             spl_associated_token_account::get_associated_token_address(&market, &self.quote_mint);
 
         let accounts = Self::Accounts {
-            oracle: self.oracle,
             market,
             bids: self.bids,
             asks: self.asks,
@@ -291,6 +288,8 @@ impl ClientInstruction for CreateMarketInstruction {
             open_orders_admin: self.open_orders_admin,
             consume_events_admin: self.consume_events_admin,
             close_market_admin: self.close_market_admin,
+            oracle_a: self.oracle_a,
+            oracle_b: self.oracle_b,
         };
 
         let instruction = make_instruction(program_id, &accounts, instruction);
@@ -351,7 +350,8 @@ impl ClientInstruction for PlaceOrderInstruction {
             bids: market.bids,
             asks: market.asks,
             event_queue: market.event_queue,
-            oracle: market.oracle.into(),
+            oracle_a: market.oracle_a.into(),
+            oracle_b: market.oracle_b.into(),
             owner_or_delegate: self.owner.pubkey(),
             token_deposit_account: self.token_deposit_account,
             market_vault: self.market_vault,
@@ -427,7 +427,8 @@ impl ClientInstruction for PlaceOrderPeggedInstruction {
             bids: market.bids,
             asks: market.asks,
             event_queue: market.event_queue,
-            oracle: market.oracle.into(),
+            oracle_a: market.oracle_a.into(),
+            oracle_b: market.oracle_b.into(),
             owner_or_delegate: self.owner.pubkey(),
             token_deposit_account: self.token_deposit_account,
             market_vault: self.market_vault,
@@ -485,7 +486,8 @@ impl ClientInstruction for PlaceTakeOrderInstruction {
             bids: market.bids,
             asks: market.asks,
             event_queue: market.event_queue,
-            oracle: market.oracle.into(),
+            oracle_a: market.oracle_a.into(),
+            oracle_b: market.oracle_b.into(),
             signer: self.owner.pubkey(),
             token_deposit_account: self.token_deposit_account,
             token_receiver_account: self.token_receiver_account,

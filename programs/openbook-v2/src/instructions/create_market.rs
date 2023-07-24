@@ -1,12 +1,12 @@
 use anchor_lang::prelude::*;
 
+use crate::accounts_ix::*;
+use crate::accounts_zerocopy::*;
 use crate::error::*;
+use crate::logs::MarketMetaDataLog;
 use crate::pubkey_option::NonZeroPubkeyOption;
 use crate::state::*;
 use crate::util::fill_from_str;
-
-use crate::accounts_ix::*;
-use crate::logs::MarketMetaDataLog;
 
 #[allow(clippy::too_many_arguments)]
 pub fn create_market(
@@ -64,12 +64,31 @@ pub fn create_market(
         .map(|account| account.key())
         .into();
 
-    let oracle: NonZeroPubkeyOption = ctx
+    let oracle_a: NonZeroPubkeyOption = ctx
         .accounts
-        .oracle
+        .oracle_a
         .as_ref()
         .map(|account| account.key())
         .into();
+
+    let oracle_b: NonZeroPubkeyOption = ctx
+        .accounts
+        .oracle_b
+        .as_ref()
+        .map(|account| account.key())
+        .into();
+
+    if oracle_a.is_some() && oracle_b.is_some() {
+        let oracle_a = AccountInfoRef::borrow(ctx.accounts.oracle_a.as_ref().unwrap())?;
+        let oracle_b = AccountInfoRef::borrow(ctx.accounts.oracle_a.as_ref().unwrap())?;
+
+        require!(
+            oracle::determine_oracle_type(&oracle_a) == oracle::determine_oracle_type(&oracle_b),
+            OpenBookError::InvalidOracleTypes
+        );
+    } else if oracle_b.is_some() {
+        return Err(OpenBookError::InvalidSecondOracle.into());
+    }
 
     let mut openbook_market = ctx.accounts.market.load_init()?;
     *openbook_market = Market {
@@ -88,7 +107,8 @@ pub fn create_market(
         bids: ctx.accounts.bids.key(),
         asks: ctx.accounts.asks.key(),
         event_queue: ctx.accounts.event_queue.key(),
-        oracle,
+        oracle_a,
+        oracle_b,
         oracle_config: oracle_config.to_oracle_config(),
         quote_lot_size,
         base_lot_size,
@@ -127,7 +147,8 @@ pub fn create_market(
         quote_decimals: ctx.accounts.quote_mint.decimals,
         base_lot_size,
         quote_lot_size,
-        oracle: oracle.into(),
+        oracle_a: oracle_a.into(),
+        oracle_b: oracle_b.into(),
     });
 
     Ok(())

@@ -30,6 +30,10 @@ pub enum OpenBookError {
     InvalidInputStaleness,
     #[msg("Slot above queue limit")]
     InvalidInputQueueSlots,
+    #[msg("Cannot combine two oracles of different providers")]
+    InvalidOracleTypes,
+    #[msg("Cannot configure secondary oracle without primary")]
+    InvalidSecondOracle,
 
     #[msg("The header version is not 1")]
     HeaderVersionNotKnown,
