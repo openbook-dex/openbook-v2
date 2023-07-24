@@ -852,7 +852,11 @@ impl ClientInstruction for StubOracleSetInstruction {
         };
 
         let oracle = Pubkey::find_program_address(
-            &[b"StubOracle".as_ref(), self.owner.pubkey().as_ref(), self.mint.as_ref()],
+            &[
+                b"StubOracle".as_ref(),
+                self.owner.pubkey().as_ref(),
+                self.mint.as_ref(),
+            ],
             &program_id,
         )
         .0;
@@ -891,7 +895,11 @@ impl ClientInstruction for StubOracleCreate {
         };
 
         let oracle = Pubkey::find_program_address(
-            &[b"StubOracle".as_ref(), self.owner.pubkey().as_ref(), self.mint.as_ref()],
+            &[
+                b"StubOracle".as_ref(),
+                self.owner.pubkey().as_ref(),
+                self.mint.as_ref(),
+            ],
             &program_id,
         )
         .0;
@@ -931,7 +939,11 @@ impl ClientInstruction for StubOracleCloseInstruction {
         let instruction = Self::Instruction {};
 
         let oracle = Pubkey::find_program_address(
-            &[b"StubOracle".as_ref(), self.owner.pubkey().as_ref(), self.mint.as_ref()],
+            &[
+                b"StubOracle".as_ref(),
+                self.owner.pubkey().as_ref(),
+                self.mint.as_ref(),
+            ],
             &program_id,
         )
         .0;
