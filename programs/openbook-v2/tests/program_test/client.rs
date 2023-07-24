@@ -306,7 +306,7 @@ pub struct PlaceOrderInstruction {
     pub open_orders_account: Pubkey,
     pub open_orders_admin: Option<TestKeypair>,
     pub market: Pubkey,
-    pub owner: TestKeypair,
+    pub signer: TestKeypair,
     pub market_vault: Pubkey,
     pub token_deposit_account: Pubkey,
     pub side: Side,
@@ -352,7 +352,7 @@ impl ClientInstruction for PlaceOrderInstruction {
             event_queue: market.event_queue,
             oracle_a: market.oracle_a.into(),
             oracle_b: market.oracle_b.into(),
-            owner_or_delegate: self.owner.pubkey(),
+            signer: self.signer.pubkey(),
             token_deposit_account: self.token_deposit_account,
             market_vault: self.market_vault,
             token_program: Token::id(),
@@ -372,7 +372,7 @@ impl ClientInstruction for PlaceOrderInstruction {
     }
 
     fn signers(&self) -> Vec<TestKeypair> {
-        let mut signers = vec![self.owner];
+        let mut signers = vec![self.signer];
         if let Some(open_orders_admin) = self.open_orders_admin {
             signers.push(open_orders_admin);
         }
@@ -385,7 +385,7 @@ impl ClientInstruction for PlaceOrderInstruction {
 pub struct PlaceOrderPeggedInstruction {
     pub open_orders_account: Pubkey,
     pub market: Pubkey,
-    pub owner: TestKeypair,
+    pub signer: TestKeypair,
     pub token_deposit_account: Pubkey,
     pub market_vault: Pubkey,
     pub side: Side,
@@ -429,7 +429,7 @@ impl ClientInstruction for PlaceOrderPeggedInstruction {
             event_queue: market.event_queue,
             oracle_a: market.oracle_a.into(),
             oracle_b: market.oracle_b.into(),
-            owner_or_delegate: self.owner.pubkey(),
+            signer: self.signer.pubkey(),
             token_deposit_account: self.token_deposit_account,
             market_vault: self.market_vault,
             token_program: Token::id(),
@@ -441,14 +441,14 @@ impl ClientInstruction for PlaceOrderPeggedInstruction {
     }
 
     fn signers(&self) -> Vec<TestKeypair> {
-        vec![self.owner]
+        vec![self.signer]
     }
 }
 
 pub struct PlaceTakeOrderInstruction {
     pub open_orders_admin: Option<TestKeypair>,
     pub market: Pubkey,
-    pub owner: TestKeypair,
+    pub signer: TestKeypair,
     pub base_vault: Pubkey,
     pub quote_vault: Pubkey,
     pub token_deposit_account: Pubkey,
@@ -488,7 +488,7 @@ impl ClientInstruction for PlaceTakeOrderInstruction {
             event_queue: market.event_queue,
             oracle_a: market.oracle_a.into(),
             oracle_b: market.oracle_b.into(),
-            signer: self.owner.pubkey(),
+            signer: self.signer.pubkey(),
             token_deposit_account: self.token_deposit_account,
             token_receiver_account: self.token_receiver_account,
             base_vault: self.base_vault,
@@ -503,7 +503,7 @@ impl ClientInstruction for PlaceTakeOrderInstruction {
     }
 
     fn signers(&self) -> Vec<TestKeypair> {
-        let mut signers = vec![self.owner];
+        let mut signers = vec![self.signer];
         if let Some(open_orders_admin) = self.open_orders_admin {
             signers.push(open_orders_admin);
         }
@@ -515,7 +515,7 @@ impl ClientInstruction for PlaceTakeOrderInstruction {
 pub struct CancelOrderInstruction {
     pub open_orders_account: Pubkey,
     pub market: Pubkey,
-    pub owner: TestKeypair,
+    pub signer: TestKeypair,
     pub order_id: u128,
 }
 #[async_trait::async_trait(?Send)]
@@ -536,7 +536,7 @@ impl ClientInstruction for CancelOrderInstruction {
             market: self.market,
             bids: market.bids,
             asks: market.asks,
-            owner: self.owner.pubkey(),
+            signer: self.signer.pubkey(),
         };
 
         let instruction = make_instruction(program_id, &accounts, instruction);
@@ -544,14 +544,14 @@ impl ClientInstruction for CancelOrderInstruction {
     }
 
     fn signers(&self) -> Vec<TestKeypair> {
-        vec![self.owner]
+        vec![self.signer]
     }
 }
 
 pub struct CancelOrderByClientOrderIdInstruction {
     pub open_orders_account: Pubkey,
     pub market: Pubkey,
-    pub owner: TestKeypair,
+    pub signer: TestKeypair,
     pub client_order_id: u64,
 }
 #[async_trait::async_trait(?Send)]
@@ -572,7 +572,7 @@ impl ClientInstruction for CancelOrderByClientOrderIdInstruction {
             market: self.market,
             bids: market.bids,
             asks: market.asks,
-            owner: self.owner.pubkey(),
+            signer: self.signer.pubkey(),
         };
 
         let instruction = make_instruction(program_id, &accounts, instruction);
@@ -580,7 +580,7 @@ impl ClientInstruction for CancelOrderByClientOrderIdInstruction {
     }
 
     fn signers(&self) -> Vec<TestKeypair> {
-        vec![self.owner]
+        vec![self.signer]
     }
 }
 
@@ -588,7 +588,7 @@ impl ClientInstruction for CancelOrderByClientOrderIdInstruction {
 pub struct CancelAllOrdersInstruction {
     pub open_orders_account: Pubkey,
     pub market: Pubkey,
-    pub owner: TestKeypair,
+    pub signer: TestKeypair,
 }
 #[async_trait::async_trait(?Send)]
 impl ClientInstruction for CancelAllOrdersInstruction {
@@ -609,7 +609,7 @@ impl ClientInstruction for CancelAllOrdersInstruction {
             market: self.market,
             bids: market.bids,
             asks: market.asks,
-            owner: self.owner.pubkey(),
+            signer: self.signer.pubkey(),
         };
 
         let instruction = make_instruction(program_id, &accounts, instruction);
@@ -617,7 +617,7 @@ impl ClientInstruction for CancelAllOrdersInstruction {
     }
 
     fn signers(&self) -> Vec<TestKeypair> {
-        vec![self.owner]
+        vec![self.signer]
     }
 }
 
