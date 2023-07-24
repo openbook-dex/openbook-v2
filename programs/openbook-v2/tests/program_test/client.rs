@@ -129,13 +129,13 @@ async fn get_oracle_address_from_market_address(
 pub async fn set_stub_oracle_price(
     solana: &SolanaCookie,
     token: &super::setup::Token,
-    admin: TestKeypair,
+    owner: TestKeypair,
     price: f64,
 ) {
     send_tx(
         solana,
         StubOracleSetInstruction {
-            admin,
+            owner,
             mint: token.mint.pubkey,
             price,
         },
@@ -834,7 +834,7 @@ impl ClientInstruction for DepositInstruction {
 
 pub struct StubOracleSetInstruction {
     pub mint: Pubkey,
-    pub admin: TestKeypair,
+    pub owner: TestKeypair,
     pub price: f64,
 }
 #[async_trait::async_trait(?Send)]
@@ -850,16 +850,20 @@ impl ClientInstruction for StubOracleSetInstruction {
         let instruction = Self::Instruction {
             price: I80F48::from_num(self.price),
         };
-        // TODO: remove copy pasta of pda derivation, use reference
+
         let oracle = Pubkey::find_program_address(
-            &[b"StubOracle".as_ref(), self.mint.as_ref()],
+            &[
+                b"StubOracle".as_ref(),
+                self.owner.pubkey().as_ref(),
+                self.mint.as_ref(),
+            ],
             &program_id,
         )
         .0;
 
         let accounts = Self::Accounts {
             oracle,
-            admin: self.admin.pubkey(),
+            owner: self.owner.pubkey(),
         };
 
         let instruction = make_instruction(program_id, &accounts, instruction);
@@ -867,13 +871,13 @@ impl ClientInstruction for StubOracleSetInstruction {
     }
 
     fn signers(&self) -> Vec<TestKeypair> {
-        vec![self.admin]
+        vec![self.owner]
     }
 }
 
 pub struct StubOracleCreate {
     pub mint: Pubkey,
-    pub admin: TestKeypair,
+    pub owner: TestKeypair,
     pub payer: TestKeypair,
 }
 #[async_trait::async_trait(?Send)]
@@ -891,7 +895,11 @@ impl ClientInstruction for StubOracleCreate {
         };
 
         let oracle = Pubkey::find_program_address(
-            &[b"StubOracle".as_ref(), self.mint.as_ref()],
+            &[
+                b"StubOracle".as_ref(),
+                self.owner.pubkey().as_ref(),
+                self.mint.as_ref(),
+            ],
             &program_id,
         )
         .0;
@@ -899,7 +907,7 @@ impl ClientInstruction for StubOracleCreate {
         let accounts = Self::Accounts {
             oracle,
             mint: self.mint,
-            admin: self.admin.pubkey(),
+            owner: self.owner.pubkey(),
             payer: self.payer.pubkey(),
             system_program: System::id(),
         };
@@ -909,13 +917,13 @@ impl ClientInstruction for StubOracleCreate {
     }
 
     fn signers(&self) -> Vec<TestKeypair> {
-        vec![self.payer, self.admin]
+        vec![self.payer, self.owner]
     }
 }
 
 pub struct StubOracleCloseInstruction {
     pub mint: Pubkey,
-    pub admin: TestKeypair,
+    pub owner: TestKeypair,
     pub sol_destination: Pubkey,
 }
 #[async_trait::async_trait(?Send)]
@@ -931,13 +939,17 @@ impl ClientInstruction for StubOracleCloseInstruction {
         let instruction = Self::Instruction {};
 
         let oracle = Pubkey::find_program_address(
-            &[b"StubOracle".as_ref(), self.mint.as_ref()],
+            &[
+                b"StubOracle".as_ref(),
+                self.owner.pubkey().as_ref(),
+                self.mint.as_ref(),
+            ],
             &program_id,
         )
         .0;
 
         let accounts = Self::Accounts {
-            admin: self.admin.pubkey(),
+            owner: self.owner.pubkey(),
             oracle,
             sol_destination: self.sol_destination,
             token_program: Token::id(),
@@ -948,7 +960,7 @@ impl ClientInstruction for StubOracleCloseInstruction {
     }
 
     fn signers(&self) -> Vec<TestKeypair> {
-        vec![self.admin]
+        vec![self.owner]
     }
 }
 
