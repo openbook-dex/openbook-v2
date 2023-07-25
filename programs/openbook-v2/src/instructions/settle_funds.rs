@@ -39,7 +39,7 @@ pub fn settle_funds<'info>(ctx: Context<'_, '_, '_, 'info, SettleFunds<'info>>) 
             referrer_rebate,
             &ctx.accounts.token_program,
             &ctx.accounts.quote_vault,
-            &referrer,
+            referrer,
             &ctx.accounts.market,
             seeds,
         )?;

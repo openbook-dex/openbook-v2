@@ -140,7 +140,7 @@ pub fn place_take_order<'info>(
             referrer_amount,
             &ctx.accounts.token_program,
             &ctx.accounts.quote_vault,
-            &referrer,
+            referrer,
             &ctx.accounts.market,
             seeds,
         )?;
