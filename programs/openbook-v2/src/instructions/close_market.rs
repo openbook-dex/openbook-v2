@@ -6,7 +6,7 @@ use anchor_lang::prelude::*;
 pub fn close_market(ctx: Context<CloseMarket>) -> Result<()> {
     let market = ctx.accounts.market.load()?;
     require!(
-        market.time_expiry == -1 || market.time_expiry < Clock::get()?.unix_timestamp,
+        market.is_expired(Clock::get()?.unix_timestamp),
         OpenBookError::MarketHasNotExpired
     );
 

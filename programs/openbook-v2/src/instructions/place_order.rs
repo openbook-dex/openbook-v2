@@ -19,9 +19,11 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<
     let mut open_orders_account = ctx.accounts.open_orders_account.load_mut()?;
     let open_orders_account_pk = ctx.accounts.open_orders_account.key();
 
+    let clock = Clock::get()?;
+
     let mut market = ctx.accounts.market.load_mut()?;
     require!(
-        market.time_expiry == 0 || market.time_expiry > Clock::get()?.unix_timestamp,
+        !market.is_expired(clock.unix_timestamp),
         OpenBookError::MarketHasExpired
     );
 
@@ -31,17 +33,17 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<
     };
     let mut event_queue = ctx.accounts.event_queue.load_mut()?;
 
-    let now_ts: u64 = Clock::get()?.unix_timestamp.try_into().unwrap();
+    let now_ts: u64 = clock.unix_timestamp.try_into().unwrap();
     let oracle_price = if market.oracle_a.is_some() && market.oracle_b.is_some() {
         Some(market.oracle_price_from_a_and_b(
             &AccountInfoRef::borrow(ctx.accounts.oracle_a.as_ref().unwrap())?,
             &AccountInfoRef::borrow(ctx.accounts.oracle_b.as_ref().unwrap())?,
-            Clock::get()?.slot,
+            clock.slot,
         )?)
     } else if market.oracle_a.is_some() {
         Some(market.oracle_price_from_a(
             &AccountInfoRef::borrow(ctx.accounts.oracle_a.as_ref().unwrap())?,
-            Clock::get()?.slot,
+            clock.slot,
         )?)
     } else {
         None
