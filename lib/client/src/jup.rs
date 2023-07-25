@@ -30,7 +30,7 @@ pub struct OpenBookMarket {
     timestamp: u64,
     key: Pubkey,
     label: String,
-    related_accounts: [Pubkey; 7],
+    related_accounts: Vec<Pubkey>,
     reserve_mints: [Pubkey; 2],
     oracle_price: I80F48,
 }
@@ -58,20 +58,29 @@ impl Amm for OpenBookMarket {
 
     fn from_keyed_account(keyed_account: &KeyedAccount) -> Result<Self> {
         let market = Market::try_deserialize(&mut keyed_account.account.data.as_slice())?;
+        let mut related_accounts = vec![
+            market.bids,
+            market.asks,
+            market.event_queue,
+            market.base_vault,
+            market.quote_vault,
+            clock::ID,
+        ];
+
+        let oracles = if market.oracle_a.is_some() && market.oracle_b.is_some() {
+            vec![market.oracle_a.key, market.oracle_b.key]
+        } else if market.oracle_a.is_some() {
+            vec![market.oracle_a.key]
+        } else {
+            vec![]
+        };
+        related_accounts.extend(oracles);
 
         Ok(OpenBookMarket {
             market,
             key: keyed_account.key,
             label: str::from_utf8(&market.name).unwrap().to_string(),
-            related_accounts: [
-                market.bids,
-                market.asks,
-                market.event_queue,
-                market.oracle,
-                market.base_vault,
-                market.quote_vault,
-                clock::ID,
-            ],
+            related_accounts,
             reserve_mints: [market.base_mint, market.quote_mint],
             event_queue: EventQueue::zeroed(),
             bids: BookSide::zeroed(),
@@ -92,16 +101,38 @@ impl Amm for OpenBookMarket {
         self.event_queue =
             EventQueue::try_deserialize(&mut event_queue_data.data.as_slice()).unwrap();
 
-        let oracle_data = account_map.get(&self.market.oracle).unwrap();
-        let oracle_acc = &AccountOracle {
-            data: &oracle_data.data,
-            key: self.market.oracle,
-        };
-
         let clock_data = account_map.get(&clock::ID).unwrap();
         let clock: Clock = bincode::deserialize(&clock_data.data.as_slice())?;
         self.timestamp = clock.unix_timestamp as u64;
-        self.oracle_price = self.market.oracle_price(oracle_acc, self.timestamp)?;
+
+        if self.market.oracle_a.is_some() && self.market.oracle_b.is_some() {
+            let oracle_a_data = account_map.get(&self.market.oracle_a.key).unwrap();
+            let oracle_a_acc = &AccountOracle {
+                data: &oracle_a_data.data,
+                key: self.market.oracle_a.key,
+            };
+            let oracle_b_data = account_map.get(&self.market.oracle_b.key).unwrap();
+            let oracle_b_acc = &AccountOracle {
+                data: &oracle_b_data.data,
+                key: self.market.oracle_b.key,
+            };
+
+            self.oracle_price = self.market.oracle_price_from_a_and_b(
+                oracle_a_acc,
+                oracle_b_acc,
+                self.timestamp,
+            )?;
+        } else if self.market.oracle_a.is_some() {
+            let oracle_a_data = account_map.get(&self.market.oracle_a.key).unwrap();
+            let oracle_a_acc = &AccountOracle {
+                data: &oracle_a_data.data,
+                key: self.market.oracle_a.key,
+            };
+
+            self.oracle_price = self
+                .market
+                .oracle_price_from_a(oracle_a_acc, self.timestamp)?;
+        };
 
         Ok(())
     }
@@ -188,7 +219,7 @@ impl Amm for OpenBookMarket {
             )
         };
 
-        let account_metas = vec![
+        let mut account_metas = vec![
             AccountMeta::new(*user_transfer_authority, true),
             AccountMeta::new(self.key, false),
             AccountMeta::new(self.market.bids, false),
@@ -198,10 +229,20 @@ impl Amm for OpenBookMarket {
             AccountMeta::new(self.market.quote_vault, false),
             AccountMeta::new(*base_account, false),
             AccountMeta::new(*quote_account, false),
-            AccountMeta::new_readonly(self.market.oracle, false),
             AccountMeta::new_readonly(Token::id(), false),
             AccountMeta::new_readonly(System::id(), false),
         ];
+        if self.market.oracle_a.is_some() && self.market.oracle_b.is_some() {
+            account_metas.extend(vec![
+                AccountMeta::new_readonly(self.market.oracle_a.key, false),
+                AccountMeta::new_readonly(self.market.oracle_b.key, false),
+            ]);
+        } else if self.market.oracle_a.is_some() {
+            account_metas.extend(vec![AccountMeta::new_readonly(
+                self.market.oracle_a.key,
+                false,
+            )]);
+        };
 
         Ok(SwapAndAccountMetas {
             swap: Swap::Openbook { side: { side } },

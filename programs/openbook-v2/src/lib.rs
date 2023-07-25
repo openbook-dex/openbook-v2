@@ -339,7 +339,6 @@ pub mod openbook_v2 {
     /// Makers might wish to `refill`, rather than have actual tokens moved for
     /// each trade, in order to reduce CUs.
     pub fn refill(ctx: Context<Deposit>, base_amount: u64, quote_amount: u64) -> Result<()> {
-        #[cfg(feature = "enable-gpl")]
         let (quote_amount, base_amount) = {
             let open_orders_account = ctx.accounts.open_orders_account.load()?;
             (
@@ -348,6 +347,7 @@ pub mod openbook_v2 {
                 base_amount - cmp::min(base_amount, open_orders_account.position.base_free_native),
             )
         };
+        #[cfg(feature = "enable-gpl")]
         instructions::deposit(ctx, base_amount, quote_amount)?;
         Ok(())
     }

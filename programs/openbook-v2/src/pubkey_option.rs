@@ -6,7 +6,7 @@ use std::convert::From;
 #[zero_copy]
 #[derive(AnchorSerialize, AnchorDeserialize, Debug, Default, PartialEq)]
 pub struct NonZeroPubkeyOption {
-    key: Pubkey,
+    pub key: Pubkey,
 }
 
 impl PartialEq<NonZeroPubkeyOption> for Pubkey {
