@@ -30,12 +30,12 @@ pub fn iterate_book(
     let (order_max_quote_lots, order_max_base_lots) = match side {
         Side::Bid => (
             market.subtract_taker_fees(max_quote_lots_including_fees),
-            i64::MAX,
+            market.max_base_lots(),
         ),
-        Side::Ask => (i64::MAX, max_base_lots),
+        Side::Ask => (market.max_quote_lots(), max_base_lots),
     };
 
-    let mut remaining_base_lots = max_base_lots;
+    let mut remaining_base_lots = order_max_base_lots;
     let mut remaining_quote_lots = order_max_quote_lots;
 
     let mut first_price = 0_i64;
@@ -79,7 +79,7 @@ pub fn iterate_book(
     }
 
     let total_quote_lots_taken = order_max_quote_lots - remaining_quote_lots;
-    let total_base_lots_taken = max_base_lots - remaining_base_lots;
+    let total_base_lots_taken = order_max_base_lots - remaining_base_lots;
 
     let total_base_taken_native = (total_base_lots_taken * market.base_lot_size) as u64;
 

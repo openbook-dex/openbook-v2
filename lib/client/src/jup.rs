@@ -1,14 +1,13 @@
 use anchor_lang::AccountDeserialize;
 use anchor_lang::__private::bytemuck::Zeroable;
-use anchor_lang::prelude::Clock;
 use anchor_lang::prelude::*;
 use anchor_spl::token::Token;
 use anyhow::Result;
 use fixed::types::I80F48;
-use openbook_v2::accounts_zerocopy::{AccountReader, KeyedAccountReader};
-use openbook_v2::state::{BookSide, OrderParams};
-use openbook_v2::state::{
-    EventQueue, Market, Order, Orderbook, SelfTradeBehavior::DecrementTake, Side,
+use openbook_v2::{
+    accounts::PlaceTakeOrder,
+    accounts_zerocopy::{AccountReader, KeyedAccountReader},
+    state::{BookSide, EventQueue, Market, Orderbook, Side},
 };
 
 use crate::book::{iterate_book, Amounts};
@@ -17,9 +16,8 @@ use jupiter_amm_interface::{
     SwapAndAccountMetas, SwapParams,
 };
 /// An abstraction in order to share reserve mints and necessary data
-use solana_sdk::{instruction::AccountMeta, pubkey::Pubkey, sysvar::clock};
+use solana_sdk::{pubkey::Pubkey, sysvar::clock};
 use std::cell::RefCell;
-use std::str;
 
 #[derive(Clone)]
 pub struct OpenBookMarket {
@@ -67,19 +65,16 @@ impl Amm for OpenBookMarket {
             clock::ID,
         ];
 
-        let oracles = if market.oracle_a.is_some() && market.oracle_b.is_some() {
-            vec![market.oracle_a.key, market.oracle_b.key]
-        } else if market.oracle_a.is_some() {
-            vec![market.oracle_a.key]
-        } else {
-            vec![]
-        };
-        related_accounts.extend(oracles);
+        related_accounts.extend(
+            [market.oracle_a, market.oracle_b]
+                .into_iter()
+                .filter_map(Option::<Pubkey>::from),
+        );
 
         Ok(OpenBookMarket {
             market,
             key: keyed_account.key,
-            label: str::from_utf8(&market.name).unwrap().to_string(),
+            label: market.name().to_string(),
             related_accounts,
             reserve_mints: [market.base_mint, market.quote_mint],
             event_queue: EventQueue::zeroed(),
@@ -102,19 +97,23 @@ impl Amm for OpenBookMarket {
             EventQueue::try_deserialize(&mut event_queue_data.data.as_slice()).unwrap();
 
         let clock_data = account_map.get(&clock::ID).unwrap();
-        let clock: Clock = bincode::deserialize(&clock_data.data.as_slice())?;
+        let clock: Clock = bincode::deserialize(clock_data.data.as_slice())?;
         self.timestamp = clock.unix_timestamp as u64;
 
         if self.market.oracle_a.is_some() && self.market.oracle_b.is_some() {
-            let oracle_a_data = account_map.get(&self.market.oracle_a.key).unwrap();
+            let oracle_a_data = account_map
+                .get(&Option::from(self.market.oracle_a).unwrap())
+                .unwrap();
             let oracle_a_acc = &AccountOracle {
                 data: &oracle_a_data.data,
-                key: self.market.oracle_a.key,
+                key: Option::from(self.market.oracle_a).unwrap(),
             };
-            let oracle_b_data = account_map.get(&self.market.oracle_b.key).unwrap();
+            let oracle_b_data = account_map
+                .get(&Option::from(self.market.oracle_b).unwrap())
+                .unwrap();
             let oracle_b_acc = &AccountOracle {
                 data: &oracle_b_data.data,
-                key: self.market.oracle_b.key,
+                key: Option::from(self.market.oracle_b).unwrap(),
             };
 
             self.oracle_price = self.market.oracle_price_from_a_and_b(
@@ -123,10 +122,12 @@ impl Amm for OpenBookMarket {
                 self.timestamp,
             )?;
         } else if self.market.oracle_a.is_some() {
-            let oracle_a_data = account_map.get(&self.market.oracle_a.key).unwrap();
+            let oracle_a_data = account_map
+                .get(&Option::from(self.market.oracle_a).unwrap())
+                .unwrap();
             let oracle_a_acc = &AccountOracle {
                 data: &oracle_a_data.data,
-                key: self.market.oracle_a.key,
+                key: Option::from(self.market.oracle_a).unwrap(),
             };
 
             self.oracle_price = self
@@ -197,7 +198,6 @@ impl Amm for OpenBookMarket {
 
     fn get_swap_and_account_metas(&self, swap_params: &SwapParams) -> Result<SwapAndAccountMetas> {
         let SwapParams {
-            destination_mint,
             source_mint,
             user_destination_token_account,
             user_source_token_account,
@@ -205,44 +205,31 @@ impl Amm for OpenBookMarket {
             ..
         } = swap_params;
 
-        let (side, base_account, quote_account) = if source_mint == &self.market.quote_mint {
-            (
-                JupiterSide::Bid,
-                user_destination_token_account,
-                user_source_token_account,
-            )
+        let side = if source_mint == &self.market.quote_mint {
+            JupiterSide::Bid
         } else {
-            (
-                JupiterSide::Ask,
-                user_source_token_account,
-                user_destination_token_account,
-            )
+            JupiterSide::Ask
         };
 
-        let mut account_metas = vec![
-            AccountMeta::new(*user_transfer_authority, true),
-            AccountMeta::new(self.key, false),
-            AccountMeta::new(self.market.bids, false),
-            AccountMeta::new(self.market.asks, false),
-            AccountMeta::new(self.market.event_queue, false),
-            AccountMeta::new(self.market.base_vault, false),
-            AccountMeta::new(self.market.quote_vault, false),
-            AccountMeta::new(*base_account, false),
-            AccountMeta::new(*quote_account, false),
-            AccountMeta::new_readonly(Token::id(), false),
-            AccountMeta::new_readonly(System::id(), false),
-        ];
-        if self.market.oracle_a.is_some() && self.market.oracle_b.is_some() {
-            account_metas.extend(vec![
-                AccountMeta::new_readonly(self.market.oracle_a.key, false),
-                AccountMeta::new_readonly(self.market.oracle_b.key, false),
-            ]);
-        } else if self.market.oracle_a.is_some() {
-            account_metas.extend(vec![AccountMeta::new_readonly(
-                self.market.oracle_a.key,
-                false,
-            )]);
+        let accounts = PlaceTakeOrder {
+            signer: *user_transfer_authority,
+            market: self.key,
+            bids: self.market.bids,
+            asks: self.market.asks,
+            token_deposit_account: *user_source_token_account,
+            token_receiver_account: *user_destination_token_account,
+            base_vault: self.market.base_vault,
+            quote_vault: self.market.quote_vault,
+            event_queue: self.market.event_queue,
+            oracle_a: Option::from(self.market.oracle_a),
+            oracle_b: Option::from(self.market.oracle_b),
+            token_program: Token::id(),
+            system_program: System::id(),
+            open_orders_admin: None,
+            referrer: None,
         };
+
+        let account_metas = accounts.to_account_metas(None);
 
         Ok(SwapAndAccountMetas {
             swap: Swap::Openbook { side: { side } },
@@ -262,16 +249,16 @@ pub struct AccountOracle<'a> {
 
 impl AccountReader for AccountOracle<'_> {
     fn owner(&self) -> &Pubkey {
-        return &self.key;
+        &self.key
     }
 
     fn data(&self) -> &[u8] {
-        return &self.data;
+        self.data
     }
 }
 
 impl KeyedAccountReader for AccountOracle<'_> {
     fn key(&self) -> &Pubkey {
-        return &self.key;
+        &self.key
     }
 }
