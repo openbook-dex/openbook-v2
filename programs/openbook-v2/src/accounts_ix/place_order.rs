@@ -27,7 +27,8 @@ pub struct PlaceOrder<'info> {
         has_one = asks,
         has_one = event_queue,
         constraint = market.load()?.oracle_a == oracle_a.non_zero_key(),
-        constraint = market.load()?.oracle_b == oracle_b.non_zero_key()
+        constraint = market.load()?.oracle_b == oracle_b.non_zero_key(),
+        constraint = market.load()?.open_orders_admin == open_orders_admin.non_zero_key() @ OpenBookError::InvalidOpenOrdersAdmin
     )]
     pub market: AccountLoader<'info, Market>,
     #[account(mut)]

@@ -24,19 +24,6 @@ pub fn place_take_order<'info>(
         market.time_expiry == 0 || market.time_expiry > Clock::get()?.unix_timestamp,
         OpenBookError::MarketHasExpired
     );
-    if let Some(open_orders_admin) = Option::<Pubkey>::from(market.open_orders_admin) {
-        let open_orders_admin_signer = ctx
-            .accounts
-            .open_orders_admin
-            .as_ref()
-            .map(|signer| signer.key())
-            .ok_or(OpenBookError::MissingOpenOrdersAdmin)?;
-        require_eq!(
-            open_orders_admin,
-            open_orders_admin_signer,
-            OpenBookError::InvalidOpenOrdersAdmin
-        );
-    }
 
     let mut book = Orderbook {
         bids: ctx.accounts.bids.load_mut()?,

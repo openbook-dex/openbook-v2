@@ -1,3 +1,4 @@
+use crate::error::OpenBookError;
 use crate::pubkey_option::NonZeroKey;
 use crate::state::*;
 use anchor_lang::prelude::*;
@@ -15,7 +16,8 @@ pub struct PlaceTakeOrder<'info> {
         has_one = base_vault,
         has_one = quote_vault,
         constraint = market.load()?.oracle_a == oracle_a.non_zero_key(),
-        constraint = market.load()?.oracle_b == oracle_b.non_zero_key()
+        constraint = market.load()?.oracle_b == oracle_b.non_zero_key(),
+        constraint = market.load()?.open_orders_admin == open_orders_admin.non_zero_key() @ OpenBookError::InvalidOpenOrdersAdmin
     )]
     pub market: AccountLoader<'info, Market>,
     #[account(mut)]
