@@ -9,6 +9,19 @@ pub struct NonZeroPubkeyOption {
     key: Pubkey,
 }
 
+pub trait NonZeroKey {
+    fn non_zero_key(&self) -> NonZeroPubkeyOption;
+}
+
+impl<T> NonZeroKey for Option<T>
+where
+    T: Key,
+{
+    fn non_zero_key(&self) -> NonZeroPubkeyOption {
+        self.as_ref().map(|this| this.key()).into()
+    }
+}
+
 impl PartialEq<NonZeroPubkeyOption> for Pubkey {
     fn eq(&self, other: &NonZeroPubkeyOption) -> bool {
         other.is_some() && *self == other.key
