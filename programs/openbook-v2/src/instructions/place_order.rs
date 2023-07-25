@@ -21,7 +21,7 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<
 
     let mut market = ctx.accounts.market.load_mut()?;
     require!(
-        market.time_expiry == 0 || market.time_expiry > Clock::get()?.unix_timestamp,
+        !market.is_expired(Clock::get()?.unix_timestamp),
         OpenBookError::MarketHasExpired
     );
     if let Some(open_orders_admin) = Option::<Pubkey>::from(market.open_orders_admin) {

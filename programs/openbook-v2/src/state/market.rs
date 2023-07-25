@@ -158,6 +158,10 @@ impl Market {
             .trim_matches(char::from(0))
     }
 
+    pub fn is_expired(&self, timestamp: i64) -> bool {
+        self.time_expiry != 0 && self.time_expiry < timestamp
+    }
+
     pub fn is_market_vault(&self, pubkey: Pubkey) -> bool {
         pubkey == self.quote_vault || pubkey == self.base_vault
     }
