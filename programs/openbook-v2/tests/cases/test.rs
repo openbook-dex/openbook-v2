@@ -204,6 +204,16 @@ async fn test_simple_settle() -> Result<(), TransportError> {
 
     send_tx(
         solana,
+        SetMarketExpiredInstruction {
+            close_market_admin,
+            market,
+        },
+    )
+    .await
+    .unwrap();
+
+    send_tx(
+        solana,
         CloseMarketInstruction {
             close_market_admin,
             market,
