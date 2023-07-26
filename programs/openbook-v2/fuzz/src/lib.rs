@@ -81,7 +81,7 @@ impl FuzzContext {
         .0;
 
         let oracle = Pubkey::find_program_address(
-            &[b"StubOracle".as_ref(), base_mint.as_ref()],
+            &[b"StubOracle".as_ref(), admin.as_ref(), base_mint.as_ref()],
             &openbook_v2::ID,
         )
         .0;
