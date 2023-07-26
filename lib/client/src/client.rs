@@ -307,9 +307,9 @@ impl OpenBookClient {
                     client_order_id,
                     order_type,
                     expiry_timestamp,
+                    self_trade_behavior,
+                    limit,
                 },
-                self_trade_behavior,
-                limit,
             }),
         };
         self.send_and_confirm_owner_tx(vec![ix]).await
@@ -368,9 +368,9 @@ impl OpenBookClient {
                     client_order_id,
                     order_type,
                     expiry_timestamp,
+                    self_trade_behavior,
+                    limit,
                 },
-                self_trade_behavior,
-                limit,
             }),
         };
         self.send_and_confirm_owner_tx(vec![ix]).await

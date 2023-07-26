@@ -84,16 +84,7 @@ pub mod openbook_v2 {
     /// `limit` determines the maximum number of orders from the book to fill,
     /// and can be used to limit CU spent. When the limit is reached, processing
     /// stops and the instruction succeeds.
-    pub fn place_order(
-        ctx: Context<PlaceOrder>,
-        args: PlaceOrderArgs,
-        self_trade_behavior: SelfTradeBehavior,
-        // Maximum number of orders from the book to fill.
-        //
-        // Use this to limit compute used during order matching.
-        // When the limit is reached, processing stops and the instruction succeeds.
-        limit: u8,
-    ) -> Result<Option<u128>> {
+    pub fn place_order(ctx: Context<PlaceOrder>, args: PlaceOrderArgs) -> Result<Option<u128>> {
         require_gte!(args.price_lots, 1, OpenBookError::InvalidInputPriceLots);
 
         use crate::state::{Order, OrderParams};
@@ -110,7 +101,7 @@ pub mod openbook_v2 {
             max_quote_lots_including_fees: args.max_quote_lots_including_fees,
             client_order_id: args.client_order_id,
             time_in_force,
-            self_trade_behavior,
+            self_trade_behavior: args.self_trade_behavior,
             params: match args.order_type {
                 PlaceOrderType::Market => OrderParams::Market,
                 PlaceOrderType::ImmediateOrCancel => OrderParams::ImmediateOrCancel {
@@ -123,7 +114,7 @@ pub mod openbook_v2 {
             },
         };
         #[cfg(feature = "enable-gpl")]
-        return instructions::place_order(ctx, order, limit);
+        return instructions::place_order(ctx, order, args.limit);
 
         #[cfg(not(feature = "enable-gpl"))]
         Ok(None)
@@ -132,12 +123,6 @@ pub mod openbook_v2 {
     pub fn place_order_pegged(
         ctx: Context<PlaceOrder>,
         args: PlaceOrderPeggedArgs,
-        self_trade_behavior: SelfTradeBehavior,
-        // Maximum number of orders from the book to fill.
-        //
-        // Use this to limit compute used during order matching.
-        // When the limit is reached, processing stops and the instruction succeeds.
-        limit: u8,
     ) -> Result<Option<u128>> {
         require!(
             ctx.accounts.oracle_a.is_some(),
@@ -166,7 +151,7 @@ pub mod openbook_v2 {
             max_quote_lots_including_fees: args.max_quote_lots_including_fees,
             client_order_id: args.client_order_id,
             time_in_force,
-            self_trade_behavior,
+            self_trade_behavior: args.self_trade_behavior,
             params: OrderParams::OraclePegged {
                 price_offset_lots: args.price_offset_lots,
                 order_type: args.order_type.to_post_order_type()?,
@@ -175,7 +160,7 @@ pub mod openbook_v2 {
             },
         };
         #[cfg(feature = "enable-gpl")]
-        return instructions::place_order(ctx, order, limit);
+        return instructions::place_order(ctx, order, args.limit);
 
         #[cfg(not(feature = "enable-gpl"))]
         Ok(None)
@@ -188,8 +173,6 @@ pub mod openbook_v2 {
     pub fn place_take_order<'info>(
         ctx: Context<'_, '_, '_, 'info, PlaceTakeOrder<'info>>,
         args: PlaceTakeOrderArgs,
-        self_trade_behavior: SelfTradeBehavior,
-        limit: u8,
     ) -> Result<()> {
         require_gte!(args.price_lots, 1, OpenBookError::InvalidInputPriceLots);
 
@@ -200,7 +183,7 @@ pub mod openbook_v2 {
             max_quote_lots_including_fees: args.max_quote_lots_including_fees,
             client_order_id: 0,
             time_in_force: 0,
-            self_trade_behavior,
+            self_trade_behavior: args.self_trade_behavior,
             params: match args.order_type {
                 PlaceOrderType::Market => OrderParams::Market,
                 PlaceOrderType::ImmediateOrCancel => OrderParams::ImmediateOrCancel {
@@ -211,7 +194,7 @@ pub mod openbook_v2 {
         };
 
         #[cfg(feature = "enable-gpl")]
-        instructions::place_take_order(ctx, order, limit)?;
+        instructions::place_take_order(ctx, order, args.limit)?;
         Ok(())
     }
 
@@ -389,6 +372,12 @@ pub struct PlaceOrderArgs {
     pub client_order_id: u64,
     pub order_type: PlaceOrderType,
     pub expiry_timestamp: u64,
+    pub self_trade_behavior: SelfTradeBehavior,
+    // Maximum number of orders from the book to fill.
+    //
+    // Use this to limit compute used during order matching.
+    // When the limit is reached, processing stops and the instruction succeeds.
+    pub limit: u8,
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Copy, Clone)]
@@ -420,6 +409,12 @@ pub struct PlaceOrderPeggedArgs {
     //
     // WARNING: Not currently implemented.
     pub max_oracle_staleness_slots: i32,
+    pub self_trade_behavior: SelfTradeBehavior,
+    // Maximum number of orders from the book to fill.
+    //
+    // Use this to limit compute used during order matching.
+    // When the limit is reached, processing stops and the instruction succeeds.
+    pub limit: u8,
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Copy, Clone)]
@@ -429,4 +424,10 @@ pub struct PlaceTakeOrderArgs {
     pub max_base_lots: i64,
     pub max_quote_lots_including_fees: i64,
     pub order_type: PlaceOrderType,
+    pub self_trade_behavior: SelfTradeBehavior,
+    // Maximum number of orders from the book to fill.
+    //
+    // Use this to limit compute used during order matching.
+    // When the limit is reached, processing stops and the instruction succeeds.
+    pub limit: u8,
 }

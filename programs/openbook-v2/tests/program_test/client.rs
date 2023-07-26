@@ -338,9 +338,9 @@ impl ClientInstruction for PlaceOrderInstruction {
                 client_order_id: self.client_order_id,
                 order_type: self.order_type,
                 expiry_timestamp: self.expiry_timestamp,
+                self_trade_behavior: self.self_trade_behavior,
+                limit: 10,
             },
-            self_trade_behavior: self.self_trade_behavior,
-            limit: 10,
         };
 
         let market: Market = account_loader.load(&self.market).await.unwrap();
@@ -417,9 +417,9 @@ impl ClientInstruction for PlaceOrderPeggedInstruction {
                 order_type: PlaceOrderType::Limit,
                 expiry_timestamp: 0,
                 max_oracle_staleness_slots: -1,
+                self_trade_behavior: SelfTradeBehavior::default(),
+                limit: 10,
             },
-            self_trade_behavior: SelfTradeBehavior::default(),
-            limit: 10,
         };
 
         let market: Market = account_loader.load(&self.market).await.unwrap();
@@ -479,9 +479,9 @@ impl ClientInstruction for PlaceTakeOrderInstruction {
                 max_base_lots: self.max_base_lots,
                 max_quote_lots_including_fees: self.max_quote_lots_including_fees,
                 order_type: PlaceOrderType::ImmediateOrCancel,
+                self_trade_behavior: SelfTradeBehavior::default(),
+                limit: 10,
             },
-            self_trade_behavior: SelfTradeBehavior::default(),
-            limit: 10,
         };
 
         let market: Market = account_loader.load(&self.market).await.unwrap();
