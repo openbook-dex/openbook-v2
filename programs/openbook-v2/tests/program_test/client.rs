@@ -479,7 +479,6 @@ impl ClientInstruction for PlaceTakeOrderInstruction {
                 max_base_lots: self.max_base_lots,
                 max_quote_lots_including_fees: self.max_quote_lots_including_fees,
                 order_type: PlaceOrderType::ImmediateOrCancel,
-                self_trade_behavior: SelfTradeBehavior::default(),
                 limit: 10,
             },
         };

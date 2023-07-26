@@ -183,7 +183,7 @@ pub mod openbook_v2 {
             max_quote_lots_including_fees: args.max_quote_lots_including_fees,
             client_order_id: 0,
             time_in_force: 0,
-            self_trade_behavior: args.self_trade_behavior,
+            self_trade_behavior: SelfTradeBehavior::default(),
             params: match args.order_type {
                 PlaceOrderType::Market => OrderParams::Market,
                 PlaceOrderType::ImmediateOrCancel => OrderParams::ImmediateOrCancel {
@@ -424,7 +424,6 @@ pub struct PlaceTakeOrderArgs {
     pub max_base_lots: i64,
     pub max_quote_lots_including_fees: i64,
     pub order_type: PlaceOrderType,
-    pub self_trade_behavior: SelfTradeBehavior,
     // Maximum number of orders from the book to fill.
     //
     // Use this to limit compute used during order matching.
