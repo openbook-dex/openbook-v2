@@ -306,9 +306,9 @@ impl OpenBookClient {
                     max_quote_lots_including_fees,
                     client_order_id,
                     order_type,
-                    self_trade_behavior,
                     expiry_timestamp,
                 },
+                self_trade_behavior,
                 limit,
             }),
         };
@@ -367,9 +367,9 @@ impl OpenBookClient {
                     max_quote_lots_including_fees,
                     client_order_id,
                     order_type,
-                    self_trade_behavior,
                     expiry_timestamp,
                 },
+                self_trade_behavior,
                 limit,
             }),
         };

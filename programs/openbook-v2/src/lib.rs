@@ -87,6 +87,7 @@ pub mod openbook_v2 {
     pub fn place_order(
         ctx: Context<PlaceOrder>,
         args: PlaceOrderArgs,
+        self_trade_behavior: SelfTradeBehavior,
         // Maximum number of orders from the book to fill.
         //
         // Use this to limit compute used during order matching.
@@ -109,7 +110,7 @@ pub mod openbook_v2 {
             max_quote_lots_including_fees: args.max_quote_lots_including_fees,
             client_order_id: args.client_order_id,
             time_in_force,
-            self_trade_behavior: args.self_trade_behavior,
+            self_trade_behavior,
             params: match args.order_type {
                 PlaceOrderType::Market => OrderParams::Market,
                 PlaceOrderType::ImmediateOrCancel => OrderParams::ImmediateOrCancel {
@@ -131,6 +132,7 @@ pub mod openbook_v2 {
     pub fn place_order_pegged(
         ctx: Context<PlaceOrder>,
         args: PlaceOrderPeggedArgs,
+        self_trade_behavior: SelfTradeBehavior,
         // Maximum number of orders from the book to fill.
         //
         // Use this to limit compute used during order matching.
@@ -164,7 +166,7 @@ pub mod openbook_v2 {
             max_quote_lots_including_fees: args.max_quote_lots_including_fees,
             client_order_id: args.client_order_id,
             time_in_force,
-            self_trade_behavior: args.self_trade_behavior,
+            self_trade_behavior,
             params: OrderParams::OraclePegged {
                 price_offset_lots: args.price_offset_lots,
                 order_type: args.order_type.to_post_order_type()?,
@@ -183,30 +185,27 @@ pub mod openbook_v2 {
     /// add a new order off the book.
     ///
     /// This type of order allows for instant token settlement for the taker.
-    #[allow(clippy::too_many_arguments)]
     pub fn place_take_order<'info>(
         ctx: Context<'_, '_, '_, 'info, PlaceTakeOrder<'info>>,
-        side: Side,
-        price_lots: i64,
-        max_base_lots: i64,
-        max_quote_lots_including_fees: i64,
-        order_type: PlaceOrderType,
+        args: PlaceTakeOrderArgs,
         self_trade_behavior: SelfTradeBehavior,
         limit: u8,
     ) -> Result<()> {
-        require_gte!(price_lots, 1, OpenBookError::InvalidInputPriceLots);
+        require_gte!(args.price_lots, 1, OpenBookError::InvalidInputPriceLots);
 
         use crate::state::{Order, OrderParams};
         let order = Order {
-            side,
-            max_base_lots,
-            max_quote_lots_including_fees,
+            side: args.side,
+            max_base_lots: args.max_base_lots,
+            max_quote_lots_including_fees: args.max_quote_lots_including_fees,
             client_order_id: 0,
             time_in_force: 0,
             self_trade_behavior,
-            params: match order_type {
+            params: match args.order_type {
                 PlaceOrderType::Market => OrderParams::Market,
-                PlaceOrderType::ImmediateOrCancel => OrderParams::ImmediateOrCancel { price_lots },
+                PlaceOrderType::ImmediateOrCancel => OrderParams::ImmediateOrCancel {
+                    price_lots: args.price_lots,
+                },
                 _ => return Err(OpenBookError::InvalidInputOrderType.into()),
             },
         };
@@ -389,7 +388,6 @@ pub struct PlaceOrderArgs {
     pub max_quote_lots_including_fees: i64,
     pub client_order_id: u64,
     pub order_type: PlaceOrderType,
-    pub self_trade_behavior: SelfTradeBehavior,
     pub expiry_timestamp: u64,
 }
 
@@ -410,7 +408,6 @@ pub struct PlaceOrderPeggedArgs {
     pub max_quote_lots_including_fees: i64,
     pub client_order_id: u64,
     pub order_type: PlaceOrderType,
-    pub self_trade_behavior: SelfTradeBehavior,
 
     // Timestamp of when order expires
     //
@@ -423,4 +420,13 @@ pub struct PlaceOrderPeggedArgs {
     //
     // WARNING: Not currently implemented.
     pub max_oracle_staleness_slots: i32,
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize, Copy, Clone)]
+pub struct PlaceTakeOrderArgs {
+    pub side: Side,
+    pub price_lots: i64,
+    pub max_base_lots: i64,
+    pub max_quote_lots_including_fees: i64,
+    pub order_type: PlaceOrderType,
 }
