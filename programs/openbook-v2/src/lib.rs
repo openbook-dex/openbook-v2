@@ -363,7 +363,7 @@ pub mod openbook_v2 {
     }
 }
 
-#[derive(AnchorSerialize, AnchorDeserialize, Copy, Clone)]
+#[derive(AnchorSerialize, AnchorDeserialize, Debug, Copy, Clone)]
 #[cfg_attr(feature = "arbitrary", derive(arbitrary::Arbitrary))]
 pub struct PlaceOrderArgs {
     pub side: Side,
@@ -381,7 +381,7 @@ pub struct PlaceOrderArgs {
     pub limit: u8,
 }
 
-#[derive(AnchorSerialize, AnchorDeserialize, Copy, Clone)]
+#[derive(AnchorSerialize, AnchorDeserialize, Debug, Copy, Clone)]
 #[cfg_attr(feature = "arbitrary", derive(arbitrary::Arbitrary))]
 pub struct PlaceOrderPeggedArgs {
     pub side: Side,
@@ -419,7 +419,7 @@ pub struct PlaceOrderPeggedArgs {
     pub limit: u8,
 }
 
-#[derive(AnchorSerialize, AnchorDeserialize, Copy, Clone)]
+#[derive(AnchorSerialize, AnchorDeserialize, Debug, Copy, Clone)]
 #[cfg_attr(feature = "arbitrary", derive(arbitrary::Arbitrary))]
 pub struct PlaceTakeOrderArgs {
     pub side: Side,
