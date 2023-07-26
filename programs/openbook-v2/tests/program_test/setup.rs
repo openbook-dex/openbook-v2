@@ -18,7 +18,7 @@ impl Token {
     pub async fn create(
         mints: Vec<MintCookie>,
         solana: &SolanaCookie,
-        admin: TestKeypair,
+        owner: TestKeypair,
         payer: TestKeypair,
     ) -> Vec<Token> {
         let mut tokens = vec![];
@@ -28,7 +28,7 @@ impl Token {
                 solana,
                 StubOracleCreate {
                     mint: mint.pubkey,
-                    admin,
+                    owner,
                     payer,
                 },
             )
@@ -38,7 +38,7 @@ impl Token {
             send_tx(
                 solana,
                 StubOracleSetInstruction {
-                    admin,
+                    owner,
                     mint: mint.pubkey,
                     price: 1.0,
                 },

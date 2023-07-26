@@ -11,7 +11,6 @@ pub struct Order {
     pub max_base_lots: i64,
 
     /// Max quote lots to pay/receive including fees.
-    /// TODO Binye Use native instead?
     pub max_quote_lots_including_fees: i64,
 
     /// Arbitrary user-controlled order id.

@@ -1,11 +1,11 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token::{self, Transfer};
 use std::cmp;
 
 use crate::accounts_ix::*;
 use crate::accounts_zerocopy::*;
 use crate::error::*;
 use crate::state::*;
+use crate::token_utils::*;
 
 #[allow(clippy::too_many_arguments)]
 pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<Option<u128>> {
@@ -17,30 +17,15 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<
     );
 
     let mut open_orders_account = ctx.accounts.open_orders_account.load_mut()?;
-    require!(
-        open_orders_account.is_owner_or_delegate(ctx.accounts.owner_or_delegate.key()),
-        OpenBookError::NoOwnerOrDelegate
-    );
     let open_orders_account_pk = ctx.accounts.open_orders_account.key();
+
+    let clock = Clock::get()?;
 
     let mut market = ctx.accounts.market.load_mut()?;
     require!(
-        market.time_expiry == 0 || market.time_expiry > Clock::get()?.unix_timestamp,
+        !market.is_expired(clock.unix_timestamp),
         OpenBookError::MarketHasExpired
     );
-    if let Some(open_orders_admin) = Option::<Pubkey>::from(market.open_orders_admin) {
-        let open_orders_admin_signer = ctx
-            .accounts
-            .open_orders_admin
-            .as_ref()
-            .map(|signer| signer.key())
-            .ok_or(OpenBookError::MissingOpenOrdersAdmin)?;
-        require_eq!(
-            open_orders_admin,
-            open_orders_admin_signer,
-            OpenBookError::InvalidOpenOrdersAdmin
-        );
-    }
 
     let mut book = Orderbook {
         bids: ctx.accounts.bids.load_mut()?,
@@ -48,11 +33,21 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<
     };
     let mut event_queue = ctx.accounts.event_queue.load_mut()?;
 
-    let now_ts: u64 = Clock::get()?.unix_timestamp.try_into().unwrap();
-    let oracle_price = market.oracle_price(
-        &AccountInfoRef::borrow(ctx.accounts.oracle.as_ref())?,
-        Clock::get()?.slot,
-    )?;
+    let now_ts: u64 = clock.unix_timestamp.try_into().unwrap();
+    let oracle_price = if market.oracle_a.is_some() && market.oracle_b.is_some() {
+        Some(market.oracle_price_from_a_and_b(
+            &AccountInfoRef::borrow(ctx.accounts.oracle_a.as_ref().unwrap())?,
+            &AccountInfoRef::borrow(ctx.accounts.oracle_b.as_ref().unwrap())?,
+            clock.slot,
+        )?)
+    } else if market.oracle_a.is_some() {
+        Some(market.oracle_price_from_a(
+            &AccountInfoRef::borrow(ctx.accounts.oracle_a.as_ref().unwrap())?,
+            clock.slot,
+        )?)
+    } else {
+        None
+    };
 
     let OrderWithAmounts {
         order_id,
@@ -107,17 +102,13 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<
         }
     };
 
-    if deposit_amount > 0 {
-        let cpi_context = CpiContext::new(
-            ctx.accounts.token_program.to_account_info(),
-            Transfer {
-                from: ctx.accounts.token_deposit_account.to_account_info(),
-                to: ctx.accounts.market_vault.to_account_info(),
-                authority: ctx.accounts.owner_or_delegate.to_account_info(),
-            },
-        );
-        token::transfer(cpi_context, deposit_amount)?;
-    }
+    token_transfer(
+        deposit_amount,
+        &ctx.accounts.token_program,
+        &ctx.accounts.token_deposit_account,
+        &ctx.accounts.market_vault,
+        &ctx.accounts.signer,
+    )?;
 
     Ok(order_id)
 }

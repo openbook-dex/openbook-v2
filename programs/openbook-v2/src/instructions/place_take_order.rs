@@ -1,17 +1,17 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token::{self, Transfer};
 
 use crate::accounts_ix::*;
 use crate::accounts_zerocopy::*;
 use crate::error::*;
 use crate::state::*;
+use crate::token_utils::*;
 
 #[allow(clippy::too_many_arguments)]
 pub fn place_take_order<'info>(
     ctx: Context<'_, '_, '_, 'info, PlaceTakeOrder<'info>>,
     order: Order,
     limit: u8,
-) -> Result<Option<u128>> {
+) -> Result<()> {
     require_gte!(order.max_base_lots, 0, OpenBookError::InvalidInputLots);
     require_gte!(
         order.max_quote_lots_including_fees,
@@ -19,24 +19,13 @@ pub fn place_take_order<'info>(
         OpenBookError::InvalidInputLots
     );
 
+    let clock = Clock::get()?;
+
     let mut market = ctx.accounts.market.load_mut()?;
     require!(
-        market.time_expiry == 0 || market.time_expiry > Clock::get()?.unix_timestamp,
+        !market.is_expired(clock.unix_timestamp),
         OpenBookError::MarketHasExpired
     );
-    if let Some(open_orders_admin) = Option::<Pubkey>::from(market.open_orders_admin) {
-        let open_orders_admin_signer = ctx
-            .accounts
-            .open_orders_admin
-            .as_ref()
-            .map(|signer| signer.key())
-            .ok_or(OpenBookError::MissingOpenOrdersAdmin)?;
-        require_eq!(
-            open_orders_admin,
-            open_orders_admin_signer,
-            OpenBookError::InvalidOpenOrdersAdmin
-        );
-    }
 
     let mut book = Orderbook {
         bids: ctx.accounts.bids.load_mut()?,
@@ -45,16 +34,25 @@ pub fn place_take_order<'info>(
 
     let mut event_queue = ctx.accounts.event_queue.load_mut()?;
 
-    let now_ts: u64 = Clock::get()?.unix_timestamp.try_into().unwrap();
-    let oracle_price = market.oracle_price(
-        &AccountInfoRef::borrow(ctx.accounts.oracle.as_ref())?,
-        Clock::get()?.slot,
-    )?;
+    let now_ts: u64 = clock.unix_timestamp.try_into().unwrap();
+    let oracle_price = if market.oracle_a.is_some() && market.oracle_b.is_some() {
+        Some(market.oracle_price_from_a_and_b(
+            &AccountInfoRef::borrow(ctx.accounts.oracle_a.as_ref().unwrap())?,
+            &AccountInfoRef::borrow(ctx.accounts.oracle_b.as_ref().unwrap())?,
+            clock.slot,
+        )?)
+    } else if market.oracle_a.is_some() {
+        Some(market.oracle_price_from_a(
+            &AccountInfoRef::borrow(ctx.accounts.oracle_a.as_ref().unwrap())?,
+            clock.slot,
+        )?)
+    } else {
+        None
+    };
 
     let side = order.side;
 
     let OrderWithAmounts {
-        order_id,
         total_base_taken_native,
         total_quote_taken_native,
         referrer_amount,
@@ -78,8 +76,8 @@ pub fn place_take_order<'info>(
             market.base_deposit_total -= total_base_taken_native;
             market.quote_deposit_total += total_quote_including_fees;
             (
-                ctx.accounts.base_vault.to_account_info(),
-                ctx.accounts.quote_vault.to_account_info(),
+                &ctx.accounts.base_vault,
+                &ctx.accounts.quote_vault,
                 total_quote_including_fees,
                 total_base_taken_native,
             )
@@ -89,8 +87,8 @@ pub fn place_take_order<'info>(
             market.base_deposit_total += total_base_taken_native;
             market.quote_deposit_total -= total_quote_discounting_fees;
             (
-                ctx.accounts.quote_vault.to_account_info(),
-                ctx.accounts.base_vault.to_account_info(),
+                &ctx.accounts.quote_vault,
+                &ctx.accounts.base_vault,
                 total_base_taken_native,
                 total_quote_discounting_fees,
             )
@@ -105,48 +103,37 @@ pub fn place_take_order<'info>(
     }
 
     let seeds = market_seeds!(market);
-    let signer = &[&seeds[..]];
     drop(market);
 
     // Transfer funds from token_deposit_account to vault
-    if deposit_amount > 0 {
-        let cpi_context = CpiContext::new(
-            ctx.accounts.token_program.to_account_info(),
-            Transfer {
-                from: ctx.accounts.token_deposit_account.to_account_info(),
-                to: to_vault,
-                authority: ctx.accounts.signer.to_account_info(),
-            },
-        );
-        token::transfer(cpi_context, deposit_amount)?;
-    }
+    token_transfer(
+        deposit_amount,
+        &ctx.accounts.token_program,
+        ctx.accounts.token_deposit_account.as_ref(),
+        to_vault,
+        &ctx.accounts.signer,
+    )?;
 
-    if withdraw_amount > 0 {
-        let cpi_context = CpiContext::new(
-            ctx.accounts.token_program.to_account_info(),
-            Transfer {
-                from: from_vault,
-                to: ctx.accounts.token_receiver_account.to_account_info(),
-                authority: ctx.accounts.market.to_account_info(),
-            },
-        );
-        token::transfer(cpi_context.with_signer(signer), withdraw_amount)?;
-    }
+    token_transfer_signed(
+        withdraw_amount,
+        &ctx.accounts.token_program,
+        from_vault,
+        ctx.accounts.token_receiver_account.as_ref(),
+        &ctx.accounts.market,
+        seeds,
+    )?;
 
     // Transfer to referrer
     if let Some(referrer) = &ctx.accounts.referrer {
-        if referrer_amount > 0 {
-            let cpi_context = CpiContext::new(
-                ctx.accounts.token_program.to_account_info(),
-                Transfer {
-                    from: ctx.accounts.quote_vault.to_account_info(),
-                    to: referrer.to_account_info(),
-                    authority: ctx.accounts.market.to_account_info(),
-                },
-            );
-            token::transfer(cpi_context.with_signer(signer), referrer_amount)?;
-        }
+        token_transfer_signed(
+            referrer_amount,
+            &ctx.accounts.token_program,
+            &ctx.accounts.quote_vault,
+            referrer,
+            &ctx.accounts.market,
+            seeds,
+        )?;
     }
 
-    Ok(order_id)
+    Ok(())
 }

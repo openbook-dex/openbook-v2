@@ -1,8 +1,9 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token::{self, Transfer};
 
 use crate::accounts_ix::*;
+use crate::logs::SettleFundsLog;
 use crate::state::*;
+use crate::token_utils::*;
 
 pub fn settle_funds<'info>(ctx: Context<'_, '_, '_, 'info, SettleFunds<'info>>) -> Result<()> {
     let mut open_orders_account = ctx.accounts.open_orders_account.load_mut()?;
@@ -30,47 +31,45 @@ pub fn settle_funds<'info>(ctx: Context<'_, '_, '_, 'info, SettleFunds<'info>>) 
     market.referrer_rebates_accrued -= pa.referrer_rebates_accrued;
 
     let seeds = market_seeds!(market);
-    let signer = &[&seeds[..]];
 
     drop(market);
 
     if let Some(referrer) = &ctx.accounts.referrer {
-        if referrer_rebate > 0 {
-            let cpi_context = CpiContext::new(
-                ctx.accounts.token_program.to_account_info(),
-                Transfer {
-                    from: ctx.accounts.quote_vault.to_account_info(),
-                    to: referrer.to_account_info(),
-                    authority: ctx.accounts.market.to_account_info(),
-                },
-            );
-            token::transfer(cpi_context.with_signer(signer), referrer_rebate)?;
-        }
+        token_transfer_signed(
+            referrer_rebate,
+            &ctx.accounts.token_program,
+            &ctx.accounts.quote_vault,
+            referrer,
+            &ctx.accounts.market,
+            seeds,
+        )?;
     }
 
-    if pa.base_free_native > 0 {
-        let cpi_context = CpiContext::new(
-            ctx.accounts.token_program.to_account_info(),
-            Transfer {
-                from: ctx.accounts.base_vault.to_account_info(),
-                to: ctx.accounts.token_base_account.to_account_info(),
-                authority: ctx.accounts.market.to_account_info(),
-            },
-        );
-        token::transfer(cpi_context.with_signer(signer), pa.base_free_native)?;
-    }
+    token_transfer_signed(
+        pa.base_free_native,
+        &ctx.accounts.token_program,
+        &ctx.accounts.base_vault,
+        &ctx.accounts.token_base_account,
+        &ctx.accounts.market,
+        seeds,
+    )?;
 
-    if pa.quote_free_native > 0 {
-        let cpi_context = CpiContext::new(
-            ctx.accounts.token_program.to_account_info(),
-            Transfer {
-                from: ctx.accounts.quote_vault.to_account_info(),
-                to: ctx.accounts.token_quote_account.to_account_info(),
-                authority: ctx.accounts.market.to_account_info(),
-            },
-        );
-        token::transfer(cpi_context.with_signer(signer), pa.quote_free_native)?;
-    }
+    token_transfer_signed(
+        pa.quote_free_native,
+        &ctx.accounts.token_program,
+        &ctx.accounts.quote_vault,
+        &ctx.accounts.token_quote_account,
+        &ctx.accounts.market,
+        seeds,
+    )?;
+
+    emit!(SettleFundsLog {
+        open_orders_account: ctx.accounts.open_orders_account.key(),
+        base_native: pa.base_free_native,
+        quote_native: pa.quote_free_native,
+        referrer_rebate,
+        referrer: ctx.accounts.referrer.as_ref().map(|acc| acc.key())
+    });
 
     pa.base_free_native = 0;
     pa.quote_free_native = 0;
