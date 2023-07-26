@@ -10,7 +10,10 @@ use anchor_spl::token::Token;
 
 use itertools::Itertools;
 
-use openbook_v2::state::{MarketIndex, OpenOrdersAccount, PlaceOrderType, SelfTradeBehavior, Side};
+use openbook_v2::{
+    state::{MarketIndex, OpenOrdersAccount, PlaceOrderType, SelfTradeBehavior, Side},
+    PlaceOrderArgs, PlaceOrderPeggedArgs,
+};
 
 use solana_client::nonblocking::rpc_client::RpcClient as RpcClientAsync;
 use solana_client::rpc_config::RpcSendTransactionConfig;
@@ -296,15 +299,17 @@ impl OpenBookClient {
                 )
             },
             data: anchor_lang::InstructionData::data(&openbook_v2::instruction::PlaceOrder {
-                side,
-                price_lots,
-                max_base_lots,
-                max_quote_lots_including_fees,
-                client_order_id,
-                order_type,
-                self_trade_behavior,
-                expiry_timestamp,
-                limit,
+                args: PlaceOrderArgs {
+                    side,
+                    price_lots,
+                    max_base_lots,
+                    max_quote_lots_including_fees,
+                    client_order_id,
+                    order_type,
+                    expiry_timestamp,
+                    self_trade_behavior,
+                    limit,
+                },
             }),
         };
         self.send_and_confirm_owner_tx(vec![ix]).await
@@ -353,17 +358,19 @@ impl OpenBookClient {
                 )
             },
             data: anchor_lang::InstructionData::data(&openbook_v2::instruction::PlaceOrderPegged {
-                side,
-                price_offset_lots,
-                peg_limit,
-                max_oracle_staleness_slots,
-                max_base_lots,
-                max_quote_lots_including_fees,
-                client_order_id,
-                order_type,
-                self_trade_behavior,
-                expiry_timestamp,
-                limit,
+                args: PlaceOrderPeggedArgs {
+                    side,
+                    price_offset_lots,
+                    peg_limit,
+                    max_oracle_staleness_slots,
+                    max_base_lots,
+                    max_quote_lots_including_fees,
+                    client_order_id,
+                    order_type,
+                    expiry_timestamp,
+                    self_trade_behavior,
+                    limit,
+                },
             }),
         };
         self.send_and_confirm_owner_tx(vec![ix]).await
