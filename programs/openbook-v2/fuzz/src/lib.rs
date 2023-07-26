@@ -278,13 +278,13 @@ impl FuzzContext {
         data: &openbook_v2::instruction::PlaceOrder,
         makers: Option<&HashSet<UserId>>,
     ) -> ProgramResult {
-        let market_vault = match data.side {
+        let market_vault = match data.args.side {
             Side::Ask => self.base_vault,
             Side::Bid => self.quote_vault,
         };
 
         let user = self.get_or_create_new_user(user_id);
-        let token_deposit_account = match data.side {
+        let token_deposit_account = match data.args.side {
             Side::Ask => user.base_vault,
             Side::Bid => user.quote_vault,
         };
@@ -327,13 +327,13 @@ impl FuzzContext {
         data: &openbook_v2::instruction::PlaceOrderPegged,
         makers: Option<&HashSet<UserId>>,
     ) -> ProgramResult {
-        let market_vault = match data.side {
+        let market_vault = match data.args.side {
             Side::Ask => self.base_vault,
             Side::Bid => self.quote_vault,
         };
 
         let user = self.get_or_create_new_user(user_id);
-        let token_deposit_account = match data.side {
+        let token_deposit_account = match data.args.side {
             Side::Ask => user.base_vault,
             Side::Bid => user.quote_vault,
         };
@@ -380,7 +380,7 @@ impl FuzzContext {
         let referrer = referrer_id.map(|id| *self.get_or_create_new_referrer(id));
         let user = self.get_or_create_new_user(user_id);
 
-        let (token_deposit_account, token_receiver_account) = match data.side {
+        let (token_deposit_account, token_receiver_account) = match data.args.side {
             Side::Ask => (user.base_vault, user.quote_vault),
             Side::Bid => (user.quote_vault, user.base_vault),
         };
