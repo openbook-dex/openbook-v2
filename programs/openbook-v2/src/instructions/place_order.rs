@@ -27,20 +27,6 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<
         OpenBookError::MarketHasExpired
     );
 
-    if let Some(open_orders_admin) = Option::<Pubkey>::from(market.open_orders_admin) {
-        let open_orders_admin_signer = ctx
-            .accounts
-            .open_orders_admin
-            .as_ref()
-            .map(|signer| signer.key())
-            .ok_or(OpenBookError::MissingOpenOrdersAdmin)?;
-        require_eq!(
-            open_orders_admin,
-            open_orders_admin_signer,
-            OpenBookError::InvalidOpenOrdersAdmin
-        );
-    }
-
     let mut book = Orderbook {
         bids: ctx.accounts.bids.load_mut()?,
         asks: ctx.accounts.asks.load_mut()?,

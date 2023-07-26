@@ -4,7 +4,7 @@ use crate::accounts_ix::*;
 use crate::accounts_zerocopy::*;
 use crate::error::*;
 use crate::logs::MarketMetaDataLog;
-use crate::pubkey_option::NonZeroPubkeyOption;
+use crate::pubkey_option::NonZeroKey;
 use crate::state::*;
 use crate::util::fill_from_str;
 
@@ -43,40 +43,8 @@ pub fn create_market(
     require_gt!(quote_lot_size, 0, OpenBookError::InvalidInputLots);
     require_gt!(base_lot_size, 0, OpenBookError::InvalidInputLots);
 
-    let open_orders_admin: NonZeroPubkeyOption = ctx
-        .accounts
-        .open_orders_admin
-        .as_ref()
-        .map(|account| account.key())
-        .into();
-
-    let consume_events_admin: NonZeroPubkeyOption = ctx
-        .accounts
-        .consume_events_admin
-        .as_ref()
-        .map(|account| account.key())
-        .into();
-
-    let close_market_admin: NonZeroPubkeyOption = ctx
-        .accounts
-        .close_market_admin
-        .as_ref()
-        .map(|account| account.key())
-        .into();
-
-    let oracle_a: NonZeroPubkeyOption = ctx
-        .accounts
-        .oracle_a
-        .as_ref()
-        .map(|account| account.key())
-        .into();
-
-    let oracle_b: NonZeroPubkeyOption = ctx
-        .accounts
-        .oracle_b
-        .as_ref()
-        .map(|account| account.key())
-        .into();
+    let oracle_a = ctx.accounts.oracle_a.non_zero_key();
+    let oracle_b = ctx.accounts.oracle_b.non_zero_key();
 
     if oracle_a.is_some() && oracle_b.is_some() {
         let oracle_a = AccountInfoRef::borrow(ctx.accounts.oracle_a.as_ref().unwrap())?;
@@ -94,9 +62,9 @@ pub fn create_market(
     *openbook_market = Market {
         signer_creator: ctx.accounts.payer.key(),
         collect_fee_admin: ctx.accounts.collect_fee_admin.key(),
-        open_orders_admin,
-        consume_events_admin,
-        close_market_admin,
+        open_orders_admin: ctx.accounts.open_orders_admin.non_zero_key(),
+        consume_events_admin: ctx.accounts.consume_events_admin.non_zero_key(),
+        close_market_admin: ctx.accounts.close_market_admin.non_zero_key(),
         market_index,
         bump: *ctx.bumps.get("market").ok_or(OpenBookError::SomeError)?,
         base_decimals: ctx.accounts.base_mint.decimals,
