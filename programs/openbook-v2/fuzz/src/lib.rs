@@ -291,7 +291,7 @@ impl FuzzContext {
 
         let accounts = openbook_v2::accounts::PlaceOrder {
             open_orders_account: user.open_orders,
-            owner_or_delegate: user.owner,
+            signer: user.owner,
             token_deposit_account,
             open_orders_admin: None,
             market: self.market,
@@ -340,7 +340,7 @@ impl FuzzContext {
 
         let accounts = openbook_v2::accounts::PlaceOrder {
             open_orders_account: user.open_orders,
-            owner_or_delegate: user.owner,
+            signer: user.owner,
             token_deposit_account,
             open_orders_admin: None,
             market: self.market,
@@ -477,7 +477,7 @@ impl FuzzContext {
         };
 
         let accounts = openbook_v2::accounts::CancelOrder {
-            owner: user.owner,
+            signer: user.owner,
             open_orders_account: user.open_orders,
             market: self.market,
             asks: self.asks,
@@ -497,7 +497,7 @@ impl FuzzContext {
         };
 
         let accounts = openbook_v2::accounts::CancelOrder {
-            owner: user.owner,
+            signer: user.owner,
             open_orders_account: user.open_orders,
             market: self.market,
             asks: self.asks,
@@ -517,7 +517,7 @@ impl FuzzContext {
         };
 
         let accounts = openbook_v2::accounts::CancelOrder {
-            owner: user.owner,
+            signer: user.owner,
             open_orders_account: user.open_orders,
             market: self.market,
             asks: self.asks,
