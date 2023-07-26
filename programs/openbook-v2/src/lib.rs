@@ -84,23 +84,19 @@ pub mod openbook_v2 {
     /// `limit` determines the maximum number of orders from the book to fill,
     /// and can be used to limit CU spent. When the limit is reached, processing
     /// stops and the instruction succeeds.
-    #[allow(clippy::too_many_arguments)]
     pub fn place_order(
         ctx: Context<PlaceOrder>,
-        side: Side,
-        price_lots: i64,
-        max_base_lots: i64,
-        max_quote_lots_including_fees: i64,
-        client_order_id: u64,
-        order_type: PlaceOrderType,
-        self_trade_behavior: SelfTradeBehavior,
-        expiry_timestamp: u64,
+        args: PlaceOrderArgs,
+        // Maximum number of orders from the book to fill.
+        //
+        // Use this to limit compute used during order matching.
+        // When the limit is reached, processing stops and the instruction succeeds.
         limit: u8,
     ) -> Result<Option<u128>> {
-        require_gte!(price_lots, 1, OpenBookError::InvalidInputPriceLots);
+        require_gte!(args.price_lots, 1, OpenBookError::InvalidInputPriceLots);
 
         use crate::state::{Order, OrderParams};
-        let time_in_force = match Order::tif_from_expiry(expiry_timestamp) {
+        let time_in_force = match Order::tif_from_expiry(args.expiry_timestamp) {
             Some(t) => t,
             None => {
                 msg!("Order is already expired");
@@ -108,18 +104,20 @@ pub mod openbook_v2 {
             }
         };
         let order = Order {
-            side,
-            max_base_lots,
-            max_quote_lots_including_fees,
-            client_order_id,
+            side: args.side,
+            max_base_lots: args.max_base_lots,
+            max_quote_lots_including_fees: args.max_quote_lots_including_fees,
+            client_order_id: args.client_order_id,
             time_in_force,
-            self_trade_behavior,
-            params: match order_type {
+            self_trade_behavior: args.self_trade_behavior,
+            params: match args.order_type {
                 PlaceOrderType::Market => OrderParams::Market,
-                PlaceOrderType::ImmediateOrCancel => OrderParams::ImmediateOrCancel { price_lots },
+                PlaceOrderType::ImmediateOrCancel => OrderParams::ImmediateOrCancel {
+                    price_lots: args.price_lots,
+                },
                 _ => OrderParams::Fixed {
-                    price_lots,
-                    order_type: order_type.to_post_order_type()?,
+                    price_lots: args.price_lots,
+                    order_type: args.order_type.to_post_order_type()?,
                 },
             },
         };
@@ -130,58 +128,29 @@ pub mod openbook_v2 {
         Ok(None)
     }
 
-    #[allow(clippy::too_many_arguments)]
     pub fn place_order_pegged(
         ctx: Context<PlaceOrder>,
-        side: Side,
-
-        // The adjustment from the oracle price, in lots (quote lots per base lots).
-        // Orders on the book may be filled at oracle + adjustment (depends on order type).
-        price_offset_lots: i64,
-
-        // The limit at which the pegged order shall expire.
-        //
-        // Example: An bid pegged to -20 with peg_limit 100 would expire if the oracle hits 121.
-        peg_limit: i64,
-
-        max_base_lots: i64,
-        max_quote_lots_including_fees: i64,
-        client_order_id: u64,
-        order_type: PlaceOrderType,
-        self_trade_behavior: SelfTradeBehavior,
-
-        // Timestamp of when order expires
-        //
-        // Send 0 if you want the order to never expire.
-        // Timestamps in the past mean the instruction is skipped.
-        // Timestamps in the future are reduced to now + 65535s.
-        expiry_timestamp: u64,
-
+        args: PlaceOrderPeggedArgs,
         // Maximum number of orders from the book to fill.
         //
         // Use this to limit compute used during order matching.
         // When the limit is reached, processing stops and the instruction succeeds.
         limit: u8,
-
-        // Oracle staleness limit, in slots. Set to -1 to disable.
-        //
-        // WARNING: Not currently implemented.
-        max_oracle_staleness_slots: i32,
     ) -> Result<Option<u128>> {
         require!(
             ctx.accounts.oracle_a.is_some(),
             OpenBookError::DisabledOraclePeg
         );
 
-        require_gt!(peg_limit, 0, OpenBookError::InvalidInputPegLimit);
+        require_gt!(args.peg_limit, 0, OpenBookError::InvalidInputPegLimit);
         require_eq!(
-            max_oracle_staleness_slots,
+            args.max_oracle_staleness_slots,
             -1,
             OpenBookError::InvalidInputStaleness
         );
 
         use crate::state::{Order, OrderParams};
-        let time_in_force = match Order::tif_from_expiry(expiry_timestamp) {
+        let time_in_force = match Order::tif_from_expiry(args.expiry_timestamp) {
             Some(t) => t,
             None => {
                 msg!("Order is already expired");
@@ -190,17 +159,17 @@ pub mod openbook_v2 {
         };
 
         let order = Order {
-            side,
-            max_base_lots,
-            max_quote_lots_including_fees,
-            client_order_id,
+            side: args.side,
+            max_base_lots: args.max_base_lots,
+            max_quote_lots_including_fees: args.max_quote_lots_including_fees,
+            client_order_id: args.client_order_id,
             time_in_force,
-            self_trade_behavior,
+            self_trade_behavior: args.self_trade_behavior,
             params: OrderParams::OraclePegged {
-                price_offset_lots,
-                order_type: order_type.to_post_order_type()?,
-                peg_limit,
-                max_oracle_staleness_slots,
+                price_offset_lots: args.price_offset_lots,
+                order_type: args.order_type.to_post_order_type()?,
+                peg_limit: args.peg_limit,
+                max_oracle_staleness_slots: args.max_oracle_staleness_slots,
             },
         };
         #[cfg(feature = "enable-gpl")]
@@ -340,7 +309,6 @@ pub mod openbook_v2 {
     /// Makers might wish to `refill`, rather than have actual tokens moved for
     /// each trade, in order to reduce CUs.
     pub fn refill(ctx: Context<Deposit>, base_amount: u64, quote_amount: u64) -> Result<()> {
-        #[cfg(feature = "enable-gpl")]
         let (quote_amount, base_amount) = {
             let open_orders_account = ctx.accounts.open_orders_account.load()?;
             (
@@ -349,6 +317,7 @@ pub mod openbook_v2 {
                 base_amount - cmp::min(base_amount, open_orders_account.position.base_free_native),
             )
         };
+        #[cfg(feature = "enable-gpl")]
         instructions::deposit(ctx, base_amount, quote_amount)?;
         Ok(())
     }
@@ -410,4 +379,48 @@ pub mod openbook_v2 {
         instructions::stub_oracle_set(ctx, price)?;
         Ok(())
     }
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize, Copy, Clone)]
+pub struct PlaceOrderArgs {
+    pub side: Side,
+    pub price_lots: i64,
+    pub max_base_lots: i64,
+    pub max_quote_lots_including_fees: i64,
+    pub client_order_id: u64,
+    pub order_type: PlaceOrderType,
+    pub self_trade_behavior: SelfTradeBehavior,
+    pub expiry_timestamp: u64,
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize, Copy, Clone)]
+pub struct PlaceOrderPeggedArgs {
+    pub side: Side,
+
+    // The adjustment from the oracle price, in lots (quote lots per base lots).
+    // Orders on the book may be filled at oracle + adjustment (depends on order type).
+    pub price_offset_lots: i64,
+
+    // The limit at which the pegged order shall expire.
+    //
+    // Example: An bid pegged to -20 with peg_limit 100 would expire if the oracle hits 121.
+    pub peg_limit: i64,
+
+    pub max_base_lots: i64,
+    pub max_quote_lots_including_fees: i64,
+    pub client_order_id: u64,
+    pub order_type: PlaceOrderType,
+    pub self_trade_behavior: SelfTradeBehavior,
+
+    // Timestamp of when order expires
+    //
+    // Send 0 if you want the order to never expire.
+    // Timestamps in the past mean the instruction is skipped.
+    // Timestamps in the future are reduced to now + 65535s.
+    pub expiry_timestamp: u64,
+
+    // Oracle staleness limit, in slots. Set to -1 to disable.
+    //
+    // WARNING: Not currently implemented.
+    pub max_oracle_staleness_slots: i32,
 }

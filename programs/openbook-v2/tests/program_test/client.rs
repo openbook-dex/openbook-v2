@@ -11,7 +11,7 @@ use std::sync::Arc;
 
 use super::solana::SolanaCookie;
 use super::utils::TestKeypair;
-use openbook_v2::state::*;
+use openbook_v2::{state::*, PlaceOrderArgs, PlaceOrderPeggedArgs};
 
 #[async_trait::async_trait(?Send)]
 pub trait ClientAccountLoader {
@@ -330,14 +330,16 @@ impl ClientInstruction for PlaceOrderInstruction {
     ) -> (Self::Accounts, instruction::Instruction) {
         let program_id = openbook_v2::id();
         let instruction = Self::Instruction {
-            side: self.side,
-            price_lots: self.price_lots,
-            max_base_lots: self.max_base_lots,
-            max_quote_lots_including_fees: self.max_quote_lots_including_fees,
-            client_order_id: self.client_order_id,
-            order_type: self.order_type,
-            self_trade_behavior: self.self_trade_behavior,
-            expiry_timestamp: self.expiry_timestamp,
+            args: PlaceOrderArgs {
+                side: self.side,
+                price_lots: self.price_lots,
+                max_base_lots: self.max_base_lots,
+                max_quote_lots_including_fees: self.max_quote_lots_including_fees,
+                client_order_id: self.client_order_id,
+                order_type: self.order_type,
+                self_trade_behavior: self.self_trade_behavior,
+                expiry_timestamp: self.expiry_timestamp,
+            },
             limit: 10,
         };
 
@@ -405,17 +407,19 @@ impl ClientInstruction for PlaceOrderPeggedInstruction {
     ) -> (Self::Accounts, instruction::Instruction) {
         let program_id = openbook_v2::id();
         let instruction = Self::Instruction {
-            side: self.side,
-            price_offset_lots: self.price_offset,
-            peg_limit: self.peg_limit,
-            max_base_lots: self.max_base_lots,
-            max_quote_lots_including_fees: self.max_quote_lots_including_fees,
-            client_order_id: self.client_order_id,
-            order_type: PlaceOrderType::Limit,
-            self_trade_behavior: SelfTradeBehavior::default(),
-            expiry_timestamp: 0,
+            args: PlaceOrderPeggedArgs {
+                side: self.side,
+                price_offset_lots: self.price_offset,
+                peg_limit: self.peg_limit,
+                max_base_lots: self.max_base_lots,
+                max_quote_lots_including_fees: self.max_quote_lots_including_fees,
+                client_order_id: self.client_order_id,
+                order_type: PlaceOrderType::Limit,
+                self_trade_behavior: SelfTradeBehavior::default(),
+                expiry_timestamp: 0,
+                max_oracle_staleness_slots: -1,
+            },
             limit: 10,
-            max_oracle_staleness_slots: -1,
         };
 
         let market: Market = account_loader.load(&self.market).await.unwrap();
