@@ -219,7 +219,7 @@ impl FuzzContext {
     fn stub_oracle_create(&mut self) -> ProgramResult {
         let accounts = openbook_v2::accounts::StubOracleCreate {
             oracle: self.oracle,
-            admin: self.admin,
+            owner: self.admin,
             mint: self.base_mint,
             payer: self.payer,
             system_program: system_program::ID,
@@ -239,7 +239,8 @@ impl FuzzContext {
             quote_vault: self.quote_vault,
             base_mint: self.base_mint,
             quote_mint: self.quote_mint,
-            oracle: self.oracle,
+            oracle_a: Some(self.oracle),
+            oracle_b: None,
             system_program: system_program::ID,
             collect_fee_admin: self.collect_fee_admin,
             open_orders_admin: None,
@@ -298,7 +299,8 @@ impl FuzzContext {
             asks: self.asks,
             event_queue: self.event_queue,
             market_vault,
-            oracle: self.oracle,
+            oracle_a: Some(self.oracle),
+            oracle_b: None,
             token_program: spl_token::ID,
             system_program: system_program::ID,
         };
@@ -346,7 +348,8 @@ impl FuzzContext {
             asks: self.asks,
             event_queue: self.event_queue,
             market_vault,
-            oracle: self.oracle,
+            oracle_a: Some(self.oracle),
+            oracle_b: None,
             token_program: spl_token::ID,
             system_program: system_program::ID,
         };
@@ -392,7 +395,8 @@ impl FuzzContext {
             base_vault: self.base_vault,
             quote_vault: self.quote_vault,
             event_queue: self.event_queue,
-            oracle: self.oracle,
+            oracle_a: Some(self.oracle),
+            oracle_b: None,
             token_program: spl_token::ID,
             system_program: system_program::ID,
             open_orders_admin: None,
@@ -569,7 +573,7 @@ impl FuzzContext {
     ) -> ProgramResult {
         let accounts = openbook_v2::accounts::StubOracleSet {
             oracle: self.oracle,
-            admin: self.admin,
+            owner: self.admin,
         };
 
         process_instruction(&mut self.state, data, &accounts, &[])
