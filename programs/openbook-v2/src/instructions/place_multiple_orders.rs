@@ -1,43 +1,28 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token::{self, Transfer};
 use std::cmp;
 
 use crate::accounts_ix::*;
 use crate::accounts_zerocopy::*;
 use crate::error::*;
 use crate::state::*;
+use crate::token_utils::token_transfer;
 
 #[allow(clippy::too_many_arguments)]
 pub fn place_multiple_orders(
     ctx: Context<PlaceMultipleOrders>,
     orders: Vec<Order>,
-    limit: u8,
+    limit: Vec<u8>,
 ) -> Result<Vec<Option<u128>>> {
     let mut open_orders_account = ctx.accounts.open_orders_account.load_mut()?;
-    require!(
-        open_orders_account.is_owner_or_delegate(ctx.accounts.owner_or_delegate.key()),
-        OpenBookError::NoOwnerOrDelegate
-    );
     let open_orders_account_pk = ctx.accounts.open_orders_account.key();
+
+    let clock = Clock::get()?;
 
     let mut market = ctx.accounts.market.load_mut()?;
     require!(
-        market.time_expiry == 0 || market.time_expiry > Clock::get()?.unix_timestamp,
+        !market.is_expired(clock.unix_timestamp),
         OpenBookError::MarketHasExpired
     );
-    if let Some(open_orders_admin) = Option::<Pubkey>::from(market.open_orders_admin) {
-        let open_orders_admin_signer = ctx
-            .accounts
-            .open_orders_admin
-            .as_ref()
-            .map(|signer| signer.key())
-            .ok_or(OpenBookError::MissingOpenOrdersAdmin)?;
-        require_eq!(
-            open_orders_admin,
-            open_orders_admin_signer,
-            OpenBookError::InvalidOpenOrdersAdmin
-        );
-    }
 
     let mut book = Orderbook {
         bids: ctx.accounts.bids.load_mut()?,
@@ -45,9 +30,18 @@ pub fn place_multiple_orders(
     };
     let mut event_queue = ctx.accounts.event_queue.load_mut()?;
 
-    let now_ts: u64 = Clock::get()?.unix_timestamp.try_into().unwrap();
-    let oracle_price = if let Some(oracle_acc) = &ctx.accounts.oracle {
-        Some(market.oracle_price(&AccountInfoRef::borrow(oracle_acc)?, Clock::get()?.slot)?)
+    let now_ts: u64 = clock.unix_timestamp.try_into().unwrap();
+    let oracle_price = if market.oracle_a.is_some() && market.oracle_b.is_some() {
+        Some(market.oracle_price_from_a_and_b(
+            &AccountInfoRef::borrow(ctx.accounts.oracle_a.as_ref().unwrap())?,
+            &AccountInfoRef::borrow(ctx.accounts.oracle_b.as_ref().unwrap())?,
+            clock.slot,
+        )?)
+    } else if market.oracle_a.is_some() {
+        Some(market.oracle_price_from_a(
+            &AccountInfoRef::borrow(ctx.accounts.oracle_a.as_ref().unwrap())?,
+            clock.slot,
+        )?)
     } else {
         None
     };
@@ -55,7 +49,7 @@ pub fn place_multiple_orders(
     let mut deposit_quote_amount = 0;
     let mut deposit_base_amount = 0;
     let mut order_ids = Vec::new();
-    for order in orders.iter() {
+    for (i, order) in orders.iter().enumerate() {
         require_gte!(order.max_base_lots, 0, OpenBookError::InvalidInputLots);
         require_gte!(
             order.max_quote_lots_including_fees,
@@ -80,7 +74,7 @@ pub fn place_multiple_orders(
             Some(&mut open_orders_account),
             &open_orders_account_pk,
             now_ts,
-            limit,
+            limit[i],
             ctx.remaining_accounts,
         )?;
 
@@ -118,29 +112,20 @@ pub fn place_multiple_orders(
         order_ids.push(order_id);
     }
 
-    if deposit_quote_amount > 0 {
-        let cpi_context = CpiContext::new(
-            ctx.accounts.token_program.to_account_info(),
-            Transfer {
-                from: ctx.accounts.token_quote_deposit_account.to_account_info(),
-                to: ctx.accounts.market_quote_vault.to_account_info(),
-                authority: ctx.accounts.owner_or_delegate.to_account_info(),
-            },
-        );
-        token::transfer(cpi_context, deposit_quote_amount)?;
-    }
-
-    if deposit_base_amount > 0 {
-        let cpi_context = CpiContext::new(
-            ctx.accounts.token_program.to_account_info(),
-            Transfer {
-                from: ctx.accounts.token_base_deposit_account.to_account_info(),
-                to: ctx.accounts.market_base_vault.to_account_info(),
-                authority: ctx.accounts.owner_or_delegate.to_account_info(),
-            },
-        );
-        token::transfer(cpi_context, deposit_base_amount)?;
-    }
+    token_transfer(
+        deposit_quote_amount,
+        &ctx.accounts.token_program,
+        &ctx.accounts.token_quote_deposit_account,
+        &ctx.accounts.market_quote_vault,
+        &ctx.accounts.signer,
+    )?;
+    token_transfer(
+        deposit_base_amount,
+        &ctx.accounts.token_program,
+        &ctx.accounts.token_base_deposit_account,
+        &ctx.accounts.market_base_vault,
+        &ctx.accounts.signer,
+    )?;
 
     Ok(order_ids)
 }

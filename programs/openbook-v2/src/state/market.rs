@@ -5,6 +5,7 @@ use std::convert::{TryFrom, TryInto};
 use std::mem::size_of;
 
 use crate::error::OpenBookError;
+use crate::i80f48::Power;
 use crate::pubkey_option::NonZeroPubkeyOption;
 use crate::state::oracle;
 use crate::{accounts_zerocopy::KeyedAccountReader, state::orderbook::Side};
@@ -55,8 +56,9 @@ pub struct Market {
     /// Address of the EventQueue account
     pub event_queue: Pubkey,
 
-    /// Oracle account address
-    pub oracle: NonZeroPubkeyOption,
+    /// Oracles account address
+    pub oracle_a: NonZeroPubkeyOption,
+    pub oracle_b: NonZeroPubkeyOption,
     /// Oracle configuration
     pub oracle_config: OracleConfig,
 
@@ -127,7 +129,8 @@ const_assert_eq!(
     8 +                         // time_expiry
     16 +                        // name
     3 * 32 +                    // bids, asks, and event_queue
-    32 +                        // oracle
+    32 +                        // oracle_a
+    32 +                        // oracle_b
     size_of::<OracleConfig>() + // oracle_config
     8 +                         // quote_lot_size
     8 +                         // base_lot_size
@@ -145,7 +148,7 @@ const_assert_eq!(
     8 +                         // referrer_rebates_accrued
     1768 // reserved
 );
-const_assert_eq!(size_of::<Market>(), 2416);
+const_assert_eq!(size_of::<Market>(), 2448);
 const_assert_eq!(size_of::<Market>() % 8, 0);
 
 impl Market {
@@ -153,6 +156,10 @@ impl Market {
         std::str::from_utf8(&self.name)
             .unwrap()
             .trim_matches(char::from(0))
+    }
+
+    pub fn is_expired(&self, timestamp: i64) -> bool {
+        self.time_expiry != 0 && self.time_expiry < timestamp
     }
 
     pub fn is_market_vault(&self, pubkey: Pubkey) -> bool {
@@ -186,18 +193,57 @@ impl Market {
             .ok_or_else(|| OpenBookError::InvalidOraclePrice.into())
     }
 
-    pub fn oracle_price(
+    pub fn oracle_price_from_a(
         &self,
         oracle_acc: &impl KeyedAccountReader,
         staleness_slot: u64,
     ) -> Result<I80F48> {
-        oracle::oracle_price(
-            oracle_acc,
-            &self.oracle_config,
-            self.base_decimals,
-            self.quote_decimals,
-            staleness_slot,
-        )
+        assert_eq!(self.oracle_a, *oracle_acc.key());
+        let (price, _err) =
+            oracle::oracle_price_data(oracle_acc, &self.oracle_config, staleness_slot)?;
+
+        let decimals = (self.quote_decimals as i8) - (self.base_decimals as i8);
+        let decimal_adj = oracle::power_of_ten(decimals);
+        Ok(price * decimal_adj)
+    }
+
+    pub fn oracle_price_from_a_and_b(
+        &self,
+        oracle_a_acc: &impl KeyedAccountReader,
+        oracle_b_acc: &impl KeyedAccountReader,
+        staleness_slot: u64,
+    ) -> Result<I80F48> {
+        assert_eq!(self.oracle_a, *oracle_a_acc.key());
+        assert_eq!(self.oracle_b, *oracle_b_acc.key());
+
+        let (price_a, err_a) =
+            oracle::oracle_price_data(oracle_a_acc, &self.oracle_config, staleness_slot)?;
+
+        let (price_b, err_b) =
+            oracle::oracle_price_data(oracle_b_acc, &self.oracle_config, staleness_slot)?;
+
+        let price = price_a / price_b;
+
+        // no sqrt impl in fixed so we compare the squares
+        let target_var = self.oracle_config.conf_filter.square();
+        let var = {
+            let relative_err_a = price_a / err_a;
+            let relative_err_b = price_b / err_b;
+            (relative_err_a.square() + relative_err_b.square()) * price.square()
+        };
+
+        if var > target_var {
+            msg!(
+                "Combined variance too high; value {}, target {}",
+                var,
+                target_var
+            );
+            return Err(OpenBookError::OracleConfidence.into());
+        }
+
+        let decimals = (self.quote_decimals as i8) - (self.base_decimals as i8);
+        let decimal_adj = oracle::power_of_ten(decimals);
+        Ok(price * decimal_adj)
     }
 
     pub fn subtract_taker_fees(&self, quote: i64) -> i64 {

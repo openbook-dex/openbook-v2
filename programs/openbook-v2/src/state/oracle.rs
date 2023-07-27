@@ -90,14 +90,14 @@ pub enum OracleType {
 
 #[account(zero_copy)]
 pub struct StubOracle {
-    // ABI: Clients rely on this being at offset 40
+    pub owner: Pubkey,
     pub mint: Pubkey,
     pub price: I80F48,
     pub last_updated: i64,
     pub reserved: [u8; 128],
 }
-const_assert_eq!(size_of::<StubOracle>(), 32 + 16 + 8 + 128);
-const_assert_eq!(size_of::<StubOracle>(), 184);
+const_assert_eq!(size_of::<StubOracle>(), 32 + 32 + 16 + 8 + 128);
+const_assert_eq!(size_of::<StubOracle>(), 216);
 const_assert_eq!(size_of::<StubOracle>() % 8, 0);
 
 pub fn determine_oracle_type(acc_info: &impl KeyedAccountReader) -> Result<OracleType> {
@@ -123,29 +123,25 @@ pub fn determine_oracle_type(acc_info: &impl KeyedAccountReader) -> Result<Oracl
     Err(OpenBookError::UnknownOracleType.into())
 }
 
-/// Returns the price of one native base token, in native quote tokens
-///
-/// Example: The for SOL at 40 USDC/SOL it would return 0.04 (the unit is USDC-native/SOL-native)
-/// given that quote decimals is 6 and native decimals is 9.
-pub fn oracle_price(
+/// Read the price & uncertainty of the given oracle
+pub fn oracle_price_data(
     acc_info: &impl KeyedAccountReader,
     config: &OracleConfig,
-    base_decimals: u8,
-    quote_decimals: u8,
     staleness_slot: u64,
-) -> Result<I80F48> {
+) -> Result<(I80F48, I80F48)> {
     let data = &acc_info.data();
     let oracle_type = determine_oracle_type(acc_info)?;
 
     Ok(match oracle_type {
-        OracleType::Stub => acc_info.load::<StubOracle>()?.price,
+        OracleType::Stub => (acc_info.load::<StubOracle>()?.price, fixed::FixedI128::ZERO),
         OracleType::Pyth => {
             let price_account = pyth_sdk_solana::state::load_price_account(data).unwrap();
             let price_data = price_account.to_price();
             let price = I80F48::from_num(price_data.price);
 
             // Filter out bad prices
-            if I80F48::from_num(price_data.conf) > (config.conf_filter * price) {
+            let error = I80F48::from_num(price_data.conf);
+            if error > (config.conf_filter * price) {
                 msg!(
                     "Pyth conf interval too high; pubkey {} price: {} price_data.conf: {}",
                     acc_info.key(),
@@ -177,10 +173,7 @@ pub fn oracle_price(
                 return Err(OpenBookError::OracleStale.into());
             }
 
-            let decimals =
-                (price_account.expo as i8) + (quote_decimals as i8) - (base_decimals as i8);
-            let decimal_adj = power_of_ten(decimals);
-            price * decimal_adj
+            (price, error)
         }
         OracleType::SwitchboardV2 => {
             fn from_foreign_error(e: impl std::fmt::Display) -> Error {
@@ -198,12 +191,14 @@ pub fn oracle_price(
                 .std_deviation
                 .try_into()
                 .map_err(from_foreign_error)?;
-            if I80F48::from_num(std_deviation_decimal) > (config.conf_filter * price) {
+            let error = I80F48::from_num(std_deviation_decimal);
+
+            if error > (config.conf_filter * price) {
                 msg!(
                     "Switchboard v2 std deviation too high; pubkey {} price: {} latest_confirmed_round.std_deviation: {}",
                     acc_info.key(),
                     price.to_num::<f64>(),
-                    std_deviation_decimal
+                    error
                 );
                 return Err(OpenBookError::OracleConfidence.into());
             }
@@ -224,9 +219,7 @@ pub fn oracle_price(
                 return Err(OpenBookError::OracleConfidence.into());
             }
 
-            let decimals = (quote_decimals as i8) - (base_decimals as i8);
-            let decimal_adj = power_of_ten(decimals);
-            price * decimal_adj
+            (price, error)
         }
         OracleType::SwitchboardV1 => {
             let result = FastRoundResultAccountData::deserialize(data).unwrap();
@@ -260,9 +253,7 @@ pub fn oracle_price(
                 return Err(OpenBookError::OracleConfidence.into());
             }
 
-            let decimals = (quote_decimals as i8) - (base_decimals as i8);
-            let decimal_adj = power_of_ten(decimals);
-            price * decimal_adj
+            (price, max_response - min_response)
         }
     })
 }

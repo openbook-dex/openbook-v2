@@ -28,7 +28,7 @@ async fn test_take_ask_order() -> Result<(), TransportError> {
             open_orders_account: account_0,
             open_orders_admin: None,
             market,
-            owner,
+            signer: owner,
             token_deposit_account: owner_token_1,
             market_vault: quote_vault,
             side: Side::Bid,
@@ -53,7 +53,7 @@ async fn test_take_ask_order() -> Result<(), TransportError> {
         solana,
         PlaceTakeOrderInstruction {
             market,
-            owner,
+            signer: owner,
             token_deposit_account: owner_token_0,
             token_receiver_account: owner_token_1,
             base_vault,
@@ -62,9 +62,6 @@ async fn test_take_ask_order() -> Result<(), TransportError> {
             price_lots,
             max_base_lots: 1,
             max_quote_lots_including_fees: 10000,
-
-            client_order_id: 0,
-            expiry_timestamp: 0,
             referrer: None,
             open_orders_admin: None,
         },
@@ -177,7 +174,7 @@ async fn test_take_bid_order() -> Result<(), TransportError> {
             open_orders_account: account_0,
             open_orders_admin: None,
             market,
-            owner,
+            signer: owner,
             token_deposit_account: owner_token_0,
             market_vault: base_vault,
             side: Side::Ask,
@@ -206,9 +203,8 @@ async fn test_take_bid_order() -> Result<(), TransportError> {
     send_tx(
         solana,
         PlaceTakeOrderInstruction {
-            open_orders_admin: None,
             market,
-            owner,
+            signer: owner,
             token_deposit_account: owner_token_1,
             token_receiver_account: owner_token_0,
             base_vault,
@@ -217,10 +213,8 @@ async fn test_take_bid_order() -> Result<(), TransportError> {
             price_lots,
             max_base_lots: 1,
             max_quote_lots_including_fees: 10040,
-
-            client_order_id: 0,
-            expiry_timestamp: 0,
             referrer: Some(admin_token_1),
+            open_orders_admin: None,
         },
     )
     .await

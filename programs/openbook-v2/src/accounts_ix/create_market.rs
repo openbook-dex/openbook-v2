@@ -7,7 +7,7 @@ use anchor_spl::token::{Mint, TokenAccount};
 pub struct CreateMarket<'info> {
     #[account(
         init,
-        seeds = [b"Market".as_ref(),  payer.key().to_bytes().as_ref(), &market_index.to_le_bytes()],
+        seeds = [b"Market".as_ref(), payer.key().to_bytes().as_ref(), &market_index.to_le_bytes()],
         bump,
         payer = payer,
         space = 8 + std::mem::size_of::<Market>(),
@@ -31,12 +31,14 @@ pub struct CreateMarket<'info> {
     #[account(mut, token::mint = quote_mint, token::authority = market)]
     pub quote_vault: Account<'info, TokenAccount>,
 
-    pub base_mint: Account<'info, Mint>,
-    pub quote_mint: Account<'info, Mint>,
+    pub base_mint: Box<Account<'info, Mint>>,
+    pub quote_mint: Box<Account<'info, Mint>>,
 
     pub system_program: Program<'info, System>,
-    /// CHECK: The oracle can be one of several different account types and the pubkey is checked above
-    pub oracle: Option<UncheckedAccount<'info>>,
+    /// CHECK: The oracle can be one of several different account types
+    pub oracle_a: Option<UncheckedAccount<'info>>,
+    /// CHECK: The oracle can be one of several different account types
+    pub oracle_b: Option<UncheckedAccount<'info>>,
 
     /// CHECK:
     pub collect_fee_admin: UncheckedAccount<'info>,

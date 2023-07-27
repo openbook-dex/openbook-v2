@@ -30,9 +30,20 @@ pub enum OpenBookError {
     InvalidInputStaleness,
     #[msg("Slot above queue limit")]
     InvalidInputQueueSlots,
+    #[msg("Cannot combine two oracles of different providers")]
+    InvalidOracleTypes,
+    #[msg("Cannot configure secondary oracle without primary")]
+    InvalidSecondOracle,
 
-    #[msg("The header version is not 1")]
-    HeaderVersionNotKnown,
+    #[msg("This market does not have a `close_market_admin` and thus cannot be closed.")]
+    NoCloseMarketAdmin,
+    #[msg("The signer of this transaction is not this market's `close_market_admin`.")]
+    InvalidCloseMarketAdmin,
+    #[msg("The `open_orders_admin` required by this market to sign all instructions that creates orders is missing or is not valid")]
+    InvalidOpenOrdersAdmin,
+    #[msg("The `consume_events_admin` required by this market to sign all instructions that consume events is missing or is not valid")]
+    InvalidConsumeEventsAdmin,
+
     #[msg("oracle type cannot be determined")]
     UnknownOracleType,
     #[msg("an oracle does not reach the confidence threshold")]
@@ -49,22 +60,6 @@ pub enum OpenBookError {
     InvalidOrderPostMarket,
     #[msg("would self trade")]
     WouldSelfTrade,
-    #[msg("This market does not have a `close_market_admin` and thus cannot be closed.")]
-    NoCloseMarketAdmin,
-    #[msg("The signer of this transaction is not this market's `close_market_admin`.")]
-    InvalidCloseMarketAdmin,
-    #[msg("This market requires `open_orders_admin` to sign all instructions that create orders.")]
-    MissingOpenOrdersAdmin,
-    #[msg("The `open_orders_admin` passed does not match this market's `open_orders_admin`.")]
-    InvalidOpenOrdersAdmin,
-    #[msg(
-        "This market requires `consume_events_admin` to sign all instructions that consume events."
-    )]
-    MissingConsumeEventsAdmin,
-    #[msg(
-        "The `consume_events_admin` passed does not match this market's `consume_events_admin`."
-    )]
-    InvalidConsumeEventsAdmin,
     #[msg("The Market has already expired.")]
     MarketHasExpired,
     #[msg("Price lots should be greater than zero")]

@@ -41,7 +41,8 @@ pub struct MarketMetaDataLog {
     pub quote_decimals: u8,
     pub base_lot_size: i64,
     pub quote_lot_size: i64,
-    pub oracle: Option<Pubkey>,
+    pub oracle_a: Option<Pubkey>,
+    pub oracle_b: Option<Pubkey>,
 }
 
 #[event]

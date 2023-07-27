@@ -1,12 +1,12 @@
 use anchor_lang::prelude::*;
 
+use crate::accounts_ix::*;
+use crate::accounts_zerocopy::*;
 use crate::error::*;
-use crate::pubkey_option::NonZeroPubkeyOption;
+use crate::logs::MarketMetaDataLog;
+use crate::pubkey_option::NonZeroKey;
 use crate::state::*;
 use crate::util::fill_from_str;
-
-use crate::accounts_ix::*;
-use crate::logs::MarketMetaDataLog;
 
 #[allow(clippy::too_many_arguments)]
 pub fn create_market(
@@ -43,41 +43,28 @@ pub fn create_market(
     require_gt!(quote_lot_size, 0, OpenBookError::InvalidInputLots);
     require_gt!(base_lot_size, 0, OpenBookError::InvalidInputLots);
 
-    let open_orders_admin: NonZeroPubkeyOption = ctx
-        .accounts
-        .open_orders_admin
-        .as_ref()
-        .map(|account| account.key())
-        .into();
+    let oracle_a = ctx.accounts.oracle_a.non_zero_key();
+    let oracle_b = ctx.accounts.oracle_b.non_zero_key();
 
-    let consume_events_admin: NonZeroPubkeyOption = ctx
-        .accounts
-        .consume_events_admin
-        .as_ref()
-        .map(|account| account.key())
-        .into();
+    if oracle_a.is_some() && oracle_b.is_some() {
+        let oracle_a = AccountInfoRef::borrow(ctx.accounts.oracle_a.as_ref().unwrap())?;
+        let oracle_b = AccountInfoRef::borrow(ctx.accounts.oracle_a.as_ref().unwrap())?;
 
-    let close_market_admin: NonZeroPubkeyOption = ctx
-        .accounts
-        .close_market_admin
-        .as_ref()
-        .map(|account| account.key())
-        .into();
-
-    let oracle: NonZeroPubkeyOption = ctx
-        .accounts
-        .oracle
-        .as_ref()
-        .map(|account| account.key())
-        .into();
+        require!(
+            oracle::determine_oracle_type(&oracle_a) == oracle::determine_oracle_type(&oracle_b),
+            OpenBookError::InvalidOracleTypes
+        );
+    } else if oracle_b.is_some() {
+        return Err(OpenBookError::InvalidSecondOracle.into());
+    }
 
     let mut openbook_market = ctx.accounts.market.load_init()?;
     *openbook_market = Market {
         signer_creator: ctx.accounts.payer.key(),
         collect_fee_admin: ctx.accounts.collect_fee_admin.key(),
-        open_orders_admin,
-        consume_events_admin,
-        close_market_admin,
+        open_orders_admin: ctx.accounts.open_orders_admin.non_zero_key(),
+        consume_events_admin: ctx.accounts.consume_events_admin.non_zero_key(),
+        close_market_admin: ctx.accounts.close_market_admin.non_zero_key(),
         market_index,
         bump: *ctx.bumps.get("market").ok_or(OpenBookError::SomeError)?,
         base_decimals: ctx.accounts.base_mint.decimals,
@@ -88,7 +75,8 @@ pub fn create_market(
         bids: ctx.accounts.bids.key(),
         asks: ctx.accounts.asks.key(),
         event_queue: ctx.accounts.event_queue.key(),
-        oracle,
+        oracle_a,
+        oracle_b,
         oracle_config: oracle_config.to_oracle_config(),
         quote_lot_size,
         base_lot_size,
@@ -127,7 +115,8 @@ pub fn create_market(
         quote_decimals: ctx.accounts.quote_mint.decimals,
         base_lot_size,
         quote_lot_size,
-        oracle: oracle.into(),
+        oracle_a: oracle_a.into(),
+        oracle_b: oracle_b.into(),
     });
 
     Ok(())

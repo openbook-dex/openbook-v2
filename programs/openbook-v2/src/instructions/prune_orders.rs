@@ -9,11 +9,11 @@ pub fn prune_orders(ctx: Context<PruneOrders>, limit: u8) -> Result<()> {
     let mut account = ctx.accounts.open_orders_account.load_mut()?;
     let market = ctx.accounts.market.load()?;
 
-    // check market is expired
     require!(
-        market.time_expiry == -1 || market.time_expiry < Clock::get()?.unix_timestamp,
+        market.is_expired(Clock::get()?.unix_timestamp),
         OpenBookError::MarketHasNotExpired
     );
+
     let close_admin: Pubkey =
         Option::from(market.close_market_admin).ok_or(OpenBookError::NoCloseMarketAdmin)?;
     require!(

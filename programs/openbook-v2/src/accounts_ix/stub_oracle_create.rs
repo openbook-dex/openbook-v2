@@ -6,15 +6,15 @@ use anchor_spl::token::Mint;
 pub struct StubOracleCreate<'info> {
     #[account(mut)]
     pub payer: Signer<'info>,
+    pub owner: Signer<'info>,
     #[account(
         init,
-        seeds = [b"StubOracle".as_ref(), mint.key().as_ref()],
+        seeds = [b"StubOracle".as_ref(), owner.key().as_ref(), mint.key().as_ref()],
         bump,
         payer = payer,
         space = 8 + std::mem::size_of::<StubOracle>(),
     )]
     pub oracle: AccountLoader<'info, StubOracle>,
-    pub admin: Signer<'info>,
     pub mint: Account<'info, Mint>,
     pub system_program: Program<'info, System>,
 }

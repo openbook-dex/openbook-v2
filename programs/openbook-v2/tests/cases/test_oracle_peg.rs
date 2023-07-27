@@ -22,7 +22,7 @@ async fn test_oracle_peg_enabled() -> Result<(), TransportError> {
         PlaceOrderPeggedInstruction {
             open_orders_account: account_0,
             market,
-            owner,
+            signer: owner,
             token_deposit_account: owner_token_1,
             market_vault: quote_vault,
             side: Side::Bid,
@@ -80,7 +80,7 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
         PlaceOrderPeggedInstruction {
             open_orders_account: account_0,
             market,
-            owner,
+            signer: owner,
             token_deposit_account: owner_token_1,
             market_vault: quote_vault,
             side: Side::Bid,
@@ -106,7 +106,7 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
     send_tx(
         solana,
         CancelOrderInstruction {
-            owner,
+            signer: owner,
             market,
             open_orders_account: account_0,
             order_id: order.id,
@@ -126,7 +126,7 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
         PlaceOrderPeggedInstruction {
             open_orders_account: account_0,
             market,
-            owner,
+            signer: owner,
             token_deposit_account: owner_token_1,
             market_vault: quote_vault,
             side: Side::Bid,
@@ -157,7 +157,7 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
             open_orders_account: account_1,
             open_orders_admin: None,
             market,
-            owner,
+            signer: owner,
             token_deposit_account: owner_token_0,
             market_vault: base_vault,
             side: Side::Ask,
@@ -179,7 +179,7 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
         PlaceOrderPeggedInstruction {
             open_orders_account: account_1,
             market,
-            owner,
+            signer: owner,
             token_deposit_account: owner_token_0,
             market_vault: base_vault,
             side: Side::Ask,
@@ -212,7 +212,7 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
         PlaceOrderPeggedInstruction {
             open_orders_account: account_0,
             market,
-            owner,
+            signer: owner,
             token_deposit_account: owner_token_1,
             market_vault: quote_vault,
             side: Side::Bid,
@@ -233,7 +233,7 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
             open_orders_account: account_1,
             open_orders_admin: None,
             market,
-            owner,
+            signer: owner,
             token_deposit_account: owner_token_0,
             market_vault: base_vault,
             side: Side::Ask,
@@ -255,7 +255,7 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
         CancelOrderByClientOrderIdInstruction {
             open_orders_account: account_1,
             market,
-            owner,
+            signer: owner,
             client_order_id: 60,
         },
     )
@@ -270,7 +270,7 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
             open_orders_account: account_1,
             open_orders_admin: None,
             market,
-            owner,
+            signer: owner,
             token_deposit_account: owner_token_0,
             market_vault: base_vault,
             side: Side::Ask,
@@ -308,7 +308,7 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
         PlaceOrderPeggedInstruction {
             open_orders_account: account_0,
             market,
-            owner,
+            signer: owner,
             token_deposit_account: owner_token_1,
             market_vault: quote_vault,
             side: Side::Bid,
@@ -330,7 +330,7 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
             open_orders_account: account_1,
             open_orders_admin: None,
             market,
-            owner,
+            signer: owner,
             token_deposit_account: owner_token_0,
             market_vault: base_vault,
             side: Side::Ask,
@@ -352,7 +352,7 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
         CancelOrderByClientOrderIdInstruction {
             open_orders_account: account_1,
             market,
-            owner,
+            signer: owner,
             client_order_id: 62,
         },
     )
@@ -367,7 +367,7 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
             open_orders_account: account_1,
             open_orders_admin: None,
             market,
-            owner,
+            signer: owner,
             token_deposit_account: owner_token_0,
             market_vault: base_vault,
             side: Side::Ask,
@@ -389,7 +389,7 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
         CancelOrderByClientOrderIdInstruction {
             open_orders_account: account_1,
             market,
-            owner,
+            signer: owner,
             client_order_id: 63,
         },
     )
@@ -459,7 +459,7 @@ async fn test_oracle_peg_limit() -> Result<(), TransportError> {
         PlaceOrderPeggedInstruction {
             open_orders_account: account_0,
             market,
-            owner,
+            signer: owner,
             token_deposit_account: owner_token_1,
             market_vault: quote_vault,
             side: Side::Bid,
@@ -482,7 +482,7 @@ async fn test_oracle_peg_limit() -> Result<(), TransportError> {
         PlaceOrderPeggedInstruction {
             open_orders_account: account_0,
             market,
-            owner,
+            signer: owner,
             token_deposit_account: owner_token_1,
             market_vault: quote_vault,
             side: Side::Bid,
@@ -543,7 +543,7 @@ async fn test_locked_amounts() -> Result<(), TransportError> {
     let place_bid_0_ix = PlaceOrderPeggedInstruction {
         open_orders_account: account_0,
         market,
-        owner,
+        signer: owner,
         token_deposit_account: owner_quote_ata,
         market_vault: quote_vault,
         side: Side::Bid,
@@ -605,7 +605,7 @@ async fn test_locked_amounts() -> Result<(), TransportError> {
             CancelAllOrdersInstruction {
                 open_orders_account: account_0,
                 market,
-                owner,
+                signer: owner,
             },
         )
         .await
@@ -636,7 +636,7 @@ async fn test_locked_amounts() -> Result<(), TransportError> {
             CancelAllOrdersInstruction {
                 open_orders_account: account_1,
                 market,
-                owner,
+                signer: owner,
             },
         )
         .await
