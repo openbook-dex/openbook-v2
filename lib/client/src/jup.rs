@@ -6,7 +6,8 @@ use anyhow::Result;
 use fixed::types::I80F48;
 use openbook_v2::{
     accounts::PlaceTakeOrder,
-    accounts_zerocopy::{AccountReader, KeyedAccountReader},
+    accounts_zerocopy,
+    pubkey_option::NonZeroPubkeyOption,
     state::{BookSide, EventQueue, Market, Orderbook, Side},
 };
 
@@ -100,39 +101,22 @@ impl Amm for OpenBookMarket {
         let clock: Clock = bincode::deserialize(clock_data.data.as_slice())?;
         self.timestamp = clock.unix_timestamp as u64;
 
-        if self.market.oracle_a.is_some() && self.market.oracle_b.is_some() {
-            let oracle_a_data = account_map
-                .get(&Option::from(self.market.oracle_a).unwrap())
-                .unwrap();
-            let oracle_a_acc = &AccountOracle {
-                data: &oracle_a_data.data,
-                key: Option::from(self.market.oracle_a).unwrap(),
-            };
-            let oracle_b_data = account_map
-                .get(&Option::from(self.market.oracle_b).unwrap())
-                .unwrap();
-            let oracle_b_acc = &AccountOracle {
-                data: &oracle_b_data.data,
-                key: Option::from(self.market.oracle_b).unwrap(),
-            };
+        let oracle_acc = |nonzero_pubkey: NonZeroPubkeyOption| -> accounts_zerocopy::KeyedAccount {
+            let key = Option::from(nonzero_pubkey).unwrap();
+            let account = account_map.get(&key).unwrap().clone();
+            accounts_zerocopy::KeyedAccount { key, account }
+        };
 
+        if self.market.oracle_a.is_some() && self.market.oracle_b.is_some() {
             self.oracle_price = self.market.oracle_price_from_a_and_b(
-                oracle_a_acc,
-                oracle_b_acc,
+                &oracle_acc(self.market.oracle_a),
+                &oracle_acc(self.market.oracle_b),
                 self.timestamp,
             )?;
         } else if self.market.oracle_a.is_some() {
-            let oracle_a_data = account_map
-                .get(&Option::from(self.market.oracle_a).unwrap())
-                .unwrap();
-            let oracle_a_acc = &AccountOracle {
-                data: &oracle_a_data.data,
-                key: Option::from(self.market.oracle_a).unwrap(),
-            };
-
             self.oracle_price = self
                 .market
-                .oracle_price_from_a(oracle_a_acc, self.timestamp)?;
+                .oracle_price_from_a(&oracle_acc(self.market.oracle_a), self.timestamp)?;
         };
 
         Ok(())
@@ -239,26 +223,5 @@ impl Amm for OpenBookMarket {
 
     fn clone_amm(&self) -> Box<dyn Amm + Send + Sync> {
         Box::new(self.clone())
-    }
-}
-
-pub struct AccountOracle<'a> {
-    data: &'a Vec<u8>,
-    key: Pubkey,
-}
-
-impl AccountReader for AccountOracle<'_> {
-    fn owner(&self) -> &Pubkey {
-        &self.key
-    }
-
-    fn data(&self) -> &[u8] {
-        self.data
-    }
-}
-
-impl KeyedAccountReader for AccountOracle<'_> {
-    fn key(&self) -> &Pubkey {
-        &self.key
     }
 }
