@@ -68,7 +68,10 @@ async fn fetch_anchor_accounts<T: AccountDeserialize + Discriminator>(
         .collect()
 }
 
-pub async fn fetch_markets(rpc: &RpcClientAsync, program: Pubkey) -> anyhow::Result<Vec<(Pubkey, Market)>> {
+pub async fn fetch_markets(
+    rpc: &RpcClientAsync,
+    program: Pubkey,
+) -> anyhow::Result<Vec<(Pubkey, Market)>> {
     fetch_anchor_accounts::<Market>(rpc, program).await
 }
 
@@ -85,7 +88,7 @@ pub async fn _fetch_market_by_payer_and_index(
             payer.to_bytes().as_ref(),
             &index.to_le_bytes(),
         ],
-        &program
+        &program,
     )
     .0;
     let account = rpc.get_account_data(&market_pubkey).await?;
