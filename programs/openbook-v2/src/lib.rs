@@ -124,7 +124,7 @@ pub mod openbook_v2 {
     ///
     pub fn place_and_cancel_multiple_orders(
         ctx: Context<PlaceAndCancelMultipleOrders>,
-        cancel_client_orders_ids: Vec<u128>,
+        cancel_client_orders_ids: Vec<u64>,
         place_orders: Vec<PlaceOrderArgs>,
     ) -> Result<Vec<Option<u128>>> {
         let mut orders = Vec::new();

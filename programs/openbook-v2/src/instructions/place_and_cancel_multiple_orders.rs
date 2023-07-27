@@ -10,7 +10,7 @@ use crate::token_utils::token_transfer;
 #[allow(clippy::too_many_arguments)]
 pub fn place_and_cancel_multiple_orders(
     ctx: Context<PlaceAndCancelMultipleOrders>,
-    cancel_client_orders_ids: Vec<u128>,
+    cancel_client_orders_ids: Vec<u64>,
     orders: Vec<Order>,
     limits: Vec<u8>,
 ) -> Result<Vec<Option<u128>>> {
@@ -53,7 +53,7 @@ pub fn place_and_cancel_multiple_orders(
 
     for client_order_id in cancel_client_orders_ids {
         require_gt!(client_order_id, 0, OpenBookError::InvalidInputOrderId);
-        let oo = open_orders_account.find_order_with_order_id(client_order_id);
+        let oo = open_orders_account.find_order_with_client_order_id(client_order_id);
         if let Some(oo) = oo {
             let order_id = oo.id;
             let order_side_and_tree = oo.side_and_tree();
@@ -66,7 +66,7 @@ pub fn place_and_cancel_multiple_orders(
             )?;
         };
     }
-    for (order, limit) in orders.iter().zip(limits.iter()).map(|(x, y)| (x, y)) {
+    for (order, limit) in orders.iter().zip(limits) {
         require_gte!(order.max_base_lots, 0, OpenBookError::InvalidInputLots);
         require_gte!(
             order.max_quote_lots_including_fees,
@@ -91,7 +91,7 @@ pub fn place_and_cancel_multiple_orders(
             Some(&mut open_orders_account),
             &open_orders_account_pk,
             now_ts,
-            *limit,
+            limit,
             ctx.remaining_accounts,
         )?;
 
