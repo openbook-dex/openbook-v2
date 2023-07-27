@@ -72,7 +72,8 @@ pub async fn fetch_markets(rpc: &RpcClientAsync, program: Pubkey) -> anyhow::Res
     fetch_anchor_accounts::<Market>(rpc, program).await
 }
 
-pub async fn fetch_market_by_payer_and_index(
+// TODO review visibility
+pub async fn _fetch_market_by_payer_and_index(
     index: MarketIndex,
     program: Pubkey,
     payer: Pubkey,
