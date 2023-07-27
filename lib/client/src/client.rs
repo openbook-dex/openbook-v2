@@ -74,7 +74,6 @@ impl Client {
         }
     }
 
-    // TODO: this function here is awkward, since it (intentionally) doesn't use OpenBookClient::account_fetcher
     pub async fn rpc_anchor_account<T: AccountDeserialize>(
         &self,
         address: &Pubkey,
@@ -88,7 +87,7 @@ pub struct OpenBookClient {
     pub client: Client,
 
     // todo: possibly this object should have cache-functions, so there can be one getMultipleAccounts
-    // call to refresh banks etc -- if it's backed by websockets, these could just do nothing
+    // call to refresh -- if it's backed by websockets, these could just do nothing
     pub account_fetcher: Arc<dyn AccountFetcher>,
 
     pub owner: Arc<Keypair>,
@@ -207,7 +206,7 @@ impl OpenBookClient {
             rpc,
         })));
         let openbook_account =
-            account_fetcher_fetch_openbook_account(&*account_fetcher, &account).await?;
+            account_fetcher_fetch_openorders_account(&*account_fetcher, &account).await?;
         if openbook_account.owner != owner.pubkey() {
             anyhow::bail!(
                 "bad owner for account: expected {} got {}",
@@ -245,8 +244,8 @@ impl OpenBookClient {
         self.owner.pubkey()
     }
 
-    pub async fn openbook_account(&self) -> anyhow::Result<OpenOrdersAccount> {
-        account_fetcher_fetch_openbook_account(&*self.account_fetcher, &self.open_orders_account)
+    pub async fn openorders_account(&self) -> anyhow::Result<OpenOrdersAccount> {
+        account_fetcher_fetch_openorders_account(&*self.account_fetcher, &self.open_orders_account)
             .await
     }
 
