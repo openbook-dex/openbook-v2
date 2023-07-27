@@ -62,7 +62,7 @@ impl OpenBookContext {
         let program = openbook_v2::ID;
 
         // markets
-        let market_tuples = fetch_markets(rpc).await?;
+        let market_tuples = fetch_markets(rpc, program).await?;
         let markets = market_tuples
             .iter()
             .map(|(pk, pm)| {
@@ -89,7 +89,7 @@ impl OpenBookContext {
     }
 
     pub async fn new_markets_listed(&self, rpc: &RpcClientAsync) -> anyhow::Result<bool> {
-        let new_markets = fetch_markets(rpc).await?;
+        let new_markets = fetch_markets(rpc, openbook_v2::id()).await?;
         Ok(new_markets.len() > self.markets.len())
     }
 }

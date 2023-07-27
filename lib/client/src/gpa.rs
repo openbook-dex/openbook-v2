@@ -10,6 +10,7 @@ use solana_sdk::pubkey::Pubkey;
 
 pub async fn fetch_openbook_accounts(
     rpc: &RpcClientAsync,
+    program: Pubkey,
     owner: Pubkey,
 ) -> anyhow::Result<Vec<(Pubkey, OpenOrdersAccount)>> {
     let config = RpcProgramAccountsConfig {
@@ -26,7 +27,7 @@ pub async fn fetch_openbook_accounts(
         },
         ..RpcProgramAccountsConfig::default()
     };
-    rpc.get_program_accounts_with_config(&openbook_v2::id(), config)
+    rpc.get_program_accounts_with_config(&program, config)
         .await?
         .into_iter()
         .map(|(key, account)| {
@@ -67,12 +68,13 @@ async fn fetch_anchor_accounts<T: AccountDeserialize + Discriminator>(
         .collect()
 }
 
-pub async fn fetch_markets(rpc: &RpcClientAsync) -> anyhow::Result<Vec<(Pubkey, Market)>> {
-    fetch_anchor_accounts::<Market>(rpc, openbook_v2::id()).await
+pub async fn fetch_markets(rpc: &RpcClientAsync, program: Pubkey) -> anyhow::Result<Vec<(Pubkey, Market)>> {
+    fetch_anchor_accounts::<Market>(rpc, program).await
 }
 
 pub async fn fetch_market_by_payer_and_index(
     index: MarketIndex,
+    program: Pubkey,
     payer: Pubkey,
     rpc: &RpcClientAsync,
 ) -> anyhow::Result<Market> {
@@ -82,7 +84,7 @@ pub async fn fetch_market_by_payer_and_index(
             payer.to_bytes().as_ref(),
             &index.to_le_bytes(),
         ],
-        &openbook_v2::id(),
+        &program
     )
     .0;
     let account = rpc.get_account_data(&market_pubkey).await?;

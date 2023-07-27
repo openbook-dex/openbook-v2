@@ -105,7 +105,7 @@ impl OpenBookClient {
         client: &Client,
         owner: &Keypair,
     ) -> anyhow::Result<Vec<(Pubkey, OpenOrdersAccount)>> {
-        fetch_openbook_accounts(&client.rpc_async(), owner.pubkey()).await
+        fetch_openbook_accounts(&client.rpc_async(), openbook_v2::ID, owner.pubkey()).await
     }
 
     pub async fn find_or_create_account(
@@ -116,8 +116,10 @@ impl OpenBookClient {
         openbook_account_name: &str,
     ) -> anyhow::Result<Pubkey> {
         let rpc = client.rpc_async();
+        let program = openbook_v2::ID;
 
-        let mut openbook_account_tuples = fetch_openbook_accounts(&rpc, owner.pubkey()).await?;
+        let mut openbook_account_tuples =
+            fetch_openbook_accounts(&rpc, program, owner.pubkey()).await?;
         let openbook_account_opt = openbook_account_tuples
             .iter()
             .find(|(_, account)| account.name() == openbook_account_name);
@@ -132,7 +134,8 @@ impl OpenBookClient {
                 .await
                 .context("Failed to create account...")?;
         }
-        let openbook_account_tuples = fetch_openbook_accounts(&rpc, owner.pubkey()).await?;
+        let openbook_account_tuples =
+            fetch_openbook_accounts(&rpc, program, owner.pubkey()).await?;
         let index = openbook_account_tuples
             .iter()
             .position(|tuple| tuple.1.name() == openbook_account_name)
