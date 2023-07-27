@@ -11,8 +11,8 @@ use crate::token_utils::token_transfer;
 pub fn place_multiple_orders(
     ctx: Context<PlaceMultipleOrders>,
     orders: Vec<Order>,
-    replace_order_id: Vec<bool>,
-    limit: Vec<u8>,
+    replace_order_ids: Vec<bool>,
+    limits: Vec<u8>,
 ) -> Result<Vec<Option<u128>>> {
     let mut open_orders_account = ctx.accounts.open_orders_account.load_mut()?;
     let open_orders_account_pk = ctx.accounts.open_orders_account.key();
@@ -50,7 +50,9 @@ pub fn place_multiple_orders(
     let mut deposit_quote_amount = 0;
     let mut deposit_base_amount = 0;
     let mut order_ids = Vec::new();
-    for (i, order) in orders.iter().enumerate() {
+
+    let zipped = zip!(orders, replace_order_ids, limits);
+    for (order, (replace_order_id, limit)) in zipped {
         require_gte!(order.max_base_lots, 0, OpenBookError::InvalidInputLots);
         require_gte!(
             order.max_quote_lots_including_fees,
@@ -58,7 +60,7 @@ pub fn place_multiple_orders(
             OpenBookError::InvalidInputLots
         );
 
-        if replace_order_id[i] {
+        if *replace_order_id {
             let oo = open_orders_account.find_order_with_order_id(order.client_order_id.into());
             if let Some(oo) = oo {
                 let client_order_id = oo.id;
@@ -90,7 +92,7 @@ pub fn place_multiple_orders(
             Some(&mut open_orders_account),
             &open_orders_account_pk,
             now_ts,
-            limit[i],
+            limit,
             ctx.remaining_accounts,
         )?;
 
@@ -145,3 +147,12 @@ pub fn place_multiple_orders(
 
     Ok(order_ids)
 }
+
+macro_rules! zip {
+    ($x: expr) => ($x);
+    ($x: expr, $($y: expr), +) => (
+        $x.iter().zip(
+            zip!($($y), +))
+    )
+}
+pub(crate) use zip;

@@ -340,6 +340,7 @@ impl ClientInstruction for PlaceOrderInstruction {
                 expiry_timestamp: self.expiry_timestamp,
                 self_trade_behavior: self.self_trade_behavior,
                 limit: 10,
+                replace_order_id: false,
             },
         };
 

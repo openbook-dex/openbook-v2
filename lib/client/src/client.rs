@@ -273,6 +273,7 @@ impl OpenBookClient {
         token_deposit_account: Pubkey,
         market_vault: Pubkey,
         self_trade_behavior: SelfTradeBehavior,
+        replace_order_id: bool,
     ) -> anyhow::Result<Signature> {
         let market = self.context.context(market_index);
 
@@ -309,6 +310,7 @@ impl OpenBookClient {
                     expiry_timestamp,
                     self_trade_behavior,
                     limit,
+                    replace_order_id,
                 },
             }),
         };
