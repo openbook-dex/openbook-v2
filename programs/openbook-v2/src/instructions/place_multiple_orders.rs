@@ -11,6 +11,7 @@ use crate::token_utils::token_transfer;
 pub fn place_multiple_orders(
     ctx: Context<PlaceMultipleOrders>,
     orders: Vec<Order>,
+    replace_order_id: Vec<bool>,
     limit: Vec<u8>,
 ) -> Result<Vec<Option<u128>>> {
     let mut open_orders_account = ctx.accounts.open_orders_account.load_mut()?;
@@ -56,6 +57,21 @@ pub fn place_multiple_orders(
             0,
             OpenBookError::InvalidInputLots
         );
+
+        if replace_order_id[i] {
+            let oo = open_orders_account.find_order_with_order_id(order.client_order_id.into());
+            if let Some(oo) = oo {
+                let client_order_id = oo.id;
+                let order_side_and_tree = oo.side_and_tree();
+                book.cancel_order(
+                    &mut open_orders_account,
+                    client_order_id,
+                    order_side_and_tree,
+                    *market,
+                    Some(ctx.accounts.open_orders_account.key()),
+                )?;
+            };
+        }
 
         let OrderWithAmounts {
             order_id,
