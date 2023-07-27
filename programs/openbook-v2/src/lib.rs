@@ -122,8 +122,8 @@ pub mod openbook_v2 {
 
     /// Place multiple orders.
     ///
-    pub fn place_and_cancel_multiple_orders(
-        ctx: Context<PlaceAndCancelMultipleOrders>,
+    pub fn cancel_and_place_orders(
+        ctx: Context<CancelAndPlaceOrders>,
         cancel_client_orders_ids: Vec<u64>,
         place_orders: Vec<PlaceOrderArgs>,
     ) -> Result<Vec<Option<u128>>> {
@@ -165,7 +165,7 @@ pub mod openbook_v2 {
             limits.push(place_order.limit);
         }
         #[cfg(feature = "enable-gpl")]
-        return instructions::place_and_cancel_multiple_orders(
+        return instructions::cancel_and_place_orders(
             ctx,
             cancel_client_orders_ids,
             orders,

@@ -1,10 +1,10 @@
+pub use cancel_and_place_orders::*;
 pub use cancel_order::*;
 pub use close_market::*;
 pub use consume_events::*;
 pub use create_market::*;
 pub use deposit::*;
 pub use init_open_orders::*;
-pub use place_and_cancel_multiple_orders::*;
 pub use place_order::*;
 pub use place_take_order::*;
 pub use prune_orders::*;
@@ -16,13 +16,13 @@ pub use stub_oracle_create::*;
 pub use stub_oracle_set::*;
 pub use sweep_fees::*;
 
+mod cancel_and_place_orders;
 mod cancel_order;
 mod close_market;
 mod consume_events;
 mod create_market;
 mod deposit;
 mod init_open_orders;
-mod place_and_cancel_multiple_orders;
 mod place_order;
 mod place_take_order;
 mod prune_orders;

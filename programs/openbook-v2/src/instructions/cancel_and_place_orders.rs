@@ -4,12 +4,13 @@ use std::cmp;
 use crate::accounts_ix::*;
 use crate::accounts_zerocopy::*;
 use crate::error::*;
+use crate::logs::CancelOrderLog;
 use crate::state::*;
 use crate::token_utils::token_transfer;
 
 #[allow(clippy::too_many_arguments)]
-pub fn place_and_cancel_multiple_orders(
-    ctx: Context<PlaceAndCancelMultipleOrders>,
+pub fn cancel_and_place_orders(
+    ctx: Context<CancelAndPlaceOrders>,
     cancel_client_orders_ids: Vec<u64>,
     orders: Vec<Order>,
     limits: Vec<u8>,
@@ -52,18 +53,23 @@ pub fn place_and_cancel_multiple_orders(
     let mut order_ids = Vec::new();
 
     for client_order_id in cancel_client_orders_ids {
-        require_gt!(client_order_id, 0, OpenBookError::InvalidInputOrderId);
         let oo = open_orders_account.find_order_with_client_order_id(client_order_id);
         if let Some(oo) = oo {
             let order_id = oo.id;
             let order_side_and_tree = oo.side_and_tree();
-            book.cancel_order(
+            let leaf_node = book.cancel_order(
                 &mut open_orders_account,
                 order_id,
                 order_side_and_tree,
                 *market,
                 Some(ctx.accounts.open_orders_account.key()),
             )?;
+            emit!(CancelOrderLog {
+                open_orders_account: ctx.accounts.open_orders_account.key(),
+                slot: leaf_node.owner_slot,
+                side: order_side_and_tree.side().into(),
+                quantity: leaf_node.quantity,
+            });
         };
     }
     for (order, limit) in orders.iter().zip(limits) {
