@@ -122,14 +122,14 @@ pub mod openbook_v2 {
 
     /// Place multiple orders.
     ///
-    pub fn place_multiple_orders(
-        ctx: Context<PlaceMultipleOrders>,
-        args: Vec<PlaceOrderArgs>,
+    pub fn place_and_cancel_multiple_orders(
+        ctx: Context<PlaceAndCancelMultipleOrders>,
+        cancel_client_orders_ids: Vec<u128>,
+        place_orders: Vec<PlaceOrderArgs>,
     ) -> Result<Vec<Option<u128>>> {
         let mut orders = Vec::new();
-        let mut replace_order_id = Vec::new();
-        let mut limit = Vec::new();
-        for place_order in args.iter() {
+        let mut limits = Vec::new();
+        for place_order in place_orders.iter() {
             require_gte!(
                 place_order.price_lots,
                 1,
@@ -162,11 +162,15 @@ pub mod openbook_v2 {
                     },
                 },
             });
-            replace_order_id.push(place_order.replace_order_id);
-            limit.push(place_order.limit);
+            limits.push(place_order.limit);
         }
         #[cfg(feature = "enable-gpl")]
-        return instructions::place_multiple_orders(ctx, orders, replace_order_id, limit);
+        return instructions::place_and_cancel_multiple_orders(
+            ctx,
+            cancel_client_orders_ids,
+            orders,
+            limits,
+        );
 
         #[cfg(not(feature = "enable-gpl"))]
         Ok(None)
@@ -430,8 +434,6 @@ pub struct PlaceOrderArgs {
     // Use this to limit compute used during order matching.
     // When the limit is reached, processing stops and the instruction succeeds.
     pub limit: u8,
-    /// If true, the program will try to remove the orders with the same client_order_id
-    pub replace_order_id: bool,
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Copy, Clone)]

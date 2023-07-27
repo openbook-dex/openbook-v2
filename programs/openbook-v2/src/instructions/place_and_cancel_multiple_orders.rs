@@ -8,10 +8,10 @@ use crate::state::*;
 use crate::token_utils::token_transfer;
 
 #[allow(clippy::too_many_arguments)]
-pub fn place_multiple_orders(
-    ctx: Context<PlaceMultipleOrders>,
+pub fn place_and_cancel_multiple_orders(
+    ctx: Context<PlaceAndCancelMultipleOrders>,
+    cancel_client_orders_ids: Vec<u128>,
     orders: Vec<Order>,
-    replace_order_ids: Vec<bool>,
     limits: Vec<u8>,
 ) -> Result<Vec<Option<u128>>> {
     let mut open_orders_account = ctx.accounts.open_orders_account.load_mut()?;
@@ -51,29 +51,28 @@ pub fn place_multiple_orders(
     let mut deposit_base_amount = 0;
     let mut order_ids = Vec::new();
 
-    let zipped = zip!(orders, replace_order_ids, limits);
-    for (order, (replace_order_id, limit)) in zipped {
+    for client_order_id in cancel_client_orders_ids {
+        require_gt!(client_order_id, 0, OpenBookError::InvalidInputOrderId);
+        let oo = open_orders_account.find_order_with_order_id(client_order_id);
+        if let Some(oo) = oo {
+            let order_id = oo.id;
+            let order_side_and_tree = oo.side_and_tree();
+            book.cancel_order(
+                &mut open_orders_account,
+                order_id,
+                order_side_and_tree,
+                *market,
+                Some(ctx.accounts.open_orders_account.key()),
+            )?;
+        };
+    }
+    for (order, limit) in orders.iter().zip(limits.iter()).map(|(x, y)| (x, y)) {
         require_gte!(order.max_base_lots, 0, OpenBookError::InvalidInputLots);
         require_gte!(
             order.max_quote_lots_including_fees,
             0,
             OpenBookError::InvalidInputLots
         );
-
-        if *replace_order_id {
-            let oo = open_orders_account.find_order_with_order_id(order.client_order_id.into());
-            if let Some(oo) = oo {
-                let client_order_id = oo.id;
-                let order_side_and_tree = oo.side_and_tree();
-                book.cancel_order(
-                    &mut open_orders_account,
-                    client_order_id,
-                    order_side_and_tree,
-                    *market,
-                    Some(ctx.accounts.open_orders_account.key()),
-                )?;
-            };
-        }
 
         let OrderWithAmounts {
             order_id,
@@ -92,7 +91,7 @@ pub fn place_multiple_orders(
             Some(&mut open_orders_account),
             &open_orders_account_pk,
             now_ts,
-            limit,
+            *limit,
             ctx.remaining_accounts,
         )?;
 
@@ -147,12 +146,3 @@ pub fn place_multiple_orders(
 
     Ok(order_ids)
 }
-
-macro_rules! zip {
-    ($x: expr) => ($x);
-    ($x: expr, $($y: expr), +) => (
-        $x.iter().zip(
-            zip!($($y), +))
-    )
-}
-pub(crate) use zip;
