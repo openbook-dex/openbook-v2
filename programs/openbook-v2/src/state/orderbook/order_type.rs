@@ -15,7 +15,6 @@ use crate::error::*;
     AnchorSerialize,
     AnchorDeserialize,
 )]
-#[cfg_attr(feature = "arbitrary", derive(arbitrary::Arbitrary))]
 #[repr(u8)]
 pub enum PlaceOrderType {
     /// Take existing orders up to price, max_base_quantity and max_quote_quantity.
@@ -91,7 +90,6 @@ pub enum PostOrderType {
     AnchorSerialize,
     AnchorDeserialize,
 )]
-#[cfg_attr(feature = "arbitrary", derive(arbitrary::Arbitrary))]
 #[repr(u8)]
 /// Self trade behavior controls how taker orders interact with resting limit orders of the same account.
 /// This setting has no influence on placing a resting or oracle pegged limit order that does not match
@@ -120,7 +118,6 @@ pub enum SelfTradeBehavior {
     AnchorSerialize,
     AnchorDeserialize,
 )]
-#[cfg_attr(feature = "arbitrary", derive(arbitrary::Arbitrary))]
 #[repr(u8)]
 pub enum Side {
     Bid = 0,
