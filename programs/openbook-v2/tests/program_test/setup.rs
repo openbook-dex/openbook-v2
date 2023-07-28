@@ -74,7 +74,6 @@ pub async fn create_open_orders_indexer(
     .await
     .unwrap()
     .open_orders_indexer
-
 }
 
 pub async fn create_open_orders_account(

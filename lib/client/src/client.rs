@@ -174,7 +174,9 @@ impl OpenBookClient {
                 },
                 None,
             ),
-            data: anchor_lang::InstructionData::data(&openbook_v2::instruction::CreateOpenOrdersIndexer {}),
+            data: anchor_lang::InstructionData::data(
+                &openbook_v2::instruction::CreateOpenOrdersIndexer {},
+            ),
         };
 
         let txsig = TransactionBuilder {
