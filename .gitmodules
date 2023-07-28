@@ -1,7 +1,3 @@
 [submodule "3rdparty/fixed"]
 	path = 3rdparty/fixed
 	url = https://gitlab.com/ckamm/fixed.git
-[submodule "3rdparty/anchor"]
-	path = 3rdparty/anchor
-	url = git@github.com:openbook-dex/anchor.git
-	branch = v0.27.0-arbitrary
