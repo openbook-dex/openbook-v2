@@ -63,6 +63,12 @@ pub struct CancelOrderLog {
 }
 
 #[event]
+pub struct CancelOrdersLog {
+    pub open_orders_account: Pubkey,
+    pub total_quantity: i64,
+}
+
+#[event]
 pub struct CancelAllOrdersLog {
     pub open_orders_account: Pubkey,
     pub side: Option<u8>,

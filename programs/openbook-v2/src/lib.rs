@@ -120,6 +120,62 @@ pub mod openbook_v2 {
         Ok(None)
     }
 
+    /// Place multiple orders.
+    ///
+    pub fn cancel_and_place_orders(
+        ctx: Context<CancelAndPlaceOrders>,
+        cancel_client_orders_ids: Vec<u64>,
+        place_orders: Vec<PlaceOrderArgs>,
+    ) -> Result<Vec<Option<u128>>> {
+        let mut orders = Vec::new();
+        let mut limits = Vec::new();
+        for place_order in place_orders.iter() {
+            require_gte!(
+                place_order.price_lots,
+                1,
+                OpenBookError::InvalidInputPriceLots
+            );
+
+            use crate::state::{Order, OrderParams};
+            let time_in_force = match Order::tif_from_expiry(place_order.expiry_timestamp) {
+                Some(t) => t,
+                None => {
+                    msg!("Order is already expired");
+                    continue;
+                }
+            };
+            orders.push(Order {
+                side: place_order.side,
+                max_base_lots: place_order.max_base_lots,
+                max_quote_lots_including_fees: place_order.max_quote_lots_including_fees,
+                client_order_id: place_order.client_order_id,
+                time_in_force,
+                self_trade_behavior: place_order.self_trade_behavior,
+                params: match place_order.order_type {
+                    PlaceOrderType::Market => OrderParams::Market,
+                    PlaceOrderType::ImmediateOrCancel => OrderParams::ImmediateOrCancel {
+                        price_lots: place_order.price_lots,
+                    },
+                    _ => OrderParams::Fixed {
+                        price_lots: place_order.price_lots,
+                        order_type: place_order.order_type.to_post_order_type()?,
+                    },
+                },
+            });
+            limits.push(place_order.limit);
+        }
+        #[cfg(feature = "enable-gpl")]
+        return instructions::cancel_and_place_orders(
+            ctx,
+            cancel_client_orders_ids,
+            orders,
+            limits,
+        );
+
+        #[cfg(not(feature = "enable-gpl"))]
+        Ok(None)
+    }
+
     pub fn place_order_pegged(
         ctx: Context<PlaceOrder>,
         args: PlaceOrderPeggedArgs,
