@@ -2,7 +2,6 @@
 
 ⚠️ Disclaimer: This code is currently under active development and should not be used in production environments.
 
-
 A central-limit order-book program based on [Mango V4](https://github.com/blockworks-foundation/mango-v4) and the [previous OpenBook program](https://github.com/openbook-dex/program) (which was a fork of [Serum](https://github.com/project-serum/serum-dex)).
 
 ## License
@@ -23,6 +22,14 @@ that call into the Openbook program.
 But deriving a Solana program with similar functionality to the Openbook program
 from this codebase would require the changes and improvements to stay publicly
 available under GPL.
+
+## Deployed versions
+
+| tag       | network |
+| --------- | ------- |
+| test-v0.1 | devnet  |
+| test-v0.1 | testnet |
+| test-v0.1 | mainnet |
 
 ## Building & testing
 
