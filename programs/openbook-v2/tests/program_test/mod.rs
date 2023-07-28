@@ -41,8 +41,8 @@ pub struct TestInitialize {
     pub quote_vault: Pubkey,
     pub price_lots: i64,
     pub tokens: Vec<Token>,
-    pub account_0: Pubkey,
     pub account_1: Pubkey,
+    pub account_2: Pubkey,
     pub bids: Pubkey,
 }
 
@@ -388,9 +388,9 @@ impl TestContext {
 
         let _indexer = create_open_orders_indexer(solana, &context.users[1], owner, market).await;
 
-        let account_0 =
-            create_open_orders_account(solana, owner, market, 1, &context.users[1], None).await;
         let account_1 =
+            create_open_orders_account(solana, owner, market, 1, &context.users[1], None).await;
+        let account_2 =
             create_open_orders_account(solana, owner, market, 2, &context.users[1], None).await;
 
         let price_lots = {
@@ -416,8 +416,8 @@ impl TestContext {
             quote_vault,
             price_lots,
             tokens,
-            account_0,
             account_1,
+            account_2,
             bids,
         })
     }

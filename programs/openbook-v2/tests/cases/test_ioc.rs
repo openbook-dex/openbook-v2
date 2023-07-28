@@ -15,8 +15,8 @@ async fn test_ioc() -> Result<(), TransportError> {
         quote_vault,
         price_lots,
         tokens,
-        account_0,
         account_1,
+        account_2,
         ..
     } = TestContext::new_with_market(TestNewMarketInitialize {
         maker_fee: 200,
@@ -29,7 +29,7 @@ async fn test_ioc() -> Result<(), TransportError> {
     send_tx(
         solana,
         PlaceOrderInstruction {
-            open_orders_account: account_0,
+            open_orders_account: account_1,
             market,
             signer: owner,
             token_deposit_account: owner_token_1,
@@ -51,7 +51,7 @@ async fn test_ioc() -> Result<(), TransportError> {
     send_tx(
         solana,
         PlaceOrderInstruction {
-            open_orders_account: account_1,
+            open_orders_account: account_2,
             market,
             signer: owner,
             token_deposit_account: owner_token_0,
@@ -71,23 +71,23 @@ async fn test_ioc() -> Result<(), TransportError> {
     .unwrap();
 
     {
-        let open_orders_account_0 = solana.get_account::<OpenOrdersAccount>(account_0).await;
         let open_orders_account_1 = solana.get_account::<OpenOrdersAccount>(account_1).await;
+        let open_orders_account_2 = solana.get_account::<OpenOrdersAccount>(account_2).await;
 
-        assert_eq!(open_orders_account_0.position.base_position_lots(), 0);
         assert_eq!(open_orders_account_1.position.base_position_lots(), 0);
-        assert_eq!(open_orders_account_0.position.quote_position_native(), 0);
-        // assert_eq!(open_orders_account_1.position.quote_position_native(), 0);
-        assert_eq!(open_orders_account_0.position.bids_base_lots, 1);
-        assert_eq!(open_orders_account_1.position.bids_base_lots, 0);
-        assert_eq!(open_orders_account_0.position.asks_base_lots, 0);
+        assert_eq!(open_orders_account_2.position.base_position_lots(), 0);
+        assert_eq!(open_orders_account_1.position.quote_position_native(), 0);
+        // assert_eq!(open_orders_account_2.position.quote_position_native(), 0);
+        assert_eq!(open_orders_account_1.position.bids_base_lots, 1);
+        assert_eq!(open_orders_account_2.position.bids_base_lots, 0);
         assert_eq!(open_orders_account_1.position.asks_base_lots, 0);
-        assert_eq!(open_orders_account_0.position.taker_base_lots, 0);
-        assert_eq!(open_orders_account_1.position.taker_quote_lots, 10000);
-        assert_eq!(open_orders_account_0.position.base_free_native, 0);
+        assert_eq!(open_orders_account_2.position.asks_base_lots, 0);
+        assert_eq!(open_orders_account_1.position.taker_base_lots, 0);
+        assert_eq!(open_orders_account_2.position.taker_quote_lots, 10000);
         assert_eq!(open_orders_account_1.position.base_free_native, 0);
-        assert_eq!(open_orders_account_0.position.quote_free_native, 0);
-        assert_eq!(open_orders_account_1.position.quote_free_native, 99960);
+        assert_eq!(open_orders_account_2.position.base_free_native, 0);
+        assert_eq!(open_orders_account_1.position.quote_free_native, 0);
+        assert_eq!(open_orders_account_2.position.quote_free_native, 99960);
     }
 
     Ok(())
