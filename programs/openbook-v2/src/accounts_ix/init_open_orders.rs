@@ -2,7 +2,6 @@ use crate::state::{Market, OpenOrdersAccount, OpenOrdersIndexer};
 use anchor_lang::prelude::*;
 
 #[derive(Accounts)]
-#[instruction(account_num: u32)]
 pub struct InitOpenOrders<'info> {
     #[account(mut)]
     pub payer: Signer<'info>,
