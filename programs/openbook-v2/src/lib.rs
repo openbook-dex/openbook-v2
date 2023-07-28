@@ -400,6 +400,13 @@ pub mod openbook_v2 {
         Ok(())
     }
 
+    /// Close a [`Market`](crate::state::Market).
+    pub fn close_open_orders_account(ctx: Context<CloseOpenOrdersAccount>) -> Result<()> {
+        #[cfg(feature = "enable-gpl")]
+        instructions::close_open_orders_account(ctx)?;
+        Ok(())
+    }
+
     pub fn stub_oracle_create(ctx: Context<StubOracleCreate>, price: I80F48) -> Result<()> {
         #[cfg(feature = "enable-gpl")]
         instructions::stub_oracle_create(ctx, price)?;
