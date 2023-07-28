@@ -4,7 +4,7 @@ use std::cmp;
 use crate::accounts_ix::*;
 use crate::accounts_zerocopy::*;
 use crate::error::*;
-use crate::logs::CancelOrderLog;
+use crate::logs::CancelOrdersLog;
 use crate::state::*;
 use crate::token_utils::token_transfer;
 
@@ -48,10 +48,7 @@ pub fn cancel_and_place_orders(
         None
     };
 
-    let mut deposit_quote_amount = 0;
-    let mut deposit_base_amount = 0;
-    let mut order_ids = Vec::new();
-
+    let mut canceled_quantity = 0;
     for client_order_id in cancel_client_orders_ids {
         let oo = open_orders_account.find_order_with_client_order_id(client_order_id);
         if let Some(oo) = oo {
@@ -64,14 +61,19 @@ pub fn cancel_and_place_orders(
                 *market,
                 Some(ctx.accounts.open_orders_account.key()),
             )?;
-            emit!(CancelOrderLog {
-                open_orders_account: ctx.accounts.open_orders_account.key(),
-                slot: leaf_node.owner_slot,
-                side: order_side_and_tree.side().into(),
-                quantity: leaf_node.quantity,
-            });
+            canceled_quantity += leaf_node.quantity;
         };
     }
+    if canceled_quantity > 0 {
+        emit!(CancelOrdersLog {
+            open_orders_account: ctx.accounts.open_orders_account.key(),
+            total_quantity: canceled_quantity,
+        });
+    }
+
+    let mut deposit_quote_amount = 0;
+    let mut deposit_base_amount = 0;
+    let mut order_ids = Vec::new();
     for (order, limit) in orders.iter().zip(limits) {
         require_gte!(order.max_base_lots, 0, OpenBookError::InvalidInputLots);
         require_gte!(
