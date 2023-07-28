@@ -57,6 +57,26 @@ impl Token {
     }
 }
 
+pub async fn create_open_orders_indexer(
+    solana: &SolanaCookie,
+    payer: &UserCookie,
+    owner: TestKeypair,
+    market: Pubkey,
+) -> Pubkey {
+    send_tx(
+        solana,
+        CreateOpenOrdersIndexerInstruction {
+            market,
+            owner,
+            payer: payer.key,
+        },
+    )
+    .await
+    .unwrap()
+    .open_orders_indexer
+
+}
+
 pub async fn create_open_orders_account(
     solana: &SolanaCookie,
     owner: TestKeypair,

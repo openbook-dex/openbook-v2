@@ -479,15 +479,14 @@ async fn test_delegate() -> Result<(), TransportError> {
     .await?;
     let solana = &context.solana.clone();
 
-    let account_0_delegate = context.users[2].key;
-
-    let account_0 = create_open_orders_account(
+    let account_3_delegate = context.users[2].key;
+    let account_3 = create_open_orders_account(
         solana,
         owner,
         market,
-        2,
+        3,
         &context.users[0],
-        Some(account_0_delegate.pubkey()),
+        Some(account_3_delegate.pubkey()),
     )
     .await;
     let delegate_token_1 = context.users[2].token_accounts[1];
@@ -498,10 +497,10 @@ async fn test_delegate() -> Result<(), TransportError> {
     send_tx(
         solana,
         PlaceOrderInstruction {
-            open_orders_account: account_0,
+            open_orders_account: account_3,
             open_orders_admin: None,
             market,
-            signer: account_0_delegate,
+            signer: account_3_delegate,
             token_deposit_account: delegate_token_1,
             market_vault: quote_vault,
             side: Side::Bid,
@@ -522,9 +521,9 @@ async fn test_delegate() -> Result<(), TransportError> {
     send_tx(
         solana,
         CancelOrderByClientOrderIdInstruction {
-            signer: account_0_delegate,
+            signer: account_3_delegate,
             market,
-            open_orders_account: account_0,
+            open_orders_account: account_3,
             client_order_id: 23,
         },
     )
@@ -535,7 +534,7 @@ async fn test_delegate() -> Result<(), TransportError> {
         solana,
         SetDelegateInstruction {
             owner,
-            open_orders_account: account_0,
+            open_orders_account: account_3,
             delegate_account: None,
         },
     )
@@ -546,10 +545,10 @@ async fn test_delegate() -> Result<(), TransportError> {
     let result = send_tx(
         solana,
         PlaceOrderInstruction {
-            open_orders_account: account_0,
+            open_orders_account: account_3,
             open_orders_admin: None,
             market,
-            signer: account_0_delegate,
+            signer: account_3_delegate,
             token_deposit_account: delegate_token_1,
             market_vault: quote_vault,
             side: Side::Bid,

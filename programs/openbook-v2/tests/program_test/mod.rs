@@ -12,8 +12,8 @@ use solana_sdk::pubkey::Pubkey;
 pub use solana_sdk::transport::TransportError;
 use spl_token::{state::*, *};
 
-use crate::program_test::setup::create_open_orders_account;
-use crate::program_test::setup::Token;
+use crate::program_test::setup::{create_open_orders_account, create_open_orders_indexer, Token};
+
 pub use client::*;
 pub use cookies::*;
 pub use solana::*;
@@ -386,10 +386,12 @@ impl TestContext {
         .await
         .unwrap();
 
+        let _indexer = create_open_orders_indexer(solana, &context.users[1], owner, market).await;
+
         let account_0 =
-            create_open_orders_account(solana, owner, market, 0, &context.users[1], None).await;
-        let account_1 =
             create_open_orders_account(solana, owner, market, 1, &context.users[1], None).await;
+        let account_1 =
+            create_open_orders_account(solana, owner, market, 2, &context.users[1], None).await;
 
         let price_lots = {
             let market = solana.get_account::<Market>(market).await;
