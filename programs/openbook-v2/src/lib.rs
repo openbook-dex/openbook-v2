@@ -120,7 +120,7 @@ pub mod openbook_v2 {
         Ok(None)
     }
 
-    /// Place multiple orders.
+    /// Cancel orders and place multiple orders.
     ///
     pub fn cancel_and_place_orders(
         ctx: Context<CancelAndPlaceOrders>,

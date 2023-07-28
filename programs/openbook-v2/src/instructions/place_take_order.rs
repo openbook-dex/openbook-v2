@@ -99,7 +99,7 @@ pub fn place_take_order<'info>(
         market.fees_to_referrers += referrer_amount;
         market.quote_deposit_total -= referrer_amount;
     } else {
-        market.quote_fees_accrued += referrer_amount;
+        market.fees_available += referrer_amount;
     }
 
     let seeds = market_seeds!(market);

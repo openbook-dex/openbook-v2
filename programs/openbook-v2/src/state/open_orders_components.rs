@@ -19,7 +19,7 @@ pub struct Position {
     pub quote_free_native: u64,
 
     pub locked_maker_fees: u64,
-    pub referrer_rebates_accrued: u64,
+    pub referrer_rebates_available: u64,
 
     /// Cumulative maker volume in quote native units (display only)
     pub maker_volume: u64,
@@ -42,7 +42,7 @@ impl Default for Position {
             base_free_native: 0,
             quote_free_native: 0,
             locked_maker_fees: 0,
-            referrer_rebates_accrued: 0,
+            referrer_rebates_available: 0,
             maker_volume: 0,
             taker_volume: 0,
             reserved: [0; 88],
