@@ -62,6 +62,18 @@ pub mod openbook_v2 {
         Ok(())
     }
 
+    pub fn create_open_orders_indexer(ctx: Context<CreateOpenOrdersIndexer>) -> Result<()> {
+        #[cfg(feature = "enable-gpl")]
+        instructions::create_open_orders_indexer(ctx)?;
+        Ok(())
+    }
+
+    pub fn close_open_orders_indexer(ctx: Context<CloseOpenOrdersIndexer>) -> Result<()> {
+        #[cfg(feature = "enable-gpl")]
+        instructions::close_open_orders_indexer(ctx)?;
+        Ok(())
+    }
+
     pub fn init_open_orders(ctx: Context<InitOpenOrders>, account_num: u32) -> Result<()> {
         #[cfg(feature = "enable-gpl")]
         instructions::init_open_orders(ctx, account_num)?;
