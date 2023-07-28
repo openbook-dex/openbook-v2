@@ -1,4 +1,4 @@
-use crate::state::{Market, OpenOrdersIndexer};
+use crate::state::OpenOrdersIndexer;
 use anchor_lang::prelude::*;
 use anchor_spl::token::Token;
 
@@ -8,11 +8,9 @@ pub struct CloseOpenOrdersIndexer<'info> {
     #[account(
         mut,
         has_one = owner,
-        has_one = market,
         close = sol_destination
     )]
     pub open_orders_indexer: AccountLoader<'info, OpenOrdersIndexer>,
-    pub market: AccountLoader<'info, Market>,
 
     #[account(mut)]
     /// CHECK: target for account rent needs no checks
