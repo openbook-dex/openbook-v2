@@ -91,6 +91,10 @@ impl OpenOrdersAccount {
         self.open_orders.iter()
     }
 
+    pub fn has_no_orders(&self) -> bool {
+        self.open_orders.iter().count() == 0
+    }
+
     pub fn all_orders_in_use(&self) -> impl Iterator<Item = &OpenOrder> {
         self.all_orders().filter(|oo| !oo.is_free())
     }

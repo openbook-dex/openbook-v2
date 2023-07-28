@@ -1,6 +1,7 @@
 pub use cancel_and_place_orders::*;
 pub use cancel_order::*;
 pub use close_market::*;
+pub use close_open_orders_account::*;
 pub use consume_events::*;
 pub use create_market::*;
 pub use deposit::*;
@@ -19,6 +20,7 @@ pub use sweep_fees::*;
 mod cancel_and_place_orders;
 mod cancel_order;
 mod close_market;
+mod close_open_orders_account;
 mod consume_events;
 mod create_market;
 mod deposit;

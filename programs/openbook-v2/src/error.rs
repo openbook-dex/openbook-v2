@@ -70,6 +70,8 @@ pub enum OpenBookError {
     MarketHasNotExpired,
     #[msg("No correct owner or delegate.")]
     NoOwnerOrDelegate,
+    #[msg("No correct owner")]
+    NoOwner,
     #[msg("No free order index in open orders account")]
     OpenOrdersFull,
     #[msg("Book contains elements")]
@@ -78,9 +80,10 @@ pub enum OpenBookError {
     OpenOrdersOrderNotFound,
     #[msg("Amount to post above book limits")]
     InvalidPostAmount,
-
     #[msg("Oracle peg orders are not enabled for this market")]
     DisabledOraclePeg,
+    #[msg("Open Orders Account Contains Orders. Cancel all before closing the account")]
+    OpenOrdersAccountContainsOrders,
 }
 
 impl From<OpenBookError> for ProgramError {
