@@ -9,5 +9,9 @@ pub fn close_open_orders_account(ctx: Context<CloseOpenOrdersAccount>) -> Result
         open_orders_account.has_no_orders(),
         OpenBookError::OpenOrdersAccountContainsOrders
     );
+
+    let mut indexer = ctx.accounts.open_orders_indexer.load_mut()?;
+    indexer.closed_counter += 1;
+
     Ok(())
 }
