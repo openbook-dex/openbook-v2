@@ -93,7 +93,7 @@ pub fn create_market(
         base_deposit_total: 0,
         quote_vault: ctx.accounts.quote_vault.key(),
         quote_deposit_total: 0,
-        quote_fees_accrued: 0,
+        fees_available: 0,
         referrer_rebates_accrued: 0,
 
         reserved: [0; 1768],

@@ -132,7 +132,7 @@ pub mod openbook_v2 {
         Ok(None)
     }
 
-    /// Place multiple orders.
+    /// Cancel orders and place multiple orders.
     ///
     pub fn cancel_and_place_orders(
         ctx: Context<CancelAndPlaceOrders>,
@@ -409,6 +409,13 @@ pub mod openbook_v2 {
     pub fn close_market(ctx: Context<CloseMarket>) -> Result<()> {
         #[cfg(feature = "enable-gpl")]
         instructions::close_market(ctx)?;
+        Ok(())
+    }
+
+    /// Close a [`Market`](crate::state::Market).
+    pub fn close_open_orders_account(ctx: Context<CloseOpenOrdersAccount>) -> Result<()> {
+        #[cfg(feature = "enable-gpl")]
+        instructions::close_open_orders_account(ctx)?;
         Ok(())
     }
 
