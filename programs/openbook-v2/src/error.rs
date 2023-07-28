@@ -44,6 +44,9 @@ pub enum OpenBookError {
     #[msg("The `consume_events_admin` required by this market to sign all instructions that consume events is missing or is not valid")]
     InvalidConsumeEventsAdmin,
 
+    #[msg("Cannot be closed due to the existence of open orders accounts")]
+    IndexerActiveOO,
+
     #[msg("oracle type cannot be determined")]
     UnknownOracleType,
     #[msg("an oracle does not reach the confidence threshold")]
