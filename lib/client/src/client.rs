@@ -146,6 +146,50 @@ impl OpenBookClient {
         Ok(openbook_account_tuples[index].0)
     }
 
+    pub async fn create_open_orders_indexer(
+        client: &Client,
+        market: Pubkey,
+        owner: &Keypair,
+        payer: &Keypair, // pays the SOL for the new account
+    ) -> anyhow::Result<(Pubkey, Signature)> {
+        let open_orders_indexer = Pubkey::find_program_address(
+            &[
+                b"OpenOrdersIndexer".as_ref(),
+                owner.pubkey().as_ref(),
+                market.as_ref(),
+            ],
+            &openbook_v2::id(),
+        )
+        .0;
+
+        let ix = Instruction {
+            program_id: openbook_v2::id(),
+            accounts: anchor_lang::ToAccountMetas::to_account_metas(
+                &openbook_v2::accounts::CreateOpenOrdersIndexer {
+                    owner: owner.pubkey(),
+                    open_orders_indexer,
+                    payer: payer.pubkey(),
+                    market,
+                    system_program: System::id(),
+                },
+                None,
+            ),
+            data: anchor_lang::InstructionData::data(&openbook_v2::instruction::CreateOpenOrdersIndexer {}),
+        };
+
+        let txsig = TransactionBuilder {
+            instructions: vec![ix],
+            address_lookup_tables: vec![],
+            payer: payer.pubkey(),
+            signers: vec![owner, payer],
+            config: client.transaction_builder_config,
+        }
+        .send_and_confirm(client)
+        .await?;
+
+        Ok((open_orders_indexer, txsig))
+    }
+
     pub async fn init_open_orders(
         client: &Client,
         market: Pubkey,
@@ -154,6 +198,16 @@ impl OpenBookClient {
         delegate: Option<Pubkey>,
         account_num: u32,
     ) -> anyhow::Result<(Pubkey, Signature)> {
+        let open_orders_indexer = Pubkey::find_program_address(
+            &[
+                b"OpenOrdersIndexer".as_ref(),
+                owner.pubkey().as_ref(),
+                market.as_ref(),
+            ],
+            &openbook_v2::id(),
+        )
+        .0;
+
         let account = Pubkey::find_program_address(
             &[
                 b"OpenOrdersAccount".as_ref(),
@@ -164,11 +218,13 @@ impl OpenBookClient {
             &openbook_v2::id(),
         )
         .0;
+
         let ix = Instruction {
             program_id: openbook_v2::id(),
             accounts: anchor_lang::ToAccountMetas::to_account_metas(
                 &openbook_v2::accounts::InitOpenOrders {
                     owner: owner.pubkey(),
+                    open_orders_indexer,
                     open_orders_account: account,
                     payer: payer.pubkey(),
                     delegate_account: delegate,
@@ -177,9 +233,7 @@ impl OpenBookClient {
                 },
                 None,
             ),
-            data: anchor_lang::InstructionData::data(&openbook_v2::instruction::InitOpenOrders {
-                account_num,
-            }),
+            data: anchor_lang::InstructionData::data(&openbook_v2::instruction::InitOpenOrders {}),
         };
 
         let txsig = TransactionBuilder {
