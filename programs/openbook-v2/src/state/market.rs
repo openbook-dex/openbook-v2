@@ -95,6 +95,11 @@ pub struct Market {
     pub fees_accrued: u64,
     // Total fees settled in native quote
     pub fees_to_referrers: u64,
+    // Total referrer rebates
+    pub referrer_rebates_accrued: u64,
+
+    // Fees generated and available to withdraw via sweep_fees
+    pub fees_available: u64,
 
     /// Cumulative taker volume in quote native units due to place take orders
     pub taker_volume_wo_oo: u64,
@@ -107,9 +112,6 @@ pub struct Market {
 
     pub quote_vault: Pubkey,
     pub quote_deposit_total: u64,
-
-    pub quote_fees_available: u64,
-    pub referrer_rebates_accrued: u64,
 
     pub reserved: [u8; 1768],
 }

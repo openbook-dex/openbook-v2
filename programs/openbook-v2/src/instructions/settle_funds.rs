@@ -23,7 +23,7 @@ pub fn settle_funds<'info>(ctx: Context<'_, '_, '_, 'info, SettleFunds<'info>>) 
         market.fees_to_referrers += referrer_rebate;
         market.quote_deposit_total -= referrer_rebate;
     } else {
-        market.quote_fees_available += referrer_rebate;
+        market.fees_available += referrer_rebate;
     }
 
     market.base_deposit_total -= pa.base_free_native;
