@@ -27,7 +27,7 @@ impl OpenOrdersIndexer {
         8 + size_of::<OpenOrdersIndexer>()
     }
 
-    pub fn has_active_open_orders(&self) -> bool {
+    pub fn has_active_open_orders_accounts(&self) -> bool {
         self.created_counter != self.closed_counter
     }
 }
