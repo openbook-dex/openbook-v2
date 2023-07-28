@@ -135,7 +135,7 @@ async fn test_fees_accrued() -> Result<(), TransportError> {
 
     {
         let market = solana.get_account::<Market>(market).await;
-        assert_eq!(market.quote_fees_accrued, 10);
+        assert_eq!(market.quote_fees_available, 10);
         assert_eq!(market.fees_accrued, 10);
         assert_eq!(market.fees_to_referrers, 0);
     }
@@ -154,7 +154,7 @@ async fn test_fees_accrued() -> Result<(), TransportError> {
 
     {
         let market = solana.get_account::<Market>(market).await;
-        assert_eq!(market.quote_fees_accrued, 0);
+        assert_eq!(market.quote_fees_available, 0);
         assert_eq!(market.fees_accrued, 10);
         assert_eq!(market.fees_to_referrers, 0);
     }
@@ -350,7 +350,7 @@ async fn test_maker_fees() -> Result<(), TransportError> {
 
     {
         let market = solana.get_account::<Market>(market).await;
-        assert_eq!(market.quote_fees_accrued, 40);
+        assert_eq!(market.quote_fees_available, 40);
         assert_eq!(market.fees_accrued, 60);
         assert_eq!(market.fees_to_referrers, 0);
     }
@@ -373,7 +373,7 @@ async fn test_maker_fees() -> Result<(), TransportError> {
 
     {
         let market = solana.get_account::<Market>(market).await;
-        assert_eq!(market.quote_fees_accrued, 40);
+        assert_eq!(market.quote_fees_available, 40);
         assert_eq!(market.fees_accrued, 60);
         assert_eq!(market.fees_to_referrers, 20);
     }
@@ -392,7 +392,7 @@ async fn test_maker_fees() -> Result<(), TransportError> {
 
     {
         let market = solana.get_account::<Market>(market).await;
-        assert_eq!(market.quote_fees_accrued, 0);
+        assert_eq!(market.quote_fees_available, 0);
     }
 
     Ok(())
@@ -542,7 +542,7 @@ async fn test_no_maker_fees_ask() -> Result<(), TransportError> {
 
     {
         let market = solana.get_account::<Market>(market).await;
-        assert_eq!(market.quote_fees_accrued, 0);
+        assert_eq!(market.quote_fees_available, 0);
         assert_eq!(market.fees_accrued, 20);
         assert_eq!(market.fees_to_referrers, 0);
     }
@@ -565,7 +565,7 @@ async fn test_no_maker_fees_ask() -> Result<(), TransportError> {
 
     {
         let market = solana.get_account::<Market>(market).await;
-        assert_eq!(market.quote_fees_accrued, 0);
+        assert_eq!(market.quote_fees_available, 0);
         assert_eq!(market.fees_accrued, 20);
         assert_eq!(market.fees_to_referrers, 20);
     }
@@ -584,7 +584,7 @@ async fn test_no_maker_fees_ask() -> Result<(), TransportError> {
 
     {
         let market = solana.get_account::<Market>(market).await;
-        assert_eq!(market.quote_fees_accrued, 0);
+        assert_eq!(market.quote_fees_available, 0);
     }
 
     Ok(())
@@ -734,7 +734,7 @@ async fn test_maker_fees_ask() -> Result<(), TransportError> {
 
     {
         let market = solana.get_account::<Market>(market).await;
-        assert_eq!(market.quote_fees_accrued, 20);
+        assert_eq!(market.quote_fees_available, 20);
         assert_eq!(market.fees_accrued, 60);
         assert_eq!(market.fees_to_referrers, 0);
     }
@@ -757,7 +757,7 @@ async fn test_maker_fees_ask() -> Result<(), TransportError> {
 
     {
         let market = solana.get_account::<Market>(market).await;
-        assert_eq!(market.quote_fees_accrued, 20);
+        assert_eq!(market.quote_fees_available, 20);
         assert_eq!(market.fees_accrued, 60);
         assert_eq!(market.fees_to_referrers, 40);
     }
@@ -776,7 +776,7 @@ async fn test_maker_fees_ask() -> Result<(), TransportError> {
 
     {
         let market = solana.get_account::<Market>(market).await;
-        assert_eq!(market.quote_fees_accrued, 0);
+        assert_eq!(market.quote_fees_available, 0);
     }
 
     Ok(())

@@ -108,7 +108,7 @@ pub struct Market {
     pub quote_vault: Pubkey,
     pub quote_deposit_total: u64,
 
-    pub quote_fees_accrued: u64,
+    pub quote_fees_available: u64,
     pub referrer_rebates_accrued: u64,
 
     pub reserved: [u8; 1768],

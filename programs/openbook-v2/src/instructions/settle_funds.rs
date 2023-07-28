@@ -17,18 +17,18 @@ pub fn settle_funds<'info>(ctx: Context<'_, '_, '_, 'info, SettleFunds<'info>>) 
     }
 
     let pa = &mut open_orders_account.position;
-    let referrer_rebate = pa.referrer_rebates_accrued + roundoff_maker_fees;
+    let referrer_rebate = pa.referrer_rebates_available + roundoff_maker_fees;
 
     if ctx.accounts.referrer.is_some() {
         market.fees_to_referrers += referrer_rebate;
         market.quote_deposit_total -= referrer_rebate;
     } else {
-        market.quote_fees_accrued += referrer_rebate;
+        market.quote_fees_available += referrer_rebate;
     }
 
     market.base_deposit_total -= pa.base_free_native;
     market.quote_deposit_total -= pa.quote_free_native;
-    market.referrer_rebates_accrued -= pa.referrer_rebates_accrued;
+    market.referrer_rebates_accrued -= pa.referrer_rebates_available;
 
     let seeds = market_seeds!(market);
 
@@ -73,7 +73,7 @@ pub fn settle_funds<'info>(ctx: Context<'_, '_, '_, 'info, SettleFunds<'info>>) 
 
     pa.base_free_native = 0;
     pa.quote_free_native = 0;
-    pa.referrer_rebates_accrued = 0;
+    pa.referrer_rebates_available = 0;
 
     Ok(())
 }
