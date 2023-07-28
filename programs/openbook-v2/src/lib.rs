@@ -74,9 +74,9 @@ pub mod openbook_v2 {
         Ok(())
     }
 
-    pub fn init_open_orders(ctx: Context<InitOpenOrders>, account_num: u32) -> Result<()> {
+    pub fn init_open_orders(ctx: Context<InitOpenOrders>) -> Result<()> {
         #[cfg(feature = "enable-gpl")]
-        instructions::init_open_orders(ctx, account_num)?;
+        instructions::init_open_orders(ctx)?;
         Ok(())
     }
 
