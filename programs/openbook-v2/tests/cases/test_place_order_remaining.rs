@@ -13,8 +13,8 @@ async fn test_place_cancel_order_remaining() -> Result<(), TransportError> {
         quote_vault,
         price_lots,
         tokens,
-        account_0,
         account_1,
+        account_2,
         bids,
         ..
     } = TestContext::new_with_market(TestNewMarketInitialize::default()).await?;
@@ -26,7 +26,7 @@ async fn test_place_cancel_order_remaining() -> Result<(), TransportError> {
     send_tx(
         solana,
         PlaceOrderInstruction {
-            open_orders_account: account_0,
+            open_orders_account: account_1,
             open_orders_admin: None,
             market,
             signer: owner,
@@ -56,7 +56,7 @@ async fn test_place_cancel_order_remaining() -> Result<(), TransportError> {
     send_tx(
         solana,
         PlaceOrderInstruction {
-            open_orders_account: account_1,
+            open_orders_account: account_2,
             open_orders_admin: None,
             market,
             signer: owner,
@@ -71,7 +71,7 @@ async fn test_place_cancel_order_remaining() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings: vec![account_0],
+            remainings: vec![account_1],
         },
     )
     .await
@@ -83,17 +83,17 @@ async fn test_place_cancel_order_remaining() -> Result<(), TransportError> {
     }
 
     {
-        let open_orders_account_0 = solana.get_account::<OpenOrdersAccount>(account_0).await;
         let open_orders_account_1 = solana.get_account::<OpenOrdersAccount>(account_1).await;
+        let open_orders_account_2 = solana.get_account::<OpenOrdersAccount>(account_2).await;
 
-        assert_eq!(open_orders_account_0.position.bids_base_lots, 0);
         assert_eq!(open_orders_account_1.position.bids_base_lots, 0);
-        assert_eq!(open_orders_account_0.position.asks_base_lots, 0);
+        assert_eq!(open_orders_account_2.position.bids_base_lots, 0);
         assert_eq!(open_orders_account_1.position.asks_base_lots, 0);
-        assert_eq!(open_orders_account_0.position.base_free_native, 100);
-        assert_eq!(open_orders_account_1.position.base_free_native, 0);
-        assert_eq!(open_orders_account_0.position.quote_free_native, 20);
-        assert_eq!(open_orders_account_1.position.quote_free_native, 99960);
+        assert_eq!(open_orders_account_2.position.asks_base_lots, 0);
+        assert_eq!(open_orders_account_1.position.base_free_native, 100);
+        assert_eq!(open_orders_account_2.position.base_free_native, 0);
+        assert_eq!(open_orders_account_1.position.quote_free_native, 20);
+        assert_eq!(open_orders_account_2.position.quote_free_native, 99960);
     }
 
     // No events on event_queue
@@ -111,7 +111,7 @@ async fn test_place_cancel_order_remaining() -> Result<(), TransportError> {
     send_tx(
         solana,
         PlaceOrderInstruction {
-            open_orders_account: account_0,
+            open_orders_account: account_1,
             open_orders_admin: None,
             market,
             signer: owner,
@@ -140,15 +140,15 @@ async fn test_place_cancel_order_remaining() -> Result<(), TransportError> {
     solana.advance_clock(11).await;
 
     {
-        let open_orders_account_0 = solana.get_account::<OpenOrdersAccount>(account_0).await;
-        assert_eq!(open_orders_account_0.position.bids_base_lots, 1);
+        let open_orders_account_1 = solana.get_account::<OpenOrdersAccount>(account_1).await;
+        assert_eq!(open_orders_account_1.position.bids_base_lots, 1);
     }
 
     // Add remainings, no event on event_queue. previous order is canceled
     send_tx(
         solana,
         PlaceOrderInstruction {
-            open_orders_account: account_1,
+            open_orders_account: account_2,
             open_orders_admin: None,
             market,
             signer: owner,
@@ -163,7 +163,7 @@ async fn test_place_cancel_order_remaining() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings: vec![account_0],
+            remainings: vec![account_1],
         },
     )
     .await
@@ -172,8 +172,8 @@ async fn test_place_cancel_order_remaining() -> Result<(), TransportError> {
     {
         let bids_data = solana.get_account_boxed::<BookSide>(bids).await;
         assert_eq!(bids_data.roots[0].leaf_count, 0);
-        let open_orders_account_0 = solana.get_account::<OpenOrdersAccount>(account_0).await;
-        assert_eq!(open_orders_account_0.position.bids_base_lots, 0);
+        let open_orders_account_1 = solana.get_account::<OpenOrdersAccount>(account_1).await;
+        assert_eq!(open_orders_account_1.position.bids_base_lots, 0);
     }
 
     // No events on event_queue
@@ -202,8 +202,8 @@ async fn test_cancel_order_yourself() -> Result<(), TransportError> {
         quote_vault,
         price_lots,
         tokens,
-        account_0,
         account_1,
+        account_2,
         bids,
         ..
     } = TestContext::new_with_market(TestNewMarketInitialize::default()).await?;
@@ -217,7 +217,7 @@ async fn test_cancel_order_yourself() -> Result<(), TransportError> {
     send_tx(
         solana,
         PlaceOrderInstruction {
-            open_orders_account: account_0,
+            open_orders_account: account_1,
             open_orders_admin: None,
             market,
             signer: owner,
@@ -250,7 +250,7 @@ async fn test_cancel_order_yourself() -> Result<(), TransportError> {
     send_tx(
         solana,
         PlaceOrderInstruction {
-            open_orders_account: account_1,
+            open_orders_account: account_2,
             open_orders_admin: None,
             market,
             signer: owner,
@@ -265,7 +265,7 @@ async fn test_cancel_order_yourself() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings: vec![account_0],
+            remainings: vec![account_1],
         },
     )
     .await

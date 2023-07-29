@@ -10,7 +10,7 @@ async fn test_permissioned_open_order() -> Result<(), TransportError> {
         market,
         quote_vault,
         tokens,
-        account_0,
+        account_1,
         open_orders_admin,
         ..
     } = TestContext::new_with_market(TestNewMarketInitialize {
@@ -32,7 +32,7 @@ async fn test_permissioned_open_order() -> Result<(), TransportError> {
     let result = send_tx(
         solana,
         PlaceOrderInstruction {
-            open_orders_account: account_0,
+            open_orders_account: account_1,
             open_orders_admin: None,
             market,
             signer: owner,
@@ -57,7 +57,7 @@ async fn test_permissioned_open_order() -> Result<(), TransportError> {
     send_tx(
         solana,
         PlaceOrderInstruction {
-            open_orders_account: account_0,
+            open_orders_account: account_1,
             open_orders_admin: Some(open_orders_admin),
             market,
             signer: owner,
@@ -92,7 +92,7 @@ async fn test_permissioned_open_take_order() -> Result<(), TransportError> {
         quote_vault,
         price_lots,
         tokens,
-        account_0,
+        account_1,
         ..
     } = TestContext::new_with_market(TestNewMarketInitialize {
         open_orders_admin_bool: true,
@@ -107,7 +107,7 @@ async fn test_permissioned_open_take_order() -> Result<(), TransportError> {
     let result = send_tx(
         solana,
         PlaceOrderInstruction {
-            open_orders_account: account_0,
+            open_orders_account: account_1,
             open_orders_admin: None,
             market,
             signer: owner,
@@ -132,7 +132,7 @@ async fn test_permissioned_open_take_order() -> Result<(), TransportError> {
     send_tx(
         solana,
         PlaceOrderInstruction {
-            open_orders_account: account_0,
+            open_orders_account: account_1,
             open_orders_admin: Some(open_orders_admin),
             market,
             signer: owner,
@@ -170,8 +170,8 @@ async fn test_consume_events_admin() -> Result<(), TransportError> {
         quote_vault,
         price_lots,
         tokens,
-        account_0,
         account_1,
+        account_2,
         ..
     } = TestContext::new_with_market(TestNewMarketInitialize {
         consume_events_admin_bool: true,
@@ -186,7 +186,7 @@ async fn test_consume_events_admin() -> Result<(), TransportError> {
     send_tx(
         solana,
         PlaceOrderInstruction {
-            open_orders_account: account_0,
+            open_orders_account: account_1,
             open_orders_admin: None,
             market,
             signer: owner,
@@ -210,7 +210,7 @@ async fn test_consume_events_admin() -> Result<(), TransportError> {
     send_tx(
         solana,
         PlaceOrderInstruction {
-            open_orders_account: account_1,
+            open_orders_account: account_2,
             open_orders_admin: None,
             market,
             signer: owner,
@@ -236,7 +236,7 @@ async fn test_consume_events_admin() -> Result<(), TransportError> {
         ConsumeEventsInstruction {
             consume_events_admin: None,
             market,
-            open_orders_accounts: vec![account_0, account_1],
+            open_orders_accounts: vec![account_1, account_2],
         },
     )
     .await;
@@ -248,7 +248,7 @@ async fn test_consume_events_admin() -> Result<(), TransportError> {
         ConsumeEventsInstruction {
             consume_events_admin: Some(consume_events_admin),
             market,
-            open_orders_accounts: vec![account_0, account_1],
+            open_orders_accounts: vec![account_1, account_2],
         },
     )
     .await
@@ -271,8 +271,8 @@ async fn test_close_market_admin() -> Result<(), TransportError> {
         quote_vault,
         price_lots,
         tokens,
-        account_0,
         account_1,
+        account_2,
         ..
     } = TestContext::new_with_market(TestNewMarketInitialize {
         close_market_admin_bool: true,
@@ -287,7 +287,7 @@ async fn test_close_market_admin() -> Result<(), TransportError> {
     send_tx(
         solana,
         PlaceOrderInstruction {
-            open_orders_account: account_0,
+            open_orders_account: account_1,
             open_orders_admin: None,
             market,
             signer: owner,
@@ -312,7 +312,7 @@ async fn test_close_market_admin() -> Result<(), TransportError> {
     send_tx(
         solana,
         PlaceOrderInstruction {
-            open_orders_account: account_1,
+            open_orders_account: account_2,
             open_orders_admin: None,
             market,
             signer: owner,
@@ -337,7 +337,7 @@ async fn test_close_market_admin() -> Result<(), TransportError> {
     send_tx(
         solana,
         PlaceOrderInstruction {
-            open_orders_account: account_0,
+            open_orders_account: account_1,
             open_orders_admin: None,
             market,
             signer: owner,
@@ -390,7 +390,7 @@ async fn test_close_market_admin() -> Result<(), TransportError> {
     let result = send_tx(
         solana,
         PlaceOrderInstruction {
-            open_orders_account: account_0,
+            open_orders_account: account_1,
             open_orders_admin: None,
             market,
             signer: owner,
@@ -417,7 +417,7 @@ async fn test_close_market_admin() -> Result<(), TransportError> {
         ConsumeEventsInstruction {
             consume_events_admin: None,
             market,
-            open_orders_accounts: vec![account_0, account_1],
+            open_orders_accounts: vec![account_1, account_2],
         },
     )
     .await
@@ -441,7 +441,7 @@ async fn test_close_market_admin() -> Result<(), TransportError> {
         PruneOrdersInstruction {
             close_market_admin,
             market,
-            open_orders_account: account_0,
+            open_orders_account: account_1,
         },
     )
     .await
@@ -479,15 +479,14 @@ async fn test_delegate() -> Result<(), TransportError> {
     .await?;
     let solana = &context.solana.clone();
 
-    let account_0_delegate = context.users[2].key;
-
-    let account_0 = create_open_orders_account(
+    let account_3_delegate = context.users[2].key;
+    let account_3 = create_open_orders_account(
         solana,
         owner,
         market,
-        2,
+        3,
         &context.users[0],
-        Some(account_0_delegate.pubkey()),
+        Some(account_3_delegate.pubkey()),
     )
     .await;
     let delegate_token_1 = context.users[2].token_accounts[1];
@@ -498,10 +497,10 @@ async fn test_delegate() -> Result<(), TransportError> {
     send_tx(
         solana,
         PlaceOrderInstruction {
-            open_orders_account: account_0,
+            open_orders_account: account_3,
             open_orders_admin: None,
             market,
-            signer: account_0_delegate,
+            signer: account_3_delegate,
             token_deposit_account: delegate_token_1,
             market_vault: quote_vault,
             side: Side::Bid,
@@ -522,9 +521,9 @@ async fn test_delegate() -> Result<(), TransportError> {
     send_tx(
         solana,
         CancelOrderByClientOrderIdInstruction {
-            signer: account_0_delegate,
+            signer: account_3_delegate,
             market,
-            open_orders_account: account_0,
+            open_orders_account: account_3,
             client_order_id: 23,
         },
     )
@@ -535,7 +534,7 @@ async fn test_delegate() -> Result<(), TransportError> {
         solana,
         SetDelegateInstruction {
             owner,
-            open_orders_account: account_0,
+            open_orders_account: account_3,
             delegate_account: None,
         },
     )
@@ -546,10 +545,10 @@ async fn test_delegate() -> Result<(), TransportError> {
     let result = send_tx(
         solana,
         PlaceOrderInstruction {
-            open_orders_account: account_0,
+            open_orders_account: account_3,
             open_orders_admin: None,
             market,
-            signer: account_0_delegate,
+            signer: account_3_delegate,
             token_deposit_account: delegate_token_1,
             market_vault: quote_vault,
             side: Side::Bid,

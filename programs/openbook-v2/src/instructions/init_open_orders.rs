@@ -3,10 +3,12 @@ use crate::pubkey_option::NonZeroKey;
 use crate::state::*;
 use anchor_lang::prelude::*;
 
-pub fn init_open_orders(ctx: Context<InitOpenOrders>, account_num: u32) -> Result<()> {
+pub fn init_open_orders(ctx: Context<InitOpenOrders>) -> Result<()> {
     let mut account = ctx.accounts.open_orders_account.load_init()?;
+    let mut indexer = ctx.accounts.open_orders_indexer.load_mut()?;
+    indexer.created_counter += 1;
 
-    account.account_num = account_num;
+    account.account_num = indexer.created_counter;
     account.market = ctx.accounts.market.key();
     account.bump = *ctx.bumps.get("open_orders_account").unwrap();
     account.owner = ctx.accounts.owner.key();

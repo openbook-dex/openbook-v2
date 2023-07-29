@@ -59,13 +59,15 @@ async fn test_skip_missing_accounts() -> Result<(), TransportError> {
         market.native_price_to_lot(I80F48::ONE).unwrap()
     };
 
-    let taker = create_open_orders_account(solana, owner, market, 0, &context.users[1], None).await;
-    let maker_1 =
-        create_open_orders_account(solana, owner, market, 1, &context.users[1], None).await;
-    let maker_2 =
-        create_open_orders_account(solana, owner, market, 2, &context.users[1], None).await;
-    let maker_3 =
-        create_open_orders_account(solana, owner, market, 3, &context.users[1], None).await;
+    let _indexer = create_open_orders_indexer(solana, &context.users[1], owner, market).await;
+    let (maker_1, maker_2, maker_3) = {
+        (
+            create_open_orders_account(solana, owner, market, 1, &context.users[1], None).await,
+            create_open_orders_account(solana, owner, market, 2, &context.users[1], None).await,
+            create_open_orders_account(solana, owner, market, 3, &context.users[1], None).await,
+        )
+    };
+    let taker = create_open_orders_account(solana, owner, market, 4, &context.users[1], None).await;
 
     send_tx(
         solana,
@@ -245,13 +247,15 @@ async fn test_crank_given_events() -> Result<(), TransportError> {
         market.native_price_to_lot(I80F48::ONE).unwrap()
     };
 
-    let taker = create_open_orders_account(solana, owner, market, 0, &context.users[1], None).await;
-    let maker_1 =
-        create_open_orders_account(solana, owner, market, 1, &context.users[1], None).await;
-    let maker_2 =
-        create_open_orders_account(solana, owner, market, 2, &context.users[1], None).await;
-    let maker_3 =
-        create_open_orders_account(solana, owner, market, 3, &context.users[1], None).await;
+    let _indexer = create_open_orders_indexer(solana, &context.users[1], owner, market).await;
+    let (maker_1, maker_2, maker_3) = {
+        (
+            create_open_orders_account(solana, owner, market, 1, &context.users[1], None).await,
+            create_open_orders_account(solana, owner, market, 2, &context.users[1], None).await,
+            create_open_orders_account(solana, owner, market, 3, &context.users[1], None).await,
+        )
+    };
+    let taker = create_open_orders_account(solana, owner, market, 4, &context.users[1], None).await;
 
     send_tx(
         solana,

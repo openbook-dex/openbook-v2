@@ -12,8 +12,8 @@ use solana_sdk::pubkey::Pubkey;
 pub use solana_sdk::transport::TransportError;
 use spl_token::{state::*, *};
 
-use crate::program_test::setup::create_open_orders_account;
-use crate::program_test::setup::Token;
+use crate::program_test::setup::{create_open_orders_account, create_open_orders_indexer, Token};
+
 pub use client::*;
 pub use cookies::*;
 pub use solana::*;
@@ -41,8 +41,8 @@ pub struct TestInitialize {
     pub quote_vault: Pubkey,
     pub price_lots: i64,
     pub tokens: Vec<Token>,
-    pub account_0: Pubkey,
     pub account_1: Pubkey,
+    pub account_2: Pubkey,
     pub bids: Pubkey,
 }
 
@@ -386,10 +386,12 @@ impl TestContext {
         .await
         .unwrap();
 
-        let account_0 =
-            create_open_orders_account(solana, owner, market, 0, &context.users[1], None).await;
+        let _indexer = create_open_orders_indexer(solana, &context.users[1], owner, market).await;
+
         let account_1 =
             create_open_orders_account(solana, owner, market, 1, &context.users[1], None).await;
+        let account_2 =
+            create_open_orders_account(solana, owner, market, 2, &context.users[1], None).await;
 
         let price_lots = {
             let market = solana.get_account::<Market>(market).await;
@@ -414,8 +416,8 @@ impl TestContext {
             quote_vault,
             price_lots,
             tokens,
-            account_0,
             account_1,
+            account_2,
             bids,
         })
     }
