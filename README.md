@@ -25,10 +25,12 @@ available under GPL.
 
 ## Deployed versions
 
+8qkavBpvoHVYkmPhu6QRpXRX39Kcop9uMXvZorBAz43o
+
 | tag       | network |
 | --------- | ------- |
-| test-v0.1 | devnet  |
-| test-v0.1 | testnet |
+| test-v0.2 | devnet  |
+| test-v0.2 | testnet |
 | test-v0.1 | mainnet |
 
 ## Building & testing
