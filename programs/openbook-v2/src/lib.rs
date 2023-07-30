@@ -2,7 +2,7 @@
 
 use anchor_lang::prelude::*;
 
-declare_id!("BfxZj7ckfRGHxByn7aHgH2puyXhfjAUvULtRjJo4rd8X");
+declare_id!("8qkavBpvoHVYkmPhu6QRpXRX39Kcop9uMXvZorBAz43o");
 
 #[macro_use]
 pub mod util;
@@ -62,9 +62,21 @@ pub mod openbook_v2 {
         Ok(())
     }
 
-    pub fn init_open_orders(ctx: Context<InitOpenOrders>, account_num: u32) -> Result<()> {
+    pub fn create_open_orders_indexer(ctx: Context<CreateOpenOrdersIndexer>) -> Result<()> {
         #[cfg(feature = "enable-gpl")]
-        instructions::init_open_orders(ctx, account_num)?;
+        instructions::create_open_orders_indexer(ctx)?;
+        Ok(())
+    }
+
+    pub fn close_open_orders_indexer(ctx: Context<CloseOpenOrdersIndexer>) -> Result<()> {
+        #[cfg(feature = "enable-gpl")]
+        instructions::close_open_orders_indexer(ctx)?;
+        Ok(())
+    }
+
+    pub fn init_open_orders(ctx: Context<InitOpenOrders>) -> Result<()> {
+        #[cfg(feature = "enable-gpl")]
+        instructions::init_open_orders(ctx)?;
         Ok(())
     }
 
@@ -115,6 +127,62 @@ pub mod openbook_v2 {
         };
         #[cfg(feature = "enable-gpl")]
         return instructions::place_order(ctx, order, args.limit);
+
+        #[cfg(not(feature = "enable-gpl"))]
+        Ok(None)
+    }
+
+    /// Cancel orders and place multiple orders.
+    ///
+    pub fn cancel_and_place_orders(
+        ctx: Context<CancelAndPlaceOrders>,
+        cancel_client_orders_ids: Vec<u64>,
+        place_orders: Vec<PlaceOrderArgs>,
+    ) -> Result<Vec<Option<u128>>> {
+        let mut orders = Vec::new();
+        let mut limits = Vec::new();
+        for place_order in place_orders.iter() {
+            require_gte!(
+                place_order.price_lots,
+                1,
+                OpenBookError::InvalidInputPriceLots
+            );
+
+            use crate::state::{Order, OrderParams};
+            let time_in_force = match Order::tif_from_expiry(place_order.expiry_timestamp) {
+                Some(t) => t,
+                None => {
+                    msg!("Order is already expired");
+                    continue;
+                }
+            };
+            orders.push(Order {
+                side: place_order.side,
+                max_base_lots: place_order.max_base_lots,
+                max_quote_lots_including_fees: place_order.max_quote_lots_including_fees,
+                client_order_id: place_order.client_order_id,
+                time_in_force,
+                self_trade_behavior: place_order.self_trade_behavior,
+                params: match place_order.order_type {
+                    PlaceOrderType::Market => OrderParams::Market,
+                    PlaceOrderType::ImmediateOrCancel => OrderParams::ImmediateOrCancel {
+                        price_lots: place_order.price_lots,
+                    },
+                    _ => OrderParams::Fixed {
+                        price_lots: place_order.price_lots,
+                        order_type: place_order.order_type.to_post_order_type()?,
+                    },
+                },
+            });
+            limits.push(place_order.limit);
+        }
+        #[cfg(feature = "enable-gpl")]
+        return instructions::cancel_and_place_orders(
+            ctx,
+            cancel_client_orders_ids,
+            orders,
+            limits,
+        );
 
         #[cfg(not(feature = "enable-gpl"))]
         Ok(None)
@@ -341,6 +409,13 @@ pub mod openbook_v2 {
     pub fn close_market(ctx: Context<CloseMarket>) -> Result<()> {
         #[cfg(feature = "enable-gpl")]
         instructions::close_market(ctx)?;
+        Ok(())
+    }
+
+    /// Close a [`Market`](crate::state::Market).
+    pub fn close_open_orders_account(ctx: Context<CloseOpenOrdersAccount>) -> Result<()> {
+        #[cfg(feature = "enable-gpl")]
+        instructions::close_open_orders_account(ctx)?;
         Ok(())
     }
 

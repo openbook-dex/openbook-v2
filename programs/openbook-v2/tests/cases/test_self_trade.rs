@@ -10,8 +10,8 @@ async fn test_self_trade_decrement_take() -> Result<(), TransportError> {
         market,
         base_vault,
         quote_vault,
-        account_0,
         account_1,
+        account_2,
         ..
     } = TestContext::new_with_market(TestNewMarketInitialize::default()).await?;
     let solana = &context.solana.clone();
@@ -22,7 +22,7 @@ async fn test_self_trade_decrement_take() -> Result<(), TransportError> {
     send_tx(
         solana,
         PlaceOrderInstruction {
-            open_orders_account: account_0,
+            open_orders_account: account_1,
             open_orders_admin: None,
             market,
             signer: owner,
@@ -46,7 +46,7 @@ async fn test_self_trade_decrement_take() -> Result<(), TransportError> {
     send_tx(
         solana,
         PlaceOrderInstruction {
-            open_orders_account: account_1,
+            open_orders_account: account_2,
             open_orders_admin: None,
             market,
             signer: owner,
@@ -70,7 +70,7 @@ async fn test_self_trade_decrement_take() -> Result<(), TransportError> {
     send_tx(
         solana,
         PlaceOrderInstruction {
-            open_orders_account: account_0,
+            open_orders_account: account_1,
             open_orders_admin: None,
             market,
             signer: owner,
@@ -91,18 +91,18 @@ async fn test_self_trade_decrement_take() -> Result<(), TransportError> {
     .unwrap();
 
     {
-        let open_orders_account_0 = solana.get_account::<OpenOrdersAccount>(account_0).await;
         let open_orders_account_1 = solana.get_account::<OpenOrdersAccount>(account_1).await;
-
-        assert_eq!(open_orders_account_0.position.bids_base_lots, 0);
-        assert_eq!(open_orders_account_0.position.asks_base_lots, 2);
-        assert_eq!(open_orders_account_0.position.base_free_native, 100);
-        assert_eq!(open_orders_account_0.position.quote_free_native, 0);
+        let open_orders_account_2 = solana.get_account::<OpenOrdersAccount>(account_2).await;
 
         assert_eq!(open_orders_account_1.position.bids_base_lots, 0);
         assert_eq!(open_orders_account_1.position.asks_base_lots, 2);
-        assert_eq!(open_orders_account_1.position.base_free_native, 0);
+        assert_eq!(open_orders_account_1.position.base_free_native, 100);
         assert_eq!(open_orders_account_1.position.quote_free_native, 0);
+
+        assert_eq!(open_orders_account_2.position.bids_base_lots, 0);
+        assert_eq!(open_orders_account_2.position.asks_base_lots, 2);
+        assert_eq!(open_orders_account_2.position.base_free_native, 0);
+        assert_eq!(open_orders_account_2.position.quote_free_native, 0);
     }
 
     send_tx(
@@ -110,7 +110,7 @@ async fn test_self_trade_decrement_take() -> Result<(), TransportError> {
         SettleFundsInstruction {
             owner,
             market,
-            open_orders_account: account_0,
+            open_orders_account: account_1,
             base_vault,
             quote_vault,
             token_base_account: owner_token_0,
@@ -122,19 +122,19 @@ async fn test_self_trade_decrement_take() -> Result<(), TransportError> {
     .unwrap();
 
     {
-        let open_orders_account_0 = solana.get_account::<OpenOrdersAccount>(account_0).await;
+        let open_orders_account_1 = solana.get_account::<OpenOrdersAccount>(account_1).await;
 
-        assert_eq!(open_orders_account_0.position.bids_base_lots, 0);
-        assert_eq!(open_orders_account_0.position.asks_base_lots, 2);
-        assert_eq!(open_orders_account_0.position.base_free_native, 0);
-        assert_eq!(open_orders_account_0.position.quote_free_native, 0);
+        assert_eq!(open_orders_account_1.position.bids_base_lots, 0);
+        assert_eq!(open_orders_account_1.position.asks_base_lots, 2);
+        assert_eq!(open_orders_account_1.position.base_free_native, 0);
+        assert_eq!(open_orders_account_1.position.quote_free_native, 0);
     }
 
     // taker partial self-trade limit
     send_tx(
         solana,
         PlaceOrderInstruction {
-            open_orders_account: account_0,
+            open_orders_account: account_1,
             open_orders_admin: None,
             market,
             signer: owner,
@@ -155,18 +155,18 @@ async fn test_self_trade_decrement_take() -> Result<(), TransportError> {
     .unwrap();
 
     {
-        let open_orders_account_0 = solana.get_account::<OpenOrdersAccount>(account_0).await;
         let open_orders_account_1 = solana.get_account::<OpenOrdersAccount>(account_1).await;
-
-        assert_eq!(open_orders_account_0.position.bids_base_lots, 0);
-        assert_eq!(open_orders_account_0.position.asks_base_lots, 2);
-        assert_eq!(open_orders_account_0.position.base_free_native, 200);
-        assert_eq!(open_orders_account_0.position.quote_free_native, 0);
+        let open_orders_account_2 = solana.get_account::<OpenOrdersAccount>(account_2).await;
 
         assert_eq!(open_orders_account_1.position.bids_base_lots, 0);
         assert_eq!(open_orders_account_1.position.asks_base_lots, 2);
-        assert_eq!(open_orders_account_1.position.base_free_native, 0);
+        assert_eq!(open_orders_account_1.position.base_free_native, 200);
         assert_eq!(open_orders_account_1.position.quote_free_native, 0);
+
+        assert_eq!(open_orders_account_2.position.bids_base_lots, 0);
+        assert_eq!(open_orders_account_2.position.asks_base_lots, 2);
+        assert_eq!(open_orders_account_2.position.base_free_native, 0);
+        assert_eq!(open_orders_account_2.position.quote_free_native, 0);
     }
 
     send_tx(
@@ -174,25 +174,25 @@ async fn test_self_trade_decrement_take() -> Result<(), TransportError> {
         ConsumeEventsInstruction {
             consume_events_admin: None,
             market,
-            open_orders_accounts: vec![account_0, account_1],
+            open_orders_accounts: vec![account_1, account_2],
         },
     )
     .await
     .unwrap();
 
     {
-        let open_orders_account_0 = solana.get_account::<OpenOrdersAccount>(account_0).await;
         let open_orders_account_1 = solana.get_account::<OpenOrdersAccount>(account_1).await;
-
-        assert_eq!(open_orders_account_0.position.bids_base_lots, 0);
-        assert_eq!(open_orders_account_0.position.asks_base_lots, 0);
-        assert_eq!(open_orders_account_0.position.base_free_native, 200);
-        assert_eq!(open_orders_account_0.position.quote_free_native, 20000);
+        let open_orders_account_2 = solana.get_account::<OpenOrdersAccount>(account_2).await;
 
         assert_eq!(open_orders_account_1.position.bids_base_lots, 0);
-        assert_eq!(open_orders_account_1.position.asks_base_lots, 1);
-        assert_eq!(open_orders_account_1.position.base_free_native, 0);
-        assert_eq!(open_orders_account_1.position.quote_free_native, 10002);
+        assert_eq!(open_orders_account_1.position.asks_base_lots, 0);
+        assert_eq!(open_orders_account_1.position.base_free_native, 200);
+        assert_eq!(open_orders_account_1.position.quote_free_native, 20000);
+
+        assert_eq!(open_orders_account_2.position.bids_base_lots, 0);
+        assert_eq!(open_orders_account_2.position.asks_base_lots, 1);
+        assert_eq!(open_orders_account_2.position.base_free_native, 0);
+        assert_eq!(open_orders_account_2.position.quote_free_native, 10002);
     }
 
     Ok(())
@@ -206,8 +206,8 @@ async fn test_self_trade_cancel_provide() -> Result<(), TransportError> {
         market,
         base_vault,
         quote_vault,
-        account_0,
         account_1,
+        account_2,
         ..
     } = TestContext::new_with_market(TestNewMarketInitialize::default()).await?;
     let solana = &context.solana.clone();
@@ -218,7 +218,7 @@ async fn test_self_trade_cancel_provide() -> Result<(), TransportError> {
     send_tx(
         solana,
         PlaceOrderInstruction {
-            open_orders_account: account_0,
+            open_orders_account: account_1,
             open_orders_admin: None,
             market,
             signer: owner,
@@ -242,7 +242,7 @@ async fn test_self_trade_cancel_provide() -> Result<(), TransportError> {
     send_tx(
         solana,
         PlaceOrderInstruction {
-            open_orders_account: account_1,
+            open_orders_account: account_2,
             open_orders_admin: None,
             market,
             signer: owner,
@@ -263,25 +263,25 @@ async fn test_self_trade_cancel_provide() -> Result<(), TransportError> {
     .unwrap();
 
     {
-        let open_orders_account_0 = solana.get_account::<OpenOrdersAccount>(account_0).await;
         let open_orders_account_1 = solana.get_account::<OpenOrdersAccount>(account_1).await;
-
-        assert_eq!(open_orders_account_0.position.bids_base_lots, 0);
-        assert_eq!(open_orders_account_0.position.asks_base_lots, 1);
-        assert_eq!(open_orders_account_0.position.base_free_native, 0);
-        assert_eq!(open_orders_account_0.position.quote_free_native, 0);
+        let open_orders_account_2 = solana.get_account::<OpenOrdersAccount>(account_2).await;
 
         assert_eq!(open_orders_account_1.position.bids_base_lots, 0);
-        assert_eq!(open_orders_account_1.position.asks_base_lots, 2);
+        assert_eq!(open_orders_account_1.position.asks_base_lots, 1);
         assert_eq!(open_orders_account_1.position.base_free_native, 0);
         assert_eq!(open_orders_account_1.position.quote_free_native, 0);
+
+        assert_eq!(open_orders_account_2.position.bids_base_lots, 0);
+        assert_eq!(open_orders_account_2.position.asks_base_lots, 2);
+        assert_eq!(open_orders_account_2.position.base_free_native, 0);
+        assert_eq!(open_orders_account_2.position.quote_free_native, 0);
     }
 
     // taker partial self-trade
     send_tx(
         solana,
         PlaceOrderInstruction {
-            open_orders_account: account_0,
+            open_orders_account: account_1,
             open_orders_admin: None,
             market,
             signer: owner,
@@ -302,25 +302,25 @@ async fn test_self_trade_cancel_provide() -> Result<(), TransportError> {
     .unwrap();
 
     {
-        let open_orders_account_0 = solana.get_account::<OpenOrdersAccount>(account_0).await;
         let open_orders_account_1 = solana.get_account::<OpenOrdersAccount>(account_1).await;
-
-        assert_eq!(open_orders_account_0.position.bids_base_lots, 0);
-        assert_eq!(open_orders_account_0.position.asks_base_lots, 0);
-        assert_eq!(open_orders_account_0.position.base_free_native, 200);
-        assert_eq!(open_orders_account_0.position.quote_free_native, 0);
+        let open_orders_account_2 = solana.get_account::<OpenOrdersAccount>(account_2).await;
 
         assert_eq!(open_orders_account_1.position.bids_base_lots, 0);
-        assert_eq!(open_orders_account_1.position.asks_base_lots, 2);
-        assert_eq!(open_orders_account_1.position.base_free_native, 0);
+        assert_eq!(open_orders_account_1.position.asks_base_lots, 0);
+        assert_eq!(open_orders_account_1.position.base_free_native, 200);
         assert_eq!(open_orders_account_1.position.quote_free_native, 0);
+
+        assert_eq!(open_orders_account_2.position.bids_base_lots, 0);
+        assert_eq!(open_orders_account_2.position.asks_base_lots, 2);
+        assert_eq!(open_orders_account_2.position.base_free_native, 0);
+        assert_eq!(open_orders_account_2.position.quote_free_native, 0);
     }
 
     // taker with another maker
     send_tx(
         solana,
         PlaceOrderInstruction {
-            open_orders_account: account_0,
+            open_orders_account: account_1,
             open_orders_admin: None,
             market,
             signer: owner,
@@ -341,18 +341,18 @@ async fn test_self_trade_cancel_provide() -> Result<(), TransportError> {
     .unwrap();
 
     {
-        let open_orders_account_0 = solana.get_account::<OpenOrdersAccount>(account_0).await;
         let open_orders_account_1 = solana.get_account::<OpenOrdersAccount>(account_1).await;
-
-        assert_eq!(open_orders_account_0.position.bids_base_lots, 0);
-        assert_eq!(open_orders_account_0.position.asks_base_lots, 0);
-        assert_eq!(open_orders_account_0.position.base_free_native, 300);
-        assert_eq!(open_orders_account_0.position.quote_free_native, 0);
+        let open_orders_account_2 = solana.get_account::<OpenOrdersAccount>(account_2).await;
 
         assert_eq!(open_orders_account_1.position.bids_base_lots, 0);
-        assert_eq!(open_orders_account_1.position.asks_base_lots, 2);
-        assert_eq!(open_orders_account_1.position.base_free_native, 0);
+        assert_eq!(open_orders_account_1.position.asks_base_lots, 0);
+        assert_eq!(open_orders_account_1.position.base_free_native, 300);
         assert_eq!(open_orders_account_1.position.quote_free_native, 0);
+
+        assert_eq!(open_orders_account_2.position.bids_base_lots, 0);
+        assert_eq!(open_orders_account_2.position.asks_base_lots, 2);
+        assert_eq!(open_orders_account_2.position.base_free_native, 0);
+        assert_eq!(open_orders_account_2.position.quote_free_native, 0);
     }
 
     send_tx(
@@ -360,25 +360,25 @@ async fn test_self_trade_cancel_provide() -> Result<(), TransportError> {
         ConsumeEventsInstruction {
             consume_events_admin: None,
             market,
-            open_orders_accounts: vec![account_0, account_1],
+            open_orders_accounts: vec![account_1, account_2],
         },
     )
     .await
     .unwrap();
 
     {
-        let open_orders_account_0 = solana.get_account::<OpenOrdersAccount>(account_0).await;
         let open_orders_account_1 = solana.get_account::<OpenOrdersAccount>(account_1).await;
-
-        assert_eq!(open_orders_account_0.position.bids_base_lots, 0);
-        assert_eq!(open_orders_account_0.position.asks_base_lots, 0);
-        assert_eq!(open_orders_account_0.position.base_free_native, 300);
-        assert_eq!(open_orders_account_0.position.quote_free_native, 0);
+        let open_orders_account_2 = solana.get_account::<OpenOrdersAccount>(account_2).await;
 
         assert_eq!(open_orders_account_1.position.bids_base_lots, 0);
         assert_eq!(open_orders_account_1.position.asks_base_lots, 0);
-        assert_eq!(open_orders_account_1.position.base_free_native, 0);
-        assert_eq!(open_orders_account_1.position.quote_free_native, 20004);
+        assert_eq!(open_orders_account_1.position.base_free_native, 300);
+        assert_eq!(open_orders_account_1.position.quote_free_native, 0);
+
+        assert_eq!(open_orders_account_2.position.bids_base_lots, 0);
+        assert_eq!(open_orders_account_2.position.asks_base_lots, 0);
+        assert_eq!(open_orders_account_2.position.base_free_native, 0);
+        assert_eq!(open_orders_account_2.position.quote_free_native, 20004);
     }
 
     Ok(())
@@ -392,7 +392,7 @@ async fn test_self_abort_transaction() -> Result<(), TransportError> {
         market,
         base_vault,
         quote_vault,
-        account_0,
+        account_1,
         ..
     } = TestContext::new_with_market(TestNewMarketInitialize::default()).await?;
     let solana = &context.solana.clone();
@@ -403,7 +403,7 @@ async fn test_self_abort_transaction() -> Result<(), TransportError> {
     send_tx(
         solana,
         PlaceOrderInstruction {
-            open_orders_account: account_0,
+            open_orders_account: account_1,
             open_orders_admin: None,
             market,
             signer: owner,
@@ -427,7 +427,7 @@ async fn test_self_abort_transaction() -> Result<(), TransportError> {
     assert!(send_tx(
         solana,
         PlaceOrderInstruction {
-            open_orders_account: account_0,
+            open_orders_account: account_1,
             open_orders_admin: None,
             market,
             signer: owner,
@@ -460,7 +460,7 @@ async fn test_self_trade_no_fees() -> Result<(), TransportError> {
         market,
         base_vault,
         quote_vault,
-        account_0: open_orders_account,
+        account_1: open_orders_account,
         ..
     } = TestContext::new_with_market(TestNewMarketInitialize::default()).await?;
     let solana = &context.solana.clone();

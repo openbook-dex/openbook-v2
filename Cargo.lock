@@ -2516,6 +2516,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "jupiter-amm-interface"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a0a07d892e79ae4ad8f0947f30633188269287967ceb0b2c182f894745f49952"
+dependencies = [
+ "anyhow",
+ "borsh",
+ "rust_decimal",
+ "serde",
+ "serde_json",
+ "solana-account-decoder",
+ "solana-sdk",
+]
+
+[[package]]
 name = "keccak"
 version = "0.1.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3210,6 +3225,7 @@ dependencies = [
  "itertools",
  "jsonrpc-core",
  "jsonrpc-core-client",
+ "jupiter-amm-interface",
  "log 0.4.17",
  "openbook-v2",
  "pyth-sdk-solana",

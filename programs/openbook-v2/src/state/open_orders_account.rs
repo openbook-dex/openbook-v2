@@ -91,6 +91,10 @@ impl OpenOrdersAccount {
         self.open_orders.iter()
     }
 
+    pub fn has_no_orders(&self) -> bool {
+        self.open_orders.iter().count() == 0
+    }
+
     pub fn all_orders_in_use(&self) -> impl Iterator<Item = &OpenOrder> {
         self.all_orders().filter(|oo| !oo.is_free())
     }
@@ -163,7 +167,7 @@ impl OpenOrdersAccount {
         };
 
         pa.maker_volume += quote_native;
-        pa.referrer_rebates_accrued += maker_fees;
+        pa.referrer_rebates_available += maker_fees;
         market.referrer_rebates_accrued += maker_fees;
         market.fees_accrued += maker_fees;
 
@@ -213,7 +217,7 @@ impl OpenOrdersAccount {
         };
 
         pa.taker_volume += quote_native;
-        pa.referrer_rebates_accrued += referrer_amount;
+        pa.referrer_rebates_available += referrer_amount;
         market.referrer_rebates_accrued += referrer_amount;
     }
 

@@ -136,6 +136,49 @@ pub async fn set_stub_oracle_price(
     .unwrap();
 }
 
+pub struct CreateOpenOrdersIndexerInstruction {
+    pub market: Pubkey,
+    pub owner: TestKeypair,
+    pub payer: TestKeypair,
+}
+#[async_trait::async_trait(?Send)]
+impl ClientInstruction for CreateOpenOrdersIndexerInstruction {
+    type Accounts = openbook_v2::accounts::CreateOpenOrdersIndexer;
+    type Instruction = openbook_v2::instruction::CreateOpenOrdersIndexer;
+    async fn to_instruction(
+        &self,
+        _account_loader: impl ClientAccountLoader + 'async_trait,
+    ) -> (Self::Accounts, instruction::Instruction) {
+        let program_id = openbook_v2::id();
+        let instruction = openbook_v2::instruction::CreateOpenOrdersIndexer {};
+
+        let open_orders_indexer = Pubkey::find_program_address(
+            &[
+                b"OpenOrdersIndexer".as_ref(),
+                self.owner.pubkey().as_ref(),
+                self.market.as_ref(),
+            ],
+            &program_id,
+        )
+        .0;
+
+        let accounts = openbook_v2::accounts::CreateOpenOrdersIndexer {
+            payer: self.payer.pubkey(),
+            owner: self.owner.pubkey(),
+            open_orders_indexer,
+            market: self.market,
+            system_program: System::id(),
+        };
+
+        let instruction = make_instruction(program_id, &accounts, instruction);
+        (accounts, instruction)
+    }
+
+    fn signers(&self) -> Vec<TestKeypair> {
+        vec![self.owner, self.payer]
+    }
+}
+
 pub struct InitOpenOrdersInstruction {
     pub account_num: u32,
     pub market: Pubkey,
@@ -152,9 +195,17 @@ impl ClientInstruction for InitOpenOrdersInstruction {
         _account_loader: impl ClientAccountLoader + 'async_trait,
     ) -> (Self::Accounts, instruction::Instruction) {
         let program_id = openbook_v2::id();
-        let instruction = openbook_v2::instruction::InitOpenOrders {
-            account_num: self.account_num,
-        };
+        let instruction = openbook_v2::instruction::InitOpenOrders {};
+
+        let open_orders_indexer = Pubkey::find_program_address(
+            &[
+                b"OpenOrdersIndexer".as_ref(),
+                self.owner.pubkey().as_ref(),
+                self.market.as_ref(),
+            ],
+            &program_id,
+        )
+        .0;
 
         let open_orders_account = Pubkey::find_program_address(
             &[
@@ -169,6 +220,7 @@ impl ClientInstruction for InitOpenOrdersInstruction {
 
         let accounts = openbook_v2::accounts::InitOpenOrders {
             owner: self.owner.pubkey(),
+            open_orders_indexer,
             open_orders_account,
             market: self.market,
             payer: self.payer.pubkey(),

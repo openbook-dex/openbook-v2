@@ -44,6 +44,9 @@ pub enum OpenBookError {
     #[msg("The `consume_events_admin` required by this market to sign all instructions that consume events is missing or is not valid")]
     InvalidConsumeEventsAdmin,
 
+    #[msg("Cannot be closed due to the existence of open orders accounts")]
+    IndexerActiveOO,
+
     #[msg("oracle type cannot be determined")]
     UnknownOracleType,
     #[msg("an oracle does not reach the confidence threshold")]
@@ -70,6 +73,8 @@ pub enum OpenBookError {
     MarketHasNotExpired,
     #[msg("No correct owner or delegate.")]
     NoOwnerOrDelegate,
+    #[msg("No correct owner")]
+    NoOwner,
     #[msg("No free order index in open orders account")]
     OpenOrdersFull,
     #[msg("Book contains elements")]
@@ -78,9 +83,10 @@ pub enum OpenBookError {
     OpenOrdersOrderNotFound,
     #[msg("Amount to post above book limits")]
     InvalidPostAmount,
-
     #[msg("Oracle peg orders are not enabled for this market")]
     DisabledOraclePeg,
+    #[msg("Open Orders Account Contains Orders. Cancel all before closing the account")]
+    OpenOrdersAccountContainsOrders,
 }
 
 impl From<OpenBookError> for ProgramError {

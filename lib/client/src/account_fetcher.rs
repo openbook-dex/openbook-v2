@@ -43,7 +43,7 @@ pub async fn account_fetcher_fetch_anchor_account<T: AccountDeserialize>(
 }
 
 // Can't be in the trait, since then it would no longer be object-safe...
-pub async fn account_fetcher_fetch_openbook_account(
+pub async fn account_fetcher_fetch_openorders_account(
     fetcher: &dyn AccountFetcher,
     address: &Pubkey,
 ) -> anyhow::Result<OpenOrdersAccount> {
