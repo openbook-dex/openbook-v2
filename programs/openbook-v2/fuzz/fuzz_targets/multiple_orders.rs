@@ -205,7 +205,7 @@ fn run_fuzz(fuzz_data: FuzzData) -> Corpus {
                     .state
                     .get_account::<openbook_v2::state::OpenOrdersAccount>(&user.open_orders)
                     .unwrap();
-                oo.position.referrer_rebates_accrued
+                oo.position.referrer_rebates_available
             })
             .sum();
 
@@ -307,7 +307,7 @@ fn run_fuzz(fuzz_data: FuzzData) -> Corpus {
             assert_eq!(position.base_free_native, 0);
             assert_eq!(position.quote_free_native, 0);
             assert_eq!(position.locked_maker_fees, 0);
-            assert_eq!(position.referrer_rebates_accrued, 0);
+            assert_eq!(position.referrer_rebates_available, 0);
         });
 
     {
@@ -344,7 +344,7 @@ fn run_fuzz(fuzz_data: FuzzData) -> Corpus {
         assert_eq!(ctx.state.get_balance(&ctx.quote_vault), 0);
         assert_eq!(market.base_deposit_total, 0);
         assert_eq!(market.quote_deposit_total, 0);
-        assert_eq!(market.quote_fees_accrued, 0);
+        assert_eq!(market.fees_available, 0);
         assert_eq!(market.fees_to_referrers, referrers_balances);
     }
 
