@@ -147,17 +147,26 @@ impl FuzzContext {
 
     fn get_or_create_new_user(&mut self, user_id: &UserId) -> &UserAccounts {
         let create_new_user = || -> UserAccounts {
-            let account_num = 0_u32;
-
             let owner = Pubkey::new_unique();
             let base_vault = Pubkey::new_unique();
             let quote_vault = Pubkey::new_unique();
+
+            let indexer = Pubkey::find_program_address(
+                &[
+                    b"OpenOrdersIndexer".as_ref(),
+                    owner.as_ref(),
+                    self.market.as_ref(),
+                ],
+                &openbook_v2::ID,
+            )
+            .0;
+
             let open_orders = Pubkey::find_program_address(
                 &[
                     b"OpenOrders".as_ref(),
                     owner.as_ref(),
                     self.market.as_ref(),
-                    &account_num.to_le_bytes(),
+                    &1_u32.to_le_bytes(),
                 ],
                 &openbook_v2::ID,
             )
@@ -173,9 +182,21 @@ impl FuzzContext {
                     self.quote_mint,
                     INITIAL_BALANCE,
                 )
+                .add_openbook_account::<OpenOrdersIndexer>(indexer)
                 .add_openbook_account::<OpenOrdersAccount>(open_orders);
 
+            let accounts = openbook_v2::accounts::CreateOpenOrdersIndexer {
+                open_orders_indexer: indexer,
+                owner,
+                payer: self.payer,
+                market: self.market,
+                system_program: system_program::ID,
+            };
+            let data = openbook_v2::instruction::CreateOpenOrdersIndexer {};
+            process_instruction(&mut self.state, &data, &accounts, &[]).unwrap();
+
             let accounts = openbook_v2::accounts::InitOpenOrders {
+                open_orders_indexer: indexer,
                 open_orders_account: open_orders,
                 owner,
                 delegate_account: None,
@@ -183,7 +204,7 @@ impl FuzzContext {
                 market: self.market,
                 system_program: system_program::ID,
             };
-            let data = openbook_v2::instruction::InitOpenOrders { account_num };
+            let data = openbook_v2::instruction::InitOpenOrders {};
             process_instruction(&mut self.state, &data, &accounts, &[]).unwrap();
 
             UserAccounts {
