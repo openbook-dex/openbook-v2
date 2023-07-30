@@ -229,8 +229,8 @@ impl Market {
         // no sqrt impl in fixed so we compare the squares
         let target_var = self.oracle_config.conf_filter.square();
         let var = {
-            let relative_err_a = price_a / err_a;
-            let relative_err_b = price_b / err_b;
+            let relative_err_a = err_a / price_a;
+            let relative_err_b = err_b / price_b;
             (relative_err_a.square() + relative_err_b.square()) * price.square()
         };
 
