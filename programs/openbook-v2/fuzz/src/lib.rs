@@ -5,6 +5,7 @@ use accounts_state::*;
 use anchor_spl::token::spl_token;
 use arbitrary::{Arbitrary, Unstructured};
 use fixed::types::I80F48;
+use num_enum::IntoPrimitive;
 use openbook_v2::state::*;
 use processor::*;
 use solana_program::{
@@ -15,6 +16,13 @@ use std::collections::{HashMap, HashSet};
 
 pub const NUM_USERS: u8 = 8;
 pub const INITIAL_BALANCE: u64 = 1_000_000_000;
+
+#[derive(Debug, Clone, IntoPrimitive, Arbitrary)]
+#[repr(u8)]
+pub enum OracleId {
+    OracleA = 1,
+    OracleB = 2,
+}
 
 #[derive(Debug, Clone, Copy, Eq, Hash, PartialEq)]
 pub struct UserId(u8);
@@ -50,7 +58,8 @@ pub struct FuzzContext {
     pub base_mint: Pubkey,
     pub quote_mint: Pubkey,
     pub market: Pubkey,
-    pub oracle: Pubkey,
+    pub oracle_a: Option<Pubkey>,
+    pub oracle_b: Option<Pubkey>,
     pub bids: Pubkey,
     pub asks: Pubkey,
     pub event_queue: Pubkey,
@@ -64,7 +73,7 @@ pub struct FuzzContext {
 }
 
 impl FuzzContext {
-    pub fn new(market_index: MarketIndex) -> Self {
+    pub fn new(market_index: MarketIndex, oracles: Option<OracleId>) -> Self {
         let payer = Pubkey::new_unique();
         let admin = Pubkey::new_unique();
         let base_mint = Pubkey::new_unique();
@@ -80,11 +89,22 @@ impl FuzzContext {
         )
         .0;
 
-        let oracle = Pubkey::find_program_address(
-            &[b"StubOracle".as_ref(), admin.as_ref(), base_mint.as_ref()],
-            &openbook_v2::ID,
-        )
-        .0;
+        let (oracle_a, oracle_b) = if let Some(oracles) = oracles {
+            let seeds_a = &[b"StubOracle".as_ref(), admin.as_ref(), base_mint.as_ref()];
+            let seeds_b = &[b"StubOracle".as_ref(), admin.as_ref(), quote_mint.as_ref()];
+            match oracles {
+                OracleId::OracleA => (
+                    Some(Pubkey::find_program_address(seeds_a, &openbook_v2::ID).0),
+                    None,
+                ),
+                OracleId::OracleB => (
+                    Some(Pubkey::find_program_address(seeds_a, &openbook_v2::ID).0),
+                    Some(Pubkey::find_program_address(seeds_b, &openbook_v2::ID).0),
+                ),
+            }
+        } else {
+            (None, None)
+        };
 
         let bids = Pubkey::new_unique();
         let asks = Pubkey::new_unique();
@@ -103,7 +123,8 @@ impl FuzzContext {
             base_mint,
             quote_mint,
             market,
-            oracle,
+            oracle_a,
+            oracle_b,
             bids,
             asks,
             event_queue,
@@ -128,7 +149,6 @@ impl FuzzContext {
             .add_openbook_account::<BookSide>(self.bids)
             .add_openbook_account::<EventQueue>(self.event_queue)
             .add_openbook_account::<Market>(self.market)
-            .add_openbook_account::<StubOracle>(self.oracle)
             .add_program(openbook_v2::ID) // optional accounts use this pubkey
             .add_program(spl_token::ID)
             .add_program(system_program::ID)
@@ -141,7 +161,16 @@ impl FuzzContext {
                 0,
             );
 
-        self.stub_oracle_create().unwrap();
+        if let Some(oracle_a) = self.oracle_a {
+            self.state.add_openbook_account::<StubOracle>(oracle_a);
+            self.stub_oracle_create(OracleId::OracleA).unwrap();
+        }
+
+        if let Some(oracle_b) = self.oracle_b {
+            self.state.add_openbook_account::<StubOracle>(oracle_b);
+            self.stub_oracle_create(OracleId::OracleB).unwrap();
+        }
+
         self
     }
 
@@ -237,11 +266,16 @@ impl FuzzContext {
             .or_insert_with(create_new_referrer)
     }
 
-    fn stub_oracle_create(&mut self) -> ProgramResult {
+    fn stub_oracle_create(&mut self, oracle_id: OracleId) -> ProgramResult {
+        let (oracle, mint) = match oracle_id {
+            OracleId::OracleA => (self.oracle_a.unwrap(), self.base_mint),
+            OracleId::OracleB => (self.oracle_b.unwrap(), self.quote_mint),
+        };
+
         let accounts = openbook_v2::accounts::StubOracleCreate {
-            oracle: self.oracle,
+            oracle,
+            mint,
             owner: self.admin,
-            mint: self.base_mint,
             payer: self.payer,
             system_program: system_program::ID,
         };
@@ -260,8 +294,8 @@ impl FuzzContext {
             quote_vault: self.quote_vault,
             base_mint: self.base_mint,
             quote_mint: self.quote_mint,
-            oracle_a: Some(self.oracle),
-            oracle_b: None,
+            oracle_a: self.oracle_a,
+            oracle_b: self.oracle_b,
             system_program: system_program::ID,
             collect_fee_admin: self.collect_fee_admin,
             open_orders_admin: None,
@@ -342,8 +376,8 @@ impl FuzzContext {
             asks: self.asks,
             event_queue: self.event_queue,
             market_vault,
-            oracle_a: Some(self.oracle),
-            oracle_b: None,
+            oracle_a: self.oracle_a,
+            oracle_b: self.oracle_b,
             token_program: spl_token::ID,
             system_program: system_program::ID,
         };
@@ -370,6 +404,10 @@ impl FuzzContext {
         data: &openbook_v2::instruction::PlaceOrderPegged,
         makers: Option<&HashSet<UserId>>,
     ) -> ProgramResult {
+        if self.oracle_a.is_none() {
+            return Ok(());
+        }
+
         let market_vault = match data.args.side {
             Side::Ask => self.base_vault,
             Side::Bid => self.quote_vault,
@@ -391,8 +429,8 @@ impl FuzzContext {
             asks: self.asks,
             event_queue: self.event_queue,
             market_vault,
-            oracle_a: Some(self.oracle),
-            oracle_b: None,
+            oracle_a: self.oracle_a,
+            oracle_b: self.oracle_b,
             token_program: spl_token::ID,
             system_program: system_program::ID,
         };
@@ -438,8 +476,8 @@ impl FuzzContext {
             base_vault: self.base_vault,
             quote_vault: self.quote_vault,
             event_queue: self.event_queue,
-            oracle_a: Some(self.oracle),
-            oracle_b: None,
+            oracle_a: self.oracle_a,
+            oracle_b: self.oracle_b,
             token_program: spl_token::ID,
             system_program: system_program::ID,
             open_orders_admin: None,
@@ -612,10 +650,20 @@ impl FuzzContext {
 
     pub fn stub_oracle_set(
         &mut self,
+        oracle_id: &OracleId,
         data: &openbook_v2::instruction::StubOracleSet,
     ) -> ProgramResult {
+        let oracle = match oracle_id {
+            OracleId::OracleA => self.oracle_a,
+            OracleId::OracleB => self.oracle_b,
+        };
+
+        let Some(oracle) = oracle else {
+            return Ok(());
+        };
+
         let accounts = openbook_v2::accounts::StubOracleSet {
-            oracle: self.oracle,
+            oracle,
             owner: self.admin,
         };
 

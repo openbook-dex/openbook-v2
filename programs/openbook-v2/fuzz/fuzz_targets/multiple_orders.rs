@@ -5,12 +5,13 @@ use libfuzzer_sys::{fuzz_target, Corpus};
 use log::info;
 use openbook_v2::instructions::MAX_EVENTS_CONSUME;
 use openbook_v2_fuzz::{
-    processor::TestSyscallStubs, FuzzContext, ReferrerId, UserId, INITIAL_BALANCE,
+    processor::TestSyscallStubs, FuzzContext, OracleId, ReferrerId, UserId, INITIAL_BALANCE,
 };
 use std::{collections::HashSet, sync::Once};
 
 #[derive(Debug, Arbitrary, Clone)]
 struct FuzzData {
+    oracles: Option<OracleId>,
     market: openbook_v2::instruction::CreateMarket,
     instructions: Vec<FuzzInstruction>,
 }
@@ -83,6 +84,7 @@ enum FuzzInstruction {
         data: openbook_v2::instruction::SweepFees,
     },
     StubOracleSet {
+        oracle_id: OracleId,
         data: openbook_v2::instruction::StubOracleSet,
     },
 }
@@ -162,8 +164,8 @@ impl FuzzRunner for FuzzContext {
                 .sweep_fees(data)
                 .map_or_else(error_parser::sweep_fees, keep),
 
-            FuzzInstruction::StubOracleSet { data } => self
-                .stub_oracle_set(data)
+            FuzzInstruction::StubOracleSet { oracle_id, data } => self
+                .stub_oracle_set(oracle_id, data)
                 .map_or_else(error_parser::stub_oracle_set, keep),
         }
     }
@@ -182,9 +184,16 @@ fn run_fuzz(fuzz_data: FuzzData) -> Corpus {
     }
 
     info!("initializing");
-    info!("{:#?}", fuzz_data.market);
+    info!(
+        "{:#?}, number oracles = {:?}",
+        fuzz_data.market,
+        fuzz_data
+            .oracles
+            .as_ref()
+            .map_or(0_u8, |id| id.clone().into()),
+    );
 
-    let mut ctx = FuzzContext::new(fuzz_data.market.market_index);
+    let mut ctx = FuzzContext::new(fuzz_data.market.market_index, fuzz_data.oracles);
     if matches!(
         ctx.initialize()
             .create_market(fuzz_data.market)
