@@ -34,6 +34,10 @@ enum FuzzInstruction {
         user_id: UserId,
         data: openbook_v2::instruction::Deposit,
     },
+    Refill {
+        user_id: UserId,
+        data: openbook_v2::instruction::Refill,
+    },
     PlaceOrder {
         user_id: UserId,
         data: openbook_v2::instruction::PlaceOrder,
@@ -96,6 +100,10 @@ impl FuzzRunner for FuzzContext {
             FuzzInstruction::Deposit { user_id, data } => self
                 .deposit(user_id, data)
                 .map_or_else(error_parser::deposit, keep),
+
+            FuzzInstruction::Refill { user_id, data } => self
+                .refill(user_id, data)
+                .map_or_else(error_parser::refill, keep),
 
             FuzzInstruction::PlaceOrder {
                 user_id,
@@ -391,6 +399,13 @@ mod error_parser {
     }
 
     pub fn deposit(err: ProgramError) -> Corpus {
+        match err {
+            e if e == TokenError::InsufficientFunds.into() => Corpus::Keep,
+            _ => panic!("{}", err),
+        }
+    }
+
+    pub fn refill(err: ProgramError) -> Corpus {
         match err {
             e if e == TokenError::InsufficientFunds.into() => Corpus::Keep,
             _ => panic!("{}", err),
