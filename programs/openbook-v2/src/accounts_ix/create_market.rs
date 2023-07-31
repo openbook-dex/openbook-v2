@@ -14,7 +14,7 @@ pub struct CreateMarket<'info> {
         seeds = [b"Market".as_ref(), market.key().to_bytes().as_ref()],
         bump,
     )]
-    pub market_authority: AccountInfo<'info>,
+    pub market_authority: UncheckedAccount<'info>,
 
     /// Accounts are initialized by client,
     /// anchor discriminator is set first when ix exits,

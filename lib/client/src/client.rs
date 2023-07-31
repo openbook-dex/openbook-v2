@@ -271,7 +271,6 @@ impl OpenBookClient {
             );
         }
 
-        let rpc = client.rpc_async();
         let openbook_context = OpenBookContext {};
 
         Self::new_detail(client, account, owner, openbook_context, account_fetcher)
@@ -432,7 +431,6 @@ impl OpenBookClient {
     #[allow(clippy::too_many_arguments)]
     pub async fn deposit(
         &self,
-        market: Market,
         market_address: Pubkey,
         base_amount: u64,
         quote_amount: u64,

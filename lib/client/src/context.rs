@@ -1,11 +1,6 @@
 use openbook_v2::state::{Market, FEES_SCALE_FACTOR};
-use std::collections::HashMap;
-use std::convert::TryInto;
-
-use crate::gpa::*;
-
-use solana_client::nonblocking::rpc_client::RpcClient as RpcClientAsync;
 use solana_sdk::pubkey::Pubkey;
+use std::convert::TryInto;
 
 pub struct MarketContext {
     pub address: Pubkey,

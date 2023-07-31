@@ -106,6 +106,13 @@ fn make_instruction(
     }
 }
 
+pub fn get_market_address(market: TestKeypair) -> Pubkey {
+    Pubkey::find_program_address(
+        &[b"Market".as_ref(), market.pubkey().to_bytes().as_ref()],
+        &openbook_v2::id(),
+    )
+    .0
+}
 pub async fn set_stub_oracle_price(
     solana: &SolanaCookie,
     token: &super::setup::Token,

@@ -19,7 +19,7 @@ pub struct SettleFunds<'info> {
         has_one = market_authority,
     )]
     pub market: AccountLoader<'info, Market>,
-    pub market_authority: AccountInfo<'info>,
+    pub market_authority: UncheckedAccount<'info>,
     #[account(mut)]
     pub base_vault: Account<'info, TokenAccount>,
     #[account(mut)]

@@ -342,11 +342,7 @@ impl TestContext {
         // Create a market
 
         let market = TestKeypair::new();
-        let market_authority = Pubkey::find_program_address(
-            &[b"Market".as_ref(), market.pubkey().to_bytes().as_ref()],
-            &openbook_v2::id(),
-        )
-        .0;
+        let market_authority = get_market_address(market);
         let base_vault = solana
             .create_associated_token_account(&market_authority, mints[0].pubkey)
             .await;

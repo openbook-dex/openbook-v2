@@ -1,6 +1,6 @@
 use anchor_lang::{AccountDeserialize, Discriminator};
 
-use openbook_v2::state::{Market, OpenOrdersAccount};
+use openbook_v2::state::OpenOrdersAccount;
 
 use solana_account_decoder::UiAccountEncoding;
 use solana_client::nonblocking::rpc_client::RpcClient as RpcClientAsync;
@@ -47,7 +47,7 @@ pub async fn fetch_anchor_account<T: AccountDeserialize>(
     Ok(T::try_deserialize(&mut (&account.data as &[u8]))?)
 }
 
-async fn fetch_anchor_accounts<T: AccountDeserialize + Discriminator>(
+async fn _fetch_anchor_accounts<T: AccountDeserialize + Discriminator>(
     rpc: &RpcClientAsync,
     program: Pubkey,
 ) -> anyhow::Result<Vec<(Pubkey, T)>> {

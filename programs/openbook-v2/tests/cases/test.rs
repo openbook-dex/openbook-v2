@@ -32,11 +32,7 @@ async fn test_simple_settle() -> Result<(), TransportError> {
     //
 
     let market_2 = TestKeypair::new();
-    let market_2_authority = Pubkey::find_program_address(
-        &[b"Market".as_ref(), market_2.pubkey().to_bytes().as_ref()],
-        &openbook_v2::id(),
-    )
-    .0;
+    let market_2_authority = get_market_address(market_2);
 
     let base_vault_2 = solana
         .create_associated_token_account(&market_2_authority, mints[0].pubkey)
