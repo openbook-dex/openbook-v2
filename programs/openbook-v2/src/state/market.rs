@@ -232,10 +232,13 @@ impl Market {
         //   $ \sigma \approx \frac{A}{B} * \sqrt{\frac{\sigma_A}{A}^2 + \frac{\sigma_B}{B}^2} $
         // but alternatively, to avoid costly operations, everything can be scaled by $B^2$, i.e.
         //   $ \sigma^2 * B^4 \approx (\sigma_A * B)^2 + (\sigma_B * A)^2 $
-        let scaled_target_var = price_b
-            .checked_square()
-            .and_then(|price_b2| price_b2.checked_mul(self.oracle_config.conf_filter))
-            .and_then(|scaled_sigma| scaled_sigma.checked_square())
+        let scaled_target_var = self
+            .oracle_config
+            .conf_filter
+            .checked_mul(price_b)
+            .and_then(|sigma_b| sigma_b.checked_square())
+            .and_then(|sigma2_b2| sigma2_b2.checked_mul(price_b))
+            .and_then(|sigma2_b3| sigma2_b3.checked_mul(price_b))
             .unwrap_or(I80F48::MAX);
 
         let scaled_var = (err_a * price_b).square() + (err_b * price_a).square();
