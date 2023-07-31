@@ -12,14 +12,11 @@ use crate::{accounts_zerocopy::KeyedAccountReader, state::orderbook::Side};
 
 use super::{orderbook, OracleConfig};
 
-pub type MarketIndex = u32;
 pub const FEES_SCALE_FACTOR: i128 = 1_000_000;
 
 #[account(zero_copy)]
 #[derive(Debug)]
 pub struct Market {
-    /// Index of this market
-    pub market_index: MarketIndex,
     /// PDA bump
     pub bump: u8,
 
@@ -29,10 +26,10 @@ pub struct Market {
     pub base_decimals: u8,
     pub quote_decimals: u8,
 
-    pub padding1: [u8; 1],
+    pub padding1: [u8; 5],
 
-    // Signer of the create market transaction
-    pub signer_creator: Pubkey,
+    // Pda for signing vault txs
+    pub market_authority: Pubkey,
 
     /// No expiry = 0. Market will expire and no trading allowed after time_expiry
     pub time_expiry: i64,
@@ -118,16 +115,15 @@ pub struct Market {
 
 const_assert_eq!(
     size_of::<Market>(),
-    32 +                        // signer_creator
+    32 +                        // market_authority
     32 +                        // collect_fee_admin
     32 +                        // open_order_admin
     32 +                        // consume_event_admin
     32 +                        // close_market_admin
-    size_of::<MarketIndex>() +  // MarketIndex
     1 +                         // bump
     1 +                         // base_decimals
     1 +                         // quote_decimals
-    1 +                         // padding1
+    5 +                         // padding1
     8 +                         // time_expiry
     16 +                        // name
     3 * 32 +                    // bids, asks, and event_queue
@@ -313,13 +309,8 @@ impl Market {
 
 /// Generate signed seeds for the market
 macro_rules! market_seeds {
-    ($market:expr) => {
-        &[
-            b"Market".as_ref(),
-            &$market.signer_creator.to_bytes(),
-            &$market.market_index.to_le_bytes(),
-            &[$market.bump],
-        ]
+    ($market:expr,$key:expr) => {
+        &[b"Market".as_ref(), &$key.to_bytes(), &[$market.bump]]
     };
 }
 pub(crate) use market_seeds;

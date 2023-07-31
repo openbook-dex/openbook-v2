@@ -11,6 +11,7 @@ async fn test_simple_settle() -> Result<(), TransportError> {
         owner_token_0,
         owner_token_1,
         market,
+        market_authority,
         base_vault,
         quote_vault,
         price_lots,
@@ -30,12 +31,13 @@ async fn test_simple_settle() -> Result<(), TransportError> {
     // TEST: Create another market
     //
 
-    let market_2 = get_market_address(payer.pubkey(), 2);
+    let market_2 = TestKeypair::new();
+
     let base_vault_2 = solana
-        .create_associated_token_account(&market_2, mints[0].pubkey)
+        .create_associated_token_account(&market_2.pubkey(), mints[0].pubkey)
         .await;
     let quote_vault_2 = solana
-        .create_associated_token_account(&market_2, mints[1].pubkey)
+        .create_associated_token_account(&market_2.pubkey(), mints[1].pubkey)
         .await;
 
     send_tx(
@@ -45,7 +47,6 @@ async fn test_simple_settle() -> Result<(), TransportError> {
             open_orders_admin: None,
             close_market_admin: None,
             payer,
-            market_index: 2,
             quote_lot_size: 10,
             base_lot_size: 100,
             maker_fee: -200,
@@ -155,6 +156,7 @@ async fn test_simple_settle() -> Result<(), TransportError> {
         SettleFundsInstruction {
             owner,
             market,
+            market_authority,
             open_orders_account: account_1,
             base_vault,
             quote_vault,
@@ -181,6 +183,7 @@ async fn test_simple_settle() -> Result<(), TransportError> {
         SettleFundsInstruction {
             owner,
             market,
+            market_authority,
             open_orders_account: account_2,
             base_vault,
             quote_vault,
@@ -234,6 +237,7 @@ async fn test_cancel_orders() -> Result<(), TransportError> {
         owner_token_0,
         owner_token_1,
         market,
+        market_authority,
         base_vault,
         quote_vault,
         price_lots,
@@ -404,6 +408,7 @@ async fn test_cancel_orders() -> Result<(), TransportError> {
         SettleFundsInstruction {
             owner,
             market,
+            market_authority,
             open_orders_account: account_1,
             base_vault,
             quote_vault,

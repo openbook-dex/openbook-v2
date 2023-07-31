@@ -12,7 +12,7 @@ pub fn sweep_fees(ctx: Context<SweepFees>) -> Result<()> {
     market.fees_available = 0;
     market.quote_deposit_total -= amount;
 
-    let seeds = market_seeds!(market);
+    let seeds = market_seeds!(market, ctx.accounts.market.key());
     drop(market);
 
     token_transfer_signed(
@@ -20,7 +20,7 @@ pub fn sweep_fees(ctx: Context<SweepFees>) -> Result<()> {
         &ctx.accounts.token_program,
         &ctx.accounts.quote_vault,
         &ctx.accounts.token_receiver_account,
-        &ctx.accounts.market,
+        &ctx.accounts.market_authority,
         seeds,
     )?;
 

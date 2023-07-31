@@ -11,6 +11,11 @@ pub struct SweepFees<'info> {
         has_one = collect_fee_admin
     )]
     pub market: AccountLoader<'info, Market>,
+    #[account(
+        seeds = [b"Market".as_ref(), market.key().to_bytes().as_ref()],
+        bump,
+    )]
+    pub market_authority: AccountInfo<'info>,
     #[account(mut)]
     pub quote_vault: Account<'info, TokenAccount>,
 

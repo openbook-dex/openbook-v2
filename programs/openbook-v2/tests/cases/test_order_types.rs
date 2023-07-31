@@ -9,6 +9,7 @@ async fn test_inmediate_order() -> Result<(), TransportError> {
         owner_token_0,
         owner_token_1,
         market,
+        market_authority,
         base_vault,
         quote_vault,
         price_lots,
@@ -125,6 +126,7 @@ async fn test_inmediate_order() -> Result<(), TransportError> {
         SettleFundsInstruction {
             owner,
             market,
+            market_authority,
             open_orders_account: account_1,
             base_vault,
             quote_vault,

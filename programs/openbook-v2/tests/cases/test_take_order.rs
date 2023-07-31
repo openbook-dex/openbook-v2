@@ -9,6 +9,7 @@ async fn test_take_ask_order() -> Result<(), TransportError> {
         owner_token_0,
         owner_token_1,
         market,
+        market_authority,
         base_vault,
         quote_vault,
         price_lots,
@@ -53,6 +54,7 @@ async fn test_take_ask_order() -> Result<(), TransportError> {
         solana,
         PlaceTakeOrderInstruction {
             market,
+            market_authority,
             signer: owner,
             token_deposit_account: owner_token_0,
             token_receiver_account: owner_token_1,
@@ -121,6 +123,7 @@ async fn test_take_ask_order() -> Result<(), TransportError> {
         SettleFundsInstruction {
             owner,
             market,
+            market_authority,
             open_orders_account: account_1,
             base_vault,
             quote_vault,
@@ -155,6 +158,7 @@ async fn test_take_bid_order() -> Result<(), TransportError> {
         owner_token_0,
         owner_token_1,
         market,
+        market_authority,
         base_vault,
         quote_vault,
         price_lots,
@@ -204,6 +208,7 @@ async fn test_take_bid_order() -> Result<(), TransportError> {
         solana,
         PlaceTakeOrderInstruction {
             market,
+            market_authority,
             signer: owner,
             token_deposit_account: owner_token_1,
             token_receiver_account: owner_token_0,
@@ -276,6 +281,7 @@ async fn test_take_bid_order() -> Result<(), TransportError> {
         SettleFundsInstruction {
             owner,
             market,
+            market_authority,
             open_orders_account: account_1,
             base_vault,
             quote_vault,
