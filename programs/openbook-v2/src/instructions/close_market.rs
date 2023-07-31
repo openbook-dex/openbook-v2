@@ -9,12 +9,12 @@ pub fn close_market(ctx: Context<CloseMarket>) -> Result<()> {
         market.is_expired(Clock::get()?.unix_timestamp),
         OpenBookError::MarketHasNotExpired
     );
+    require!(market.is_empty(), OpenBookError::NonEmptyMarket);
 
     let book = Orderbook {
         bids: ctx.accounts.bids.load_mut()?,
         asks: ctx.accounts.asks.load_mut()?,
     };
-
     require!(book.is_empty(), OpenBookError::BookContainsElements);
 
     let event_queue = ctx.accounts.event_queue.load()?;
@@ -22,5 +22,6 @@ pub fn close_market(ctx: Context<CloseMarket>) -> Result<()> {
         event_queue.is_empty(),
         OpenBookError::EventQueueContainsElements
     );
+
     Ok(())
 }
