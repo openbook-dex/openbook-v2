@@ -24,7 +24,6 @@ use solana_sdk::signer::keypair;
 use solana_sdk::transaction::TransactionError;
 
 use crate::account_fetcher::*;
-use crate::context::OpenBookContext;
 use crate::gpa::{fetch_anchor_account, fetch_openbook_accounts};
 
 use anyhow::Context;
@@ -92,8 +91,6 @@ pub struct OpenBookClient {
 
     pub owner: Arc<Keypair>,
     pub open_orders_account: Pubkey,
-
-    pub context: OpenBookContext,
 
     pub http_client: reqwest::Client,
 }
@@ -271,9 +268,7 @@ impl OpenBookClient {
             );
         }
 
-        let openbook_context = OpenBookContext {};
-
-        Self::new_detail(client, account, owner, openbook_context, account_fetcher)
+        Self::new_detail(client, account, owner, account_fetcher)
     }
 
     /// Allows control of AccountFetcher and externally created MangoGroupContext
@@ -282,7 +277,6 @@ impl OpenBookClient {
         account: Pubkey,
         owner: Arc<Keypair>,
         // future: maybe pass Arc<MangoGroupContext>, so it can be extenally updated?
-        openbook_context: OpenBookContext,
         account_fetcher: Arc<dyn AccountFetcher>,
     ) -> anyhow::Result<Self> {
         Ok(Self {
@@ -290,7 +284,6 @@ impl OpenBookClient {
             account_fetcher,
             owner,
             open_orders_account: account,
-            context: openbook_context,
             http_client: reqwest::Client::new(),
         })
     }

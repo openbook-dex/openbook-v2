@@ -38,7 +38,3 @@ impl MarketContext {
         base_size / (self.market.base_lot_size as u64)
     }
 }
-
-pub struct OpenBookContext {}
-
-impl OpenBookContext {}
