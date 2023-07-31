@@ -102,7 +102,7 @@ pub fn place_take_order<'info>(
         market.fees_available += referrer_amount;
     }
 
-    let seeds = market_seeds!(market);
+    let seeds = market_seeds!(market, ctx.accounts.market.key());
     drop(market);
 
     // Transfer funds from token_deposit_account to vault
@@ -119,7 +119,7 @@ pub fn place_take_order<'info>(
         &ctx.accounts.token_program,
         from_vault,
         ctx.accounts.token_receiver_account.as_ref(),
-        &ctx.accounts.market,
+        &ctx.accounts.market_authority,
         seeds,
     )?;
 
@@ -130,7 +130,7 @@ pub fn place_take_order<'info>(
             &ctx.accounts.token_program,
             &ctx.accounts.quote_vault,
             referrer,
-            &ctx.accounts.market,
+            &ctx.accounts.market_authority,
             seeds,
         )?;
     }

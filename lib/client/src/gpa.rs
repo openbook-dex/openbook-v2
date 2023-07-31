@@ -1,6 +1,6 @@
 use anchor_lang::{AccountDeserialize, Discriminator};
 
-use openbook_v2::state::{Market, MarketIndex, OpenOrdersAccount};
+use openbook_v2::state::OpenOrdersAccount;
 
 use solana_account_decoder::UiAccountEncoding;
 use solana_client::nonblocking::rpc_client::RpcClient as RpcClientAsync;
@@ -47,7 +47,7 @@ pub async fn fetch_anchor_account<T: AccountDeserialize>(
     Ok(T::try_deserialize(&mut (&account.data as &[u8]))?)
 }
 
-async fn fetch_anchor_accounts<T: AccountDeserialize + Discriminator>(
+async fn _fetch_anchor_accounts<T: AccountDeserialize + Discriminator>(
     rpc: &RpcClientAsync,
     program: Pubkey,
 ) -> anyhow::Result<Vec<(Pubkey, T)>> {
@@ -66,32 +66,4 @@ async fn fetch_anchor_accounts<T: AccountDeserialize + Discriminator>(
         .into_iter()
         .map(|(key, account)| Ok((key, T::try_deserialize(&mut (&account.data as &[u8]))?)))
         .collect()
-}
-
-pub async fn fetch_markets(
-    rpc: &RpcClientAsync,
-    program: Pubkey,
-) -> anyhow::Result<Vec<(Pubkey, Market)>> {
-    fetch_anchor_accounts::<Market>(rpc, program).await
-}
-
-// TODO review visibility
-pub async fn _fetch_market_by_payer_and_index(
-    index: MarketIndex,
-    program: Pubkey,
-    payer: Pubkey,
-    rpc: &RpcClientAsync,
-) -> anyhow::Result<Market> {
-    let market_pubkey: Pubkey = Pubkey::find_program_address(
-        &[
-            b"Market".as_ref(),
-            payer.to_bytes().as_ref(),
-            &index.to_le_bytes(),
-        ],
-        &program,
-    )
-    .0;
-    let account = rpc.get_account_data(&market_pubkey).await?;
-    let market = Market::try_deserialize(&mut (&account as &[u8]))?;
-    Ok(market)
 }

@@ -8,9 +8,12 @@ pub struct SweepFees<'info> {
     #[account(
         mut,
         has_one = quote_vault,
-        has_one = collect_fee_admin
+        has_one = collect_fee_admin,
+        has_one = market_authority
     )]
     pub market: AccountLoader<'info, Market>,
+    /// CHECK: checked on has_one in market
+    pub market_authority: UncheckedAccount<'info>,
     #[account(mut)]
     pub quote_vault: Account<'info, TokenAccount>,
 

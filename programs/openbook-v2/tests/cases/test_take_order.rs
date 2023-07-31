@@ -9,6 +9,7 @@ async fn test_take_ask_order() -> Result<(), TransportError> {
         owner_token_0,
         owner_token_1,
         market,
+
         base_vault,
         quote_vault,
         price_lots,
@@ -155,6 +156,7 @@ async fn test_take_bid_order() -> Result<(), TransportError> {
         owner_token_0,
         owner_token_1,
         market,
+
         base_vault,
         quote_vault,
         price_lots,

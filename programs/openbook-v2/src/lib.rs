@@ -21,7 +21,7 @@ pub mod types;
 
 use error::*;
 use fixed::types::I80F48;
-use state::{MarketIndex, OracleConfigParams, PlaceOrderType, SelfTradeBehavior, Side};
+use state::{OracleConfigParams, PlaceOrderType, SelfTradeBehavior, Side};
 use std::cmp;
 
 #[cfg(feature = "enable-gpl")]
@@ -38,7 +38,6 @@ pub mod openbook_v2 {
     #[allow(clippy::too_many_arguments)]
     pub fn create_market(
         ctx: Context<CreateMarket>,
-        market_index: MarketIndex,
         name: String,
         oracle_config: OracleConfigParams,
         quote_lot_size: i64,
@@ -50,7 +49,6 @@ pub mod openbook_v2 {
         #[cfg(feature = "enable-gpl")]
         instructions::create_market(
             ctx,
-            market_index,
             name,
             oracle_config,
             quote_lot_size,

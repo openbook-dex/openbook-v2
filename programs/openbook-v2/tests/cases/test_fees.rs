@@ -10,6 +10,7 @@ async fn test_fees_accrued() -> Result<(), TransportError> {
         owner_token_0,
         owner_token_1,
         market,
+
         base_vault,
         quote_vault,
         price_lots,
@@ -172,6 +173,7 @@ async fn test_maker_fees() -> Result<(), TransportError> {
         owner_token_0,
         owner_token_1,
         market,
+
         base_vault,
         quote_vault,
         price_lots,
@@ -408,6 +410,7 @@ async fn test_no_maker_fees_ask() -> Result<(), TransportError> {
         owner_token_0,
         owner_token_1,
         market,
+
         base_vault,
         quote_vault,
         price_lots,
@@ -600,6 +603,7 @@ async fn test_maker_fees_ask() -> Result<(), TransportError> {
         owner_token_0,
         owner_token_1,
         market,
+
         base_vault,
         quote_vault,
         price_lots,
@@ -792,6 +796,7 @@ async fn test_fees_half() -> Result<(), TransportError> {
         owner_token_0,
         owner_token_1,
         market,
+
         base_vault,
         quote_vault,
         price_lots,
@@ -953,6 +958,7 @@ async fn test_fees_half() -> Result<(), TransportError> {
         owner_token_0,
         owner_token_1,
         market,
+
         base_vault,
         quote_vault,
         price_lots,
@@ -1118,6 +1124,7 @@ async fn test_locked_maker_fees() -> Result<(), TransportError> {
         owner_token_0: owner_base_ata,
         owner_token_1: owner_quote_ata,
         market,
+
         base_vault,
         quote_vault,
         account_1: maker,
