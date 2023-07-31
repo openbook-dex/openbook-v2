@@ -193,7 +193,7 @@ fn run_fuzz(fuzz_data: FuzzData) -> Corpus {
             .map_or(0_u8, |id| id.clone().into()),
     );
 
-    let mut ctx = FuzzContext::new(fuzz_data.market.market_index, fuzz_data.oracles);
+    let mut ctx = FuzzContext::new(fuzz_data.oracles);
     if matches!(
         ctx.initialize()
             .create_market(fuzz_data.market)

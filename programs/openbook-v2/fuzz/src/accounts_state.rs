@@ -158,6 +158,11 @@ impl AccountsState {
         self
     }
 
+    pub fn add_empty_system_account(&mut self, pubkey: Pubkey) -> &mut Self {
+        self.insert(pubkey, Account::new(0, 0, &system_program::ID));
+        self
+    }
+
     pub fn add_openbook_account<T>(&mut self, pubkey: Pubkey) -> &mut Self {
         let len = 8 + std::mem::size_of::<T>();
         self.insert(pubkey, zero_account(len));

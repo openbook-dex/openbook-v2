@@ -58,13 +58,14 @@ pub struct FuzzContext {
     pub base_mint: Pubkey,
     pub quote_mint: Pubkey,
     pub market: Pubkey,
-    pub oracle_a: Option<Pubkey>,
-    pub oracle_b: Option<Pubkey>,
+    pub market_authority: Pubkey,
     pub bids: Pubkey,
     pub asks: Pubkey,
     pub event_queue: Pubkey,
     pub base_vault: Pubkey,
     pub quote_vault: Pubkey,
+    pub oracle_a: Option<Pubkey>,
+    pub oracle_b: Option<Pubkey>,
     pub collect_fee_admin: Pubkey,
     pub collect_fee_admin_quote_vault: Pubkey,
     pub users: HashMap<UserId, UserAccounts>,
@@ -73,21 +74,15 @@ pub struct FuzzContext {
 }
 
 impl FuzzContext {
-    pub fn new(market_index: MarketIndex, oracles: Option<OracleId>) -> Self {
+    pub fn new(oracles: Option<OracleId>) -> Self {
         let payer = Pubkey::new_unique();
         let admin = Pubkey::new_unique();
+        let market = Pubkey::new_unique();
         let base_mint = Pubkey::new_unique();
         let quote_mint = Pubkey::new_unique();
 
-        let market = Pubkey::find_program_address(
-            &[
-                b"Market".as_ref(),
-                payer.as_ref(),
-                market_index.to_le_bytes().as_ref(),
-            ],
-            &openbook_v2::ID,
-        )
-        .0;
+        let (market_authority, _bump) =
+            Pubkey::find_program_address(&[b"Market".as_ref(), market.as_ref()], &openbook_v2::ID);
 
         let (oracle_a, oracle_b) = if let Some(oracles) = oracles {
             let seeds_a = &[b"StubOracle".as_ref(), admin.as_ref(), base_mint.as_ref()];
@@ -110,8 +105,8 @@ impl FuzzContext {
         let asks = Pubkey::new_unique();
         let event_queue = Pubkey::new_unique();
 
-        let base_vault = get_associated_token_address(&market, &base_mint);
-        let quote_vault = get_associated_token_address(&market, &quote_mint);
+        let base_vault = get_associated_token_address(&market_authority, &base_mint);
+        let quote_vault = get_associated_token_address(&market_authority, &quote_mint);
 
         let collect_fee_admin = Pubkey::new_unique();
         let collect_fee_admin_quote_vault =
@@ -123,13 +118,14 @@ impl FuzzContext {
             base_mint,
             quote_mint,
             market,
-            oracle_a,
-            oracle_b,
+            market_authority,
             bids,
             asks,
             event_queue,
             base_vault,
             quote_vault,
+            oracle_a,
+            oracle_b,
             collect_fee_admin,
             collect_fee_admin_quote_vault,
             users: HashMap::new(),
@@ -149,11 +145,22 @@ impl FuzzContext {
             .add_openbook_account::<BookSide>(self.bids)
             .add_openbook_account::<EventQueue>(self.event_queue)
             .add_openbook_account::<Market>(self.market)
+            .add_empty_system_account(self.market_authority)
             .add_program(openbook_v2::ID) // optional accounts use this pubkey
             .add_program(spl_token::ID)
             .add_program(system_program::ID)
-            .add_token_account_with_lamports(self.base_vault, self.market, self.base_mint, 0)
-            .add_token_account_with_lamports(self.quote_vault, self.market, self.quote_mint, 0)
+            .add_token_account_with_lamports(
+                self.base_vault,
+                self.market_authority,
+                self.base_mint,
+                0,
+            )
+            .add_token_account_with_lamports(
+                self.quote_vault,
+                self.market_authority,
+                self.quote_mint,
+                0,
+            )
             .add_token_account_with_lamports(
                 self.collect_fee_admin_quote_vault,
                 self.collect_fee_admin,
@@ -286,6 +293,7 @@ impl FuzzContext {
     pub fn create_market(&mut self, data: openbook_v2::instruction::CreateMarket) -> ProgramResult {
         let accounts = openbook_v2::accounts::CreateMarket {
             market: self.market,
+            market_authority: self.market_authority,
             bids: self.bids,
             asks: self.asks,
             event_queue: self.event_queue,
@@ -469,6 +477,7 @@ impl FuzzContext {
         let accounts = openbook_v2::accounts::PlaceTakeOrder {
             signer: user.owner,
             market: self.market,
+            market_authority: self.market_authority,
             bids: self.bids,
             asks: self.asks,
             token_deposit_account,
@@ -625,6 +634,7 @@ impl FuzzContext {
             token_base_account: user.base_vault,
             token_quote_account: user.quote_vault,
             market: self.market,
+            market_authority: self.market_authority,
             base_vault: self.base_vault,
             quote_vault: self.quote_vault,
             token_program: spl_token::ID,
@@ -640,6 +650,7 @@ impl FuzzContext {
             collect_fee_admin: self.collect_fee_admin,
             token_receiver_account: self.collect_fee_admin_quote_vault,
             market: self.market,
+            market_authority: self.market_authority,
             quote_vault: self.quote_vault,
             token_program: spl_token::ID,
             system_program: system_program::ID,
