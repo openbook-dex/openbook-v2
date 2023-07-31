@@ -31,7 +31,7 @@ available under GPL.
 | --------- | ------- |
 | test-v0.2 | devnet  |
 | test-v0.2 | testnet |
-| test-v0.1 | mainnet |
+| test-v0.2 | mainnet |
 
 ## Building & testing
 
