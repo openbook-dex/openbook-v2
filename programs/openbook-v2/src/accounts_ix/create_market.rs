@@ -14,6 +14,7 @@ pub struct CreateMarket<'info> {
         seeds = [b"Market".as_ref(), market.key().to_bytes().as_ref()],
         bump,
     )]
+    /// CHECK:
     pub market_authority: UncheckedAccount<'info>,
 
     /// Accounts are initialized by client,
