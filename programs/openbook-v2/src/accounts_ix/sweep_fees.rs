@@ -8,13 +8,10 @@ pub struct SweepFees<'info> {
     #[account(
         mut,
         has_one = quote_vault,
-        has_one = collect_fee_admin
+        has_one = collect_fee_admin,
+        has_one = market_authority
     )]
     pub market: AccountLoader<'info, Market>,
-    #[account(
-        seeds = [b"Market".as_ref(), market.key().to_bytes().as_ref()],
-        bump,
-    )]
     pub market_authority: AccountInfo<'info>,
     #[account(mut)]
     pub quote_vault: Account<'info, TokenAccount>,

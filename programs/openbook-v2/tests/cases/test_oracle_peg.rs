@@ -525,7 +525,7 @@ async fn test_locked_amounts() -> Result<(), TransportError> {
         owner_token_0: owner_base_ata,
         owner_token_1: owner_quote_ata,
         market,
-        market_authority,
+
         base_vault,
         quote_vault,
         account_1,
@@ -566,7 +566,6 @@ async fn test_locked_amounts() -> Result<(), TransportError> {
     let settle_funds_0_ix = SettleFundsInstruction {
         owner,
         market,
-        market_authority,
         open_orders_account: account_1,
         base_vault,
         quote_vault,

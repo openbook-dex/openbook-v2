@@ -242,7 +242,6 @@ pub struct CreateMarketInstruction {
     pub asks: Pubkey,
     pub event_queue: Pubkey,
     pub market: TestKeypair,
-    pub market_authority: Pubkey,
     pub payer: TestKeypair,
     pub quote_lot_size: i64,
     pub base_lot_size: i64,
@@ -298,18 +297,23 @@ impl ClientInstruction for CreateMarketInstruction {
             time_expiry: self.time_expiry,
         };
 
+        let market_authority = Pubkey::find_program_address(
+            &[b"Market".as_ref(), self.market.pubkey().to_bytes().as_ref()],
+            &openbook_v2::id(),
+        )
+        .0;
         let base_vault = spl_associated_token_account::get_associated_token_address(
-            &self.market_authority,
+            &market_authority,
             &self.base_mint,
         );
         let quote_vault = spl_associated_token_account::get_associated_token_address(
-            &self.market_authority,
+            &market_authority,
             &self.quote_mint,
         );
 
         let accounts = Self::Accounts {
             market: self.market.pubkey(),
-            market_authority: self.market_authority,
+            market_authority,
             bids: self.bids,
             asks: self.asks,
             event_queue: self.event_queue,
@@ -487,7 +491,6 @@ impl ClientInstruction for PlaceOrderPeggedInstruction {
 pub struct PlaceTakeOrderInstruction {
     pub open_orders_admin: Option<TestKeypair>,
     pub market: Pubkey,
-    pub market_authority: Pubkey,
     pub signer: TestKeypair,
     pub base_vault: Pubkey,
     pub quote_vault: Pubkey,
@@ -524,7 +527,7 @@ impl ClientInstruction for PlaceTakeOrderInstruction {
         let accounts = Self::Accounts {
             open_orders_admin: self.open_orders_admin.map(|kp| kp.pubkey()),
             market: self.market,
-            market_authority: self.market_authority,
+            market_authority: market.market_authority,
             bids: market.bids,
             asks: market.asks,
             event_queue: market.event_queue,
@@ -756,7 +759,6 @@ pub struct SettleFundsInstruction {
     pub owner: TestKeypair,
     pub open_orders_account: Pubkey,
     pub market: Pubkey,
-    pub market_authority: Pubkey,
     pub base_vault: Pubkey,
     pub quote_vault: Pubkey,
     pub token_base_account: Pubkey,
@@ -769,16 +771,16 @@ impl ClientInstruction for SettleFundsInstruction {
     type Instruction = openbook_v2::instruction::SettleFunds;
     async fn to_instruction(
         &self,
-        _account_loader: impl ClientAccountLoader + 'async_trait,
+        account_loader: impl ClientAccountLoader + 'async_trait,
     ) -> (Self::Accounts, instruction::Instruction) {
         let program_id = openbook_v2::id();
         let instruction = Self::Instruction {};
-
+        let market: Market = account_loader.load(&self.market).await.unwrap();
         let accounts = Self::Accounts {
             owner: self.owner.pubkey(),
             open_orders_account: self.open_orders_account,
             market: self.market,
-            market_authority: self.market_authority,
+            market_authority: market.market_authority,
             base_vault: self.base_vault,
             quote_vault: self.quote_vault,
             token_base_account: self.token_base_account,
@@ -800,7 +802,6 @@ impl ClientInstruction for SettleFundsInstruction {
 pub struct SweepFeesInstruction {
     pub collect_fee_admin: TestKeypair,
     pub market: Pubkey,
-    pub market_authority: Pubkey,
     pub quote_vault: Pubkey,
     pub token_receiver_account: Pubkey,
 }
@@ -810,15 +811,16 @@ impl ClientInstruction for SweepFeesInstruction {
     type Instruction = openbook_v2::instruction::SweepFees;
     async fn to_instruction(
         &self,
-        _account_loader: impl ClientAccountLoader + 'async_trait,
+        account_loader: impl ClientAccountLoader + 'async_trait,
     ) -> (Self::Accounts, instruction::Instruction) {
         let program_id = openbook_v2::id();
         let instruction = Self::Instruction {};
+        let market: Market = account_loader.load(&self.market).await.unwrap();
 
         let accounts = Self::Accounts {
             collect_fee_admin: self.collect_fee_admin.pubkey(),
             market: self.market,
-            market_authority: self.market_authority,
+            market_authority: market.market_authority,
             quote_vault: self.quote_vault,
             token_receiver_account: self.token_receiver_account,
             token_program: Token::id(),

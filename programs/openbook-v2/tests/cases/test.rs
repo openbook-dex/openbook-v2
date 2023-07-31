@@ -11,7 +11,7 @@ async fn test_simple_settle() -> Result<(), TransportError> {
         owner_token_0,
         owner_token_1,
         market,
-        market_authority,
+
         base_vault,
         quote_vault,
         price_lots,
@@ -53,7 +53,6 @@ async fn test_simple_settle() -> Result<(), TransportError> {
             close_market_admin: None,
             payer,
             market: market_2,
-            market_authority: market_2_authority,
             quote_lot_size: 10,
             base_lot_size: 100,
             maker_fee: -200,
@@ -163,7 +162,6 @@ async fn test_simple_settle() -> Result<(), TransportError> {
         SettleFundsInstruction {
             owner,
             market,
-            market_authority,
             open_orders_account: account_1,
             base_vault,
             quote_vault,
@@ -190,7 +188,6 @@ async fn test_simple_settle() -> Result<(), TransportError> {
         SettleFundsInstruction {
             owner,
             market,
-            market_authority,
             open_orders_account: account_2,
             base_vault,
             quote_vault,
@@ -244,7 +241,7 @@ async fn test_cancel_orders() -> Result<(), TransportError> {
         owner_token_0,
         owner_token_1,
         market,
-        market_authority,
+
         base_vault,
         quote_vault,
         price_lots,
@@ -415,7 +412,6 @@ async fn test_cancel_orders() -> Result<(), TransportError> {
         SettleFundsInstruction {
             owner,
             market,
-            market_authority,
             open_orders_account: account_1,
             base_vault,
             quote_vault,

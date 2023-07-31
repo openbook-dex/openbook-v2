@@ -3,7 +3,6 @@ use anchor_lang::prelude::*;
 use anchor_spl::token::{Mint, TokenAccount};
 
 #[derive(Accounts)]
-#[instruction()]
 pub struct CreateMarket<'info> {
     #[account(
         init,

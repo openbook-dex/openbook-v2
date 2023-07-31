@@ -37,7 +37,6 @@ pub struct TestInitialize {
     pub owner_token_0: Pubkey,
     pub owner_token_1: Pubkey,
     pub market: Pubkey,
-    pub market_authority: Pubkey,
     pub base_vault: Pubkey,
     pub quote_vault: Pubkey,
     pub price_lots: i64,
@@ -363,7 +362,7 @@ impl TestContext {
 
         let openbook_v2::accounts::CreateMarket {
             market,
-            market_authority,
+
             base_vault,
             quote_vault,
             bids,
@@ -377,7 +376,6 @@ impl TestContext {
                 consume_events_admin,
                 payer,
                 market,
-                market_authority,
                 quote_lot_size: args.quote_lot_size,
                 base_lot_size: args.base_lot_size,
                 maker_fee: args.maker_fee,
@@ -420,7 +418,7 @@ impl TestContext {
             owner_token_0,
             owner_token_1,
             market,
-            market_authority,
+
             base_vault,
             quote_vault,
             price_lots,

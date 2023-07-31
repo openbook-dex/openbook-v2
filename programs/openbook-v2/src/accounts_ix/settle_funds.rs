@@ -16,12 +16,9 @@ pub struct SettleFunds<'info> {
         mut,
         has_one = base_vault,
         has_one = quote_vault,
+        has_one = market_authority,
     )]
     pub market: AccountLoader<'info, Market>,
-    #[account(
-        seeds = [b"Market".as_ref(), market.key().to_bytes().as_ref()],
-        bump,
-    )]
     pub market_authority: AccountInfo<'info>,
     #[account(mut)]
     pub base_vault: Account<'info, TokenAccount>,

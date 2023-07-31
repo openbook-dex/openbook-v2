@@ -8,7 +8,7 @@ async fn test_self_trade_decrement_take() -> Result<(), TransportError> {
         owner_token_0,
         owner_token_1,
         market,
-        market_authority,
+
         base_vault,
         quote_vault,
         account_1,
@@ -111,7 +111,6 @@ async fn test_self_trade_decrement_take() -> Result<(), TransportError> {
         SettleFundsInstruction {
             owner,
             market,
-            market_authority,
             open_orders_account: account_1,
             base_vault,
             quote_vault,
@@ -460,7 +459,7 @@ async fn test_self_trade_no_fees() -> Result<(), TransportError> {
         owner_token_0: owner_base_ata,
         owner_token_1: owner_quote_ata,
         market,
-        market_authority,
+
         base_vault,
         quote_vault,
         account_1: open_orders_account,
@@ -502,7 +501,6 @@ async fn test_self_trade_no_fees() -> Result<(), TransportError> {
     let settle_funds_ix = SettleFundsInstruction {
         owner,
         market,
-        market_authority,
         open_orders_account,
         base_vault,
         quote_vault,
