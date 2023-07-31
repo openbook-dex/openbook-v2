@@ -362,6 +362,7 @@ fn run_fuzz(fuzz_data: FuzzData) -> Corpus {
         assert_eq!(market.base_deposit_total, 0);
         assert_eq!(market.quote_deposit_total, 0);
         assert_eq!(market.fees_available, 0);
+        assert_eq!(market.referrer_rebates_accrued, 0);
         assert_eq!(market.fees_to_referrers, referrers_balances);
     }
 
