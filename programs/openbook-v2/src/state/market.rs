@@ -224,21 +224,26 @@ impl Market {
         let (price_b, err_b) =
             oracle::oracle_price_data(oracle_b_acc, &self.oracle_config, staleness_slot)?;
 
-        let price = price_a / price_b;
+        let price = price_a
+            .checked_div(price_b)
+            .ok_or_else(|| error!(OpenBookError::InvalidOraclePrice))?;
 
-        // no sqrt impl in fixed so we compare the squares
-        let target_var = self.oracle_config.conf_filter.square();
-        let var = {
-            let relative_err_a = err_a / price_a;
-            let relative_err_b = err_b / price_b;
-            (relative_err_a.square() + relative_err_b.square()) * price.square()
-        };
+        // target uncertainty reads
+        //   $ \sigma \approx \frac{A}{B} * \sqrt{\frac{\sigma_A}{A}^2 + \frac{\sigma_B}{B}^2} $
+        // but alternatively, to avoid costly operations, everything can be scaled by $B^2$, i.e.
+        //   $ \sigma^2 * B^4 \approx (\sigma_A * B)^2 + (\sigma_B * A)^2 $
+        let scaled_target_var = price_b
+            .checked_square()
+            .and_then(|price_b2| price_b2.checked_mul(self.oracle_config.conf_filter))
+            .and_then(|scaled_sigma| scaled_sigma.checked_square())
+            .unwrap_or(I80F48::MAX);
 
-        if var > target_var {
+        let scaled_var = (err_a * price_b).square() + (err_b * price_a).square();
+        if scaled_var > scaled_target_var {
             msg!(
-                "Combined variance too high; value {}, target {}",
-                var,
-                target_var
+                "Combined variance too high; scaled value {}, target {}",
+                scaled_var,
+                scaled_target_var
             );
             return Err(OpenBookError::OracleConfidence.into());
         }
