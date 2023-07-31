@@ -525,6 +525,7 @@ async fn test_locked_amounts() -> Result<(), TransportError> {
         owner_token_0: owner_base_ata,
         owner_token_1: owner_quote_ata,
         market,
+
         base_vault,
         quote_vault,
         account_1,

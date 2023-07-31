@@ -8,6 +8,7 @@ async fn test_self_trade_decrement_take() -> Result<(), TransportError> {
         owner_token_0,
         owner_token_1,
         market,
+
         base_vault,
         quote_vault,
         account_1,
@@ -458,6 +459,7 @@ async fn test_self_trade_no_fees() -> Result<(), TransportError> {
         owner_token_0: owner_base_ata,
         owner_token_1: owner_quote_ata,
         market,
+
         base_vault,
         quote_vault,
         account_1: open_orders_account,

@@ -11,7 +11,6 @@ use crate::util::fill_from_str;
 #[allow(clippy::too_many_arguments)]
 pub fn create_market(
     ctx: Context<CreateMarket>,
-    market_index: MarketIndex,
     name: String,
     oracle_config: OracleConfigParams,
     quote_lot_size: i64,
@@ -60,13 +59,15 @@ pub fn create_market(
 
     let mut openbook_market = ctx.accounts.market.load_init()?;
     *openbook_market = Market {
-        signer_creator: ctx.accounts.payer.key(),
+        market_authority: ctx.accounts.market_authority.key(),
         collect_fee_admin: ctx.accounts.collect_fee_admin.key(),
         open_orders_admin: ctx.accounts.open_orders_admin.non_zero_key(),
         consume_events_admin: ctx.accounts.consume_events_admin.non_zero_key(),
         close_market_admin: ctx.accounts.close_market_admin.non_zero_key(),
-        market_index,
-        bump: *ctx.bumps.get("market").ok_or(OpenBookError::SomeError)?,
+        bump: *ctx
+            .bumps
+            .get("market_authority")
+            .ok_or(OpenBookError::SomeError)?,
         base_decimals: ctx.accounts.base_mint.decimals,
         quote_decimals: ctx.accounts.quote_mint.decimals,
         padding1: Default::default(),
@@ -110,7 +111,6 @@ pub fn create_market(
 
     emit!(MarketMetaDataLog {
         market: ctx.accounts.market.key(),
-        market_index,
         base_decimals: ctx.accounts.base_mint.decimals,
         quote_decimals: ctx.accounts.quote_mint.decimals,
         base_lot_size,

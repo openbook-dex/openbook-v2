@@ -341,12 +341,13 @@ impl TestContext {
 
         // Create a market
 
-        let market = get_market_address(payer.pubkey(), 1);
+        let market = TestKeypair::new();
+        let market_authority = get_market_address(market);
         let base_vault = solana
-            .create_associated_token_account(&market, mints[0].pubkey)
+            .create_associated_token_account(&market_authority, mints[0].pubkey)
             .await;
         let quote_vault = solana
-            .create_associated_token_account(&market, mints[1].pubkey)
+            .create_associated_token_account(&market_authority, mints[1].pubkey)
             .await;
 
         let oracle = if args.with_oracle {
@@ -357,6 +358,7 @@ impl TestContext {
 
         let openbook_v2::accounts::CreateMarket {
             market,
+
             base_vault,
             quote_vault,
             bids,
@@ -369,7 +371,7 @@ impl TestContext {
                 close_market_admin,
                 consume_events_admin,
                 payer,
-                market_index: 1,
+                market,
                 quote_lot_size: args.quote_lot_size,
                 base_lot_size: args.base_lot_size,
                 maker_fee: args.maker_fee,
@@ -412,6 +414,7 @@ impl TestContext {
             owner_token_0,
             owner_token_1,
             market,
+
             base_vault,
             quote_vault,
             price_lots,

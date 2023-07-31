@@ -198,6 +198,7 @@ impl Amm for OpenBookMarket {
         let accounts = PlaceTakeOrder {
             signer: *user_transfer_authority,
             market: self.key,
+            market_authority: self.market.market_authority,
             bids: self.market.bids,
             asks: self.market.asks,
             token_deposit_account: *user_source_token_account,

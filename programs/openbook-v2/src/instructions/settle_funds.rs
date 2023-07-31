@@ -30,7 +30,7 @@ pub fn settle_funds<'info>(ctx: Context<'_, '_, '_, 'info, SettleFunds<'info>>) 
     market.quote_deposit_total -= pa.quote_free_native;
     market.referrer_rebates_accrued -= pa.referrer_rebates_available;
 
-    let seeds = market_seeds!(market);
+    let seeds = market_seeds!(market, ctx.accounts.market.key());
 
     drop(market);
 
@@ -40,7 +40,7 @@ pub fn settle_funds<'info>(ctx: Context<'_, '_, '_, 'info, SettleFunds<'info>>) 
             &ctx.accounts.token_program,
             &ctx.accounts.quote_vault,
             referrer,
-            &ctx.accounts.market,
+            &ctx.accounts.market_authority,
             seeds,
         )?;
     }
@@ -50,7 +50,7 @@ pub fn settle_funds<'info>(ctx: Context<'_, '_, '_, 'info, SettleFunds<'info>>) 
         &ctx.accounts.token_program,
         &ctx.accounts.base_vault,
         &ctx.accounts.token_base_account,
-        &ctx.accounts.market,
+        &ctx.accounts.market_authority,
         seeds,
     )?;
 
@@ -59,7 +59,7 @@ pub fn settle_funds<'info>(ctx: Context<'_, '_, '_, 'info, SettleFunds<'info>>) 
         &ctx.accounts.token_program,
         &ctx.accounts.quote_vault,
         &ctx.accounts.token_quote_account,
-        &ctx.accounts.market,
+        &ctx.accounts.market_authority,
         seeds,
     )?;
 
