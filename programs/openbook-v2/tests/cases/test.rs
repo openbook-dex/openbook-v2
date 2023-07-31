@@ -32,12 +32,17 @@ async fn test_simple_settle() -> Result<(), TransportError> {
     //
 
     let market_2 = TestKeypair::new();
+    let market_2_authority = Pubkey::find_program_address(
+        &[b"Market".as_ref(), market_2.pubkey().to_bytes().as_ref()],
+        &openbook_v2::id(),
+    )
+    .0;
 
     let base_vault_2 = solana
-        .create_associated_token_account(&market_2.pubkey(), mints[0].pubkey)
+        .create_associated_token_account(&market_2_authority, mints[0].pubkey)
         .await;
     let quote_vault_2 = solana
-        .create_associated_token_account(&market_2.pubkey(), mints[1].pubkey)
+        .create_associated_token_account(&market_2_authority, mints[1].pubkey)
         .await;
 
     send_tx(
@@ -47,6 +52,8 @@ async fn test_simple_settle() -> Result<(), TransportError> {
             open_orders_admin: None,
             close_market_admin: None,
             payer,
+            market: market_2,
+            market_authority: market_2_authority,
             quote_lot_size: 10,
             base_lot_size: 100,
             maker_fee: -200,

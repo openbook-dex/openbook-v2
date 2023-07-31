@@ -18,11 +18,16 @@ async fn test_skip_missing_accounts() -> Result<(), TransportError> {
     let tokens = Token::create(mints.to_vec(), solana, collect_fee_admin, payer).await;
 
     let market = TestKeypair::new();
+    let market_authority = Pubkey::find_program_address(
+        &[b"Market".as_ref(), market.pubkey().to_bytes().as_ref()],
+        &openbook_v2::id(),
+    )
+    .0;
     let base_vault = solana
-        .create_associated_token_account(&market.pubkey(), mints[0].pubkey)
+        .create_associated_token_account(&market_authority, mints[0].pubkey)
         .await;
     let quote_vault = solana
-        .create_associated_token_account(&market.pubkey(), mints[1].pubkey)
+        .create_associated_token_account(&market_authority, mints[1].pubkey)
         .await;
 
     let openbook_v2::accounts::CreateMarket {
@@ -39,6 +44,7 @@ async fn test_skip_missing_accounts() -> Result<(), TransportError> {
             close_market_admin: Some(close_market_admin.pubkey()),
             payer,
             market,
+            market_authority,
             quote_lot_size: 10,
             base_lot_size: 100,
             maker_fee: -200,
@@ -206,11 +212,16 @@ async fn test_crank_given_events() -> Result<(), TransportError> {
     let tokens = Token::create(mints.to_vec(), solana, collect_fee_admin, payer).await;
 
     let market = TestKeypair::new();
+    let market_authority = Pubkey::find_program_address(
+        &[b"Market".as_ref(), market.pubkey().to_bytes().as_ref()],
+        &openbook_v2::id(),
+    )
+    .0;
     let base_vault = solana
-        .create_associated_token_account(&market.pubkey(), mints[0].pubkey)
+        .create_associated_token_account(&market_authority, mints[0].pubkey)
         .await;
     let quote_vault = solana
-        .create_associated_token_account(&market.pubkey(), mints[1].pubkey)
+        .create_associated_token_account(&market_authority, mints[1].pubkey)
         .await;
 
     let openbook_v2::accounts::CreateMarket {
@@ -226,6 +237,8 @@ async fn test_crank_given_events() -> Result<(), TransportError> {
             open_orders_admin: None,
             close_market_admin: Some(close_market_admin.pubkey()),
             payer,
+            market,
+            market_authority,
             quote_lot_size: 10,
             base_lot_size: 100,
             maker_fee: -200,
