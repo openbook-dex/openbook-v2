@@ -1021,6 +1021,7 @@ impl ClientInstruction for StubOracleCloseInstruction {
     }
 }
 
+#[derive(Clone)]
 pub struct CloseMarketInstruction {
     pub close_market_admin: TestKeypair,
     pub market: Pubkey,

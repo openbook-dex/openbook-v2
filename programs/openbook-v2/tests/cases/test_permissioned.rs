@@ -264,13 +264,13 @@ async fn test_close_market_admin() -> Result<(), TransportError> {
         close_market_admin,
         collect_fee_admin,
         owner,
+        mints,
         owner_token_0,
         owner_token_1,
         market,
         base_vault,
         quote_vault,
         price_lots,
-        tokens,
         account_1,
         account_2,
         ..
@@ -281,8 +281,9 @@ async fn test_close_market_admin() -> Result<(), TransportError> {
     .await?;
     let solana = &context.solana.clone();
 
-    // Set the initial oracle price
-    set_stub_oracle_price(solana, &tokens[1], collect_fee_admin, 1000.0).await;
+    let fee_admin_ata = solana
+        .create_associated_token_account(&collect_fee_admin.pubkey(), mints[1].pubkey)
+        .await;
 
     send_tx(
         solana,
@@ -297,7 +298,6 @@ async fn test_close_market_admin() -> Result<(), TransportError> {
             price_lots,
             max_base_lots: 1,
             max_quote_lots_including_fees: 10000,
-
             client_order_id: 0,
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
@@ -322,7 +322,6 @@ async fn test_close_market_admin() -> Result<(), TransportError> {
             price_lots,
             max_base_lots: 1,
             max_quote_lots_including_fees: 10000,
-
             client_order_id: 0,
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
@@ -347,7 +346,6 @@ async fn test_close_market_admin() -> Result<(), TransportError> {
             price_lots,
             max_base_lots: 1,
             max_quote_lots_including_fees: 10000,
-
             client_order_id: 0,
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
@@ -358,17 +356,14 @@ async fn test_close_market_admin() -> Result<(), TransportError> {
     .await
     .unwrap();
 
-    // Can't close yet
-    let result = send_tx(
-        solana,
-        CloseMarketInstruction {
-            close_market_admin,
-            market,
-            sol_destination: owner.pubkey(),
-        },
-    )
-    .await;
-    assert!(result.is_err());
+    let close_ix = CloseMarketInstruction {
+        close_market_admin,
+        market,
+        sol_destination: owner.pubkey(),
+    };
+
+    // Can't close yet, market not market as expired
+    assert!(send_tx(solana, close_ix.clone()).await.is_err());
 
     send_tx(
         solana,
@@ -386,7 +381,6 @@ async fn test_close_market_admin() -> Result<(), TransportError> {
     }
 
     // Can't post orders anymore
-
     let result = send_tx(
         solana,
         PlaceOrderInstruction {
@@ -400,7 +394,6 @@ async fn test_close_market_admin() -> Result<(), TransportError> {
             price_lots,
             max_base_lots: 1,
             max_quote_lots_including_fees: 10000,
-
             client_order_id: 0,
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
@@ -424,18 +417,8 @@ async fn test_close_market_admin() -> Result<(), TransportError> {
     .unwrap();
 
     // Can't close, have to prune orders first
-    let result = send_tx(
-        solana,
-        CloseMarketInstruction {
-            close_market_admin,
-            market,
-            sol_destination: owner.pubkey(),
-        },
-    )
-    .await;
-    assert!(result.is_err());
+    assert!(send_tx(solana, close_ix.clone()).await.is_err());
 
-    //Prune order
     send_tx(
         solana,
         PruneOrdersInstruction {
@@ -447,17 +430,67 @@ async fn test_close_market_admin() -> Result<(), TransportError> {
     .await
     .unwrap();
 
-    // Boom
+    // and wait until users settle funds
+    {
+        let market = solana.get_account::<Market>(market).await;
+        assert!(market.base_deposit_total != 0);
+        assert!(market.quote_deposit_total != 0);
+    }
+    assert!(send_tx(solana, close_ix.clone()).await.is_err());
+
     send_tx(
         solana,
-        CloseMarketInstruction {
-            close_market_admin,
+        SettleFundsInstruction {
+            owner,
             market,
-            sol_destination: owner.pubkey(),
+            open_orders_account: account_1,
+            base_vault,
+            quote_vault,
+            token_base_account: owner_token_0,
+            token_quote_account: owner_token_1,
+            referrer: None,
         },
     )
     .await
     .unwrap();
+
+    send_tx(
+        solana,
+        SettleFundsInstruction {
+            owner,
+            market,
+            open_orders_account: account_2,
+            base_vault,
+            quote_vault,
+            token_base_account: owner_token_0,
+            token_quote_account: owner_token_1,
+            referrer: None,
+        },
+    )
+    .await
+    .unwrap();
+
+    // but wait! the're still pending fees
+    {
+        let market = solana.get_account::<Market>(market).await;
+        assert!(market.fees_available != 0);
+    }
+    assert!(send_tx(solana, close_ix.clone()).await.is_err());
+
+    send_tx(
+        solana,
+        SweepFeesInstruction {
+            collect_fee_admin,
+            market,
+            quote_vault,
+            token_receiver_account: fee_admin_ata,
+        },
+    )
+    .await
+    .unwrap();
+
+    // Boom
+    send_tx(solana, close_ix.clone()).await.unwrap();
 
     Ok(())
 }
