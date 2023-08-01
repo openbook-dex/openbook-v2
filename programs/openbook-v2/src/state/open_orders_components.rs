@@ -58,6 +58,15 @@ impl Position {
     pub fn has_open_orders(&self) -> bool {
         self.asks_base_lots != 0 || self.bids_base_lots != 0
     }
+
+    pub fn is_empty(&self) -> bool {
+        self.bids_base_lots == 0
+            && self.asks_base_lots == 0
+            && self.base_free_native == 0
+            && self.quote_free_native == 0
+            && self.locked_maker_fees == 0
+            && self.referrer_rebates_available == 0
+    }
 }
 
 #[zero_copy]

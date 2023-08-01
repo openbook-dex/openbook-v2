@@ -11,14 +11,12 @@ async fn test_simple_settle() -> Result<(), TransportError> {
         owner_token_0,
         owner_token_1,
         market,
-
         base_vault,
         quote_vault,
         price_lots,
         tokens,
         account_1,
         account_2,
-        close_market_admin,
         ..
     } = TestContext::new_with_market(TestNewMarketInitialize {
         close_market_admin_bool: true,
@@ -204,27 +202,6 @@ async fn test_simple_settle() -> Result<(), TransportError> {
         assert_eq!(open_orders_account_1.position.quote_free_native, 0);
         assert_eq!(open_orders_account_2.position.quote_free_native, 0);
     }
-
-    send_tx(
-        solana,
-        SetMarketExpiredInstruction {
-            close_market_admin,
-            market,
-        },
-    )
-    .await
-    .unwrap();
-
-    send_tx(
-        solana,
-        CloseMarketInstruction {
-            close_market_admin,
-            market,
-            sol_destination: owner.pubkey(),
-        },
-    )
-    .await
-    .unwrap();
 
     Ok(())
 }
