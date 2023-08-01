@@ -362,8 +362,24 @@ async fn test_close_market_admin() -> Result<(), TransportError> {
         sol_destination: owner.pubkey(),
     };
 
+    let settle_funds_expired_ix = SettleFundsExpiredInstruction {
+        close_market_admin,
+        market,
+        open_orders_account: account_2,
+        base_vault,
+        quote_vault,
+        token_base_account: owner_token_0,
+        token_quote_account: owner_token_1,
+        referrer: None,
+    };
+
     // Can't close yet, market not market as expired
     assert!(send_tx(solana, close_ix.clone()).await.is_err());
+
+    // also not possible to settle in behalf of the users
+    assert!(send_tx(solana, settle_funds_expired_ix.clone())
+        .await
+        .is_err());
 
     send_tx(
         solana,
@@ -454,21 +470,9 @@ async fn test_close_market_admin() -> Result<(), TransportError> {
     .await
     .unwrap();
 
-    send_tx(
-        solana,
-        SettleFundsInstruction {
-            owner,
-            market,
-            open_orders_account: account_2,
-            base_vault,
-            quote_vault,
-            token_base_account: owner_token_0,
-            token_quote_account: owner_token_1,
-            referrer: None,
-        },
-    )
-    .await
-    .unwrap();
+    // which can be even be called by the close_market_admin once the market is expired so it
+    // doesn't have to wait for the users!
+    send_tx(solana, settle_funds_expired_ix).await.unwrap();
 
     // but wait! the're still pending fees
     {

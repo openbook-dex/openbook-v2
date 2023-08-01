@@ -377,6 +377,15 @@ pub mod openbook_v2 {
         Ok(())
     }
 
+    /// Withdraw any available tokens when the market is expired (only `close_market_admin`)
+    pub fn settle_funds_expired<'info>(
+        ctx: Context<'_, '_, '_, 'info, SettleFundsExpired<'info>>,
+    ) -> Result<()> {
+        #[cfg(feature = "enable-gpl")]
+        instructions::settle_funds_expired(ctx)?;
+        Ok(())
+    }
+
     /// Sweep fees, as a [`Market`](crate::state::Market)'s admin.
     pub fn sweep_fees(ctx: Context<SweepFees>) -> Result<()> {
         #[cfg(feature = "enable-gpl")]
