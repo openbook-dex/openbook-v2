@@ -101,3 +101,9 @@ If you want to have tests that automatically re-run when you edit a file, instal
 ```bash
 just test-dev
 ```
+
+### TS Client
+
+```bash
+yarn build
+```

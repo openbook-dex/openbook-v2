@@ -1,11 +1,11 @@
-import { AnchorProvider } from '@coral-xyz/anchor';
+import { type AnchorProvider } from '@coral-xyz/anchor';
 import NodeWallet from '@coral-xyz/anchor/dist/cjs/nodewallet';
 import {
-  AddressLookupTableAccount,
+  type AddressLookupTableAccount,
   ComputeBudgetProgram,
   MessageV0,
-  Signer,
-  TransactionInstruction,
+  type Signer,
+  type TransactionInstruction,
   VersionedTransaction,
 } from '@solana/web3.js';
 
@@ -24,14 +24,14 @@ export async function sendTransaction(
         'finalized',
     ));
 
-  const payer = (provider as AnchorProvider).wallet;
+  const payer = (provider ).wallet;
 
   if (opts.prioritizationFee) {
     ixs = [createComputeBudgetIx(opts.prioritizationFee), ...ixs];
   }
 
   const message = MessageV0.compile({
-    payerKey: (provider as AnchorProvider).wallet.publicKey,
+    payerKey: (provider ).wallet.publicKey,
     instructions: ixs,
     recentBlockhash: latestBlockhash.blockhash,
     addressLookupTableAccounts: alts,

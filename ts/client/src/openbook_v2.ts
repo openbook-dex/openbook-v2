@@ -1,4 +1,4 @@
-export type OpenbookV2 = {
+export interface OpenbookV2 {
   version: '0.1.0';
   name: 'openbook_v2';
   instructions: [
@@ -3334,7 +3334,7 @@ export type OpenbookV2 = {
       msg: 'Cannot close a non-empty open orders account';
     },
   ];
-};
+}
 
 export const IDL: OpenbookV2 = {
   version: '0.1.0',

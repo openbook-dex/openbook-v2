@@ -1,9 +1,9 @@
-import { PublicKey } from '@solana/web3.js';
+import { type PublicKey } from '@solana/web3.js';
 
 export class OpenOrdersAccount {
   publicKey: PublicKey;
   owner: PublicKey;
-  name: String;
+  name: string;
   market: PublicKey;
   delegate: PublicKey;
   oracle: PublicKey;
@@ -13,7 +13,7 @@ export class OpenOrdersAccount {
   constructor(
     publicKey: PublicKey,
     owner: PublicKey,
-    name: String,
+    name: string,
     delegate: PublicKey,
     oracle: PublicKey,
   ) {

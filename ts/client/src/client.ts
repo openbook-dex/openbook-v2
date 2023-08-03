@@ -1,11 +1,11 @@
-import { AnchorProvider, BN, Program, Provider } from '@coral-xyz/anchor';
+import { type AnchorProvider, BN, type Program, Provider } from '@coral-xyz/anchor';
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
   AccountLayout,
   MintLayout,
   NATIVE_MINT,
-  RawAccount,
-  RawMint,
+  type RawAccount,
+  type RawMint,
   TOKEN_PROGRAM_ID,
   createCloseAccountInstruction,
   createInitializeAccount3Instruction,
@@ -13,40 +13,40 @@ import {
   getOrCreateAssociatedTokenAccount,
 } from '@solana/spl-token';
 import {
-  AccountInfo,
+  type AccountInfo,
   AccountMeta,
   AddressLookupTableAccount,
-  Cluster,
-  Commitment,
-  Connection,
+  type Cluster,
+  type Commitment,
+  type Connection,
   Keypair,
   MemcmpFilter,
   PublicKey,
   SYSVAR_INSTRUCTIONS_PUBKEY,
   SYSVAR_RENT_PUBKEY,
-  Signer,
+  type Signer,
   SystemProgram,
-  TransactionInstruction,
-  TransactionSignature,
+  type TransactionInstruction,
+  type TransactionSignature,
 } from '@solana/web3.js';
-import { IDL, OpenbookV2 } from './openbook_v2';
+import { IDL, type OpenbookV2 } from './openbook_v2';
 import { sendTransaction } from './utils/rpc';
-import { OpenOrdersAccount } from './accounts/openOrdersAccount';
+import { type OpenOrdersAccount } from './accounts/openOrdersAccount';
 
 export type IdsSource = 'api' | 'static' | 'get-program-accounts';
 
-export type OpenBookClientOptions = {
+export interface OpenBookClientOptions {
   idsSource?: IdsSource;
   postSendTxCallback?: ({ txid }: { txid: string }) => void;
   prioritizationFee?: number;
   txConfirmationCommitment?: Commitment;
-};
+}
 
 export class OpenBookV2Client {
-  private idsSource: IdsSource;
-  private postSendTxCallback?: ({ txid }) => void;
-  private prioritizationFee: number;
-  private txConfirmationCommitment: Commitment;
+  private readonly idsSource: IdsSource;
+  private readonly postSendTxCallback?: ({ txid }) => void;
+  private readonly prioritizationFee: number;
+  private readonly txConfirmationCommitment: Commitment;
 
   constructor(
     public program: Program<OpenbookV2>,
@@ -106,7 +106,7 @@ export class OpenBookV2Client {
     oracleA: PublicKey,
     oracleB: PublicKey,
   ): Promise<TransactionSignature> {
-    let bids = Keypair.generate().publicKey;
+    const bids = Keypair.generate().publicKey;
     let space = 123712;
     const ix0 = SystemProgram.createAccount({
       fromPubkey: payer.publicKey,
@@ -115,7 +115,7 @@ export class OpenBookV2Client {
       space,
       programId: SystemProgram.programId,
     });
-    let asks = Keypair.generate().publicKey;
+    const asks = Keypair.generate().publicKey;
     const ix1 = SystemProgram.createAccount({
       fromPubkey: payer.publicKey,
       newAccountPubkey: asks,
@@ -123,7 +123,7 @@ export class OpenBookV2Client {
       space,
       programId: SystemProgram.programId,
     });
-    let eventQueue = Keypair.generate().publicKey;
+    const eventQueue = Keypair.generate().publicKey;
     space = 97680;
     const ix2 = SystemProgram.createAccount({
       fromPubkey: payer.publicKey,
@@ -133,9 +133,9 @@ export class OpenBookV2Client {
       programId: SystemProgram.programId,
     });
 
-    let market = Keypair.generate();
+    const market = Keypair.generate();
 
-    let [marketAuthority, _tmp2] = PublicKey.findProgramAddressSync(
+    const [marketAuthority, _tmp2] = PublicKey.findProgramAddressSync(
       [Buffer.from('Market'), market.publicKey.toBuffer()],
       this.program.programId,
     );
@@ -298,8 +298,8 @@ export async function getFilteredProgramAccounts(
   connection: Connection,
   programId: PublicKey,
   filters,
-): Promise<{ publicKey: PublicKey; accountInfo: AccountInfo<Buffer> }[]> {
-  // @ts-ignore
+): Promise<Array<{ publicKey: PublicKey; accountInfo: AccountInfo<Buffer> }>> {
+  // @ts-expect-error
   const resp = await connection._rpcRequest('getProgramAccounts', [
     programId.toBase58(),
     {

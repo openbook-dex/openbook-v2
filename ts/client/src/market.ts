@@ -1,4 +1,4 @@
-import { Connection, PublicKey } from '@solana/web3.js';
+import { type Connection, type PublicKey } from '@solana/web3.js';
 import { getFilteredProgramAccounts } from './client';
 
 async function findAccountsByMints(
@@ -21,5 +21,5 @@ async function findAccountsByMints(
       },
     },
   ];
-  return getFilteredProgramAccounts(connection, programId, filters);
+  return await getFilteredProgramAccounts(connection, programId, filters);
 }
