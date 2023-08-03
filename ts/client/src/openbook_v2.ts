@@ -11,6 +11,11 @@ export type OpenbookV2 = {
         {
           "name": "market",
           "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "marketAuthority",
+          "isMut": false,
           "isSigner": false
         },
         {
@@ -18,7 +23,7 @@ export type OpenbookV2 = {
           "isMut": true,
           "isSigner": false,
           "docs": [
-            "Accounts are initialised by client,",
+            "Accounts are initialized by client,",
             "anchor discriminator is set first when ix exits,"
           ]
         },
@@ -63,16 +68,42 @@ export type OpenbookV2 = {
           "isSigner": false
         },
         {
-          "name": "oracle",
+          "name": "oracleA",
+          "isMut": false,
+          "isSigner": false,
+          "isOptional": true
+        },
+        {
+          "name": "oracleB",
+          "isMut": false,
+          "isSigner": false,
+          "isOptional": true
+        },
+        {
+          "name": "collectFeeAdmin",
           "isMut": false,
           "isSigner": false
+        },
+        {
+          "name": "openOrdersAdmin",
+          "isMut": false,
+          "isSigner": false,
+          "isOptional": true
+        },
+        {
+          "name": "consumeEventsAdmin",
+          "isMut": false,
+          "isSigner": false,
+          "isOptional": true
+        },
+        {
+          "name": "closeMarketAdmin",
+          "isMut": false,
+          "isSigner": false,
+          "isOptional": true
         }
       ],
       "args": [
-        {
-          "name": "marketIndex",
-          "type": "u32"
-        },
         {
           "name": "name",
           "type": "string"
@@ -93,61 +124,39 @@ export type OpenbookV2 = {
         },
         {
           "name": "makerFee",
-          "type": "f32"
+          "type": "i64"
         },
         {
           "name": "takerFee",
-          "type": "f32"
+          "type": "i64"
         },
         {
-          "name": "feePenalty",
-          "type": "u64"
-        },
-        {
-          "name": "collectFeeAdmin",
-          "type": "publicKey"
-        },
-        {
-          "name": "openOrdersAdmin",
-          "type": {
-            "option": "publicKey"
-          }
-        },
-        {
-          "name": "consumeEventsAdmin",
-          "type": {
-            "option": "publicKey"
-          }
-        },
-        {
-          "name": "closeMarketAdmin",
-          "type": {
-            "option": "publicKey"
-          }
+          "name": "timeExpiry",
+          "type": "i64"
         }
       ]
     },
     {
-      "name": "initOpenOrders",
+      "name": "createOpenOrdersIndexer",
       "accounts": [
-        {
-          "name": "openOrdersAccount",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "owner",
-          "isMut": true,
-          "isSigner": true
-        },
         {
           "name": "payer",
           "isMut": true,
           "isSigner": true
         },
         {
-          "name": "market",
+          "name": "owner",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "openOrdersIndexer",
           "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "market",
+          "isMut": false,
           "isSigner": false
         },
         {
@@ -156,16 +165,75 @@ export type OpenbookV2 = {
           "isSigner": false
         }
       ],
-      "args": [
+      "args": []
+    },
+    {
+      "name": "closeOpenOrdersIndexer",
+      "accounts": [
         {
-          "name": "accountNum",
-          "type": "u32"
+          "name": "owner",
+          "isMut": false,
+          "isSigner": true
         },
         {
-          "name": "openOrdersCount",
-          "type": "u8"
+          "name": "openOrdersIndexer",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "solDestination",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
         }
-      ]
+      ],
+      "args": []
+    },
+    {
+      "name": "initOpenOrders",
+      "accounts": [
+        {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "owner",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "delegateAccount",
+          "isMut": false,
+          "isSigner": false,
+          "isOptional": true
+        },
+        {
+          "name": "openOrdersIndexer",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "openOrdersAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "market",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
     },
     {
       "name": "placeOrder",
@@ -189,20 +257,25 @@ export type OpenbookV2 = {
       ],
       "accounts": [
         {
+          "name": "signer",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
           "name": "openOrdersAccount",
           "isMut": true,
           "isSigner": false
-        },
-        {
-          "name": "owner",
-          "isMut": false,
-          "isSigner": true
         },
         {
           "name": "openOrdersAdmin",
           "isMut": false,
           "isSigner": true,
           "isOptional": true
+        },
+        {
+          "name": "tokenDepositAccount",
+          "isMut": true,
+          "isSigner": false
         },
         {
           "name": "market",
@@ -220,29 +293,26 @@ export type OpenbookV2 = {
           "isSigner": false
         },
         {
-          "name": "tokenDepositAccount",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "baseVault",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "quoteVault",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
           "name": "eventQueue",
           "isMut": true,
           "isSigner": false
         },
         {
-          "name": "oracle",
-          "isMut": false,
+          "name": "marketVault",
+          "isMut": true,
           "isSigner": false
+        },
+        {
+          "name": "oracleA",
+          "isMut": false,
+          "isSigner": false,
+          "isOptional": true
+        },
+        {
+          "name": "oracleB",
+          "isMut": false,
+          "isSigner": false,
+          "isOptional": true
         },
         {
           "name": "tokenProgram",
@@ -257,46 +327,10 @@ export type OpenbookV2 = {
       ],
       "args": [
         {
-          "name": "side",
+          "name": "args",
           "type": {
-            "defined": "Side"
+            "defined": "PlaceOrderArgs"
           }
-        },
-        {
-          "name": "priceLots",
-          "type": "i64"
-        },
-        {
-          "name": "maxBaseLots",
-          "type": "i64"
-        },
-        {
-          "name": "maxQuoteLotsIncludingFees",
-          "type": "i64"
-        },
-        {
-          "name": "clientOrderId",
-          "type": "u64"
-        },
-        {
-          "name": "orderType",
-          "type": {
-            "defined": "PlaceOrderType"
-          }
-        },
-        {
-          "name": "selfTradeBehavior",
-          "type": {
-            "defined": "SelfTradeBehavior"
-          }
-        },
-        {
-          "name": "expiryTimestamp",
-          "type": "u64"
-        },
-        {
-          "name": "limit",
-          "type": "u8"
         }
       ],
       "returns": {
@@ -304,23 +338,37 @@ export type OpenbookV2 = {
       }
     },
     {
-      "name": "placeOrderPegged",
+      "name": "cancelAndPlaceOrders",
+      "docs": [
+        "Cancel orders and place multiple orders.",
+        ""
+      ],
       "accounts": [
+        {
+          "name": "signer",
+          "isMut": false,
+          "isSigner": true
+        },
         {
           "name": "openOrdersAccount",
           "isMut": true,
           "isSigner": false
         },
         {
-          "name": "owner",
-          "isMut": false,
-          "isSigner": true
-        },
-        {
           "name": "openOrdersAdmin",
           "isMut": false,
           "isSigner": true,
           "isOptional": true
+        },
+        {
+          "name": "tokenQuoteDepositAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenBaseDepositAccount",
+          "isMut": true,
+          "isSigner": false
         },
         {
           "name": "market",
@@ -338,29 +386,31 @@ export type OpenbookV2 = {
           "isSigner": false
         },
         {
-          "name": "tokenDepositAccount",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "baseVault",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "quoteVault",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
           "name": "eventQueue",
           "isMut": true,
           "isSigner": false
         },
         {
-          "name": "oracle",
-          "isMut": false,
+          "name": "marketQuoteVault",
+          "isMut": true,
           "isSigner": false
+        },
+        {
+          "name": "marketBaseVault",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "oracleA",
+          "isMut": false,
+          "isSigner": false,
+          "isOptional": true
+        },
+        {
+          "name": "oracleB",
+          "isMut": false,
+          "isSigner": false,
+          "isOptional": true
         },
         {
           "name": "tokenProgram",
@@ -375,54 +425,104 @@ export type OpenbookV2 = {
       ],
       "args": [
         {
-          "name": "side",
+          "name": "cancelClientOrdersIds",
           "type": {
-            "defined": "Side"
+            "vec": "u64"
           }
         },
         {
-          "name": "priceOffsetLots",
-          "type": "i64"
-        },
-        {
-          "name": "pegLimit",
-          "type": "i64"
-        },
-        {
-          "name": "maxBaseLots",
-          "type": "i64"
-        },
-        {
-          "name": "maxQuoteLotsIncludingFees",
-          "type": "i64"
-        },
-        {
-          "name": "clientOrderId",
-          "type": "u64"
-        },
-        {
-          "name": "orderType",
+          "name": "placeOrders",
           "type": {
-            "defined": "PlaceOrderType"
+            "vec": {
+              "defined": "PlaceOrderArgs"
+            }
           }
+        }
+      ],
+      "returns": {
+        "vec": {
+          "option": "u128"
+        }
+      }
+    },
+    {
+      "name": "placeOrderPegged",
+      "accounts": [
+        {
+          "name": "signer",
+          "isMut": false,
+          "isSigner": true
         },
         {
-          "name": "selfTradeBehavior",
+          "name": "openOrdersAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "openOrdersAdmin",
+          "isMut": false,
+          "isSigner": true,
+          "isOptional": true
+        },
+        {
+          "name": "tokenDepositAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "market",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "bids",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "asks",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "eventQueue",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "marketVault",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "oracleA",
+          "isMut": false,
+          "isSigner": false,
+          "isOptional": true
+        },
+        {
+          "name": "oracleB",
+          "isMut": false,
+          "isSigner": false,
+          "isOptional": true
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "args",
           "type": {
-            "defined": "SelfTradeBehavior"
+            "defined": "PlaceOrderPeggedArgs"
           }
-        },
-        {
-          "name": "expiryTimestamp",
-          "type": "u64"
-        },
-        {
-          "name": "limit",
-          "type": "u8"
-        },
-        {
-          "name": "maxOracleStalenessSlots",
-          "type": "i32"
         }
       ],
       "returns": {
@@ -439,7 +539,7 @@ export type OpenbookV2 = {
       ],
       "accounts": [
         {
-          "name": "owner",
+          "name": "signer",
           "isMut": false,
           "isSigner": true
         },
@@ -449,22 +549,17 @@ export type OpenbookV2 = {
           "isSigner": false
         },
         {
+          "name": "marketAuthority",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
           "name": "bids",
           "isMut": true,
           "isSigner": false
         },
         {
           "name": "asks",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "tokenDepositAccount",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "tokenReceiverAccount",
           "isMut": true,
           "isSigner": false
         },
@@ -484,9 +579,32 @@ export type OpenbookV2 = {
           "isSigner": false
         },
         {
-          "name": "oracle",
-          "isMut": false,
+          "name": "tokenDepositAccount",
+          "isMut": true,
           "isSigner": false
+        },
+        {
+          "name": "tokenReceiverAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "referrer",
+          "isMut": true,
+          "isSigner": false,
+          "isOptional": true
+        },
+        {
+          "name": "oracleA",
+          "isMut": false,
+          "isSigner": false,
+          "isOptional": true
+        },
+        {
+          "name": "oracleB",
+          "isMut": false,
+          "isSigner": false,
+          "isOptional": true
         },
         {
           "name": "tokenProgram",
@@ -507,47 +625,12 @@ export type OpenbookV2 = {
       ],
       "args": [
         {
-          "name": "side",
+          "name": "args",
           "type": {
-            "defined": "Side"
+            "defined": "PlaceTakeOrderArgs"
           }
-        },
-        {
-          "name": "priceLots",
-          "type": "i64"
-        },
-        {
-          "name": "maxBaseLots",
-          "type": "i64"
-        },
-        {
-          "name": "maxQuoteLotsIncludingFees",
-          "type": "i64"
-        },
-        {
-          "name": "clientOrderId",
-          "type": "u64"
-        },
-        {
-          "name": "orderType",
-          "type": {
-            "defined": "PlaceOrderType"
-          }
-        },
-        {
-          "name": "selfTradeBehavior",
-          "type": {
-            "defined": "SelfTradeBehavior"
-          }
-        },
-        {
-          "name": "limit",
-          "type": "u8"
         }
-      ],
-      "returns": {
-        "option": "u128"
-      }
+      ]
     },
     {
       "name": "consumeEvents",
@@ -602,6 +685,38 @@ export type OpenbookV2 = {
       ]
     },
     {
+      "name": "consumeGivenEvents",
+      "docs": [
+        "Process the [events](crate::state::AnyEvent) at the given positions."
+      ],
+      "accounts": [
+        {
+          "name": "consumeEventsAdmin",
+          "isMut": false,
+          "isSigner": true,
+          "isOptional": true
+        },
+        {
+          "name": "market",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "eventQueue",
+          "isMut": true,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "slots",
+          "type": {
+            "vec": "u64"
+          }
+        }
+      ]
+    },
+    {
       "name": "cancelOrder",
       "docs": [
         "Cancel an order by its `order_id`.",
@@ -611,18 +726,18 @@ export type OpenbookV2 = {
       ],
       "accounts": [
         {
+          "name": "signer",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
           "name": "openOrdersAccount",
           "isMut": true,
           "isSigner": false
         },
         {
-          "name": "owner",
-          "isMut": false,
-          "isSigner": true
-        },
-        {
           "name": "market",
-          "isMut": true,
+          "isMut": false,
           "isSigner": false
         },
         {
@@ -653,14 +768,14 @@ export type OpenbookV2 = {
       ],
       "accounts": [
         {
+          "name": "signer",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
           "name": "openOrdersAccount",
           "isMut": true,
           "isSigner": false
-        },
-        {
-          "name": "owner",
-          "isMut": false,
-          "isSigner": true
         },
         {
           "name": "market",
@@ -688,57 +803,18 @@ export type OpenbookV2 = {
     {
       "name": "cancelAllOrders",
       "docs": [
-        "Cancel up to `limit` orders."
+        "Cancel up to `limit` orders, optionally filtering by side"
       ],
       "accounts": [
         {
-          "name": "openOrdersAccount",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "owner",
+          "name": "signer",
           "isMut": false,
           "isSigner": true
         },
         {
-          "name": "market",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "bids",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "asks",
-          "isMut": true,
-          "isSigner": false
-        }
-      ],
-      "args": [
-        {
-          "name": "limit",
-          "type": "u8"
-        }
-      ]
-    },
-    {
-      "name": "cancelAllOrdersBySide",
-      "docs": [
-        "Cancel up to `limit` orders on a single side of the book."
-      ],
-      "accounts": [
-        {
           "name": "openOrdersAccount",
           "isMut": true,
           "isSigner": false
-        },
-        {
-          "name": "owner",
-          "isMut": false,
-          "isSigner": true
         },
         {
           "name": "market",
@@ -774,8 +850,8 @@ export type OpenbookV2 = {
     {
       "name": "deposit",
       "docs": [
-        "Desposit a certain amount of `base_amount_lots` and `quote_amount_lots`",
-        "into one's [`Position`](crate::state::Position).",
+        "Desposit a certain amount of `base` and `quote` lamports into one's",
+        "[`Position`](crate::state::Position).",
         "",
         "Makers might wish to `deposit`, rather than have actual tokens moved for",
         "each trade, in order to reduce CUs."
@@ -829,11 +905,78 @@ export type OpenbookV2 = {
       ],
       "args": [
         {
-          "name": "baseAmountLots",
+          "name": "baseAmount",
           "type": "u64"
         },
         {
-          "name": "quoteAmountLots",
+          "name": "quoteAmount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "refill",
+      "docs": [
+        "Refill a certain amount of `base` and `quote` lamports. The amount being passed is the",
+        "total lamports that the [`Position`](crate::state::Position) will have.",
+        "",
+        "Makers might wish to `refill`, rather than have actual tokens moved for",
+        "each trade, in order to reduce CUs."
+      ],
+      "accounts": [
+        {
+          "name": "owner",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "tokenBaseAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenQuoteAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "openOrdersAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "market",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "baseVault",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "quoteVault",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "baseAmount",
+          "type": "u64"
+        },
+        {
+          "name": "quoteAmount",
           "type": "u64"
         }
       ]
@@ -860,6 +1003,11 @@ export type OpenbookV2 = {
           "isSigner": false
         },
         {
+          "name": "marketAuthority",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
           "name": "baseVault",
           "isMut": true,
           "isSigner": false
@@ -878,6 +1026,77 @@ export type OpenbookV2 = {
           "name": "tokenQuoteAccount",
           "isMut": true,
           "isSigner": false
+        },
+        {
+          "name": "referrer",
+          "isMut": true,
+          "isSigner": false,
+          "isOptional": true
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "settleFundsExpired",
+      "docs": [
+        "Withdraw any available tokens when the market is expired (only `close_market_admin`)"
+      ],
+      "accounts": [
+        {
+          "name": "closeMarketAdmin",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "openOrdersAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "market",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "marketAuthority",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "baseVault",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "quoteVault",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenBaseAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenQuoteAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "referrer",
+          "isMut": true,
+          "isSigner": false,
+          "isOptional": true
         },
         {
           "name": "tokenProgram",
@@ -909,12 +1128,17 @@ export type OpenbookV2 = {
           "isSigner": false
         },
         {
-          "name": "tokenReceiverAccount",
-          "isMut": true,
+          "name": "marketAuthority",
+          "isMut": false,
           "isSigner": false
         },
         {
           "name": "quoteVault",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenReceiverAccount",
           "isMut": true,
           "isSigner": false
         },
@@ -930,6 +1154,83 @@ export type OpenbookV2 = {
         }
       ],
       "args": []
+    },
+    {
+      "name": "setDelegate",
+      "accounts": [
+        {
+          "name": "owner",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "openOrdersAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "delegateAccount",
+          "isMut": false,
+          "isSigner": false,
+          "isOptional": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "setMarketExpired",
+      "docs": [
+        "Set market to expired before pruning orders and closing the market"
+      ],
+      "accounts": [
+        {
+          "name": "closeMarketAdmin",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "market",
+          "isMut": true,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "pruneOrders",
+      "accounts": [
+        {
+          "name": "closeMarketAdmin",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "openOrdersAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "market",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "bids",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "asks",
+          "isMut": true,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "limit",
+          "type": "u8"
+        }
+      ]
     },
     {
       "name": "closeMarket",
@@ -976,27 +1277,56 @@ export type OpenbookV2 = {
       "args": []
     },
     {
+      "name": "closeOpenOrdersAccount",
+      "docs": [
+        "Close a [`Market`](crate::state::Market)."
+      ],
+      "accounts": [
+        {
+          "name": "owner",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "openOrdersIndexer",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "openOrdersAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "solDestination",
+          "isMut": true,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    },
+    {
       "name": "stubOracleCreate",
       "accounts": [
+        {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "owner",
+          "isMut": false,
+          "isSigner": true
+        },
         {
           "name": "oracle",
           "isMut": true,
           "isSigner": false
         },
         {
-          "name": "admin",
-          "isMut": false,
-          "isSigner": true
-        },
-        {
           "name": "mint",
           "isMut": false,
           "isSigner": false
-        },
-        {
-          "name": "payer",
-          "isMut": true,
-          "isSigner": true
         },
         {
           "name": "systemProgram",
@@ -1017,7 +1347,7 @@ export type OpenbookV2 = {
       "name": "stubOracleClose",
       "accounts": [
         {
-          "name": "admin",
+          "name": "owner",
           "isMut": false,
           "isSigner": true
         },
@@ -1043,7 +1373,7 @@ export type OpenbookV2 = {
       "name": "stubOracleSet",
       "accounts": [
         {
-          "name": "admin",
+          "name": "owner",
           "isMut": false,
           "isSigner": true
         },
@@ -1070,13 +1400,6 @@ export type OpenbookV2 = {
         "kind": "struct",
         "fields": [
           {
-            "name": "marketIndex",
-            "docs": [
-              "Index of this market"
-            ],
-            "type": "u32"
-          },
-          {
             "name": "bump",
             "docs": [
               "PDA bump"
@@ -1101,9 +1424,20 @@ export type OpenbookV2 = {
             "type": {
               "array": [
                 "u8",
-                1
+                5
               ]
             }
+          },
+          {
+            "name": "marketAuthority",
+            "type": "publicKey"
+          },
+          {
+            "name": "timeExpiry",
+            "docs": [
+              "No expiry = 0. Market will expire and no trading allowed after time_expiry"
+            ],
+            "type": "i64"
           },
           {
             "name": "collectFeeAdmin",
@@ -1118,7 +1452,7 @@ export type OpenbookV2 = {
               "Admin who must sign off on all order creations"
             ],
             "type": {
-              "defined": "PodOption<Pubkey>"
+              "defined": "NonZeroPubkeyOption"
             }
           },
           {
@@ -1127,16 +1461,16 @@ export type OpenbookV2 = {
               "Admin who must sign off on all event consumptions"
             ],
             "type": {
-              "defined": "PodOption<Pubkey>"
+              "defined": "NonZeroPubkeyOption"
             }
           },
           {
             "name": "closeMarketAdmin",
             "docs": [
-              "Admin who can close the market"
+              "Admin who can set market expired, prune orders and close the market"
             ],
             "type": {
-              "defined": "PodOption<Pubkey>"
+              "defined": "NonZeroPubkeyOption"
             }
           },
           {
@@ -1173,11 +1507,19 @@ export type OpenbookV2 = {
             "type": "publicKey"
           },
           {
-            "name": "oracle",
+            "name": "oracleA",
             "docs": [
-              "Oracle account address"
+              "Oracles account address"
             ],
-            "type": "publicKey"
+            "type": {
+              "defined": "NonZeroPubkeyOption"
+            }
+          },
+          {
+            "name": "oracleB",
+            "type": {
+              "defined": "NonZeroPubkeyOption"
+            }
           },
           {
             "name": "oracleConfig",
@@ -1186,15 +1528,6 @@ export type OpenbookV2 = {
             ],
             "type": {
               "defined": "OracleConfig"
-            }
-          },
-          {
-            "name": "stablePriceModel",
-            "docs": [
-              "Maintains a stable price based on the oracle price that is less volatile."
-            ],
-            "type": {
-              "defined": "StablePriceModel"
             }
           },
           {
@@ -1237,40 +1570,44 @@ export type OpenbookV2 = {
             "name": "makerFee",
             "docs": [
               "Fees",
-              "Fee when matching maker orders.",
+              "",
+              "Fee (in 10^-6) when matching maker orders.",
               "maker_fee < 0 it means some of the taker_fees goes to the maker",
               "maker_fee > 0, it means no taker_fee to the maker, and maker fee goes to the referral"
             ],
-            "type": {
-              "defined": "I80F48"
-            }
+            "type": "i64"
           },
           {
             "name": "takerFee",
             "docs": [
-              "Fee for taker orders, always >= 0."
+              "Fee (in 10^-6) for taker orders, always >= 0."
             ],
-            "type": {
-              "defined": "I80F48"
-            }
-          },
-          {
-            "name": "feePenalty",
-            "docs": [
-              "Fee (in quote native) to charge for ioc orders that don't match to avoid spam"
-            ],
-            "type": "u64"
+            "type": "i64"
           },
           {
             "name": "feesAccrued",
-            "type": "i64"
+            "docs": [
+              "Total fees accrued in native quote"
+            ],
+            "type": "u64"
           },
           {
             "name": "feesToReferrers",
             "type": "u64"
           },
           {
-            "name": "vaultSignerNonce",
+            "name": "referrerRebatesAccrued",
+            "type": "u64"
+          },
+          {
+            "name": "feesAvailable",
+            "type": "u64"
+          },
+          {
+            "name": "takerVolumeWoOo",
+            "docs": [
+              "Cumulative taker volume in quote native units due to place take orders"
+            ],
             "type": "u64"
           },
           {
@@ -1290,23 +1627,11 @@ export type OpenbookV2 = {
             "type": "u64"
           },
           {
-            "name": "baseFeesAccrued",
-            "type": "u64"
-          },
-          {
             "name": "quoteVault",
             "type": "publicKey"
           },
           {
             "name": "quoteDepositTotal",
-            "type": "u64"
-          },
-          {
-            "name": "quoteFeesAccrued",
-            "type": "u64"
-          },
-          {
-            "name": "referrerRebatesAccrued",
             "type": "u64"
           },
           {
@@ -1331,6 +1656,10 @@ export type OpenbookV2 = {
             "type": "publicKey"
           },
           {
+            "name": "market",
+            "type": "publicKey"
+          },
+          {
             "name": "name",
             "type": {
               "array": [
@@ -1341,7 +1670,9 @@ export type OpenbookV2 = {
           },
           {
             "name": "delegate",
-            "type": "publicKey"
+            "type": {
+              "defined": "NonZeroPubkeyOption"
+            }
           },
           {
             "name": "accountNum",
@@ -1361,65 +1692,66 @@ export type OpenbookV2 = {
             }
           },
           {
-            "name": "buybackFeesAccruedCurrent",
-            "docs": [
-              "Fees usable with the \"fees buyback\" feature.",
-              "This tracks the ones that accrued in the current expiry interval."
-            ],
-            "type": "u64"
-          },
-          {
-            "name": "buybackFeesAccruedPrevious",
-            "docs": [
-              "Fees buyback amount from the previous expiry interval."
-            ],
-            "type": "u64"
-          },
-          {
-            "name": "buybackFeesExpiryTimestamp",
-            "docs": [
-              "End timestamp of the current expiry interval of the buyback fees amount."
-            ],
-            "type": "u64"
-          },
-          {
             "name": "position",
             "type": {
               "defined": "Position"
             }
           },
           {
+            "name": "openOrders",
+            "type": {
+              "array": [
+                {
+                  "defined": "OpenOrder"
+                },
+                128
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "openOrdersIndexer",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "owner",
+            "type": "publicKey"
+          },
+          {
+            "name": "market",
+            "type": "publicKey"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "padding",
+            "type": {
+              "array": [
+                "u8",
+                3
+              ]
+            }
+          },
+          {
+            "name": "createdCounter",
+            "type": "u32"
+          },
+          {
+            "name": "closedCounter",
+            "type": "u32"
+          },
+          {
             "name": "reserved",
             "type": {
               "array": [
                 "u8",
-                208
+                20
               ]
-            }
-          },
-          {
-            "name": "headerVersion",
-            "type": "u8"
-          },
-          {
-            "name": "padding3",
-            "type": {
-              "array": [
-                "u8",
-                7
-              ]
-            }
-          },
-          {
-            "name": "padding4",
-            "type": "u32"
-          },
-          {
-            "name": "openOrders",
-            "type": {
-              "vec": {
-                "defined": "OpenOrder"
-              }
             }
           }
         ]
@@ -1431,7 +1763,7 @@ export type OpenbookV2 = {
         "kind": "struct",
         "fields": [
           {
-            "name": "group",
+            "name": "owner",
             "type": "publicKey"
           },
           {
@@ -1507,6 +1839,13 @@ export type OpenbookV2 = {
     },
     {
       "name": "eventQueue",
+      "docs": [
+        "Container for the different EventTypes.",
+        "",
+        "Events are stored in a fixed-array of nodes. Free nodes are connected by a single-linked list",
+        "starting at free_head while used nodes form a circular doubly-linked list starting at",
+        "used_head."
+      ],
       "type": {
         "kind": "struct",
         "fields": [
@@ -1517,13 +1856,13 @@ export type OpenbookV2 = {
             }
           },
           {
-            "name": "buf",
+            "name": "nodes",
             "type": {
               "array": [
                 {
-                  "defined": "AnyEvent"
+                  "defined": "EventNode"
                 },
-                488
+                600
               ]
             }
           },
@@ -1542,70 +1881,16 @@ export type OpenbookV2 = {
   ],
   "types": [
     {
-      "name": "OpenOrdersAccountFixed",
+      "name": "NonZeroPubkeyOption",
+      "docs": [
+        "Like `Option`, but implemented for `Pubkey`."
+      ],
       "type": {
         "kind": "struct",
         "fields": [
           {
-            "name": "owner",
+            "name": "key",
             "type": "publicKey"
-          },
-          {
-            "name": "name",
-            "type": {
-              "array": [
-                "u8",
-                32
-              ]
-            }
-          },
-          {
-            "name": "delegate",
-            "type": "publicKey"
-          },
-          {
-            "name": "accountNum",
-            "type": "u32"
-          },
-          {
-            "name": "bump",
-            "type": "u8"
-          },
-          {
-            "name": "padding",
-            "type": {
-              "array": [
-                "u8",
-                3
-              ]
-            }
-          },
-          {
-            "name": "buybackFeesAccruedCurrent",
-            "type": "u64"
-          },
-          {
-            "name": "buybackFeesAccruedPrevious",
-            "type": "u64"
-          },
-          {
-            "name": "buybackFeesExpiryTimestamp",
-            "type": "u64"
-          },
-          {
-            "name": "position",
-            "type": {
-              "defined": "Position"
-            }
-          },
-          {
-            "name": "reserved",
-            "type": {
-              "array": [
-                "u8",
-                208
-              ]
-            }
           }
         ]
       }
@@ -1638,34 +1923,26 @@ export type OpenbookV2 = {
             "type": "u64"
           },
           {
-            "name": "referrerRebatesAccrued",
+            "name": "lockedMakerFees",
+            "type": "u64"
+          },
+          {
+            "name": "referrerRebatesAvailable",
             "type": "u64"
           },
           {
             "name": "makerVolume",
             "docs": [
-              "Cumulative maker volume in quote native units",
-              "",
-              "(Display only)"
+              "Cumulative maker volume in quote native units (display only)"
             ],
             "type": "u64"
           },
           {
             "name": "takerVolume",
             "docs": [
-              "Cumulative taker volume in quote native units",
-              "",
-              "(Display only)"
+              "Cumulative taker volume in quote native units (display only)"
             ],
             "type": "u64"
-          },
-          {
-            "name": "avgEntryPricePerBaseLot",
-            "docs": [
-              "The native average entry price for the base lots of the current position.",
-              "Reset to 0 when the base position reaches or crosses 0."
-            ],
-            "type": "f64"
           },
           {
             "name": "reserved",
@@ -1685,36 +1962,43 @@ export type OpenbookV2 = {
         "kind": "struct",
         "fields": [
           {
-            "name": "sideAndTree",
-            "type": "u8"
-          },
-          {
-            "name": "padding1",
-            "type": {
-              "array": [
-                "u8",
-                7
-              ]
-            }
+            "name": "id",
+            "type": "u128"
           },
           {
             "name": "clientId",
             "type": "u64"
           },
           {
-            "name": "pegLimit",
+            "name": "lockedPrice",
+            "docs": [
+              "Price at which user's assets were locked"
+            ],
             "type": "i64"
           },
           {
-            "name": "id",
-            "type": "u128"
+            "name": "isFree",
+            "type": "u8"
+          },
+          {
+            "name": "sideAndTree",
+            "type": "u8"
+          },
+          {
+            "name": "padding",
+            "type": {
+              "array": [
+                "u8",
+                6
+              ]
+            }
           },
           {
             "name": "reserved",
             "type": {
               "array": [
                 "u8",
-                64
+                32
               ]
             }
           }
@@ -1868,22 +2152,6 @@ export type OpenbookV2 = {
             "type": "u8"
           },
           {
-            "name": "orderType",
-            "docs": [
-              "PostOrderType, this was added for TradingView move order"
-            ],
-            "type": "u8"
-          },
-          {
-            "name": "padding",
-            "type": {
-              "array": [
-                "u8",
-                1
-              ]
-            }
-          },
-          {
             "name": "timeInForce",
             "docs": [
               "Time in seconds after `timestamp` at which the order expires.",
@@ -1892,11 +2160,11 @@ export type OpenbookV2 = {
             "type": "u16"
           },
           {
-            "name": "padding2",
+            "name": "padding",
             "type": {
               "array": [
                 "u8",
-                2
+                4
               ]
             }
           },
@@ -2058,16 +2326,55 @@ export type OpenbookV2 = {
         "kind": "struct",
         "fields": [
           {
-            "name": "head",
-            "type": "u32"
+            "name": "freeHead",
+            "type": "u16"
+          },
+          {
+            "name": "usedHead",
+            "type": "u16"
           },
           {
             "name": "count",
-            "type": "u32"
+            "type": "u16"
+          },
+          {
+            "name": "padd",
+            "type": "u16"
           },
           {
             "name": "seqNum",
             "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "EventNode",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "next",
+            "type": "u16"
+          },
+          {
+            "name": "prev",
+            "type": "u16"
+          },
+          {
+            "name": "pad",
+            "type": {
+              "array": [
+                "u8",
+                4
+              ]
+            }
+          },
+          {
+            "name": "event",
+            "type": {
+              "defined": "AnyEvent"
+            }
           }
         ]
       }
@@ -2086,7 +2393,7 @@ export type OpenbookV2 = {
             "type": {
               "array": [
                 "u8",
-                199
+                143
               ]
             }
           }
@@ -2136,15 +2443,6 @@ export type OpenbookV2 = {
             "type": "publicKey"
           },
           {
-            "name": "padding2",
-            "type": {
-              "array": [
-                "u8",
-                32
-              ]
-            }
-          },
-          {
             "name": "makerTimestamp",
             "type": "u64"
           },
@@ -2153,29 +2451,15 @@ export type OpenbookV2 = {
             "type": "publicKey"
           },
           {
-            "name": "padding3",
-            "type": {
-              "array": [
-                "u8",
-                16
-              ]
-            }
-          },
-          {
             "name": "takerClientOrderId",
             "type": "u64"
           },
           {
-            "name": "padding4",
-            "type": {
-              "array": [
-                "u8",
-                16
-              ]
-            }
+            "name": "price",
+            "type": "i64"
           },
           {
-            "name": "price",
+            "name": "pegLimit",
             "type": "i64"
           },
           {
@@ -2245,7 +2529,7 @@ export type OpenbookV2 = {
             "type": {
               "array": [
                 "u8",
-                136
+                80
               ]
             }
           }
@@ -2253,117 +2537,7 @@ export type OpenbookV2 = {
       }
     },
     {
-      "name": "StablePriceModel",
-      "docs": [
-        "Maintains a \"stable_price\" based on the oracle price.",
-        "",
-        "The stable price follows the oracle price, but its relative rate of",
-        "change is limited (to `stable_growth_limit`) and futher reduced if",
-        "the oracle price is far from the `delay_price`.",
-        "",
-        "Conceptually the `delay_price` is itself a time delayed",
-        "(`24 * delay_interval_seconds`, assume 24h) and relative rate of change limited",
-        "function of the oracle price. It is implemented as averaging the oracle",
-        "price over every `delay_interval_seconds` (assume 1h) and then applying the",
-        "`delay_growth_limit` between intervals."
-      ],
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "stablePrice",
-            "docs": [
-              "Current stable price to use in health"
-            ],
-            "type": "f64"
-          },
-          {
-            "name": "lastUpdateTimestamp",
-            "type": "u64"
-          },
-          {
-            "name": "delayPrices",
-            "docs": [
-              "Stored delay_price for each delay_interval.",
-              "If we want the delay_price to be 24h delayed, we would store one for each hour.",
-              "This is used in a cyclical way: We use the maximally-delayed value at delay_interval_index",
-              "and once enough time passes to move to the next delay interval, that gets overwritten and",
-              "we use the next one."
-            ],
-            "type": {
-              "array": [
-                "f64",
-                24
-              ]
-            }
-          },
-          {
-            "name": "delayAccumulatorPrice",
-            "docs": [
-              "The delay price is based on an average over each delay_interval. The contributions",
-              "to the average are summed up here."
-            ],
-            "type": "f64"
-          },
-          {
-            "name": "delayAccumulatorTime",
-            "docs": [
-              "Accumulating the total time for the above average."
-            ],
-            "type": "u32"
-          },
-          {
-            "name": "delayIntervalSeconds",
-            "docs": [
-              "Length of a delay_interval"
-            ],
-            "type": "u32"
-          },
-          {
-            "name": "delayGrowthLimit",
-            "docs": [
-              "Maximal relative difference between two delay_price in consecutive intervals."
-            ],
-            "type": "f32"
-          },
-          {
-            "name": "stableGrowthLimit",
-            "docs": [
-              "Maximal per-second relative difference of the stable price.",
-              "It gets further reduced if stable and delay price disagree."
-            ],
-            "type": "f32"
-          },
-          {
-            "name": "lastDelayIntervalIndex",
-            "docs": [
-              "The delay_interval_index that update() was last called on."
-            ],
-            "type": "u8"
-          },
-          {
-            "name": "padding",
-            "type": {
-              "array": [
-                "u8",
-                7
-              ]
-            }
-          },
-          {
-            "name": "reserved",
-            "type": {
-              "array": [
-                "u8",
-                48
-              ]
-            }
-          }
-        ]
-      }
-    },
-    {
-      "name": "MarketIndex",
+      "name": "I80F48",
       "docs": [
         "Nothing in Rust shall use these types. They only exist so that the Anchor IDL",
         "knows about them and typescript can deserialize it."
@@ -2373,19 +2547,151 @@ export type OpenbookV2 = {
         "fields": [
           {
             "name": "val",
-            "type": "u32"
+            "type": "i128"
           }
         ]
       }
     },
     {
-      "name": "I80F48",
+      "name": "PlaceOrderArgs",
       "type": {
         "kind": "struct",
         "fields": [
           {
-            "name": "val",
-            "type": "i128"
+            "name": "side",
+            "type": {
+              "defined": "Side"
+            }
+          },
+          {
+            "name": "priceLots",
+            "type": "i64"
+          },
+          {
+            "name": "maxBaseLots",
+            "type": "i64"
+          },
+          {
+            "name": "maxQuoteLotsIncludingFees",
+            "type": "i64"
+          },
+          {
+            "name": "clientOrderId",
+            "type": "u64"
+          },
+          {
+            "name": "orderType",
+            "type": {
+              "defined": "PlaceOrderType"
+            }
+          },
+          {
+            "name": "expiryTimestamp",
+            "type": "u64"
+          },
+          {
+            "name": "selfTradeBehavior",
+            "type": {
+              "defined": "SelfTradeBehavior"
+            }
+          },
+          {
+            "name": "limit",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "PlaceOrderPeggedArgs",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "side",
+            "type": {
+              "defined": "Side"
+            }
+          },
+          {
+            "name": "priceOffsetLots",
+            "type": "i64"
+          },
+          {
+            "name": "pegLimit",
+            "type": "i64"
+          },
+          {
+            "name": "maxBaseLots",
+            "type": "i64"
+          },
+          {
+            "name": "maxQuoteLotsIncludingFees",
+            "type": "i64"
+          },
+          {
+            "name": "clientOrderId",
+            "type": "u64"
+          },
+          {
+            "name": "orderType",
+            "type": {
+              "defined": "PlaceOrderType"
+            }
+          },
+          {
+            "name": "expiryTimestamp",
+            "type": "u64"
+          },
+          {
+            "name": "maxOracleStalenessSlots",
+            "type": "i32"
+          },
+          {
+            "name": "selfTradeBehavior",
+            "type": {
+              "defined": "SelfTradeBehavior"
+            }
+          },
+          {
+            "name": "limit",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "PlaceTakeOrderArgs",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "side",
+            "type": {
+              "defined": "Side"
+            }
+          },
+          {
+            "name": "priceLots",
+            "type": "i64"
+          },
+          {
+            "name": "maxBaseLots",
+            "type": "i64"
+          },
+          {
+            "name": "maxQuoteLotsIncludingFees",
+            "type": "i64"
+          },
+          {
+            "name": "orderType",
+            "type": {
+              "defined": "PlaceOrderType"
+            }
+          },
+          {
+            "name": "limit",
+            "type": "u8"
           }
         ]
       }
@@ -2652,30 +2958,10 @@ export type OpenbookV2 = {
   ],
   "events": [
     {
-      "name": "BalanceLog",
-      "fields": [
-        {
-          "name": "openOrdersAcc",
-          "type": "publicKey",
-          "index": false
-        },
-        {
-          "name": "basePosition",
-          "type": "i64",
-          "index": false
-        },
-        {
-          "name": "quotePosition",
-          "type": "i128",
-          "index": false
-        }
-      ]
-    },
-    {
       "name": "DepositLog",
       "fields": [
         {
-          "name": "openOrdersAcc",
+          "name": "openOrdersAccount",
           "type": "publicKey",
           "index": false
         },
@@ -2685,7 +2971,12 @@ export type OpenbookV2 = {
           "index": false
         },
         {
-          "name": "quantity",
+          "name": "baseAmount",
+          "type": "u64",
+          "index": false
+        },
+        {
+          "name": "quoteAmount",
           "type": "u64",
           "index": false
         }
@@ -2731,7 +3022,7 @@ export type OpenbookV2 = {
         },
         {
           "name": "makerFee",
-          "type": "f32",
+          "type": "i64",
           "index": false
         },
         {
@@ -2751,7 +3042,7 @@ export type OpenbookV2 = {
         },
         {
           "name": "takerFee",
-          "type": "f32",
+          "type": "i64",
           "index": false
         },
         {
@@ -2775,11 +3066,6 @@ export type OpenbookV2 = {
           "index": false
         },
         {
-          "name": "marketIndex",
-          "type": "u32",
-          "index": false
-        },
-        {
           "name": "baseDecimals",
           "type": "u8",
           "index": false
@@ -2800,8 +3086,17 @@ export type OpenbookV2 = {
           "index": false
         },
         {
-          "name": "oracle",
-          "type": "publicKey",
+          "name": "oracleA",
+          "type": {
+            "option": "publicKey"
+          },
+          "index": false
+        },
+        {
+          "name": "oracleB",
+          "type": {
+            "option": "publicKey"
+          },
           "index": false
         }
       ]
@@ -2835,6 +3130,162 @@ export type OpenbookV2 = {
           "index": false
         }
       ]
+    },
+    {
+      "name": "CancelOrderLog",
+      "fields": [
+        {
+          "name": "openOrdersAccount",
+          "type": "publicKey",
+          "index": false
+        },
+        {
+          "name": "slot",
+          "type": "u8",
+          "index": false
+        },
+        {
+          "name": "side",
+          "type": "u8",
+          "index": false
+        },
+        {
+          "name": "quantity",
+          "type": "i64",
+          "index": false
+        }
+      ]
+    },
+    {
+      "name": "CancelOrdersLog",
+      "fields": [
+        {
+          "name": "openOrdersAccount",
+          "type": "publicKey",
+          "index": false
+        },
+        {
+          "name": "totalQuantity",
+          "type": "i64",
+          "index": false
+        }
+      ]
+    },
+    {
+      "name": "CancelAllOrdersLog",
+      "fields": [
+        {
+          "name": "openOrdersAccount",
+          "type": "publicKey",
+          "index": false
+        },
+        {
+          "name": "side",
+          "type": {
+            "option": "u8"
+          },
+          "index": false
+        },
+        {
+          "name": "quantity",
+          "type": "i64",
+          "index": false
+        },
+        {
+          "name": "limit",
+          "type": "u8",
+          "index": false
+        }
+      ]
+    },
+    {
+      "name": "PruneOrdersLog",
+      "fields": [
+        {
+          "name": "openOrdersAccount",
+          "type": "publicKey",
+          "index": false
+        },
+        {
+          "name": "quantity",
+          "type": "i64",
+          "index": false
+        },
+        {
+          "name": "limit",
+          "type": "u8",
+          "index": false
+        }
+      ]
+    },
+    {
+      "name": "SetDelegateLog",
+      "fields": [
+        {
+          "name": "openOrdersAccount",
+          "type": "publicKey",
+          "index": false
+        },
+        {
+          "name": "delegate",
+          "type": {
+            "option": "publicKey"
+          },
+          "index": false
+        }
+      ]
+    },
+    {
+      "name": "SettleFundsLog",
+      "fields": [
+        {
+          "name": "openOrdersAccount",
+          "type": "publicKey",
+          "index": false
+        },
+        {
+          "name": "baseNative",
+          "type": "u64",
+          "index": false
+        },
+        {
+          "name": "quoteNative",
+          "type": "u64",
+          "index": false
+        },
+        {
+          "name": "referrerRebate",
+          "type": "u64",
+          "index": false
+        },
+        {
+          "name": "referrer",
+          "type": {
+            "option": "publicKey"
+          },
+          "index": false
+        }
+      ]
+    },
+    {
+      "name": "SweepFeesLog",
+      "fields": [
+        {
+          "name": "market",
+          "type": "publicKey",
+          "index": false
+        },
+        {
+          "name": "amount",
+          "type": "u64",
+          "index": false
+        },
+        {
+          "name": "receiver",
+          "type": "publicKey",
+          "index": false
+        }
+      ]
     }
   ],
   "errors": [
@@ -2845,223 +3296,198 @@ export type OpenbookV2 = {
     },
     {
       "code": 6001,
-      "name": "NotImplementedError",
-      "msg": ""
+      "name": "InvalidInputNameLength",
+      "msg": "Name lenght above limit"
     },
     {
       "code": 6002,
-      "name": "MathError",
-      "msg": "checked math error"
+      "name": "InvalidInputMarketExpired",
+      "msg": "Market cannot be created as expired"
     },
     {
       "code": 6003,
-      "name": "UnexpectedOracle",
-      "msg": ""
-    },
-    {
-      "code": 6004,
-      "name": "UnknownOracleType",
-      "msg": "oracle type cannot be determined"
-    },
-    {
-      "code": 6005,
-      "name": "InvalidBank",
-      "msg": "invalid bank"
-    },
-    {
-      "code": 6006,
-      "name": "ProfitabilityMismatch",
-      "msg": "account profitability is mismatched"
-    },
-    {
-      "code": 6007,
-      "name": "CannotSettleWithSelf",
-      "msg": "cannot settle with self"
-    },
-    {
-      "code": 6008,
-      "name": "PositionDoesNotExist",
-      "msg": "perp position does not exist"
-    },
-    {
-      "code": 6009,
-      "name": "MaxSettleAmountMustBeGreaterThanZero",
-      "msg": "max settle amount must be greater than zero"
-    },
-    {
-      "code": 6010,
-      "name": "HasOpenOrders",
-      "msg": "the perp position has open orders or unprocessed fill events"
-    },
-    {
-      "code": 6011,
-      "name": "OracleConfidence",
-      "msg": "an oracle does not reach the confidence threshold"
-    },
-    {
-      "code": 6012,
-      "name": "OracleStale",
-      "msg": "an oracle is stale"
-    },
-    {
-      "code": 6013,
-      "name": "SettlementAmountMustBePositive",
-      "msg": "settlement amount must always be positive"
-    },
-    {
-      "code": 6014,
-      "name": "BankBorrowLimitReached",
-      "msg": "bank utilization has reached limit"
-    },
-    {
-      "code": 6015,
-      "name": "BankNetBorrowsLimitReached",
-      "msg": "bank net borrows has reached limit - this is an intermittent error - the limit will reset regularly"
-    },
-    {
-      "code": 6016,
-      "name": "TokenPositionDoesNotExist",
-      "msg": "token position does not exist"
-    },
-    {
-      "code": 6017,
-      "name": "DepositsIntoLiquidatingMustRecover",
-      "msg": "token deposits into accounts that are being liquidated must bring their health above the init threshold"
-    },
-    {
-      "code": 6018,
-      "name": "TokenInReduceOnlyMode",
-      "msg": "token is in reduce only mode"
-    },
-    {
-      "code": 6019,
-      "name": "MarketInReduceOnlyMode",
-      "msg": "market is in reduce only mode"
-    },
-    {
-      "code": 6020,
-      "name": "GroupIsHalted",
-      "msg": "group is halted"
-    },
-    {
-      "code": 6021,
-      "name": "HasBaseLots",
-      "msg": "the perp position has non-zero base lots"
-    },
-    {
-      "code": 6022,
-      "name": "HasOpenOrUnsettledSerum3Orders",
-      "msg": "there are open or unsettled serum3 orders"
-    },
-    {
-      "code": 6023,
-      "name": "HasLiquidatableTokenPosition",
-      "msg": "has liquidatable token position"
-    },
-    {
-      "code": 6024,
-      "name": "HasLiquidatableBasePosition",
-      "msg": "has liquidatable perp base position"
-    },
-    {
-      "code": 6025,
-      "name": "HasLiquidatablePositivePnl",
-      "msg": "has liquidatable positive perp pnl"
-    },
-    {
-      "code": 6026,
-      "name": "AccountIsFrozen",
-      "msg": "account is frozen"
-    },
-    {
-      "code": 6027,
-      "name": "InitAssetWeightCantBeNegative",
-      "msg": "Init Asset Weight can't be negative"
-    },
-    {
-      "code": 6028,
-      "name": "HasOpenTakerFills",
-      "msg": "has open perp taker fills"
-    },
-    {
-      "code": 6029,
-      "name": "DepositLimit",
-      "msg": "deposit crosses the current group deposit limit"
-    },
-    {
-      "code": 6030,
-      "name": "IxIsDisabled",
-      "msg": "instruction is disabled"
-    },
-    {
-      "code": 6031,
-      "name": "NoLiquidatableBasePosition",
-      "msg": "no liquidatable perp base position"
-    },
-    {
-      "code": 6032,
-      "name": "OrderIdNotFound",
-      "msg": "perp order id not found on the orderbook"
-    },
-    {
-      "code": 6033,
-      "name": "HealthRegionBadInnerInstruction",
-      "msg": "HealthRegions allow only specific instructions between Begin and End"
-    },
-    {
-      "code": 6034,
-      "name": "EventQueueContainsElements",
-      "msg": "Event queue contains elements and market can't be closed"
-    },
-    {
-      "code": 6035,
-      "name": "InvalidFeesError",
+      "name": "InvalidInputMarketFees",
       "msg": "Taker fees should be positive and if maker fees are negative, greater or equal to their abs value"
     },
     {
-      "code": 6036,
-      "name": "InvalidOrderType",
+      "code": 6004,
+      "name": "InvalidInputLots",
+      "msg": "Lots cannot be negative"
+    },
+    {
+      "code": 6005,
+      "name": "InvalidInputLotsSize",
+      "msg": "Lots size above market limits"
+    },
+    {
+      "code": 6006,
+      "name": "InvalidInputPriceLots",
+      "msg": "Price lots should be greater than zero"
+    },
+    {
+      "code": 6007,
+      "name": "InvalidInputPegLimit",
+      "msg": "Peg limit should be greater than zero"
+    },
+    {
+      "code": 6008,
+      "name": "InvalidInputOrderType",
       "msg": "The order type is invalid. A taker order must be Market or ImmediateOrCancel"
     },
     {
-      "code": 6037,
-      "name": "InvalidFundsReceiver",
-      "msg": "The receiver is invalid. Makes sure the receiver's owner is the market admin"
+      "code": 6009,
+      "name": "InvalidInputOrderId",
+      "msg": "Order id cannot be zero"
     },
     {
-      "code": 6038,
-      "name": "WouldSelfTrade",
-      "msg": "would self trade"
+      "code": 6010,
+      "name": "InvalidInputStaleness",
+      "msg": "Oracle staleness limit is currently unimplemented"
     },
     {
-      "code": 6039,
+      "code": 6011,
+      "name": "InvalidInputQueueSlots",
+      "msg": "Slot above queue limit"
+    },
+    {
+      "code": 6012,
+      "name": "InvalidOracleTypes",
+      "msg": "Cannot combine two oracles of different providers"
+    },
+    {
+      "code": 6013,
+      "name": "InvalidSecondOracle",
+      "msg": "Cannot configure secondary oracle without primary"
+    },
+    {
+      "code": 6014,
       "name": "NoCloseMarketAdmin",
       "msg": "This market does not have a `close_market_admin` and thus cannot be closed."
     },
     {
-      "code": 6040,
+      "code": 6015,
       "name": "InvalidCloseMarketAdmin",
       "msg": "The signer of this transaction is not this market's `close_market_admin`."
     },
     {
-      "code": 6041,
-      "name": "MissingOpenOrdersAdmin",
-      "msg": "This market requires `open_orders_admin` to sign all instructions that create orders."
-    },
-    {
-      "code": 6042,
+      "code": 6016,
       "name": "InvalidOpenOrdersAdmin",
-      "msg": "The `open_orders_admin` passed does not match this market's `open_orders_admin`."
+      "msg": "The `open_orders_admin` required by this market to sign all instructions that creates orders is missing or is not valid"
     },
     {
-      "code": 6043,
-      "name": "MissingConsumeEventsAdmin",
-      "msg": "This market requires `consume_events_admin` to sign all instructions that consume events."
-    },
-    {
-      "code": 6044,
+      "code": 6017,
       "name": "InvalidConsumeEventsAdmin",
-      "msg": "The `consume_events_admin` passed does not match this market's `consume_events_admin`."
+      "msg": "The `consume_events_admin` required by this market to sign all instructions that consume events is missing or is not valid"
+    },
+    {
+      "code": 6018,
+      "name": "IndexerActiveOO",
+      "msg": "Cannot be closed due to the existence of open orders accounts"
+    },
+    {
+      "code": 6019,
+      "name": "UnknownOracleType",
+      "msg": "oracle type cannot be determined"
+    },
+    {
+      "code": 6020,
+      "name": "OracleConfidence",
+      "msg": "an oracle does not reach the confidence threshold"
+    },
+    {
+      "code": 6021,
+      "name": "OracleStale",
+      "msg": "an oracle is stale"
+    },
+    {
+      "code": 6022,
+      "name": "OrderIdNotFound",
+      "msg": "Order id not found on the orderbook"
+    },
+    {
+      "code": 6023,
+      "name": "EventQueueContainsElements",
+      "msg": "Event queue contains elements and market can't be closed"
+    },
+    {
+      "code": 6024,
+      "name": "InvalidOrderPostIOC",
+      "msg": "ImmediateOrCancel is not a PostOrderType"
+    },
+    {
+      "code": 6025,
+      "name": "InvalidOrderPostMarket",
+      "msg": "Market is not a PostOrderType"
+    },
+    {
+      "code": 6026,
+      "name": "WouldSelfTrade",
+      "msg": "would self trade"
+    },
+    {
+      "code": 6027,
+      "name": "MarketHasExpired",
+      "msg": "The Market has already expired."
+    },
+    {
+      "code": 6028,
+      "name": "InvalidPriceLots",
+      "msg": "Price lots should be greater than zero"
+    },
+    {
+      "code": 6029,
+      "name": "InvalidOraclePrice",
+      "msg": "Oracle price above market limits"
+    },
+    {
+      "code": 6030,
+      "name": "MarketHasNotExpired",
+      "msg": "The Market has not expired yet."
+    },
+    {
+      "code": 6031,
+      "name": "NoOwnerOrDelegate",
+      "msg": "No correct owner or delegate."
+    },
+    {
+      "code": 6032,
+      "name": "NoOwner",
+      "msg": "No correct owner"
+    },
+    {
+      "code": 6033,
+      "name": "OpenOrdersFull",
+      "msg": "No free order index in open orders account"
+    },
+    {
+      "code": 6034,
+      "name": "BookContainsElements",
+      "msg": "Book contains elements"
+    },
+    {
+      "code": 6035,
+      "name": "OpenOrdersOrderNotFound",
+      "msg": "Could not find order in user account"
+    },
+    {
+      "code": 6036,
+      "name": "InvalidPostAmount",
+      "msg": "Amount to post above book limits"
+    },
+    {
+      "code": 6037,
+      "name": "DisabledOraclePeg",
+      "msg": "Oracle peg orders are not enabled for this market"
+    },
+    {
+      "code": 6038,
+      "name": "NonEmptyMarket",
+      "msg": "Cannot close a non-empty market"
+    },
+    {
+      "code": 6039,
+      "name": "NonEmptyOpenOrdersPosition",
+      "msg": "Cannot close a non-empty open orders account"
     }
   ]
 };
@@ -3079,6 +3505,11 @@ export const IDL: OpenbookV2 = {
         {
           "name": "market",
           "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "marketAuthority",
+          "isMut": false,
           "isSigner": false
         },
         {
@@ -3086,7 +3517,7 @@ export const IDL: OpenbookV2 = {
           "isMut": true,
           "isSigner": false,
           "docs": [
-            "Accounts are initialised by client,",
+            "Accounts are initialized by client,",
             "anchor discriminator is set first when ix exits,"
           ]
         },
@@ -3131,16 +3562,42 @@ export const IDL: OpenbookV2 = {
           "isSigner": false
         },
         {
-          "name": "oracle",
+          "name": "oracleA",
+          "isMut": false,
+          "isSigner": false,
+          "isOptional": true
+        },
+        {
+          "name": "oracleB",
+          "isMut": false,
+          "isSigner": false,
+          "isOptional": true
+        },
+        {
+          "name": "collectFeeAdmin",
           "isMut": false,
           "isSigner": false
+        },
+        {
+          "name": "openOrdersAdmin",
+          "isMut": false,
+          "isSigner": false,
+          "isOptional": true
+        },
+        {
+          "name": "consumeEventsAdmin",
+          "isMut": false,
+          "isSigner": false,
+          "isOptional": true
+        },
+        {
+          "name": "closeMarketAdmin",
+          "isMut": false,
+          "isSigner": false,
+          "isOptional": true
         }
       ],
       "args": [
-        {
-          "name": "marketIndex",
-          "type": "u32"
-        },
         {
           "name": "name",
           "type": "string"
@@ -3161,61 +3618,39 @@ export const IDL: OpenbookV2 = {
         },
         {
           "name": "makerFee",
-          "type": "f32"
+          "type": "i64"
         },
         {
           "name": "takerFee",
-          "type": "f32"
+          "type": "i64"
         },
         {
-          "name": "feePenalty",
-          "type": "u64"
-        },
-        {
-          "name": "collectFeeAdmin",
-          "type": "publicKey"
-        },
-        {
-          "name": "openOrdersAdmin",
-          "type": {
-            "option": "publicKey"
-          }
-        },
-        {
-          "name": "consumeEventsAdmin",
-          "type": {
-            "option": "publicKey"
-          }
-        },
-        {
-          "name": "closeMarketAdmin",
-          "type": {
-            "option": "publicKey"
-          }
+          "name": "timeExpiry",
+          "type": "i64"
         }
       ]
     },
     {
-      "name": "initOpenOrders",
+      "name": "createOpenOrdersIndexer",
       "accounts": [
-        {
-          "name": "openOrdersAccount",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "owner",
-          "isMut": true,
-          "isSigner": true
-        },
         {
           "name": "payer",
           "isMut": true,
           "isSigner": true
         },
         {
-          "name": "market",
+          "name": "owner",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "openOrdersIndexer",
           "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "market",
+          "isMut": false,
           "isSigner": false
         },
         {
@@ -3224,16 +3659,75 @@ export const IDL: OpenbookV2 = {
           "isSigner": false
         }
       ],
-      "args": [
+      "args": []
+    },
+    {
+      "name": "closeOpenOrdersIndexer",
+      "accounts": [
         {
-          "name": "accountNum",
-          "type": "u32"
+          "name": "owner",
+          "isMut": false,
+          "isSigner": true
         },
         {
-          "name": "openOrdersCount",
-          "type": "u8"
+          "name": "openOrdersIndexer",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "solDestination",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
         }
-      ]
+      ],
+      "args": []
+    },
+    {
+      "name": "initOpenOrders",
+      "accounts": [
+        {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "owner",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "delegateAccount",
+          "isMut": false,
+          "isSigner": false,
+          "isOptional": true
+        },
+        {
+          "name": "openOrdersIndexer",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "openOrdersAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "market",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
     },
     {
       "name": "placeOrder",
@@ -3257,20 +3751,25 @@ export const IDL: OpenbookV2 = {
       ],
       "accounts": [
         {
+          "name": "signer",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
           "name": "openOrdersAccount",
           "isMut": true,
           "isSigner": false
-        },
-        {
-          "name": "owner",
-          "isMut": false,
-          "isSigner": true
         },
         {
           "name": "openOrdersAdmin",
           "isMut": false,
           "isSigner": true,
           "isOptional": true
+        },
+        {
+          "name": "tokenDepositAccount",
+          "isMut": true,
+          "isSigner": false
         },
         {
           "name": "market",
@@ -3288,29 +3787,26 @@ export const IDL: OpenbookV2 = {
           "isSigner": false
         },
         {
-          "name": "tokenDepositAccount",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "baseVault",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "quoteVault",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
           "name": "eventQueue",
           "isMut": true,
           "isSigner": false
         },
         {
-          "name": "oracle",
-          "isMut": false,
+          "name": "marketVault",
+          "isMut": true,
           "isSigner": false
+        },
+        {
+          "name": "oracleA",
+          "isMut": false,
+          "isSigner": false,
+          "isOptional": true
+        },
+        {
+          "name": "oracleB",
+          "isMut": false,
+          "isSigner": false,
+          "isOptional": true
         },
         {
           "name": "tokenProgram",
@@ -3325,46 +3821,10 @@ export const IDL: OpenbookV2 = {
       ],
       "args": [
         {
-          "name": "side",
+          "name": "args",
           "type": {
-            "defined": "Side"
+            "defined": "PlaceOrderArgs"
           }
-        },
-        {
-          "name": "priceLots",
-          "type": "i64"
-        },
-        {
-          "name": "maxBaseLots",
-          "type": "i64"
-        },
-        {
-          "name": "maxQuoteLotsIncludingFees",
-          "type": "i64"
-        },
-        {
-          "name": "clientOrderId",
-          "type": "u64"
-        },
-        {
-          "name": "orderType",
-          "type": {
-            "defined": "PlaceOrderType"
-          }
-        },
-        {
-          "name": "selfTradeBehavior",
-          "type": {
-            "defined": "SelfTradeBehavior"
-          }
-        },
-        {
-          "name": "expiryTimestamp",
-          "type": "u64"
-        },
-        {
-          "name": "limit",
-          "type": "u8"
         }
       ],
       "returns": {
@@ -3372,23 +3832,37 @@ export const IDL: OpenbookV2 = {
       }
     },
     {
-      "name": "placeOrderPegged",
+      "name": "cancelAndPlaceOrders",
+      "docs": [
+        "Cancel orders and place multiple orders.",
+        ""
+      ],
       "accounts": [
+        {
+          "name": "signer",
+          "isMut": false,
+          "isSigner": true
+        },
         {
           "name": "openOrdersAccount",
           "isMut": true,
           "isSigner": false
         },
         {
-          "name": "owner",
-          "isMut": false,
-          "isSigner": true
-        },
-        {
           "name": "openOrdersAdmin",
           "isMut": false,
           "isSigner": true,
           "isOptional": true
+        },
+        {
+          "name": "tokenQuoteDepositAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenBaseDepositAccount",
+          "isMut": true,
+          "isSigner": false
         },
         {
           "name": "market",
@@ -3406,29 +3880,31 @@ export const IDL: OpenbookV2 = {
           "isSigner": false
         },
         {
-          "name": "tokenDepositAccount",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "baseVault",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "quoteVault",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
           "name": "eventQueue",
           "isMut": true,
           "isSigner": false
         },
         {
-          "name": "oracle",
-          "isMut": false,
+          "name": "marketQuoteVault",
+          "isMut": true,
           "isSigner": false
+        },
+        {
+          "name": "marketBaseVault",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "oracleA",
+          "isMut": false,
+          "isSigner": false,
+          "isOptional": true
+        },
+        {
+          "name": "oracleB",
+          "isMut": false,
+          "isSigner": false,
+          "isOptional": true
         },
         {
           "name": "tokenProgram",
@@ -3443,54 +3919,104 @@ export const IDL: OpenbookV2 = {
       ],
       "args": [
         {
-          "name": "side",
+          "name": "cancelClientOrdersIds",
           "type": {
-            "defined": "Side"
+            "vec": "u64"
           }
         },
         {
-          "name": "priceOffsetLots",
-          "type": "i64"
-        },
-        {
-          "name": "pegLimit",
-          "type": "i64"
-        },
-        {
-          "name": "maxBaseLots",
-          "type": "i64"
-        },
-        {
-          "name": "maxQuoteLotsIncludingFees",
-          "type": "i64"
-        },
-        {
-          "name": "clientOrderId",
-          "type": "u64"
-        },
-        {
-          "name": "orderType",
+          "name": "placeOrders",
           "type": {
-            "defined": "PlaceOrderType"
+            "vec": {
+              "defined": "PlaceOrderArgs"
+            }
           }
+        }
+      ],
+      "returns": {
+        "vec": {
+          "option": "u128"
+        }
+      }
+    },
+    {
+      "name": "placeOrderPegged",
+      "accounts": [
+        {
+          "name": "signer",
+          "isMut": false,
+          "isSigner": true
         },
         {
-          "name": "selfTradeBehavior",
+          "name": "openOrdersAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "openOrdersAdmin",
+          "isMut": false,
+          "isSigner": true,
+          "isOptional": true
+        },
+        {
+          "name": "tokenDepositAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "market",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "bids",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "asks",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "eventQueue",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "marketVault",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "oracleA",
+          "isMut": false,
+          "isSigner": false,
+          "isOptional": true
+        },
+        {
+          "name": "oracleB",
+          "isMut": false,
+          "isSigner": false,
+          "isOptional": true
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "args",
           "type": {
-            "defined": "SelfTradeBehavior"
+            "defined": "PlaceOrderPeggedArgs"
           }
-        },
-        {
-          "name": "expiryTimestamp",
-          "type": "u64"
-        },
-        {
-          "name": "limit",
-          "type": "u8"
-        },
-        {
-          "name": "maxOracleStalenessSlots",
-          "type": "i32"
         }
       ],
       "returns": {
@@ -3507,7 +4033,7 @@ export const IDL: OpenbookV2 = {
       ],
       "accounts": [
         {
-          "name": "owner",
+          "name": "signer",
           "isMut": false,
           "isSigner": true
         },
@@ -3517,22 +4043,17 @@ export const IDL: OpenbookV2 = {
           "isSigner": false
         },
         {
+          "name": "marketAuthority",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
           "name": "bids",
           "isMut": true,
           "isSigner": false
         },
         {
           "name": "asks",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "tokenDepositAccount",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "tokenReceiverAccount",
           "isMut": true,
           "isSigner": false
         },
@@ -3552,9 +4073,32 @@ export const IDL: OpenbookV2 = {
           "isSigner": false
         },
         {
-          "name": "oracle",
-          "isMut": false,
+          "name": "tokenDepositAccount",
+          "isMut": true,
           "isSigner": false
+        },
+        {
+          "name": "tokenReceiverAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "referrer",
+          "isMut": true,
+          "isSigner": false,
+          "isOptional": true
+        },
+        {
+          "name": "oracleA",
+          "isMut": false,
+          "isSigner": false,
+          "isOptional": true
+        },
+        {
+          "name": "oracleB",
+          "isMut": false,
+          "isSigner": false,
+          "isOptional": true
         },
         {
           "name": "tokenProgram",
@@ -3575,47 +4119,12 @@ export const IDL: OpenbookV2 = {
       ],
       "args": [
         {
-          "name": "side",
+          "name": "args",
           "type": {
-            "defined": "Side"
+            "defined": "PlaceTakeOrderArgs"
           }
-        },
-        {
-          "name": "priceLots",
-          "type": "i64"
-        },
-        {
-          "name": "maxBaseLots",
-          "type": "i64"
-        },
-        {
-          "name": "maxQuoteLotsIncludingFees",
-          "type": "i64"
-        },
-        {
-          "name": "clientOrderId",
-          "type": "u64"
-        },
-        {
-          "name": "orderType",
-          "type": {
-            "defined": "PlaceOrderType"
-          }
-        },
-        {
-          "name": "selfTradeBehavior",
-          "type": {
-            "defined": "SelfTradeBehavior"
-          }
-        },
-        {
-          "name": "limit",
-          "type": "u8"
         }
-      ],
-      "returns": {
-        "option": "u128"
-      }
+      ]
     },
     {
       "name": "consumeEvents",
@@ -3670,6 +4179,38 @@ export const IDL: OpenbookV2 = {
       ]
     },
     {
+      "name": "consumeGivenEvents",
+      "docs": [
+        "Process the [events](crate::state::AnyEvent) at the given positions."
+      ],
+      "accounts": [
+        {
+          "name": "consumeEventsAdmin",
+          "isMut": false,
+          "isSigner": true,
+          "isOptional": true
+        },
+        {
+          "name": "market",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "eventQueue",
+          "isMut": true,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "slots",
+          "type": {
+            "vec": "u64"
+          }
+        }
+      ]
+    },
+    {
       "name": "cancelOrder",
       "docs": [
         "Cancel an order by its `order_id`.",
@@ -3679,18 +4220,18 @@ export const IDL: OpenbookV2 = {
       ],
       "accounts": [
         {
+          "name": "signer",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
           "name": "openOrdersAccount",
           "isMut": true,
           "isSigner": false
         },
         {
-          "name": "owner",
-          "isMut": false,
-          "isSigner": true
-        },
-        {
           "name": "market",
-          "isMut": true,
+          "isMut": false,
           "isSigner": false
         },
         {
@@ -3721,14 +4262,14 @@ export const IDL: OpenbookV2 = {
       ],
       "accounts": [
         {
+          "name": "signer",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
           "name": "openOrdersAccount",
           "isMut": true,
           "isSigner": false
-        },
-        {
-          "name": "owner",
-          "isMut": false,
-          "isSigner": true
         },
         {
           "name": "market",
@@ -3756,57 +4297,18 @@ export const IDL: OpenbookV2 = {
     {
       "name": "cancelAllOrders",
       "docs": [
-        "Cancel up to `limit` orders."
+        "Cancel up to `limit` orders, optionally filtering by side"
       ],
       "accounts": [
         {
-          "name": "openOrdersAccount",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "owner",
+          "name": "signer",
           "isMut": false,
           "isSigner": true
         },
         {
-          "name": "market",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "bids",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "asks",
-          "isMut": true,
-          "isSigner": false
-        }
-      ],
-      "args": [
-        {
-          "name": "limit",
-          "type": "u8"
-        }
-      ]
-    },
-    {
-      "name": "cancelAllOrdersBySide",
-      "docs": [
-        "Cancel up to `limit` orders on a single side of the book."
-      ],
-      "accounts": [
-        {
           "name": "openOrdersAccount",
           "isMut": true,
           "isSigner": false
-        },
-        {
-          "name": "owner",
-          "isMut": false,
-          "isSigner": true
         },
         {
           "name": "market",
@@ -3842,8 +4344,8 @@ export const IDL: OpenbookV2 = {
     {
       "name": "deposit",
       "docs": [
-        "Desposit a certain amount of `base_amount_lots` and `quote_amount_lots`",
-        "into one's [`Position`](crate::state::Position).",
+        "Desposit a certain amount of `base` and `quote` lamports into one's",
+        "[`Position`](crate::state::Position).",
         "",
         "Makers might wish to `deposit`, rather than have actual tokens moved for",
         "each trade, in order to reduce CUs."
@@ -3897,11 +4399,78 @@ export const IDL: OpenbookV2 = {
       ],
       "args": [
         {
-          "name": "baseAmountLots",
+          "name": "baseAmount",
           "type": "u64"
         },
         {
-          "name": "quoteAmountLots",
+          "name": "quoteAmount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "refill",
+      "docs": [
+        "Refill a certain amount of `base` and `quote` lamports. The amount being passed is the",
+        "total lamports that the [`Position`](crate::state::Position) will have.",
+        "",
+        "Makers might wish to `refill`, rather than have actual tokens moved for",
+        "each trade, in order to reduce CUs."
+      ],
+      "accounts": [
+        {
+          "name": "owner",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "tokenBaseAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenQuoteAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "openOrdersAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "market",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "baseVault",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "quoteVault",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "baseAmount",
+          "type": "u64"
+        },
+        {
+          "name": "quoteAmount",
           "type": "u64"
         }
       ]
@@ -3928,6 +4497,11 @@ export const IDL: OpenbookV2 = {
           "isSigner": false
         },
         {
+          "name": "marketAuthority",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
           "name": "baseVault",
           "isMut": true,
           "isSigner": false
@@ -3946,6 +4520,77 @@ export const IDL: OpenbookV2 = {
           "name": "tokenQuoteAccount",
           "isMut": true,
           "isSigner": false
+        },
+        {
+          "name": "referrer",
+          "isMut": true,
+          "isSigner": false,
+          "isOptional": true
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "settleFundsExpired",
+      "docs": [
+        "Withdraw any available tokens when the market is expired (only `close_market_admin`)"
+      ],
+      "accounts": [
+        {
+          "name": "closeMarketAdmin",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "openOrdersAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "market",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "marketAuthority",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "baseVault",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "quoteVault",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenBaseAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenQuoteAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "referrer",
+          "isMut": true,
+          "isSigner": false,
+          "isOptional": true
         },
         {
           "name": "tokenProgram",
@@ -3977,12 +4622,17 @@ export const IDL: OpenbookV2 = {
           "isSigner": false
         },
         {
-          "name": "tokenReceiverAccount",
-          "isMut": true,
+          "name": "marketAuthority",
+          "isMut": false,
           "isSigner": false
         },
         {
           "name": "quoteVault",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenReceiverAccount",
           "isMut": true,
           "isSigner": false
         },
@@ -3998,6 +4648,83 @@ export const IDL: OpenbookV2 = {
         }
       ],
       "args": []
+    },
+    {
+      "name": "setDelegate",
+      "accounts": [
+        {
+          "name": "owner",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "openOrdersAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "delegateAccount",
+          "isMut": false,
+          "isSigner": false,
+          "isOptional": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "setMarketExpired",
+      "docs": [
+        "Set market to expired before pruning orders and closing the market"
+      ],
+      "accounts": [
+        {
+          "name": "closeMarketAdmin",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "market",
+          "isMut": true,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "pruneOrders",
+      "accounts": [
+        {
+          "name": "closeMarketAdmin",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "openOrdersAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "market",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "bids",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "asks",
+          "isMut": true,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "limit",
+          "type": "u8"
+        }
+      ]
     },
     {
       "name": "closeMarket",
@@ -4044,27 +4771,56 @@ export const IDL: OpenbookV2 = {
       "args": []
     },
     {
+      "name": "closeOpenOrdersAccount",
+      "docs": [
+        "Close a [`Market`](crate::state::Market)."
+      ],
+      "accounts": [
+        {
+          "name": "owner",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "openOrdersIndexer",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "openOrdersAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "solDestination",
+          "isMut": true,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    },
+    {
       "name": "stubOracleCreate",
       "accounts": [
+        {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "owner",
+          "isMut": false,
+          "isSigner": true
+        },
         {
           "name": "oracle",
           "isMut": true,
           "isSigner": false
         },
         {
-          "name": "admin",
-          "isMut": false,
-          "isSigner": true
-        },
-        {
           "name": "mint",
           "isMut": false,
           "isSigner": false
-        },
-        {
-          "name": "payer",
-          "isMut": true,
-          "isSigner": true
         },
         {
           "name": "systemProgram",
@@ -4085,7 +4841,7 @@ export const IDL: OpenbookV2 = {
       "name": "stubOracleClose",
       "accounts": [
         {
-          "name": "admin",
+          "name": "owner",
           "isMut": false,
           "isSigner": true
         },
@@ -4111,7 +4867,7 @@ export const IDL: OpenbookV2 = {
       "name": "stubOracleSet",
       "accounts": [
         {
-          "name": "admin",
+          "name": "owner",
           "isMut": false,
           "isSigner": true
         },
@@ -4138,13 +4894,6 @@ export const IDL: OpenbookV2 = {
         "kind": "struct",
         "fields": [
           {
-            "name": "marketIndex",
-            "docs": [
-              "Index of this market"
-            ],
-            "type": "u32"
-          },
-          {
             "name": "bump",
             "docs": [
               "PDA bump"
@@ -4169,9 +4918,20 @@ export const IDL: OpenbookV2 = {
             "type": {
               "array": [
                 "u8",
-                1
+                5
               ]
             }
+          },
+          {
+            "name": "marketAuthority",
+            "type": "publicKey"
+          },
+          {
+            "name": "timeExpiry",
+            "docs": [
+              "No expiry = 0. Market will expire and no trading allowed after time_expiry"
+            ],
+            "type": "i64"
           },
           {
             "name": "collectFeeAdmin",
@@ -4186,7 +4946,7 @@ export const IDL: OpenbookV2 = {
               "Admin who must sign off on all order creations"
             ],
             "type": {
-              "defined": "PodOption<Pubkey>"
+              "defined": "NonZeroPubkeyOption"
             }
           },
           {
@@ -4195,16 +4955,16 @@ export const IDL: OpenbookV2 = {
               "Admin who must sign off on all event consumptions"
             ],
             "type": {
-              "defined": "PodOption<Pubkey>"
+              "defined": "NonZeroPubkeyOption"
             }
           },
           {
             "name": "closeMarketAdmin",
             "docs": [
-              "Admin who can close the market"
+              "Admin who can set market expired, prune orders and close the market"
             ],
             "type": {
-              "defined": "PodOption<Pubkey>"
+              "defined": "NonZeroPubkeyOption"
             }
           },
           {
@@ -4241,11 +5001,19 @@ export const IDL: OpenbookV2 = {
             "type": "publicKey"
           },
           {
-            "name": "oracle",
+            "name": "oracleA",
             "docs": [
-              "Oracle account address"
+              "Oracles account address"
             ],
-            "type": "publicKey"
+            "type": {
+              "defined": "NonZeroPubkeyOption"
+            }
+          },
+          {
+            "name": "oracleB",
+            "type": {
+              "defined": "NonZeroPubkeyOption"
+            }
           },
           {
             "name": "oracleConfig",
@@ -4254,15 +5022,6 @@ export const IDL: OpenbookV2 = {
             ],
             "type": {
               "defined": "OracleConfig"
-            }
-          },
-          {
-            "name": "stablePriceModel",
-            "docs": [
-              "Maintains a stable price based on the oracle price that is less volatile."
-            ],
-            "type": {
-              "defined": "StablePriceModel"
             }
           },
           {
@@ -4305,40 +5064,44 @@ export const IDL: OpenbookV2 = {
             "name": "makerFee",
             "docs": [
               "Fees",
-              "Fee when matching maker orders.",
+              "",
+              "Fee (in 10^-6) when matching maker orders.",
               "maker_fee < 0 it means some of the taker_fees goes to the maker",
               "maker_fee > 0, it means no taker_fee to the maker, and maker fee goes to the referral"
             ],
-            "type": {
-              "defined": "I80F48"
-            }
+            "type": "i64"
           },
           {
             "name": "takerFee",
             "docs": [
-              "Fee for taker orders, always >= 0."
+              "Fee (in 10^-6) for taker orders, always >= 0."
             ],
-            "type": {
-              "defined": "I80F48"
-            }
-          },
-          {
-            "name": "feePenalty",
-            "docs": [
-              "Fee (in quote native) to charge for ioc orders that don't match to avoid spam"
-            ],
-            "type": "u64"
+            "type": "i64"
           },
           {
             "name": "feesAccrued",
-            "type": "i64"
+            "docs": [
+              "Total fees accrued in native quote"
+            ],
+            "type": "u64"
           },
           {
             "name": "feesToReferrers",
             "type": "u64"
           },
           {
-            "name": "vaultSignerNonce",
+            "name": "referrerRebatesAccrued",
+            "type": "u64"
+          },
+          {
+            "name": "feesAvailable",
+            "type": "u64"
+          },
+          {
+            "name": "takerVolumeWoOo",
+            "docs": [
+              "Cumulative taker volume in quote native units due to place take orders"
+            ],
             "type": "u64"
           },
           {
@@ -4358,23 +5121,11 @@ export const IDL: OpenbookV2 = {
             "type": "u64"
           },
           {
-            "name": "baseFeesAccrued",
-            "type": "u64"
-          },
-          {
             "name": "quoteVault",
             "type": "publicKey"
           },
           {
             "name": "quoteDepositTotal",
-            "type": "u64"
-          },
-          {
-            "name": "quoteFeesAccrued",
-            "type": "u64"
-          },
-          {
-            "name": "referrerRebatesAccrued",
             "type": "u64"
           },
           {
@@ -4399,6 +5150,10 @@ export const IDL: OpenbookV2 = {
             "type": "publicKey"
           },
           {
+            "name": "market",
+            "type": "publicKey"
+          },
+          {
             "name": "name",
             "type": {
               "array": [
@@ -4409,7 +5164,9 @@ export const IDL: OpenbookV2 = {
           },
           {
             "name": "delegate",
-            "type": "publicKey"
+            "type": {
+              "defined": "NonZeroPubkeyOption"
+            }
           },
           {
             "name": "accountNum",
@@ -4429,65 +5186,66 @@ export const IDL: OpenbookV2 = {
             }
           },
           {
-            "name": "buybackFeesAccruedCurrent",
-            "docs": [
-              "Fees usable with the \"fees buyback\" feature.",
-              "This tracks the ones that accrued in the current expiry interval."
-            ],
-            "type": "u64"
-          },
-          {
-            "name": "buybackFeesAccruedPrevious",
-            "docs": [
-              "Fees buyback amount from the previous expiry interval."
-            ],
-            "type": "u64"
-          },
-          {
-            "name": "buybackFeesExpiryTimestamp",
-            "docs": [
-              "End timestamp of the current expiry interval of the buyback fees amount."
-            ],
-            "type": "u64"
-          },
-          {
             "name": "position",
             "type": {
               "defined": "Position"
             }
           },
           {
+            "name": "openOrders",
+            "type": {
+              "array": [
+                {
+                  "defined": "OpenOrder"
+                },
+                128
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "openOrdersIndexer",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "owner",
+            "type": "publicKey"
+          },
+          {
+            "name": "market",
+            "type": "publicKey"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "padding",
+            "type": {
+              "array": [
+                "u8",
+                3
+              ]
+            }
+          },
+          {
+            "name": "createdCounter",
+            "type": "u32"
+          },
+          {
+            "name": "closedCounter",
+            "type": "u32"
+          },
+          {
             "name": "reserved",
             "type": {
               "array": [
                 "u8",
-                208
+                20
               ]
-            }
-          },
-          {
-            "name": "headerVersion",
-            "type": "u8"
-          },
-          {
-            "name": "padding3",
-            "type": {
-              "array": [
-                "u8",
-                7
-              ]
-            }
-          },
-          {
-            "name": "padding4",
-            "type": "u32"
-          },
-          {
-            "name": "openOrders",
-            "type": {
-              "vec": {
-                "defined": "OpenOrder"
-              }
             }
           }
         ]
@@ -4499,7 +5257,7 @@ export const IDL: OpenbookV2 = {
         "kind": "struct",
         "fields": [
           {
-            "name": "group",
+            "name": "owner",
             "type": "publicKey"
           },
           {
@@ -4575,6 +5333,13 @@ export const IDL: OpenbookV2 = {
     },
     {
       "name": "eventQueue",
+      "docs": [
+        "Container for the different EventTypes.",
+        "",
+        "Events are stored in a fixed-array of nodes. Free nodes are connected by a single-linked list",
+        "starting at free_head while used nodes form a circular doubly-linked list starting at",
+        "used_head."
+      ],
       "type": {
         "kind": "struct",
         "fields": [
@@ -4585,13 +5350,13 @@ export const IDL: OpenbookV2 = {
             }
           },
           {
-            "name": "buf",
+            "name": "nodes",
             "type": {
               "array": [
                 {
-                  "defined": "AnyEvent"
+                  "defined": "EventNode"
                 },
-                488
+                600
               ]
             }
           },
@@ -4610,70 +5375,16 @@ export const IDL: OpenbookV2 = {
   ],
   "types": [
     {
-      "name": "OpenOrdersAccountFixed",
+      "name": "NonZeroPubkeyOption",
+      "docs": [
+        "Like `Option`, but implemented for `Pubkey`."
+      ],
       "type": {
         "kind": "struct",
         "fields": [
           {
-            "name": "owner",
+            "name": "key",
             "type": "publicKey"
-          },
-          {
-            "name": "name",
-            "type": {
-              "array": [
-                "u8",
-                32
-              ]
-            }
-          },
-          {
-            "name": "delegate",
-            "type": "publicKey"
-          },
-          {
-            "name": "accountNum",
-            "type": "u32"
-          },
-          {
-            "name": "bump",
-            "type": "u8"
-          },
-          {
-            "name": "padding",
-            "type": {
-              "array": [
-                "u8",
-                3
-              ]
-            }
-          },
-          {
-            "name": "buybackFeesAccruedCurrent",
-            "type": "u64"
-          },
-          {
-            "name": "buybackFeesAccruedPrevious",
-            "type": "u64"
-          },
-          {
-            "name": "buybackFeesExpiryTimestamp",
-            "type": "u64"
-          },
-          {
-            "name": "position",
-            "type": {
-              "defined": "Position"
-            }
-          },
-          {
-            "name": "reserved",
-            "type": {
-              "array": [
-                "u8",
-                208
-              ]
-            }
           }
         ]
       }
@@ -4706,34 +5417,26 @@ export const IDL: OpenbookV2 = {
             "type": "u64"
           },
           {
-            "name": "referrerRebatesAccrued",
+            "name": "lockedMakerFees",
+            "type": "u64"
+          },
+          {
+            "name": "referrerRebatesAvailable",
             "type": "u64"
           },
           {
             "name": "makerVolume",
             "docs": [
-              "Cumulative maker volume in quote native units",
-              "",
-              "(Display only)"
+              "Cumulative maker volume in quote native units (display only)"
             ],
             "type": "u64"
           },
           {
             "name": "takerVolume",
             "docs": [
-              "Cumulative taker volume in quote native units",
-              "",
-              "(Display only)"
+              "Cumulative taker volume in quote native units (display only)"
             ],
             "type": "u64"
-          },
-          {
-            "name": "avgEntryPricePerBaseLot",
-            "docs": [
-              "The native average entry price for the base lots of the current position.",
-              "Reset to 0 when the base position reaches or crosses 0."
-            ],
-            "type": "f64"
           },
           {
             "name": "reserved",
@@ -4753,36 +5456,43 @@ export const IDL: OpenbookV2 = {
         "kind": "struct",
         "fields": [
           {
-            "name": "sideAndTree",
-            "type": "u8"
-          },
-          {
-            "name": "padding1",
-            "type": {
-              "array": [
-                "u8",
-                7
-              ]
-            }
+            "name": "id",
+            "type": "u128"
           },
           {
             "name": "clientId",
             "type": "u64"
           },
           {
-            "name": "pegLimit",
+            "name": "lockedPrice",
+            "docs": [
+              "Price at which user's assets were locked"
+            ],
             "type": "i64"
           },
           {
-            "name": "id",
-            "type": "u128"
+            "name": "isFree",
+            "type": "u8"
+          },
+          {
+            "name": "sideAndTree",
+            "type": "u8"
+          },
+          {
+            "name": "padding",
+            "type": {
+              "array": [
+                "u8",
+                6
+              ]
+            }
           },
           {
             "name": "reserved",
             "type": {
               "array": [
                 "u8",
-                64
+                32
               ]
             }
           }
@@ -4936,22 +5646,6 @@ export const IDL: OpenbookV2 = {
             "type": "u8"
           },
           {
-            "name": "orderType",
-            "docs": [
-              "PostOrderType, this was added for TradingView move order"
-            ],
-            "type": "u8"
-          },
-          {
-            "name": "padding",
-            "type": {
-              "array": [
-                "u8",
-                1
-              ]
-            }
-          },
-          {
             "name": "timeInForce",
             "docs": [
               "Time in seconds after `timestamp` at which the order expires.",
@@ -4960,11 +5654,11 @@ export const IDL: OpenbookV2 = {
             "type": "u16"
           },
           {
-            "name": "padding2",
+            "name": "padding",
             "type": {
               "array": [
                 "u8",
-                2
+                4
               ]
             }
           },
@@ -5126,16 +5820,55 @@ export const IDL: OpenbookV2 = {
         "kind": "struct",
         "fields": [
           {
-            "name": "head",
-            "type": "u32"
+            "name": "freeHead",
+            "type": "u16"
+          },
+          {
+            "name": "usedHead",
+            "type": "u16"
           },
           {
             "name": "count",
-            "type": "u32"
+            "type": "u16"
+          },
+          {
+            "name": "padd",
+            "type": "u16"
           },
           {
             "name": "seqNum",
             "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "EventNode",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "next",
+            "type": "u16"
+          },
+          {
+            "name": "prev",
+            "type": "u16"
+          },
+          {
+            "name": "pad",
+            "type": {
+              "array": [
+                "u8",
+                4
+              ]
+            }
+          },
+          {
+            "name": "event",
+            "type": {
+              "defined": "AnyEvent"
+            }
           }
         ]
       }
@@ -5154,7 +5887,7 @@ export const IDL: OpenbookV2 = {
             "type": {
               "array": [
                 "u8",
-                199
+                143
               ]
             }
           }
@@ -5204,15 +5937,6 @@ export const IDL: OpenbookV2 = {
             "type": "publicKey"
           },
           {
-            "name": "padding2",
-            "type": {
-              "array": [
-                "u8",
-                32
-              ]
-            }
-          },
-          {
             "name": "makerTimestamp",
             "type": "u64"
           },
@@ -5221,29 +5945,15 @@ export const IDL: OpenbookV2 = {
             "type": "publicKey"
           },
           {
-            "name": "padding3",
-            "type": {
-              "array": [
-                "u8",
-                16
-              ]
-            }
-          },
-          {
             "name": "takerClientOrderId",
             "type": "u64"
           },
           {
-            "name": "padding4",
-            "type": {
-              "array": [
-                "u8",
-                16
-              ]
-            }
+            "name": "price",
+            "type": "i64"
           },
           {
-            "name": "price",
+            "name": "pegLimit",
             "type": "i64"
           },
           {
@@ -5313,7 +6023,7 @@ export const IDL: OpenbookV2 = {
             "type": {
               "array": [
                 "u8",
-                136
+                80
               ]
             }
           }
@@ -5321,117 +6031,7 @@ export const IDL: OpenbookV2 = {
       }
     },
     {
-      "name": "StablePriceModel",
-      "docs": [
-        "Maintains a \"stable_price\" based on the oracle price.",
-        "",
-        "The stable price follows the oracle price, but its relative rate of",
-        "change is limited (to `stable_growth_limit`) and futher reduced if",
-        "the oracle price is far from the `delay_price`.",
-        "",
-        "Conceptually the `delay_price` is itself a time delayed",
-        "(`24 * delay_interval_seconds`, assume 24h) and relative rate of change limited",
-        "function of the oracle price. It is implemented as averaging the oracle",
-        "price over every `delay_interval_seconds` (assume 1h) and then applying the",
-        "`delay_growth_limit` between intervals."
-      ],
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "stablePrice",
-            "docs": [
-              "Current stable price to use in health"
-            ],
-            "type": "f64"
-          },
-          {
-            "name": "lastUpdateTimestamp",
-            "type": "u64"
-          },
-          {
-            "name": "delayPrices",
-            "docs": [
-              "Stored delay_price for each delay_interval.",
-              "If we want the delay_price to be 24h delayed, we would store one for each hour.",
-              "This is used in a cyclical way: We use the maximally-delayed value at delay_interval_index",
-              "and once enough time passes to move to the next delay interval, that gets overwritten and",
-              "we use the next one."
-            ],
-            "type": {
-              "array": [
-                "f64",
-                24
-              ]
-            }
-          },
-          {
-            "name": "delayAccumulatorPrice",
-            "docs": [
-              "The delay price is based on an average over each delay_interval. The contributions",
-              "to the average are summed up here."
-            ],
-            "type": "f64"
-          },
-          {
-            "name": "delayAccumulatorTime",
-            "docs": [
-              "Accumulating the total time for the above average."
-            ],
-            "type": "u32"
-          },
-          {
-            "name": "delayIntervalSeconds",
-            "docs": [
-              "Length of a delay_interval"
-            ],
-            "type": "u32"
-          },
-          {
-            "name": "delayGrowthLimit",
-            "docs": [
-              "Maximal relative difference between two delay_price in consecutive intervals."
-            ],
-            "type": "f32"
-          },
-          {
-            "name": "stableGrowthLimit",
-            "docs": [
-              "Maximal per-second relative difference of the stable price.",
-              "It gets further reduced if stable and delay price disagree."
-            ],
-            "type": "f32"
-          },
-          {
-            "name": "lastDelayIntervalIndex",
-            "docs": [
-              "The delay_interval_index that update() was last called on."
-            ],
-            "type": "u8"
-          },
-          {
-            "name": "padding",
-            "type": {
-              "array": [
-                "u8",
-                7
-              ]
-            }
-          },
-          {
-            "name": "reserved",
-            "type": {
-              "array": [
-                "u8",
-                48
-              ]
-            }
-          }
-        ]
-      }
-    },
-    {
-      "name": "MarketIndex",
+      "name": "I80F48",
       "docs": [
         "Nothing in Rust shall use these types. They only exist so that the Anchor IDL",
         "knows about them and typescript can deserialize it."
@@ -5441,19 +6041,151 @@ export const IDL: OpenbookV2 = {
         "fields": [
           {
             "name": "val",
-            "type": "u32"
+            "type": "i128"
           }
         ]
       }
     },
     {
-      "name": "I80F48",
+      "name": "PlaceOrderArgs",
       "type": {
         "kind": "struct",
         "fields": [
           {
-            "name": "val",
-            "type": "i128"
+            "name": "side",
+            "type": {
+              "defined": "Side"
+            }
+          },
+          {
+            "name": "priceLots",
+            "type": "i64"
+          },
+          {
+            "name": "maxBaseLots",
+            "type": "i64"
+          },
+          {
+            "name": "maxQuoteLotsIncludingFees",
+            "type": "i64"
+          },
+          {
+            "name": "clientOrderId",
+            "type": "u64"
+          },
+          {
+            "name": "orderType",
+            "type": {
+              "defined": "PlaceOrderType"
+            }
+          },
+          {
+            "name": "expiryTimestamp",
+            "type": "u64"
+          },
+          {
+            "name": "selfTradeBehavior",
+            "type": {
+              "defined": "SelfTradeBehavior"
+            }
+          },
+          {
+            "name": "limit",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "PlaceOrderPeggedArgs",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "side",
+            "type": {
+              "defined": "Side"
+            }
+          },
+          {
+            "name": "priceOffsetLots",
+            "type": "i64"
+          },
+          {
+            "name": "pegLimit",
+            "type": "i64"
+          },
+          {
+            "name": "maxBaseLots",
+            "type": "i64"
+          },
+          {
+            "name": "maxQuoteLotsIncludingFees",
+            "type": "i64"
+          },
+          {
+            "name": "clientOrderId",
+            "type": "u64"
+          },
+          {
+            "name": "orderType",
+            "type": {
+              "defined": "PlaceOrderType"
+            }
+          },
+          {
+            "name": "expiryTimestamp",
+            "type": "u64"
+          },
+          {
+            "name": "maxOracleStalenessSlots",
+            "type": "i32"
+          },
+          {
+            "name": "selfTradeBehavior",
+            "type": {
+              "defined": "SelfTradeBehavior"
+            }
+          },
+          {
+            "name": "limit",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "PlaceTakeOrderArgs",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "side",
+            "type": {
+              "defined": "Side"
+            }
+          },
+          {
+            "name": "priceLots",
+            "type": "i64"
+          },
+          {
+            "name": "maxBaseLots",
+            "type": "i64"
+          },
+          {
+            "name": "maxQuoteLotsIncludingFees",
+            "type": "i64"
+          },
+          {
+            "name": "orderType",
+            "type": {
+              "defined": "PlaceOrderType"
+            }
+          },
+          {
+            "name": "limit",
+            "type": "u8"
           }
         ]
       }
@@ -5720,30 +6452,10 @@ export const IDL: OpenbookV2 = {
   ],
   "events": [
     {
-      "name": "BalanceLog",
-      "fields": [
-        {
-          "name": "openOrdersAcc",
-          "type": "publicKey",
-          "index": false
-        },
-        {
-          "name": "basePosition",
-          "type": "i64",
-          "index": false
-        },
-        {
-          "name": "quotePosition",
-          "type": "i128",
-          "index": false
-        }
-      ]
-    },
-    {
       "name": "DepositLog",
       "fields": [
         {
-          "name": "openOrdersAcc",
+          "name": "openOrdersAccount",
           "type": "publicKey",
           "index": false
         },
@@ -5753,7 +6465,12 @@ export const IDL: OpenbookV2 = {
           "index": false
         },
         {
-          "name": "quantity",
+          "name": "baseAmount",
+          "type": "u64",
+          "index": false
+        },
+        {
+          "name": "quoteAmount",
           "type": "u64",
           "index": false
         }
@@ -5799,7 +6516,7 @@ export const IDL: OpenbookV2 = {
         },
         {
           "name": "makerFee",
-          "type": "f32",
+          "type": "i64",
           "index": false
         },
         {
@@ -5819,7 +6536,7 @@ export const IDL: OpenbookV2 = {
         },
         {
           "name": "takerFee",
-          "type": "f32",
+          "type": "i64",
           "index": false
         },
         {
@@ -5843,11 +6560,6 @@ export const IDL: OpenbookV2 = {
           "index": false
         },
         {
-          "name": "marketIndex",
-          "type": "u32",
-          "index": false
-        },
-        {
           "name": "baseDecimals",
           "type": "u8",
           "index": false
@@ -5868,8 +6580,17 @@ export const IDL: OpenbookV2 = {
           "index": false
         },
         {
-          "name": "oracle",
-          "type": "publicKey",
+          "name": "oracleA",
+          "type": {
+            "option": "publicKey"
+          },
+          "index": false
+        },
+        {
+          "name": "oracleB",
+          "type": {
+            "option": "publicKey"
+          },
           "index": false
         }
       ]
@@ -5903,6 +6624,162 @@ export const IDL: OpenbookV2 = {
           "index": false
         }
       ]
+    },
+    {
+      "name": "CancelOrderLog",
+      "fields": [
+        {
+          "name": "openOrdersAccount",
+          "type": "publicKey",
+          "index": false
+        },
+        {
+          "name": "slot",
+          "type": "u8",
+          "index": false
+        },
+        {
+          "name": "side",
+          "type": "u8",
+          "index": false
+        },
+        {
+          "name": "quantity",
+          "type": "i64",
+          "index": false
+        }
+      ]
+    },
+    {
+      "name": "CancelOrdersLog",
+      "fields": [
+        {
+          "name": "openOrdersAccount",
+          "type": "publicKey",
+          "index": false
+        },
+        {
+          "name": "totalQuantity",
+          "type": "i64",
+          "index": false
+        }
+      ]
+    },
+    {
+      "name": "CancelAllOrdersLog",
+      "fields": [
+        {
+          "name": "openOrdersAccount",
+          "type": "publicKey",
+          "index": false
+        },
+        {
+          "name": "side",
+          "type": {
+            "option": "u8"
+          },
+          "index": false
+        },
+        {
+          "name": "quantity",
+          "type": "i64",
+          "index": false
+        },
+        {
+          "name": "limit",
+          "type": "u8",
+          "index": false
+        }
+      ]
+    },
+    {
+      "name": "PruneOrdersLog",
+      "fields": [
+        {
+          "name": "openOrdersAccount",
+          "type": "publicKey",
+          "index": false
+        },
+        {
+          "name": "quantity",
+          "type": "i64",
+          "index": false
+        },
+        {
+          "name": "limit",
+          "type": "u8",
+          "index": false
+        }
+      ]
+    },
+    {
+      "name": "SetDelegateLog",
+      "fields": [
+        {
+          "name": "openOrdersAccount",
+          "type": "publicKey",
+          "index": false
+        },
+        {
+          "name": "delegate",
+          "type": {
+            "option": "publicKey"
+          },
+          "index": false
+        }
+      ]
+    },
+    {
+      "name": "SettleFundsLog",
+      "fields": [
+        {
+          "name": "openOrdersAccount",
+          "type": "publicKey",
+          "index": false
+        },
+        {
+          "name": "baseNative",
+          "type": "u64",
+          "index": false
+        },
+        {
+          "name": "quoteNative",
+          "type": "u64",
+          "index": false
+        },
+        {
+          "name": "referrerRebate",
+          "type": "u64",
+          "index": false
+        },
+        {
+          "name": "referrer",
+          "type": {
+            "option": "publicKey"
+          },
+          "index": false
+        }
+      ]
+    },
+    {
+      "name": "SweepFeesLog",
+      "fields": [
+        {
+          "name": "market",
+          "type": "publicKey",
+          "index": false
+        },
+        {
+          "name": "amount",
+          "type": "u64",
+          "index": false
+        },
+        {
+          "name": "receiver",
+          "type": "publicKey",
+          "index": false
+        }
+      ]
     }
   ],
   "errors": [
@@ -5913,223 +6790,198 @@ export const IDL: OpenbookV2 = {
     },
     {
       "code": 6001,
-      "name": "NotImplementedError",
-      "msg": ""
+      "name": "InvalidInputNameLength",
+      "msg": "Name lenght above limit"
     },
     {
       "code": 6002,
-      "name": "MathError",
-      "msg": "checked math error"
+      "name": "InvalidInputMarketExpired",
+      "msg": "Market cannot be created as expired"
     },
     {
       "code": 6003,
-      "name": "UnexpectedOracle",
-      "msg": ""
-    },
-    {
-      "code": 6004,
-      "name": "UnknownOracleType",
-      "msg": "oracle type cannot be determined"
-    },
-    {
-      "code": 6005,
-      "name": "InvalidBank",
-      "msg": "invalid bank"
-    },
-    {
-      "code": 6006,
-      "name": "ProfitabilityMismatch",
-      "msg": "account profitability is mismatched"
-    },
-    {
-      "code": 6007,
-      "name": "CannotSettleWithSelf",
-      "msg": "cannot settle with self"
-    },
-    {
-      "code": 6008,
-      "name": "PositionDoesNotExist",
-      "msg": "perp position does not exist"
-    },
-    {
-      "code": 6009,
-      "name": "MaxSettleAmountMustBeGreaterThanZero",
-      "msg": "max settle amount must be greater than zero"
-    },
-    {
-      "code": 6010,
-      "name": "HasOpenOrders",
-      "msg": "the perp position has open orders or unprocessed fill events"
-    },
-    {
-      "code": 6011,
-      "name": "OracleConfidence",
-      "msg": "an oracle does not reach the confidence threshold"
-    },
-    {
-      "code": 6012,
-      "name": "OracleStale",
-      "msg": "an oracle is stale"
-    },
-    {
-      "code": 6013,
-      "name": "SettlementAmountMustBePositive",
-      "msg": "settlement amount must always be positive"
-    },
-    {
-      "code": 6014,
-      "name": "BankBorrowLimitReached",
-      "msg": "bank utilization has reached limit"
-    },
-    {
-      "code": 6015,
-      "name": "BankNetBorrowsLimitReached",
-      "msg": "bank net borrows has reached limit - this is an intermittent error - the limit will reset regularly"
-    },
-    {
-      "code": 6016,
-      "name": "TokenPositionDoesNotExist",
-      "msg": "token position does not exist"
-    },
-    {
-      "code": 6017,
-      "name": "DepositsIntoLiquidatingMustRecover",
-      "msg": "token deposits into accounts that are being liquidated must bring their health above the init threshold"
-    },
-    {
-      "code": 6018,
-      "name": "TokenInReduceOnlyMode",
-      "msg": "token is in reduce only mode"
-    },
-    {
-      "code": 6019,
-      "name": "MarketInReduceOnlyMode",
-      "msg": "market is in reduce only mode"
-    },
-    {
-      "code": 6020,
-      "name": "GroupIsHalted",
-      "msg": "group is halted"
-    },
-    {
-      "code": 6021,
-      "name": "HasBaseLots",
-      "msg": "the perp position has non-zero base lots"
-    },
-    {
-      "code": 6022,
-      "name": "HasOpenOrUnsettledSerum3Orders",
-      "msg": "there are open or unsettled serum3 orders"
-    },
-    {
-      "code": 6023,
-      "name": "HasLiquidatableTokenPosition",
-      "msg": "has liquidatable token position"
-    },
-    {
-      "code": 6024,
-      "name": "HasLiquidatableBasePosition",
-      "msg": "has liquidatable perp base position"
-    },
-    {
-      "code": 6025,
-      "name": "HasLiquidatablePositivePnl",
-      "msg": "has liquidatable positive perp pnl"
-    },
-    {
-      "code": 6026,
-      "name": "AccountIsFrozen",
-      "msg": "account is frozen"
-    },
-    {
-      "code": 6027,
-      "name": "InitAssetWeightCantBeNegative",
-      "msg": "Init Asset Weight can't be negative"
-    },
-    {
-      "code": 6028,
-      "name": "HasOpenTakerFills",
-      "msg": "has open perp taker fills"
-    },
-    {
-      "code": 6029,
-      "name": "DepositLimit",
-      "msg": "deposit crosses the current group deposit limit"
-    },
-    {
-      "code": 6030,
-      "name": "IxIsDisabled",
-      "msg": "instruction is disabled"
-    },
-    {
-      "code": 6031,
-      "name": "NoLiquidatableBasePosition",
-      "msg": "no liquidatable perp base position"
-    },
-    {
-      "code": 6032,
-      "name": "OrderIdNotFound",
-      "msg": "perp order id not found on the orderbook"
-    },
-    {
-      "code": 6033,
-      "name": "HealthRegionBadInnerInstruction",
-      "msg": "HealthRegions allow only specific instructions between Begin and End"
-    },
-    {
-      "code": 6034,
-      "name": "EventQueueContainsElements",
-      "msg": "Event queue contains elements and market can't be closed"
-    },
-    {
-      "code": 6035,
-      "name": "InvalidFeesError",
+      "name": "InvalidInputMarketFees",
       "msg": "Taker fees should be positive and if maker fees are negative, greater or equal to their abs value"
     },
     {
-      "code": 6036,
-      "name": "InvalidOrderType",
+      "code": 6004,
+      "name": "InvalidInputLots",
+      "msg": "Lots cannot be negative"
+    },
+    {
+      "code": 6005,
+      "name": "InvalidInputLotsSize",
+      "msg": "Lots size above market limits"
+    },
+    {
+      "code": 6006,
+      "name": "InvalidInputPriceLots",
+      "msg": "Price lots should be greater than zero"
+    },
+    {
+      "code": 6007,
+      "name": "InvalidInputPegLimit",
+      "msg": "Peg limit should be greater than zero"
+    },
+    {
+      "code": 6008,
+      "name": "InvalidInputOrderType",
       "msg": "The order type is invalid. A taker order must be Market or ImmediateOrCancel"
     },
     {
-      "code": 6037,
-      "name": "InvalidFundsReceiver",
-      "msg": "The receiver is invalid. Makes sure the receiver's owner is the market admin"
+      "code": 6009,
+      "name": "InvalidInputOrderId",
+      "msg": "Order id cannot be zero"
     },
     {
-      "code": 6038,
-      "name": "WouldSelfTrade",
-      "msg": "would self trade"
+      "code": 6010,
+      "name": "InvalidInputStaleness",
+      "msg": "Oracle staleness limit is currently unimplemented"
     },
     {
-      "code": 6039,
+      "code": 6011,
+      "name": "InvalidInputQueueSlots",
+      "msg": "Slot above queue limit"
+    },
+    {
+      "code": 6012,
+      "name": "InvalidOracleTypes",
+      "msg": "Cannot combine two oracles of different providers"
+    },
+    {
+      "code": 6013,
+      "name": "InvalidSecondOracle",
+      "msg": "Cannot configure secondary oracle without primary"
+    },
+    {
+      "code": 6014,
       "name": "NoCloseMarketAdmin",
       "msg": "This market does not have a `close_market_admin` and thus cannot be closed."
     },
     {
-      "code": 6040,
+      "code": 6015,
       "name": "InvalidCloseMarketAdmin",
       "msg": "The signer of this transaction is not this market's `close_market_admin`."
     },
     {
-      "code": 6041,
-      "name": "MissingOpenOrdersAdmin",
-      "msg": "This market requires `open_orders_admin` to sign all instructions that create orders."
-    },
-    {
-      "code": 6042,
+      "code": 6016,
       "name": "InvalidOpenOrdersAdmin",
-      "msg": "The `open_orders_admin` passed does not match this market's `open_orders_admin`."
+      "msg": "The `open_orders_admin` required by this market to sign all instructions that creates orders is missing or is not valid"
     },
     {
-      "code": 6043,
-      "name": "MissingConsumeEventsAdmin",
-      "msg": "This market requires `consume_events_admin` to sign all instructions that consume events."
-    },
-    {
-      "code": 6044,
+      "code": 6017,
       "name": "InvalidConsumeEventsAdmin",
-      "msg": "The `consume_events_admin` passed does not match this market's `consume_events_admin`."
+      "msg": "The `consume_events_admin` required by this market to sign all instructions that consume events is missing or is not valid"
+    },
+    {
+      "code": 6018,
+      "name": "IndexerActiveOO",
+      "msg": "Cannot be closed due to the existence of open orders accounts"
+    },
+    {
+      "code": 6019,
+      "name": "UnknownOracleType",
+      "msg": "oracle type cannot be determined"
+    },
+    {
+      "code": 6020,
+      "name": "OracleConfidence",
+      "msg": "an oracle does not reach the confidence threshold"
+    },
+    {
+      "code": 6021,
+      "name": "OracleStale",
+      "msg": "an oracle is stale"
+    },
+    {
+      "code": 6022,
+      "name": "OrderIdNotFound",
+      "msg": "Order id not found on the orderbook"
+    },
+    {
+      "code": 6023,
+      "name": "EventQueueContainsElements",
+      "msg": "Event queue contains elements and market can't be closed"
+    },
+    {
+      "code": 6024,
+      "name": "InvalidOrderPostIOC",
+      "msg": "ImmediateOrCancel is not a PostOrderType"
+    },
+    {
+      "code": 6025,
+      "name": "InvalidOrderPostMarket",
+      "msg": "Market is not a PostOrderType"
+    },
+    {
+      "code": 6026,
+      "name": "WouldSelfTrade",
+      "msg": "would self trade"
+    },
+    {
+      "code": 6027,
+      "name": "MarketHasExpired",
+      "msg": "The Market has already expired."
+    },
+    {
+      "code": 6028,
+      "name": "InvalidPriceLots",
+      "msg": "Price lots should be greater than zero"
+    },
+    {
+      "code": 6029,
+      "name": "InvalidOraclePrice",
+      "msg": "Oracle price above market limits"
+    },
+    {
+      "code": 6030,
+      "name": "MarketHasNotExpired",
+      "msg": "The Market has not expired yet."
+    },
+    {
+      "code": 6031,
+      "name": "NoOwnerOrDelegate",
+      "msg": "No correct owner or delegate."
+    },
+    {
+      "code": 6032,
+      "name": "NoOwner",
+      "msg": "No correct owner"
+    },
+    {
+      "code": 6033,
+      "name": "OpenOrdersFull",
+      "msg": "No free order index in open orders account"
+    },
+    {
+      "code": 6034,
+      "name": "BookContainsElements",
+      "msg": "Book contains elements"
+    },
+    {
+      "code": 6035,
+      "name": "OpenOrdersOrderNotFound",
+      "msg": "Could not find order in user account"
+    },
+    {
+      "code": 6036,
+      "name": "InvalidPostAmount",
+      "msg": "Amount to post above book limits"
+    },
+    {
+      "code": 6037,
+      "name": "DisabledOraclePeg",
+      "msg": "Oracle peg orders are not enabled for this market"
+    },
+    {
+      "code": 6038,
+      "name": "NonEmptyMarket",
+      "msg": "Cannot close a non-empty market"
+    },
+    {
+      "code": 6039,
+      "name": "NonEmptyOpenOrdersPosition",
+      "msg": "Cannot close a non-empty open orders account"
     }
   ]
 };

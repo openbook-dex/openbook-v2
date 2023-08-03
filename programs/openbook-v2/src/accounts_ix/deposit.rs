@@ -5,15 +5,28 @@ use anchor_spl::token::{Token, TokenAccount};
 #[derive(Accounts)]
 pub struct Deposit<'info> {
     pub owner: Signer<'info>,
-    #[account(mut)]
+    #[account(
+        mut,
+        token::mint = base_vault.mint
+    )]
     pub token_base_account: Account<'info, TokenAccount>,
-    #[account(mut)]
+    #[account(
+        mut,
+        token::mint = quote_vault.mint
+    )]
     pub token_quote_account: Account<'info, TokenAccount>,
-    #[account(mut)]
-    pub open_orders_account: AccountLoader<'info, OpenOrdersAccountFixed>,
-    #[account(mut)]
-    pub market: AccountLoader<'info, Market>,
+    #[account(
+        mut,
+        has_one = market,
+    )]
+    pub open_orders_account: AccountLoader<'info, OpenOrdersAccount>,
 
+    #[account(
+        mut,
+        has_one = base_vault,
+        has_one = quote_vault,
+    )]
+    pub market: AccountLoader<'info, Market>,
     #[account(mut)]
     pub base_vault: Account<'info, TokenAccount>,
     #[account(mut)]

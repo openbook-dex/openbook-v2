@@ -12,8 +12,8 @@ use solana_sdk::pubkey::Pubkey;
 pub use solana_sdk::transport::TransportError;
 use spl_token::{state::*, *};
 
-use crate::program_test::setup::create_open_orders_account;
-use crate::program_test::setup::Token;
+use crate::program_test::setup::{create_open_orders_account, create_open_orders_indexer, Token};
+
 pub use client::*;
 pub use cookies::*;
 pub use solana::*;
@@ -41,8 +41,8 @@ pub struct TestInitialize {
     pub quote_vault: Pubkey,
     pub price_lots: i64,
     pub tokens: Vec<Token>,
-    pub account_0: Pubkey,
     pub account_1: Pubkey,
+    pub account_2: Pubkey,
     pub bids: Pubkey,
 }
 
@@ -274,11 +274,13 @@ pub struct TestNewMarketInitialize {
     pub fee_penalty: u64,
     pub quote_lot_size: i64,
     pub base_lot_size: i64,
-    pub maker_fee: f32,
-    pub taker_fee: f32,
+    pub maker_fee: i64,
+    pub taker_fee: i64,
     pub open_orders_admin_bool: bool,
     pub close_market_admin_bool: bool,
     pub consume_events_admin_bool: bool,
+    pub time_expiry: i64,
+    pub with_oracle: bool,
 }
 
 impl Default for TestNewMarketInitialize {
@@ -287,11 +289,13 @@ impl Default for TestNewMarketInitialize {
             fee_penalty: 0,
             quote_lot_size: 10,
             base_lot_size: 100,
-            maker_fee: -0.0002,
-            taker_fee: 0.0004,
+            maker_fee: -200,
+            taker_fee: 400,
             open_orders_admin_bool: false,
             close_market_admin_bool: false,
             consume_events_admin_bool: false,
+            time_expiry: 0,
+            with_oracle: true,
         }
     }
 }
@@ -337,16 +341,24 @@ impl TestContext {
 
         // Create a market
 
-        let market = get_market_address(1);
+        let market = TestKeypair::new();
+        let market_authority = get_market_address(market);
         let base_vault = solana
-            .create_associated_token_account(&market, mints[0].pubkey)
+            .create_associated_token_account(&market_authority, mints[0].pubkey)
             .await;
         let quote_vault = solana
-            .create_associated_token_account(&market, mints[1].pubkey)
+            .create_associated_token_account(&market_authority, mints[1].pubkey)
             .await;
+
+        let oracle = if args.with_oracle {
+            Some(tokens[0].oracle)
+        } else {
+            None
+        };
 
         let openbook_v2::accounts::CreateMarket {
             market,
+
             base_vault,
             quote_vault,
             bids,
@@ -359,7 +371,7 @@ impl TestContext {
                 close_market_admin,
                 consume_events_admin,
                 payer,
-                market_index: 1,
+                market,
                 quote_lot_size: args.quote_lot_size,
                 base_lot_size: args.base_lot_size,
                 maker_fee: args.maker_fee,
@@ -369,20 +381,23 @@ impl TestContext {
                 base_vault,
                 quote_vault,
                 fee_penalty: args.fee_penalty,
-                ..CreateMarketInstruction::with_new_book_and_queue(solana, &tokens[0]).await
+                time_expiry: args.time_expiry,
+                ..CreateMarketInstruction::with_new_book_and_queue(solana, oracle, None).await
             },
         )
         .await
         .unwrap();
 
-        let account_0 =
-            create_open_orders_account(solana, owner, market, 0, &context.users[1]).await;
+        let _indexer = create_open_orders_indexer(solana, &context.users[1], owner, market).await;
+
         let account_1 =
-            create_open_orders_account(solana, owner, market, 1, &context.users[1]).await;
+            create_open_orders_account(solana, owner, market, 1, &context.users[1], None).await;
+        let account_2 =
+            create_open_orders_account(solana, owner, market, 2, &context.users[1], None).await;
 
         let price_lots = {
             let market = solana.get_account::<Market>(market).await;
-            market.native_price_to_lot(I80F48::from(1000))
+            market.native_price_to_lot(I80F48::from(1000)).unwrap()
         };
 
         let mints = mints.to_vec();
@@ -399,12 +414,13 @@ impl TestContext {
             owner_token_0,
             owner_token_1,
             market,
+
             base_vault,
             quote_vault,
             price_lots,
             tokens,
-            account_0,
             account_1,
+            account_2,
             bids,
         })
     }

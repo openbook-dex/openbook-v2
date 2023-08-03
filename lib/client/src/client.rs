@@ -10,8 +10,9 @@ use anchor_spl::token::Token;
 
 use itertools::Itertools;
 
-use openbook_v2::state::{
-    MarketIndex, OpenOrdersAccountValue, PlaceOrderType, SelfTradeBehavior, Side,
+use openbook_v2::{
+    state::{Market, OpenOrdersAccount, PlaceOrderType, SelfTradeBehavior, Side},
+    PlaceOrderArgs, PlaceOrderPeggedArgs,
 };
 
 use solana_client::nonblocking::rpc_client::RpcClient as RpcClientAsync;
@@ -23,7 +24,6 @@ use solana_sdk::signer::keypair;
 use solana_sdk::transaction::TransactionError;
 
 use crate::account_fetcher::*;
-use crate::context::OpenBookContext;
 use crate::gpa::{fetch_anchor_account, fetch_openbook_accounts};
 
 use anyhow::Context;
@@ -73,7 +73,6 @@ impl Client {
         }
     }
 
-    // TODO: this function here is awkward, since it (intentionally) doesn't use OpenBookClient::account_fetcher
     pub async fn rpc_anchor_account<T: AccountDeserialize>(
         &self,
         address: &Pubkey,
@@ -87,13 +86,11 @@ pub struct OpenBookClient {
     pub client: Client,
 
     // todo: possibly this object should have cache-functions, so there can be one getMultipleAccounts
-    // call to refresh banks etc -- if it's backed by websockets, these could just do nothing
+    // call to refresh -- if it's backed by websockets, these could just do nothing
     pub account_fetcher: Arc<dyn AccountFetcher>,
 
     pub owner: Arc<Keypair>,
     pub open_orders_account: Pubkey,
-
-    pub context: OpenBookContext,
 
     pub http_client: reqwest::Client,
 }
@@ -107,7 +104,7 @@ impl OpenBookClient {
     pub async fn find_accounts(
         client: &Client,
         owner: &Keypair,
-    ) -> anyhow::Result<Vec<(Pubkey, OpenOrdersAccountValue)>> {
+    ) -> anyhow::Result<Vec<(Pubkey, OpenOrdersAccount)>> {
         fetch_openbook_accounts(&client.rpc_async(), openbook_v2::ID, owner.pubkey()).await
     }
 
@@ -125,19 +122,15 @@ impl OpenBookClient {
             fetch_openbook_accounts(&rpc, program, owner.pubkey()).await?;
         let openbook_account_opt = openbook_account_tuples
             .iter()
-            .find(|(_, account)| account.fixed.name() == openbook_account_name);
+            .find(|(_, account)| account.name() == openbook_account_name);
         if openbook_account_opt.is_none() {
-            openbook_account_tuples.sort_by(|a, b| {
-                a.1.fixed
-                    .account_num
-                    .partial_cmp(&b.1.fixed.account_num)
-                    .unwrap()
-            });
+            openbook_account_tuples
+                .sort_by(|a, b| a.1.account_num.partial_cmp(&b.1.account_num).unwrap());
             let account_num = match openbook_account_tuples.last() {
-                Some(tuple) => tuple.1.fixed.account_num + 1,
+                Some(tuple) => tuple.1.account_num + 1,
                 None => 0u32,
             };
-            Self::init_open_orders(client, market, owner, payer, account_num)
+            Self::init_open_orders(client, market, owner, payer, None, account_num)
                 .await
                 .context("Failed to create account...")?;
         }
@@ -145,9 +138,55 @@ impl OpenBookClient {
             fetch_openbook_accounts(&rpc, program, owner.pubkey()).await?;
         let index = openbook_account_tuples
             .iter()
-            .position(|tuple| tuple.1.fixed.name() == openbook_account_name)
+            .position(|tuple| tuple.1.name() == openbook_account_name)
             .unwrap();
         Ok(openbook_account_tuples[index].0)
+    }
+
+    pub async fn create_open_orders_indexer(
+        client: &Client,
+        market: Pubkey,
+        owner: &Keypair,
+        payer: &Keypair, // pays the SOL for the new account
+    ) -> anyhow::Result<(Pubkey, Signature)> {
+        let open_orders_indexer = Pubkey::find_program_address(
+            &[
+                b"OpenOrdersIndexer".as_ref(),
+                owner.pubkey().as_ref(),
+                market.as_ref(),
+            ],
+            &openbook_v2::id(),
+        )
+        .0;
+
+        let ix = Instruction {
+            program_id: openbook_v2::id(),
+            accounts: anchor_lang::ToAccountMetas::to_account_metas(
+                &openbook_v2::accounts::CreateOpenOrdersIndexer {
+                    owner: owner.pubkey(),
+                    open_orders_indexer,
+                    payer: payer.pubkey(),
+                    market,
+                    system_program: System::id(),
+                },
+                None,
+            ),
+            data: anchor_lang::InstructionData::data(
+                &openbook_v2::instruction::CreateOpenOrdersIndexer {},
+            ),
+        };
+
+        let txsig = TransactionBuilder {
+            instructions: vec![ix],
+            address_lookup_tables: vec![],
+            payer: payer.pubkey(),
+            signers: vec![owner, payer],
+            config: client.transaction_builder_config,
+        }
+        .send_and_confirm(client)
+        .await?;
+
+        Ok((open_orders_indexer, txsig))
     }
 
     pub async fn init_open_orders(
@@ -155,8 +194,19 @@ impl OpenBookClient {
         market: Pubkey,
         owner: &Keypair,
         payer: &Keypair, // pays the SOL for the new account
+        delegate: Option<Pubkey>,
         account_num: u32,
     ) -> anyhow::Result<(Pubkey, Signature)> {
+        let open_orders_indexer = Pubkey::find_program_address(
+            &[
+                b"OpenOrdersIndexer".as_ref(),
+                owner.pubkey().as_ref(),
+                market.as_ref(),
+            ],
+            &openbook_v2::id(),
+        )
+        .0;
+
         let account = Pubkey::find_program_address(
             &[
                 b"OpenOrdersAccount".as_ref(),
@@ -167,22 +217,22 @@ impl OpenBookClient {
             &openbook_v2::id(),
         )
         .0;
+
         let ix = Instruction {
             program_id: openbook_v2::id(),
             accounts: anchor_lang::ToAccountMetas::to_account_metas(
                 &openbook_v2::accounts::InitOpenOrders {
                     owner: owner.pubkey(),
+                    open_orders_indexer,
                     open_orders_account: account,
                     payer: payer.pubkey(),
+                    delegate_account: delegate,
                     market,
                     system_program: System::id(),
                 },
                 None,
             ),
-            data: anchor_lang::InstructionData::data(&openbook_v2::instruction::InitOpenOrders {
-                account_num,
-                open_orders_count: 8,
-            }),
+            data: anchor_lang::InstructionData::data(&openbook_v2::instruction::InitOpenOrders {}),
         };
 
         let txsig = TransactionBuilder {
@@ -209,19 +259,16 @@ impl OpenBookClient {
             rpc,
         })));
         let openbook_account =
-            account_fetcher_fetch_openbook_account(&*account_fetcher, &account).await?;
-        if openbook_account.fixed.owner != owner.pubkey() {
+            account_fetcher_fetch_openorders_account(&*account_fetcher, &account).await?;
+        if openbook_account.owner != owner.pubkey() {
             anyhow::bail!(
                 "bad owner for account: expected {} got {}",
-                openbook_account.fixed.owner,
+                openbook_account.owner,
                 owner.pubkey()
             );
         }
 
-        let rpc = client.rpc_async();
-        let openbook_context = OpenBookContext::new_from_rpc(&rpc).await?;
-
-        Self::new_detail(client, account, owner, openbook_context, account_fetcher)
+        Self::new_detail(client, account, owner, account_fetcher)
     }
 
     /// Allows control of AccountFetcher and externally created MangoGroupContext
@@ -230,7 +277,6 @@ impl OpenBookClient {
         account: Pubkey,
         owner: Arc<Keypair>,
         // future: maybe pass Arc<MangoGroupContext>, so it can be extenally updated?
-        openbook_context: OpenBookContext,
         account_fetcher: Arc<dyn AccountFetcher>,
     ) -> anyhow::Result<Self> {
         Ok(Self {
@@ -238,7 +284,6 @@ impl OpenBookClient {
             account_fetcher,
             owner,
             open_orders_account: account,
-            context: openbook_context,
             http_client: reqwest::Client::new(),
         })
     }
@@ -247,8 +292,8 @@ impl OpenBookClient {
         self.owner.pubkey()
     }
 
-    pub async fn openbook_account(&self) -> anyhow::Result<OpenOrdersAccountValue> {
-        account_fetcher_fetch_openbook_account(&*self.account_fetcher, &self.open_orders_account)
+    pub async fn openorders_account(&self) -> anyhow::Result<OpenOrdersAccount> {
+        account_fetcher_fetch_openorders_account(&*self.account_fetcher, &self.open_orders_account)
             .await
     }
 
@@ -263,7 +308,8 @@ impl OpenBookClient {
     #[allow(clippy::too_many_arguments)]
     pub async fn place_order(
         &self,
-        market_index: MarketIndex,
+        market: Market,
+        market_address: Pubkey,
         side: Side,
         price_lots: i64,
         max_base_lots: i64,
@@ -273,12 +319,9 @@ impl OpenBookClient {
         expiry_timestamp: u64,
         limit: u8,
         token_deposit_account: Pubkey,
-        base_vault: Pubkey,
-        quote_vault: Pubkey,
+        market_vault: Pubkey,
         self_trade_behavior: SelfTradeBehavior,
     ) -> anyhow::Result<Signature> {
-        let market = self.context.context(market_index);
-
         let ix = Instruction {
             program_id: openbook_v2::id(),
             accounts: {
@@ -286,15 +329,15 @@ impl OpenBookClient {
                     &openbook_v2::accounts::PlaceOrder {
                         open_orders_account: self.open_orders_account,
                         open_orders_admin: None,
-                        owner: self.owner(),
-                        market: market.address,
-                        bids: market.market.bids,
-                        asks: market.market.asks,
-                        event_queue: market.market.event_queue,
-                        oracle: market.market.oracle,
+                        signer: self.owner(),
+                        market: market_address,
+                        bids: market.bids,
+                        asks: market.asks,
+                        event_queue: market.event_queue,
+                        oracle_a: market.oracle_a.into(),
+                        oracle_b: market.oracle_b.into(),
                         token_deposit_account,
-                        base_vault,
-                        quote_vault,
+                        market_vault,
                         system_program: System::id(),
                         token_program: Token::id(),
                     },
@@ -302,15 +345,17 @@ impl OpenBookClient {
                 )
             },
             data: anchor_lang::InstructionData::data(&openbook_v2::instruction::PlaceOrder {
-                side,
-                price_lots,
-                max_base_lots,
-                max_quote_lots_including_fees,
-                client_order_id,
-                order_type,
-                self_trade_behavior,
-                expiry_timestamp,
-                limit,
+                args: PlaceOrderArgs {
+                    side,
+                    price_lots,
+                    max_base_lots,
+                    max_quote_lots_including_fees,
+                    client_order_id,
+                    order_type,
+                    expiry_timestamp,
+                    self_trade_behavior,
+                    limit,
+                },
             }),
         };
         self.send_and_confirm_owner_tx(vec![ix]).await
@@ -319,7 +364,8 @@ impl OpenBookClient {
     #[allow(clippy::too_many_arguments)]
     pub async fn place_order_pegged(
         &self,
-        market_index: MarketIndex,
+        market: Market,
+        market_address: Pubkey,
         side: Side,
         price_offset_lots: i64,
         peg_limit: i64,
@@ -330,13 +376,10 @@ impl OpenBookClient {
         expiry_timestamp: u64,
         limit: u8,
         token_deposit_account: Pubkey,
-        base_vault: Pubkey,
-        quote_vault: Pubkey,
+        market_vault: Pubkey,
         self_trade_behavior: SelfTradeBehavior,
         max_oracle_staleness_slots: i32,
     ) -> anyhow::Result<Signature> {
-        let market = self.context.context(market_index);
-
         let ix = Instruction {
             program_id: openbook_v2::id(),
             accounts: {
@@ -344,15 +387,15 @@ impl OpenBookClient {
                     &openbook_v2::accounts::PlaceOrder {
                         open_orders_account: self.open_orders_account,
                         open_orders_admin: None,
-                        owner: self.owner(),
-                        market: market.address,
-                        bids: market.market.bids,
-                        asks: market.market.asks,
-                        event_queue: market.market.event_queue,
-                        oracle: market.market.oracle,
+                        signer: self.owner(),
+                        market: market_address,
+                        bids: market.bids,
+                        asks: market.asks,
+                        event_queue: market.event_queue,
+                        oracle_a: market.oracle_a.into(),
+                        oracle_b: market.oracle_b.into(),
                         token_deposit_account,
-                        base_vault,
-                        quote_vault,
+                        market_vault,
                         system_program: System::id(),
                         token_program: Token::id(),
                     },
@@ -360,17 +403,19 @@ impl OpenBookClient {
                 )
             },
             data: anchor_lang::InstructionData::data(&openbook_v2::instruction::PlaceOrderPegged {
-                side,
-                price_offset_lots,
-                peg_limit,
-                max_oracle_staleness_slots,
-                max_base_lots,
-                max_quote_lots_including_fees,
-                client_order_id,
-                order_type,
-                self_trade_behavior,
-                expiry_timestamp,
-                limit,
+                args: PlaceOrderPeggedArgs {
+                    side,
+                    price_offset_lots,
+                    peg_limit,
+                    max_oracle_staleness_slots,
+                    max_base_lots,
+                    max_quote_lots_including_fees,
+                    client_order_id,
+                    order_type,
+                    expiry_timestamp,
+                    self_trade_behavior,
+                    limit,
+                },
             }),
         };
         self.send_and_confirm_owner_tx(vec![ix]).await
@@ -379,16 +424,14 @@ impl OpenBookClient {
     #[allow(clippy::too_many_arguments)]
     pub async fn deposit(
         &self,
-        market_index: MarketIndex,
-        base_amount_lots: u64,
-        quote_amount_lots: u64,
+        market_address: Pubkey,
+        base_amount: u64,
+        quote_amount: u64,
         token_base_account: Pubkey,
         token_quote_account: Pubkey,
         base_vault: Pubkey,
         quote_vault: Pubkey,
     ) -> anyhow::Result<Signature> {
-        let market = self.context.context(market_index);
-
         let ix = Instruction {
             program_id: openbook_v2::id(),
             accounts: {
@@ -396,7 +439,7 @@ impl OpenBookClient {
                     &openbook_v2::accounts::Deposit {
                         open_orders_account: self.open_orders_account,
                         owner: self.owner(),
-                        market: market.address,
+                        market: market_address,
                         token_base_account,
                         token_quote_account,
                         base_vault,
@@ -408,8 +451,8 @@ impl OpenBookClient {
                 )
             },
             data: anchor_lang::InstructionData::data(&openbook_v2::instruction::Deposit {
-                base_amount_lots,
-                quote_amount_lots,
+                base_amount,
+                quote_amount,
             }),
         };
         self.send_and_confirm_owner_tx(vec![ix]).await
@@ -418,14 +461,14 @@ impl OpenBookClient {
     #[allow(clippy::too_many_arguments)]
     pub async fn settle_funds(
         &self,
-        market_index: MarketIndex,
+        market: Market,
+        market_address: Pubkey,
         token_base_account: Pubkey,
         token_quote_account: Pubkey,
         base_vault: Pubkey,
         quote_vault: Pubkey,
+        referrer: Option<Pubkey>,
     ) -> anyhow::Result<Signature> {
-        let market = self.context.context(market_index);
-
         let ix = Instruction {
             program_id: openbook_v2::id(),
             accounts: {
@@ -433,11 +476,13 @@ impl OpenBookClient {
                     &openbook_v2::accounts::SettleFunds {
                         owner: self.owner(),
                         open_orders_account: self.open_orders_account,
-                        market: market.address,
+                        market: market_address,
+                        market_authority: market.market_authority,
                         token_base_account,
                         token_quote_account,
                         base_vault,
                         quote_vault,
+                        referrer,
                         system_program: System::id(),
                         token_program: Token::id(),
                     },

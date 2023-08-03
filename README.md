@@ -1,5 +1,7 @@
 # OpenBook V2
 
+⚠️ Disclaimer: This code is currently under active development and should not be used in production environments.
+
 A central-limit order-book program based on [Mango V4](https://github.com/blockworks-foundation/mango-v4) and the [previous OpenBook program](https://github.com/openbook-dex/program) (which was a fork of [Serum](https://github.com/project-serum/serum-dex)).
 
 ## License
@@ -20,6 +22,16 @@ that call into the Openbook program.
 But deriving a Solana program with similar functionality to the Openbook program
 from this codebase would require the changes and improvements to stay publicly
 available under GPL.
+
+## Deployed versions
+
+8qkavBpvoHVYkmPhu6QRpXRX39Kcop9uMXvZorBAz43o
+
+| tag       | network |
+| --------- | ------- |
+| test-v0.3 | devnet  |
+| test-v0.3 | testnet |
+| test-v0.3 | mainnet |
 
 ## Building & testing
 
@@ -81,4 +93,11 @@ To drill down on a specific test (e.g., test_expired_order), run:
 
 ```bash
 just test test_expired_order
+```
+
+If you want to have tests that automatically re-run when you edit a file, install
+[entr](https://github.com/eradman/entr) and run:
+
+```bash
+just test-dev
 ```

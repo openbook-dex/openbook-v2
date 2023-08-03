@@ -18,7 +18,7 @@ impl Token {
     pub async fn create(
         mints: Vec<MintCookie>,
         solana: &SolanaCookie,
-        admin: TestKeypair,
+        owner: TestKeypair,
         payer: TestKeypair,
     ) -> Vec<Token> {
         let mut tokens = vec![];
@@ -28,7 +28,7 @@ impl Token {
                 solana,
                 StubOracleCreate {
                     mint: mint.pubkey,
-                    admin,
+                    owner,
                     payer,
                 },
             )
@@ -38,7 +38,7 @@ impl Token {
             send_tx(
                 solana,
                 StubOracleSetInstruction {
-                    admin,
+                    owner,
                     mint: mint.pubkey,
                     price: 1.0,
                 },
@@ -57,21 +57,41 @@ impl Token {
     }
 }
 
+pub async fn create_open_orders_indexer(
+    solana: &SolanaCookie,
+    payer: &UserCookie,
+    owner: TestKeypair,
+    market: Pubkey,
+) -> Pubkey {
+    send_tx(
+        solana,
+        CreateOpenOrdersIndexerInstruction {
+            market,
+            owner,
+            payer: payer.key,
+        },
+    )
+    .await
+    .unwrap()
+    .open_orders_indexer
+}
+
 pub async fn create_open_orders_account(
     solana: &SolanaCookie,
     owner: TestKeypair,
     market: Pubkey,
     account_num: u32,
     payer: &UserCookie,
+    delegate: Option<Pubkey>,
 ) -> Pubkey {
     send_tx(
         solana,
         InitOpenOrdersInstruction {
             account_num,
-            open_orders_count: 8,
             market,
             owner,
             payer: payer.key,
+            delegate,
         },
     )
     .await

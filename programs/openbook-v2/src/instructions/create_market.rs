@@ -1,75 +1,100 @@
 use anchor_lang::prelude::*;
-use fixed::types::I80F48;
-
-use crate::error::*;
-use crate::state::*;
-use crate::util::fill_from_str;
 
 use crate::accounts_ix::*;
+use crate::accounts_zerocopy::*;
+use crate::error::*;
 use crate::logs::MarketMetaDataLog;
+use crate::pubkey_option::NonZeroKey;
+use crate::state::*;
+use crate::util::fill_from_str;
 
 #[allow(clippy::too_many_arguments)]
 pub fn create_market(
     ctx: Context<CreateMarket>,
-    market_index: MarketIndex,
     name: String,
     oracle_config: OracleConfigParams,
     quote_lot_size: i64,
     base_lot_size: i64,
-    maker_fee: f32,
-    taker_fee: f32,
-    fee_penalty: u64,
-    collect_fee_admin: Pubkey,
-    open_orders_admin: Option<Pubkey>,
-    consume_events_admin: Option<Pubkey>,
-    close_market_admin: Option<Pubkey>,
+    maker_fee: i64,
+    taker_fee: i64,
+    time_expiry: i64,
 ) -> Result<()> {
     let now_ts: u64 = Clock::get()?.unix_timestamp.try_into().unwrap();
 
     require!(
-        taker_fee.is_sign_positive()
-            && (maker_fee.is_sign_positive() || maker_fee.abs() <= taker_fee),
-        OpenBookError::InvalidFeesError
+        maker_fee.unsigned_abs() as i128 <= FEES_SCALE_FACTOR,
+        OpenBookError::InvalidInputMarketFees
     );
+    require!(
+        taker_fee.unsigned_abs() as i128 <= FEES_SCALE_FACTOR,
+        OpenBookError::InvalidInputMarketFees
+    );
+    require!(
+        taker_fee >= 0 && (maker_fee >= 0 || maker_fee.abs() <= taker_fee),
+        OpenBookError::InvalidInputMarketFees
+    );
+
+    require!(
+        time_expiry == 0 || time_expiry > Clock::get()?.unix_timestamp,
+        OpenBookError::InvalidInputMarketExpired
+    );
+
+    require_gt!(quote_lot_size, 0, OpenBookError::InvalidInputLots);
+    require_gt!(base_lot_size, 0, OpenBookError::InvalidInputLots);
+
+    let oracle_a = ctx.accounts.oracle_a.non_zero_key();
+    let oracle_b = ctx.accounts.oracle_b.non_zero_key();
+
+    if oracle_a.is_some() && oracle_b.is_some() {
+        let oracle_a = AccountInfoRef::borrow(ctx.accounts.oracle_a.as_ref().unwrap())?;
+        let oracle_b = AccountInfoRef::borrow(ctx.accounts.oracle_a.as_ref().unwrap())?;
+
+        require!(
+            oracle::determine_oracle_type(&oracle_a) == oracle::determine_oracle_type(&oracle_b),
+            OpenBookError::InvalidOracleTypes
+        );
+    } else if oracle_b.is_some() {
+        return Err(OpenBookError::InvalidSecondOracle.into());
+    }
 
     let mut openbook_market = ctx.accounts.market.load_init()?;
     *openbook_market = Market {
-        collect_fee_admin,
-        open_orders_admin: open_orders_admin.into(),
-        consume_events_admin: consume_events_admin.into(),
-        close_market_admin: close_market_admin.into(),
-        market_index,
-        bump: *ctx.bumps.get("market").ok_or(OpenBookError::SomeError)?,
+        market_authority: ctx.accounts.market_authority.key(),
+        collect_fee_admin: ctx.accounts.collect_fee_admin.key(),
+        open_orders_admin: ctx.accounts.open_orders_admin.non_zero_key(),
+        consume_events_admin: ctx.accounts.consume_events_admin.non_zero_key(),
+        close_market_admin: ctx.accounts.close_market_admin.non_zero_key(),
+        bump: *ctx
+            .bumps
+            .get("market_authority")
+            .ok_or(OpenBookError::SomeError)?,
         base_decimals: ctx.accounts.base_mint.decimals,
         quote_decimals: ctx.accounts.quote_mint.decimals,
         padding1: Default::default(),
+        time_expiry,
         name: fill_from_str(&name)?,
         bids: ctx.accounts.bids.key(),
         asks: ctx.accounts.asks.key(),
         event_queue: ctx.accounts.event_queue.key(),
-        oracle: ctx.accounts.oracle.key(),
+        oracle_a,
+        oracle_b,
         oracle_config: oracle_config.to_oracle_config(),
-        stable_price_model: StablePriceModel::default(),
         quote_lot_size,
         base_lot_size,
         seq_num: 0,
         registration_time: now_ts,
-
-        maker_fee: I80F48::from_num(maker_fee),
-        taker_fee: I80F48::from_num(taker_fee),
-        fee_penalty,
-
+        maker_fee,
+        taker_fee,
         fees_accrued: 0,
         fees_to_referrers: 0,
-        vault_signer_nonce: 0,
+        taker_volume_wo_oo: 0,
         base_mint: ctx.accounts.base_mint.key(),
         quote_mint: ctx.accounts.quote_mint.key(),
         base_vault: ctx.accounts.base_vault.key(),
         base_deposit_total: 0,
-        base_fees_accrued: 0,
         quote_vault: ctx.accounts.quote_vault.key(),
         quote_deposit_total: 0,
-        quote_fees_accrued: 0,
+        fees_available: 0,
         referrer_rebates_accrued: 0,
 
         reserved: [0; 1768],
@@ -81,14 +106,17 @@ pub fn create_market(
     };
     orderbook.init();
 
+    let mut event_queue = ctx.accounts.event_queue.load_init()?;
+    event_queue.init();
+
     emit!(MarketMetaDataLog {
         market: ctx.accounts.market.key(),
-        market_index,
         base_decimals: ctx.accounts.base_mint.decimals,
         quote_decimals: ctx.accounts.quote_mint.decimals,
         base_lot_size,
         quote_lot_size,
-        oracle: ctx.accounts.oracle.key(),
+        oracle_a: oracle_a.into(),
+        oracle_b: oracle_b.into(),
     });
 
     Ok(())

@@ -2,7 +2,7 @@
 
 use anchor_lang::prelude::*;
 
-declare_id!("BfxZj7ckfRGHxByn7aHgH2puyXhfjAUvULtRjJo4rd8X");
+declare_id!("8qkavBpvoHVYkmPhu6QRpXRX39Kcop9uMXvZorBAz43o");
 
 #[macro_use]
 pub mod util;
@@ -14,13 +14,15 @@ pub mod accounts_zerocopy;
 pub mod error;
 pub mod i80f48;
 pub mod logs;
-pub mod pod_option;
+pub mod pubkey_option;
 pub mod state;
+pub mod token_utils;
 pub mod types;
 
 use error::*;
 use fixed::types::I80F48;
-use state::{MarketIndex, OracleConfigParams, PlaceOrderType, SelfTradeBehavior, Side};
+use state::{OracleConfigParams, PlaceOrderType, SelfTradeBehavior, Side};
+use std::cmp;
 
 #[cfg(feature = "enable-gpl")]
 pub mod instructions;
@@ -36,45 +38,43 @@ pub mod openbook_v2 {
     #[allow(clippy::too_many_arguments)]
     pub fn create_market(
         ctx: Context<CreateMarket>,
-        market_index: MarketIndex,
         name: String,
         oracle_config: OracleConfigParams,
         quote_lot_size: i64,
         base_lot_size: i64,
-        maker_fee: f32,
-        taker_fee: f32,
-        fee_penalty: u64,
-        collect_fee_admin: Pubkey,
-        open_orders_admin: Option<Pubkey>,
-        consume_events_admin: Option<Pubkey>,
-        close_market_admin: Option<Pubkey>,
+        maker_fee: i64,
+        taker_fee: i64,
+        time_expiry: i64,
     ) -> Result<()> {
         #[cfg(feature = "enable-gpl")]
         instructions::create_market(
             ctx,
-            market_index,
             name,
             oracle_config,
             quote_lot_size,
             base_lot_size,
             maker_fee,
             taker_fee,
-            fee_penalty,
-            collect_fee_admin,
-            open_orders_admin,
-            consume_events_admin,
-            close_market_admin,
+            time_expiry,
         )?;
         Ok(())
     }
 
-    pub fn init_open_orders(
-        ctx: Context<InitOpenOrders>,
-        account_num: u32,
-        open_orders_count: u8,
-    ) -> Result<()> {
+    pub fn create_open_orders_indexer(ctx: Context<CreateOpenOrdersIndexer>) -> Result<()> {
         #[cfg(feature = "enable-gpl")]
-        instructions::init_open_orders(ctx, account_num, open_orders_count)?;
+        instructions::create_open_orders_indexer(ctx)?;
+        Ok(())
+    }
+
+    pub fn close_open_orders_indexer(ctx: Context<CloseOpenOrdersIndexer>) -> Result<()> {
+        #[cfg(feature = "enable-gpl")]
+        instructions::close_open_orders_indexer(ctx)?;
+        Ok(())
+    }
+
+    pub fn init_open_orders(ctx: Context<InitOpenOrders>) -> Result<()> {
+        #[cfg(feature = "enable-gpl")]
+        instructions::init_open_orders(ctx)?;
         Ok(())
     }
 
@@ -94,23 +94,11 @@ pub mod openbook_v2 {
     /// `limit` determines the maximum number of orders from the book to fill,
     /// and can be used to limit CU spent. When the limit is reached, processing
     /// stops and the instruction succeeds.
-    #[allow(clippy::too_many_arguments)]
-    pub fn place_order(
-        ctx: Context<PlaceOrder>,
-        side: Side,
-        price_lots: i64,
-        max_base_lots: i64,
-        max_quote_lots_including_fees: i64,
-        client_order_id: u64,
-        order_type: PlaceOrderType,
-        self_trade_behavior: SelfTradeBehavior,
-        expiry_timestamp: u64,
-        limit: u8,
-    ) -> Result<Option<u128>> {
-        require_gte!(price_lots, 0);
+    pub fn place_order(ctx: Context<PlaceOrder>, args: PlaceOrderArgs) -> Result<Option<u128>> {
+        require_gte!(args.price_lots, 1, OpenBookError::InvalidInputPriceLots);
 
         use crate::state::{Order, OrderParams};
-        let time_in_force = match Order::tif_from_expiry(expiry_timestamp) {
+        let time_in_force = match Order::tif_from_expiry(args.expiry_timestamp) {
             Some(t) => t,
             None => {
                 msg!("Order is already expired");
@@ -118,71 +106,104 @@ pub mod openbook_v2 {
             }
         };
         let order = Order {
-            side,
-            max_base_lots,
-            max_quote_lots_including_fees,
-            client_order_id,
+            side: args.side,
+            max_base_lots: args.max_base_lots,
+            max_quote_lots_including_fees: args.max_quote_lots_including_fees,
+            client_order_id: args.client_order_id,
             time_in_force,
-            self_trade_behavior,
-            params: match order_type {
+            self_trade_behavior: args.self_trade_behavior,
+            params: match args.order_type {
                 PlaceOrderType::Market => OrderParams::Market,
-                PlaceOrderType::ImmediateOrCancel => OrderParams::ImmediateOrCancel { price_lots },
+                PlaceOrderType::ImmediateOrCancel => OrderParams::ImmediateOrCancel {
+                    price_lots: args.price_lots,
+                },
                 _ => OrderParams::Fixed {
-                    price_lots,
-                    order_type: order_type.to_post_order_type()?,
+                    price_lots: args.price_lots,
+                    order_type: args.order_type.to_post_order_type()?,
                 },
             },
         };
         #[cfg(feature = "enable-gpl")]
-        return instructions::place_order(ctx, order, limit);
+        return instructions::place_order(ctx, order, args.limit);
 
         #[cfg(not(feature = "enable-gpl"))]
         Ok(None)
     }
 
-    #[allow(clippy::too_many_arguments)]
+    /// Cancel orders and place multiple orders.
+    ///
+    pub fn cancel_and_place_orders(
+        ctx: Context<CancelAndPlaceOrders>,
+        cancel_client_orders_ids: Vec<u64>,
+        place_orders: Vec<PlaceOrderArgs>,
+    ) -> Result<Vec<Option<u128>>> {
+        let mut orders = Vec::new();
+        let mut limits = Vec::new();
+        for place_order in place_orders.iter() {
+            require_gte!(
+                place_order.price_lots,
+                1,
+                OpenBookError::InvalidInputPriceLots
+            );
+
+            use crate::state::{Order, OrderParams};
+            let time_in_force = match Order::tif_from_expiry(place_order.expiry_timestamp) {
+                Some(t) => t,
+                None => {
+                    msg!("Order is already expired");
+                    continue;
+                }
+            };
+            orders.push(Order {
+                side: place_order.side,
+                max_base_lots: place_order.max_base_lots,
+                max_quote_lots_including_fees: place_order.max_quote_lots_including_fees,
+                client_order_id: place_order.client_order_id,
+                time_in_force,
+                self_trade_behavior: place_order.self_trade_behavior,
+                params: match place_order.order_type {
+                    PlaceOrderType::Market => OrderParams::Market,
+                    PlaceOrderType::ImmediateOrCancel => OrderParams::ImmediateOrCancel {
+                        price_lots: place_order.price_lots,
+                    },
+                    _ => OrderParams::Fixed {
+                        price_lots: place_order.price_lots,
+                        order_type: place_order.order_type.to_post_order_type()?,
+                    },
+                },
+            });
+            limits.push(place_order.limit);
+        }
+        #[cfg(feature = "enable-gpl")]
+        return instructions::cancel_and_place_orders(
+            ctx,
+            cancel_client_orders_ids,
+            orders,
+            limits,
+        );
+
+        #[cfg(not(feature = "enable-gpl"))]
+        Ok(None)
+    }
+
     pub fn place_order_pegged(
         ctx: Context<PlaceOrder>,
-        side: Side,
-
-        // The adjustment from the oracle price, in lots (quote lots per base lots).
-        // Orders on the book may be filled at oracle + adjustment (depends on order type).
-        price_offset_lots: i64,
-
-        // The limit at which the pegged order shall expire.
-        //
-        // Example: An bid pegged to -20 with peg_limit 100 would expire if the oracle hits 121.
-        peg_limit: i64,
-
-        max_base_lots: i64,
-        max_quote_lots_including_fees: i64,
-        client_order_id: u64,
-        order_type: PlaceOrderType,
-        self_trade_behavior: SelfTradeBehavior,
-
-        // Timestamp of when order expires
-        //
-        // Send 0 if you want the order to never expire.
-        // Timestamps in the past mean the instruction is skipped.
-        // Timestamps in the future are reduced to now + 65535s.
-        expiry_timestamp: u64,
-
-        // Maximum number of orders from the book to fill.
-        //
-        // Use this to limit compute used during order matching.
-        // When the limit is reached, processing stops and the instruction succeeds.
-        limit: u8,
-
-        // Oracle staleness limit, in slots. Set to -1 to disable.
-        //
-        // WARNING: Not currently implemented.
-        max_oracle_staleness_slots: i32,
+        args: PlaceOrderPeggedArgs,
     ) -> Result<Option<u128>> {
-        require_gt!(peg_limit, 0);
-        require_eq!(max_oracle_staleness_slots, -1); // unimplemented
+        require!(
+            ctx.accounts.oracle_a.is_some(),
+            OpenBookError::DisabledOraclePeg
+        );
+
+        require_gt!(args.peg_limit, 0, OpenBookError::InvalidInputPegLimit);
+        require_eq!(
+            args.max_oracle_staleness_slots,
+            -1,
+            OpenBookError::InvalidInputStaleness
+        );
 
         use crate::state::{Order, OrderParams};
-        let time_in_force = match Order::tif_from_expiry(expiry_timestamp) {
+        let time_in_force = match Order::tif_from_expiry(args.expiry_timestamp) {
             Some(t) => t,
             None => {
                 msg!("Order is already expired");
@@ -191,21 +212,21 @@ pub mod openbook_v2 {
         };
 
         let order = Order {
-            side,
-            max_base_lots,
-            max_quote_lots_including_fees,
-            client_order_id,
+            side: args.side,
+            max_base_lots: args.max_base_lots,
+            max_quote_lots_including_fees: args.max_quote_lots_including_fees,
+            client_order_id: args.client_order_id,
             time_in_force,
-            self_trade_behavior,
+            self_trade_behavior: args.self_trade_behavior,
             params: OrderParams::OraclePegged {
-                price_offset_lots,
-                order_type: order_type.to_post_order_type()?,
-                peg_limit,
-                max_oracle_staleness_slots,
+                price_offset_lots: args.price_offset_lots,
+                order_type: args.order_type.to_post_order_type()?,
+                peg_limit: args.peg_limit,
+                max_oracle_staleness_slots: args.max_oracle_staleness_slots,
             },
         };
         #[cfg(feature = "enable-gpl")]
-        return instructions::place_order(ctx, order, limit);
+        return instructions::place_order(ctx, order, args.limit);
 
         #[cfg(not(feature = "enable-gpl"))]
         Ok(None)
@@ -215,44 +236,32 @@ pub mod openbook_v2 {
     /// add a new order off the book.
     ///
     /// This type of order allows for instant token settlement for the taker.
-    #[allow(clippy::too_many_arguments)]
     pub fn place_take_order<'info>(
         ctx: Context<'_, '_, '_, 'info, PlaceTakeOrder<'info>>,
-        side: Side,
-        price_lots: i64,
-        max_base_lots: i64,
-        max_quote_lots_including_fees: i64,
-        client_order_id: u64,
-        order_type: PlaceOrderType,
-        self_trade_behavior: SelfTradeBehavior,
-        limit: u8,
-    ) -> Result<Option<u128>> {
-        require_gte!(price_lots, 0);
+        args: PlaceTakeOrderArgs,
+    ) -> Result<()> {
+        require_gte!(args.price_lots, 1, OpenBookError::InvalidInputPriceLots);
 
         use crate::state::{Order, OrderParams};
-        require!(
-            order_type == PlaceOrderType::Market || order_type == PlaceOrderType::ImmediateOrCancel,
-            OpenBookError::InvalidOrderType
-        );
         let order = Order {
-            side,
-            max_base_lots,
-            max_quote_lots_including_fees,
-            client_order_id,
+            side: args.side,
+            max_base_lots: args.max_base_lots,
+            max_quote_lots_including_fees: args.max_quote_lots_including_fees,
+            client_order_id: 0,
             time_in_force: 0,
-            self_trade_behavior,
-            params: match order_type {
+            self_trade_behavior: SelfTradeBehavior::default(),
+            params: match args.order_type {
                 PlaceOrderType::Market => OrderParams::Market,
-                PlaceOrderType::ImmediateOrCancel => OrderParams::ImmediateOrCancel { price_lots },
-                // never goes here, order type already checked
-                _ => panic!(),
+                PlaceOrderType::ImmediateOrCancel => OrderParams::ImmediateOrCancel {
+                    price_lots: args.price_lots,
+                },
+                _ => return Err(OpenBookError::InvalidInputOrderType.into()),
             },
         };
-        #[cfg(feature = "enable-gpl")]
-        return instructions::place_take_order(ctx, order, limit);
 
-        #[cfg(not(feature = "enable-gpl"))]
-        Ok(None)
+        #[cfg(feature = "enable-gpl")]
+        instructions::place_take_order(ctx, order, args.limit)?;
+        Ok(())
     }
 
     /// Process up to `limit` [events](crate::state::AnyEvent).
@@ -280,7 +289,20 @@ pub mod openbook_v2 {
     /// base token in an ask) back to the maker.
     pub fn consume_events(ctx: Context<ConsumeEvents>, limit: usize) -> Result<()> {
         #[cfg(feature = "enable-gpl")]
-        instructions::consume_events(ctx, limit)?;
+        instructions::consume_events(ctx, limit, None)?;
+        Ok(())
+    }
+
+    /// Process the [events](crate::state::AnyEvent) at the given positions.
+    pub fn consume_given_events(ctx: Context<ConsumeEvents>, slots: Vec<usize>) -> Result<()> {
+        require!(
+            slots
+                .iter()
+                .all(|slot| *slot < crate::state::MAX_NUM_EVENTS as usize),
+            OpenBookError::InvalidInputQueueSlots
+        );
+        #[cfg(feature = "enable-gpl")]
+        instructions::consume_events(ctx, slots.len(), Some(slots))?;
         Ok(())
     }
 
@@ -299,7 +321,7 @@ pub mod openbook_v2 {
     /// Note that this doesn't emit an [`OutEvent`](crate::state::OutEvent) because a
     /// maker knows that they will be passing in their own [`OpenOrdersAccount`](crate::state::OpenOrdersAccount).
     pub fn cancel_order_by_client_order_id(
-        ctx: Context<CancelOrderByClientOrderId>,
+        ctx: Context<CancelOrder>,
         client_order_id: u64,
     ) -> Result<()> {
         #[cfg(feature = "enable-gpl")]
@@ -307,36 +329,44 @@ pub mod openbook_v2 {
         Ok(())
     }
 
-    /// Cancel up to `limit` orders.
-    pub fn cancel_all_orders(ctx: Context<CancelAllOrders>, limit: u8) -> Result<()> {
-        #[cfg(feature = "enable-gpl")]
-        instructions::cancel_all_orders(ctx, limit)?;
-        Ok(())
-    }
-
-    /// Cancel up to `limit` orders on a single side of the book.
-    pub fn cancel_all_orders_by_side(
-        ctx: Context<CancelAllOrdersBySide>,
+    /// Cancel up to `limit` orders, optionally filtering by side
+    pub fn cancel_all_orders(
+        ctx: Context<CancelOrder>,
         side_option: Option<Side>,
         limit: u8,
     ) -> Result<()> {
         #[cfg(feature = "enable-gpl")]
-        instructions::cancel_all_orders_by_side(ctx, side_option, limit)?;
+        instructions::cancel_all_orders(ctx, side_option, limit)?;
         Ok(())
     }
 
-    /// Desposit a certain amount of `base_amount_lots` and `quote_amount_lots`
-    /// into one's [`Position`](crate::state::Position).
+    /// Desposit a certain amount of `base` and `quote` lamports into one's
+    /// [`Position`](crate::state::Position).
     ///
     /// Makers might wish to `deposit`, rather than have actual tokens moved for
     /// each trade, in order to reduce CUs.
-    pub fn deposit(
-        ctx: Context<Deposit>,
-        base_amount_lots: u64,
-        quote_amount_lots: u64,
-    ) -> Result<()> {
+    pub fn deposit(ctx: Context<Deposit>, base_amount: u64, quote_amount: u64) -> Result<()> {
         #[cfg(feature = "enable-gpl")]
-        instructions::deposit(ctx, base_amount_lots, quote_amount_lots)?;
+        instructions::deposit(ctx, base_amount, quote_amount)?;
+        Ok(())
+    }
+
+    /// Refill a certain amount of `base` and `quote` lamports. The amount being passed is the
+    /// total lamports that the [`Position`](crate::state::Position) will have.
+    ///
+    /// Makers might wish to `refill`, rather than have actual tokens moved for
+    /// each trade, in order to reduce CUs.
+    pub fn refill(ctx: Context<Deposit>, base_amount: u64, quote_amount: u64) -> Result<()> {
+        let (quote_amount, base_amount) = {
+            let open_orders_account = ctx.accounts.open_orders_account.load()?;
+            (
+                quote_amount
+                    - cmp::min(quote_amount, open_orders_account.position.quote_free_native),
+                base_amount - cmp::min(base_amount, open_orders_account.position.base_free_native),
+            )
+        };
+        #[cfg(feature = "enable-gpl")]
+        instructions::deposit(ctx, base_amount, quote_amount)?;
         Ok(())
     }
 
@@ -347,10 +377,38 @@ pub mod openbook_v2 {
         Ok(())
     }
 
+    /// Withdraw any available tokens when the market is expired (only `close_market_admin`)
+    pub fn settle_funds_expired<'info>(
+        ctx: Context<'_, '_, '_, 'info, SettleFundsExpired<'info>>,
+    ) -> Result<()> {
+        #[cfg(feature = "enable-gpl")]
+        instructions::settle_funds_expired(ctx)?;
+        Ok(())
+    }
+
     /// Sweep fees, as a [`Market`](crate::state::Market)'s admin.
     pub fn sweep_fees(ctx: Context<SweepFees>) -> Result<()> {
         #[cfg(feature = "enable-gpl")]
         instructions::sweep_fees(ctx)?;
+        Ok(())
+    }
+
+    pub fn set_delegate(ctx: Context<SetDelegate>) -> Result<()> {
+        #[cfg(feature = "enable-gpl")]
+        instructions::set_delegate(ctx)?;
+        Ok(())
+    }
+
+    /// Set market to expired before pruning orders and closing the market
+    pub fn set_market_expired(ctx: Context<SetMarketExpired>) -> Result<()> {
+        #[cfg(feature = "enable-gpl")]
+        instructions::set_market_expired(ctx)?;
+        Ok(())
+    }
+
+    pub fn prune_orders(ctx: Context<PruneOrders>, limit: u8) -> Result<()> {
+        #[cfg(feature = "enable-gpl")]
+        instructions::prune_orders(ctx, limit)?;
         Ok(())
     }
 
@@ -361,11 +419,13 @@ pub mod openbook_v2 {
         Ok(())
     }
 
-    // todo:
-    // ckamm: generally, using an I80F48 arg will make it harder to call
-    // because generic anchor clients won't know how to deal with it
-    // and it's tricky to use in typescript generally
-    // lets do an interface pass later
+    /// Close a [`Market`](crate::state::Market).
+    pub fn close_open_orders_account(ctx: Context<CloseOpenOrdersAccount>) -> Result<()> {
+        #[cfg(feature = "enable-gpl")]
+        instructions::close_open_orders_account(ctx)?;
+        Ok(())
+    }
+
     pub fn stub_oracle_create(ctx: Context<StubOracleCreate>, price: I80F48) -> Result<()> {
         #[cfg(feature = "enable-gpl")]
         instructions::stub_oracle_create(ctx, price)?;
@@ -383,4 +443,72 @@ pub mod openbook_v2 {
         instructions::stub_oracle_set(ctx, price)?;
         Ok(())
     }
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize, Copy, Clone)]
+pub struct PlaceOrderArgs {
+    pub side: Side,
+    pub price_lots: i64,
+    pub max_base_lots: i64,
+    pub max_quote_lots_including_fees: i64,
+    pub client_order_id: u64,
+    pub order_type: PlaceOrderType,
+    pub expiry_timestamp: u64,
+    pub self_trade_behavior: SelfTradeBehavior,
+    // Maximum number of orders from the book to fill.
+    //
+    // Use this to limit compute used during order matching.
+    // When the limit is reached, processing stops and the instruction succeeds.
+    pub limit: u8,
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize, Copy, Clone)]
+pub struct PlaceOrderPeggedArgs {
+    pub side: Side,
+
+    // The adjustment from the oracle price, in lots (quote lots per base lots).
+    // Orders on the book may be filled at oracle + adjustment (depends on order type).
+    pub price_offset_lots: i64,
+
+    // The limit at which the pegged order shall expire.
+    //
+    // Example: An bid pegged to -20 with peg_limit 100 would expire if the oracle hits 121.
+    pub peg_limit: i64,
+
+    pub max_base_lots: i64,
+    pub max_quote_lots_including_fees: i64,
+    pub client_order_id: u64,
+    pub order_type: PlaceOrderType,
+
+    // Timestamp of when order expires
+    //
+    // Send 0 if you want the order to never expire.
+    // Timestamps in the past mean the instruction is skipped.
+    // Timestamps in the future are reduced to now + 65535s.
+    pub expiry_timestamp: u64,
+
+    // Oracle staleness limit, in slots. Set to -1 to disable.
+    //
+    // WARNING: Not currently implemented.
+    pub max_oracle_staleness_slots: i32,
+    pub self_trade_behavior: SelfTradeBehavior,
+    // Maximum number of orders from the book to fill.
+    //
+    // Use this to limit compute used during order matching.
+    // When the limit is reached, processing stops and the instruction succeeds.
+    pub limit: u8,
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize, Copy, Clone)]
+pub struct PlaceTakeOrderArgs {
+    pub side: Side,
+    pub price_lots: i64,
+    pub max_base_lots: i64,
+    pub max_quote_lots_including_fees: i64,
+    pub order_type: PlaceOrderType,
+    // Maximum number of orders from the book to fill.
+    //
+    // Use this to limit compute used during order matching.
+    // When the limit is reached, processing stops and the instruction succeeds.
+    pub limit: u8,
 }

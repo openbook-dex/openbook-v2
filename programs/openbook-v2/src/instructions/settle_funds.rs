@@ -1,72 +1,79 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token::{self, Transfer};
 
 use crate::accounts_ix::*;
+use crate::logs::SettleFundsLog;
 use crate::state::*;
+use crate::token_utils::*;
 
 pub fn settle_funds<'info>(ctx: Context<'_, '_, '_, 'info, SettleFunds<'info>>) -> Result<()> {
-    let mut open_orders_account = ctx.accounts.open_orders_account.load_full_mut()?;
-    let position = &mut open_orders_account.fixed_mut().position;
+    let mut open_orders_account = ctx.accounts.open_orders_account.load_mut()?;
     let mut market = ctx.accounts.market.load_mut()?;
 
-    if ctx.remaining_accounts.is_empty() {
-        market.quote_fees_accrued += position.referrer_rebates_accrued;
-    } else {
-        market.fees_to_referrers += position.referrer_rebates_accrued;
-    }
-    market.referrer_rebates_accrued -= position.referrer_rebates_accrued;
-    market.base_deposit_total -= position.base_free_native;
-    market.quote_deposit_total -= position.quote_free_native;
+    let mut roundoff_maker_fees = 0;
 
-    let seeds = market_seeds!(market);
-    let signer = &[&seeds[..]];
+    if market.maker_fee.is_positive() && open_orders_account.position.bids_base_lots == 0 {
+        roundoff_maker_fees = open_orders_account.position.locked_maker_fees;
+        open_orders_account.position.locked_maker_fees = 0;
+    }
+
+    let pa = &mut open_orders_account.position;
+    let referrer_rebate = pa.referrer_rebates_available + roundoff_maker_fees;
+
+    if ctx.accounts.referrer.is_some() {
+        market.fees_to_referrers += referrer_rebate;
+        market.quote_deposit_total -= referrer_rebate;
+    } else {
+        market.fees_available += referrer_rebate;
+    }
+
+    market.base_deposit_total -= pa.base_free_native;
+    market.quote_deposit_total -= pa.quote_free_native;
+    market.referrer_rebates_accrued -= pa.referrer_rebates_available;
+
+    let seeds = market_seeds!(market, ctx.accounts.market.key());
 
     drop(market);
 
-    if !ctx.remaining_accounts.is_empty() && position.referrer_rebates_accrued > 0 {
-        let referrer = ctx.remaining_accounts[0].to_account_info();
-        let cpi_context = CpiContext::new(
-            ctx.accounts.token_program.to_account_info(),
-            Transfer {
-                from: ctx.accounts.quote_vault.to_account_info(),
-                to: referrer,
-                authority: ctx.accounts.market.to_account_info(),
-            },
-        );
-        token::transfer(
-            cpi_context.with_signer(signer),
-            position.referrer_rebates_accrued,
+    if let Some(referrer) = &ctx.accounts.referrer {
+        token_transfer_signed(
+            referrer_rebate,
+            &ctx.accounts.token_program,
+            &ctx.accounts.quote_vault,
+            referrer,
+            &ctx.accounts.market_authority,
+            seeds,
         )?;
     }
 
-    if position.base_free_native > 0 {
-        let cpi_context = CpiContext::new(
-            ctx.accounts.token_program.to_account_info(),
-            Transfer {
-                from: ctx.accounts.base_vault.to_account_info(),
-                to: ctx.accounts.token_base_account.to_account_info(),
-                authority: ctx.accounts.market.to_account_info(),
-            },
-        );
-        token::transfer(cpi_context.with_signer(signer), position.base_free_native)?;
-    }
+    token_transfer_signed(
+        pa.base_free_native,
+        &ctx.accounts.token_program,
+        &ctx.accounts.base_vault,
+        &ctx.accounts.token_base_account,
+        &ctx.accounts.market_authority,
+        seeds,
+    )?;
 
-    if position.quote_free_native > 0 {
-        let cpi_context = CpiContext::new(
-            ctx.accounts.token_program.to_account_info(),
-            Transfer {
-                from: ctx.accounts.quote_vault.to_account_info(),
-                to: ctx.accounts.token_quote_account.to_account_info(),
-                authority: ctx.accounts.market.to_account_info(),
-            },
-        );
-        token::transfer(cpi_context.with_signer(signer), position.quote_free_native)?;
-    }
+    token_transfer_signed(
+        pa.quote_free_native,
+        &ctx.accounts.token_program,
+        &ctx.accounts.quote_vault,
+        &ctx.accounts.token_quote_account,
+        &ctx.accounts.market_authority,
+        seeds,
+    )?;
 
-    // Set to 0 after transfer
-    position.base_free_native = 0;
-    position.quote_free_native = 0;
-    position.referrer_rebates_accrued = 0;
+    emit!(SettleFundsLog {
+        open_orders_account: ctx.accounts.open_orders_account.key(),
+        base_native: pa.base_free_native,
+        quote_native: pa.quote_free_native,
+        referrer_rebate,
+        referrer: ctx.accounts.referrer.as_ref().map(|acc| acc.key())
+    });
+
+    pa.base_free_native = 0;
+    pa.quote_free_native = 0;
+    pa.referrer_rebates_available = 0;
 
     Ok(())
 }

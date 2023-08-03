@@ -1,21 +1,22 @@
 use anchor_lang::prelude::*;
 use fixed::types::I80F48;
 use static_assertions::const_assert_eq;
+use std::convert::{TryFrom, TryInto};
 use std::mem::size_of;
 
-use crate::pod_option::PodOption;
+use crate::error::OpenBookError;
+use crate::i80f48::Power;
+use crate::pubkey_option::NonZeroPubkeyOption;
 use crate::state::oracle;
 use crate::{accounts_zerocopy::KeyedAccountReader, state::orderbook::Side};
 
-use super::{orderbook, OracleConfig, StablePriceModel};
+use super::{orderbook, OracleConfig};
 
-pub type MarketIndex = u32;
+pub const FEES_SCALE_FACTOR: i128 = 1_000_000;
 
 #[account(zero_copy)]
 #[derive(Debug)]
 pub struct Market {
-    /// Index of this market
-    pub market_index: MarketIndex,
     /// PDA bump
     pub bump: u8,
 
@@ -25,16 +26,22 @@ pub struct Market {
     pub base_decimals: u8,
     pub quote_decimals: u8,
 
-    pub padding1: [u8; 1],
+    pub padding1: [u8; 5],
+
+    // Pda for signing vault txs
+    pub market_authority: Pubkey,
+
+    /// No expiry = 0. Market will expire and no trading allowed after time_expiry
+    pub time_expiry: i64,
 
     /// Admin who can collect fees from the market
     pub collect_fee_admin: Pubkey,
     /// Admin who must sign off on all order creations
-    pub open_orders_admin: PodOption<Pubkey>,
+    pub open_orders_admin: NonZeroPubkeyOption,
     /// Admin who must sign off on all event consumptions
-    pub consume_events_admin: PodOption<Pubkey>,
-    /// Admin who can close the market
-    pub close_market_admin: PodOption<Pubkey>,
+    pub consume_events_admin: NonZeroPubkeyOption,
+    /// Admin who can set market expired, prune orders and close the market
+    pub close_market_admin: NonZeroPubkeyOption,
 
     /// Name. Trailing zero bytes are ignored.
     pub name: [u8; 16],
@@ -46,12 +53,11 @@ pub struct Market {
     /// Address of the EventQueue account
     pub event_queue: Pubkey,
 
-    /// Oracle account address
-    pub oracle: Pubkey,
+    /// Oracles account address
+    pub oracle_a: NonZeroPubkeyOption,
+    pub oracle_b: NonZeroPubkeyOption,
     /// Oracle configuration
     pub oracle_config: OracleConfig,
-    /// Maintains a stable price based on the oracle price that is less volatile.
-    pub stable_price_model: StablePriceModel,
 
     /// Number of quote native in a quote lot. Must be a power of 10.
     ///
@@ -74,73 +80,73 @@ pub struct Market {
     pub registration_time: u64,
 
     /// Fees
-    /// Fee when matching maker orders.
+    ///
+    /// Fee (in 10^-6) when matching maker orders.
     /// maker_fee < 0 it means some of the taker_fees goes to the maker
     /// maker_fee > 0, it means no taker_fee to the maker, and maker fee goes to the referral
-    pub maker_fee: I80F48,
-    /// Fee for taker orders, always >= 0.
-    pub taker_fee: I80F48,
-    /// Fee (in quote native) to charge for ioc orders that don't match to avoid spam
-    pub fee_penalty: u64,
+    pub maker_fee: i64,
+    /// Fee (in 10^-6) for taker orders, always >= 0.
+    pub taker_fee: i64,
 
-    // Total (maker + taker) fees accrued in native quote.
-    // i64 due there is a case where maker fees are subtracted (process_fill_event) before taker fees
-    pub fees_accrued: i64,
+    /// Total fees accrued in native quote
+    pub fees_accrued: u64,
     // Total fees settled in native quote
     pub fees_to_referrers: u64,
+    // Total referrer rebates
+    pub referrer_rebates_accrued: u64,
 
-    // Fields related to MarketSate, related to the tokenAccounts
-    pub vault_signer_nonce: u64,
+    // Fees generated and available to withdraw via sweep_fees
+    pub fees_available: u64,
+
+    /// Cumulative taker volume in quote native units due to place take orders
+    pub taker_volume_wo_oo: u64,
 
     pub base_mint: Pubkey,
     pub quote_mint: Pubkey,
 
     pub base_vault: Pubkey,
     pub base_deposit_total: u64,
-    pub base_fees_accrued: u64,
 
     pub quote_vault: Pubkey,
     pub quote_deposit_total: u64,
-    pub quote_fees_accrued: u64,
-    pub referrer_rebates_accrued: u64,
 
     pub reserved: [u8; 1768],
 }
 
 const_assert_eq!(
     size_of::<Market>(),
-    32 + // size of collect_fee_admin
-    40 + // size of open_order_admin
-    40 + // size of consume_event_admin
-    40 + // size of close_market_admin
-    size_of::<MarketIndex>() + // size of MarketIndex
-    1 + // size of bump
-    1 + // size of base_decimals
-    1 + // size of quote_decimals
-    1 + // size of padding1
-    16 + // size of name
-    3 * 32 + // size of bids, asks, and event_queue
-    32 + // size of oracle
-    size_of::<OracleConfig>() + // size of oracle_config
-    size_of::<StablePriceModel>() + // size of stable_price_model
-    8 + // size of quote_lot_size
-    8 + // size of base_lot_size
-    8 + // size of seq_num
-    8 + // size of registration_time
-    2 * size_of::<I80F48>() + // size of maker_fee and taker_fee
-    8 + // size of fee_penalty
-    8 + // size of fees_accrued
-    8 + // size of fees_to_referrers
-    8 + // size of vault_signer_nonce
-    4 * 32 + // size of base_mint, quote_mint, base_vault, and quote_vault
-    8 + // size of base_deposit_total
-    8 + // size of base_fees_accrued
-    8 + // size of quote_deposit_total
-    8 + // size of quote_fees_accrued
-    8 + // size of referrer_rebates_accrued
-    1768 // size of reserved
+    32 +                        // market_authority
+    32 +                        // collect_fee_admin
+    32 +                        // open_order_admin
+    32 +                        // consume_event_admin
+    32 +                        // close_market_admin
+    1 +                         // bump
+    1 +                         // base_decimals
+    1 +                         // quote_decimals
+    5 +                         // padding1
+    8 +                         // time_expiry
+    16 +                        // name
+    3 * 32 +                    // bids, asks, and event_queue
+    32 +                        // oracle_a
+    32 +                        // oracle_b
+    size_of::<OracleConfig>() + // oracle_config
+    8 +                         // quote_lot_size
+    8 +                         // base_lot_size
+    8 +                         // seq_num
+    8 +                         // registration_time
+    8 +                         // maker_fee
+    8 +                         // taker_fee
+    8 +                         // fees_accrued
+    8 +                         // fees_to_referrers
+    8 +                         // taker_volume_wo_oo
+    4 * 32 +                    // base_mint, quote_mint, base_vault, and quote_vault
+    8 +                         // base_deposit_total
+    8 +                         // quote_deposit_total
+    8 +                         // base_fees_accrued
+    8 +                         // referrer_rebates_accrued
+    1768 // reserved
 );
-const_assert_eq!(size_of::<Market>(), 2720);
+const_assert_eq!(size_of::<Market>(), 2448);
 const_assert_eq!(size_of::<Market>() % 8, 0);
 
 impl Market {
@@ -150,9 +156,32 @@ impl Market {
             .trim_matches(char::from(0))
     }
 
+    pub fn is_expired(&self, timestamp: i64) -> bool {
+        self.time_expiry != 0 && self.time_expiry < timestamp
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.base_deposit_total == 0
+            && self.quote_deposit_total == 0
+            && self.fees_available == 0
+            && self.referrer_rebates_accrued == 0
+    }
+
+    pub fn is_market_vault(&self, pubkey: Pubkey) -> bool {
+        pubkey == self.quote_vault || pubkey == self.base_vault
+    }
+
     pub fn gen_order_id(&mut self, side: Side, price_data: u64) -> u128 {
         self.seq_num += 1;
         orderbook::new_node_key(side, price_data, self.seq_num)
+    }
+
+    pub fn max_base_lots(&self) -> i64 {
+        i64::MAX / self.base_lot_size
+    }
+
+    pub fn max_quote_lots(&self) -> i64 {
+        i64::MAX / self.quote_lot_size
     }
 
     /// Convert from the price stored on the book to the price used in value calculations
@@ -161,103 +190,142 @@ impl Market {
             / I80F48::from_num(self.base_lot_size)
     }
 
-    pub fn native_price_to_lot(&self, price: I80F48) -> i64 {
-        (price * I80F48::from_num(self.base_lot_size) / I80F48::from_num(self.quote_lot_size))
-            .to_num()
+    pub fn native_price_to_lot(&self, price: I80F48) -> Result<i64> {
+        price
+            .checked_mul(I80F48::from_num(self.base_lot_size))
+            .and_then(|x| x.checked_div(I80F48::from_num(self.quote_lot_size)))
+            .and_then(|x| x.checked_to_num())
+            .ok_or_else(|| OpenBookError::InvalidOraclePrice.into())
     }
 
-    pub fn oracle_price(
+    pub fn oracle_price_from_a(
         &self,
         oracle_acc: &impl KeyedAccountReader,
         staleness_slot: u64,
     ) -> Result<I80F48> {
-        require_keys_eq!(self.oracle, *oracle_acc.key());
-        oracle::oracle_price(
-            oracle_acc,
-            &self.oracle_config,
-            self.base_decimals,
-            self.quote_decimals,
-            staleness_slot,
-        )
+        assert_eq!(self.oracle_a, *oracle_acc.key());
+        let (price, _err) =
+            oracle::oracle_price_data(oracle_acc, &self.oracle_config, staleness_slot)?;
+
+        let decimals = (self.quote_decimals as i8) - (self.base_decimals as i8);
+        let decimal_adj = oracle::power_of_ten(decimals);
+        Ok(price * decimal_adj)
     }
 
-    // TODO binye
-    /// Creates default market for tests
-    pub fn default_for_tests() -> Market {
-        Market {
-            collect_fee_admin: Pubkey::new_unique(),
-            open_orders_admin: Some(Pubkey::new_unique()).into(),
-            consume_events_admin: Some(Pubkey::new_unique()).into(),
-            close_market_admin: Some(Pubkey::new_unique()).into(),
-            market_index: 0,
-            bump: 0,
-            base_decimals: 0,
-            quote_decimals: 0,
-            padding1: Default::default(),
-            name: Default::default(),
-            bids: Pubkey::new_unique(),
-            asks: Pubkey::new_unique(),
-            event_queue: Pubkey::new_unique(),
-            oracle: Pubkey::new_unique(),
-            oracle_config: OracleConfig {
-                conf_filter: I80F48::ZERO,
-                max_staleness_slots: -1,
-                reserved: [0; 72],
-            },
-            stable_price_model: StablePriceModel::default(),
+    pub fn oracle_price_from_a_and_b(
+        &self,
+        oracle_a_acc: &impl KeyedAccountReader,
+        oracle_b_acc: &impl KeyedAccountReader,
+        staleness_slot: u64,
+    ) -> Result<I80F48> {
+        assert_eq!(self.oracle_a, *oracle_a_acc.key());
+        assert_eq!(self.oracle_b, *oracle_b_acc.key());
 
-            quote_lot_size: 1,
-            base_lot_size: 1,
-            seq_num: 0,
-            registration_time: 0,
-            maker_fee: I80F48::ZERO,
-            taker_fee: I80F48::ZERO,
-            fee_penalty: 0,
-            fees_accrued: 0,
-            fees_to_referrers: 0,
-            vault_signer_nonce: 0,
-            base_mint: Pubkey::new_unique(),
-            quote_mint: Pubkey::new_unique(),
+        let (price_a, err_a) =
+            oracle::oracle_price_data(oracle_a_acc, &self.oracle_config, staleness_slot)?;
 
-            base_vault: Pubkey::new_unique(),
-            base_deposit_total: 0,
-            base_fees_accrued: 0,
+        let (price_b, err_b) =
+            oracle::oracle_price_data(oracle_b_acc, &self.oracle_config, staleness_slot)?;
 
-            quote_vault: Pubkey::new_unique(),
-            quote_deposit_total: 0,
-            quote_fees_accrued: 0,
-            referrer_rebates_accrued: 0,
-            reserved: [0; 1768],
+        let price = price_a
+            .checked_div(price_b)
+            .ok_or_else(|| error!(OpenBookError::InvalidOraclePrice))?;
+
+        // target uncertainty reads
+        //   $ \sigma \approx \frac{A}{B} * \sqrt{\frac{\sigma_A}{A}^2 + \frac{\sigma_B}{B}^2} $
+        // but alternatively, to avoid costly operations, everything can be scaled by $B^2$, i.e.
+        //   $ \sigma^2 * B^4 \approx (\sigma_A * B)^2 + (\sigma_B * A)^2 $
+        let scaled_target_var = self
+            .oracle_config
+            .conf_filter
+            .checked_mul(price_b)
+            .and_then(|sigma_b| sigma_b.checked_square())
+            .and_then(|sigma2_b2| sigma2_b2.checked_mul(price_b))
+            .and_then(|sigma2_b3| sigma2_b3.checked_mul(price_b))
+            .unwrap_or(I80F48::MAX);
+
+        let scaled_var = (err_a * price_b).square() + (err_b * price_a).square();
+        if scaled_var > scaled_target_var {
+            msg!(
+                "Combined variance too high; scaled value {}, target {}",
+                scaled_var,
+                scaled_target_var
+            );
+            return Err(OpenBookError::OracleConfidence.into());
         }
+
+        let decimals = (self.quote_decimals as i8) - (self.base_decimals as i8);
+        let decimal_adj = oracle::power_of_ten(decimals);
+        Ok(price * decimal_adj)
     }
 
     pub fn subtract_taker_fees(&self, quote: i64) -> i64 {
-        (I80F48::from(quote) / (I80F48::ONE + self.taker_fee)).to_num()
-    }
-    // Only for maker_fee > 0
-    pub fn subtract_maker_fees(&self, quote: i64) -> i64 {
-        (I80F48::from(quote) / (I80F48::ONE + self.maker_fee)).to_num()
+        ((quote as i128) * FEES_SCALE_FACTOR / (FEES_SCALE_FACTOR + (self.taker_fee as i128)))
+            .try_into()
+            .unwrap()
     }
 
-    pub fn referrer_taker_rebate(&self, quote: u64) -> u64 {
-        let quo = I80F48::from_num(quote);
-        if self.maker_fee < 0 {
-            (quo * (self.taker_fee + self.maker_fee)).to_num()
+    pub fn taker_fees_floor(self, amount: u64) -> u64 {
+        (i128::from(amount) * i128::from(self.taker_fee) / FEES_SCALE_FACTOR)
+            .try_into()
+            .unwrap()
+    }
+
+    pub fn maker_fees_floor(self, amount: u64) -> u64 {
+        if self.maker_fee.is_positive() {
+            self.unsigned_maker_fees_floor(amount)
         } else {
-            // Nothing goes to maker, all to referrer
-            (quo * self.taker_fee).to_num()
+            0
         }
+    }
+
+    pub fn maker_rebate_floor(self, amount: u64) -> u64 {
+        if self.maker_fee.is_positive() {
+            0
+        } else {
+            self.unsigned_maker_fees_floor(amount)
+        }
+    }
+
+    pub fn maker_fees_ceil<T>(self, amount: T) -> T
+    where
+        T: Into<i128> + TryFrom<i128> + From<u8>,
+        <T as TryFrom<i128>>::Error: std::fmt::Debug,
+    {
+        if self.maker_fee.is_positive() {
+            self.ceil_fee_division(amount.into() * (self.maker_fee.abs() as i128))
+                .try_into()
+                .unwrap()
+        } else {
+            T::from(0)
+        }
+    }
+
+    pub fn taker_fees_ceil<T>(self, amount: T) -> T
+    where
+        T: Into<i128> + TryFrom<i128>,
+        <T as TryFrom<i128>>::Error: std::fmt::Debug,
+    {
+        self.ceil_fee_division(amount.into() * (self.taker_fee as i128))
+            .try_into()
+            .unwrap()
+    }
+
+    fn ceil_fee_division(self, numerator: i128) -> i128 {
+        (numerator + (FEES_SCALE_FACTOR - 1_i128)) / FEES_SCALE_FACTOR
+    }
+
+    fn unsigned_maker_fees_floor(self, amount: u64) -> u64 {
+        (i128::from(amount) * i128::from(self.maker_fee.abs()) / FEES_SCALE_FACTOR)
+            .try_into()
+            .unwrap()
     }
 }
 
 /// Generate signed seeds for the market
 macro_rules! market_seeds {
-    ($market:expr) => {
-        &[
-            b"Market".as_ref(),
-            &$market.market_index.to_le_bytes(),
-            &[$market.bump],
-        ]
+    ($market:expr,$key:expr) => {
+        &[b"Market".as_ref(), &$key.to_bytes(), &[$market.bump]]
     };
 }
 pub(crate) use market_seeds;

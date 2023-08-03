@@ -79,6 +79,12 @@ impl BookSide {
         self.nodes.is_full()
     }
 
+    pub fn is_empty(&self) -> bool {
+        [BookSideOrderTree::Fixed, BookSideOrderTree::OraclePegged]
+            .into_iter()
+            .all(|component| self.nodes.iter(self.root(component)).count() == 0)
+    }
+
     pub fn insert_leaf(
         &mut self,
         component: BookSideOrderTree,
@@ -205,19 +211,7 @@ mod tests {
         let mut order_tree = new_order_tree(order_tree_type);
         let mut root_fixed = OrderTreeRoot::zeroed();
         let mut root_pegged = OrderTreeRoot::zeroed();
-        let new_leaf = |key: u128| {
-            LeafNode::new(
-                0,
-                key,
-                Pubkey::default(),
-                0,
-                1,
-                PostOrderType::Limit,
-                0,
-                -1,
-                0,
-            )
-        };
+        let new_leaf = |key: u128| LeafNode::new(0, key, Pubkey::default(), 0, 1, 0, -1, 0);
 
         // add 100 leaves to each BookSide, mostly random
         let mut keys = vec![];
@@ -301,17 +295,7 @@ mod tests {
         let mut root_fixed = OrderTreeRoot::zeroed();
         let mut root_pegged = OrderTreeRoot::zeroed();
         let new_node = |key: u128, tif: u16, peg_limit: i64| {
-            LeafNode::new(
-                0,
-                key,
-                Pubkey::default(),
-                0,
-                1000,
-                PostOrderType::Limit,
-                tif,
-                peg_limit,
-                0,
-            )
+            LeafNode::new(0, key, Pubkey::default(), 0, 1000, tif, peg_limit, 0)
         };
         let mut add_fixed = |price: i64, tif: u16| {
             let key = new_node_key(side, fixed_price_data(price).unwrap(), 0);

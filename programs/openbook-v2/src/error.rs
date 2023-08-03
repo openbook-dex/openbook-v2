@@ -7,98 +7,95 @@ use core::fmt::Display;
 pub enum OpenBookError {
     #[msg("")]
     SomeError,
-    #[msg("")]
-    NotImplementedError,
-    #[msg("checked math error")]
-    MathError,
-    #[msg("")]
-    UnexpectedOracle,
-    #[msg("oracle type cannot be determined")]
-    UnknownOracleType,
-    #[msg("invalid bank")]
-    InvalidBank,
-    #[msg("account profitability is mismatched")]
-    ProfitabilityMismatch,
-    #[msg("cannot settle with self")]
-    CannotSettleWithSelf,
-    #[msg("perp position does not exist")]
-    PositionDoesNotExist,
-    #[msg("max settle amount must be greater than zero")]
-    MaxSettleAmountMustBeGreaterThanZero,
-    #[msg("the perp position has open orders or unprocessed fill events")]
-    HasOpenOrders,
-    #[msg("an oracle does not reach the confidence threshold")]
-    OracleConfidence,
-    #[msg("an oracle is stale")]
-    OracleStale,
-    #[msg("settlement amount must always be positive")]
-    SettlementAmountMustBePositive,
-    #[msg("bank utilization has reached limit")]
-    BankBorrowLimitReached,
-    #[msg("bank net borrows has reached limit - this is an intermittent error - the limit will reset regularly")]
-    BankNetBorrowsLimitReached,
-    #[msg("token position does not exist")]
-    TokenPositionDoesNotExist,
-    #[msg("token deposits into accounts that are being liquidated must bring their health above the init threshold")]
-    DepositsIntoLiquidatingMustRecover,
-    #[msg("token is in reduce only mode")]
-    TokenInReduceOnlyMode,
-    #[msg("market is in reduce only mode")]
-    MarketInReduceOnlyMode,
-    #[msg("group is halted")]
-    GroupIsHalted,
-    #[msg("the perp position has non-zero base lots")]
-    HasBaseLots,
-    #[msg("there are open or unsettled serum3 orders")]
-    HasOpenOrUnsettledSerum3Orders,
-    #[msg("has liquidatable token position")]
-    HasLiquidatableTokenPosition,
-    #[msg("has liquidatable perp base position")]
-    HasLiquidatableBasePosition,
-    #[msg("has liquidatable positive perp pnl")]
-    HasLiquidatablePositivePnl,
-    #[msg("account is frozen")]
-    AccountIsFrozen,
-    #[msg("Init Asset Weight can't be negative")]
-    InitAssetWeightCantBeNegative,
-    #[msg("has open perp taker fills")]
-    HasOpenTakerFills,
-    #[msg("deposit crosses the current group deposit limit")]
-    DepositLimit,
-    #[msg("instruction is disabled")]
-    IxIsDisabled,
-    #[msg("no liquidatable perp base position")]
-    NoLiquidatableBasePosition,
-    #[msg("perp order id not found on the orderbook")]
-    OrderIdNotFound,
-    #[msg("HealthRegions allow only specific instructions between Begin and End")]
-    HealthRegionBadInnerInstruction,
-    #[msg("Event queue contains elements and market can't be closed")]
-    EventQueueContainsElements,
+
+    #[msg("Name lenght above limit")]
+    InvalidInputNameLength,
+    #[msg("Market cannot be created as expired")]
+    InvalidInputMarketExpired,
     #[msg("Taker fees should be positive and if maker fees are negative, greater or equal to their abs value")]
-    InvalidFeesError,
+    InvalidInputMarketFees,
+    #[msg("Lots cannot be negative")]
+    InvalidInputLots,
+    #[msg("Lots size above market limits")]
+    InvalidInputLotsSize,
+    #[msg("Price lots should be greater than zero")]
+    InvalidInputPriceLots,
+    #[msg("Peg limit should be greater than zero")]
+    InvalidInputPegLimit,
     #[msg("The order type is invalid. A taker order must be Market or ImmediateOrCancel")]
-    InvalidOrderType,
-    #[msg("The receiver is invalid. Makes sure the receiver's owner is the market admin")]
-    InvalidFundsReceiver,
-    #[msg("would self trade")]
-    WouldSelfTrade,
+    InvalidInputOrderType,
+    #[msg("Order id cannot be zero")]
+    InvalidInputOrderId,
+    #[msg("Oracle staleness limit is currently unimplemented")]
+    InvalidInputStaleness,
+    #[msg("Slot above queue limit")]
+    InvalidInputQueueSlots,
+    #[msg("Cannot combine two oracles of different providers")]
+    InvalidOracleTypes,
+    #[msg("Cannot configure secondary oracle without primary")]
+    InvalidSecondOracle,
+
     #[msg("This market does not have a `close_market_admin` and thus cannot be closed.")]
     NoCloseMarketAdmin,
     #[msg("The signer of this transaction is not this market's `close_market_admin`.")]
     InvalidCloseMarketAdmin,
-    #[msg("This market requires `open_orders_admin` to sign all instructions that create orders.")]
-    MissingOpenOrdersAdmin,
-    #[msg("The `open_orders_admin` passed does not match this market's `open_orders_admin`.")]
+    #[msg("The `open_orders_admin` required by this market to sign all instructions that creates orders is missing or is not valid")]
     InvalidOpenOrdersAdmin,
-    #[msg(
-        "This market requires `consume_events_admin` to sign all instructions that consume events."
-    )]
-    MissingConsumeEventsAdmin,
-    #[msg(
-        "The `consume_events_admin` passed does not match this market's `consume_events_admin`."
-    )]
+    #[msg("The `consume_events_admin` required by this market to sign all instructions that consume events is missing or is not valid")]
     InvalidConsumeEventsAdmin,
+
+    #[msg("Cannot be closed due to the existence of open orders accounts")]
+    IndexerActiveOO,
+
+    #[msg("oracle type cannot be determined")]
+    UnknownOracleType,
+    #[msg("an oracle does not reach the confidence threshold")]
+    OracleConfidence,
+    #[msg("an oracle is stale")]
+    OracleStale,
+    #[msg("Order id not found on the orderbook")]
+    OrderIdNotFound,
+    #[msg("Event queue contains elements and market can't be closed")]
+    EventQueueContainsElements,
+    #[msg("ImmediateOrCancel is not a PostOrderType")]
+    InvalidOrderPostIOC,
+    #[msg("Market is not a PostOrderType")]
+    InvalidOrderPostMarket,
+    #[msg("would self trade")]
+    WouldSelfTrade,
+    #[msg("The Market has already expired.")]
+    MarketHasExpired,
+    #[msg("Price lots should be greater than zero")]
+    InvalidPriceLots,
+    #[msg("Oracle price above market limits")]
+    InvalidOraclePrice,
+    #[msg("The Market has not expired yet.")]
+    MarketHasNotExpired,
+    #[msg("No correct owner or delegate.")]
+    NoOwnerOrDelegate,
+    #[msg("No correct owner")]
+    NoOwner,
+    #[msg("No free order index in open orders account")]
+    OpenOrdersFull,
+    #[msg("Book contains elements")]
+    BookContainsElements,
+    #[msg("Could not find order in user account")]
+    OpenOrdersOrderNotFound,
+    #[msg("Amount to post above book limits")]
+    InvalidPostAmount,
+    #[msg("Oracle peg orders are not enabled for this market")]
+    DisabledOraclePeg,
+
+    #[msg("Cannot close a non-empty market")]
+    NonEmptyMarket,
+    #[msg("Cannot close a non-empty open orders account")]
+    NonEmptyOpenOrdersPosition,
+}
+
+impl From<OpenBookError> for ProgramError {
+    fn from(error: OpenBookError) -> Self {
+        ProgramError::from(Error::from(error))
+    }
 }
 
 impl OpenBookError {

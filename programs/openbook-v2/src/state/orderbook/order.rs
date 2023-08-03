@@ -1,6 +1,7 @@
 use anchor_lang::prelude::*;
 
 use super::*;
+use crate::error::*;
 
 ///  order parameters
 pub struct Order {
@@ -10,7 +11,6 @@ pub struct Order {
     pub max_base_lots: i64,
 
     /// Max quote lots to pay/receive including fees.
-    /// TODO Binye Use native instead?
     pub max_quote_lots_including_fees: i64,
 
     /// Arbitrary user-controlled order id.
@@ -59,14 +59,6 @@ impl Order {
             // Never expire
             Some(0)
         }
-    }
-
-    /// Should this order be penalized with an extra fee?
-    ///
-    /// Some programs opportunistically call ioc orders, wasting lots of compute. This
-    /// is intended to encourage people to be smarter about it.
-    pub fn needs_penalty_fee(&self) -> bool {
-        matches!(self.params, OrderParams::ImmediateOrCancel { .. })
     }
 
     /// Is this order required to be posted to the orderbook? It will fail if it would take.
@@ -138,7 +130,10 @@ impl Order {
                 order_type,
                 ..
             } => {
-                let price_lots = oracle_price_lots + price_offset_lots;
+                let price_lots = oracle_price_lots
+                    .checked_add(price_offset_lots)
+                    .ok_or(OpenBookError::InvalidPriceLots)?;
+
                 self.price_for_order_type(
                     now_ts,
                     oracle_price_lots,
@@ -148,13 +143,13 @@ impl Order {
                 )
             }
         };
+        require_gte!(price_lots, 1, OpenBookError::InvalidPriceLots);
         let price_data = match self.params {
             OrderParams::OraclePegged { .. } => {
                 oracle_pegged_price_data(price_lots - oracle_price_lots)
             }
             _ => fixed_price_data(price_lots)?,
         };
-        require_gte!(price_lots, 1);
         Ok((price_lots, price_data))
     }
 

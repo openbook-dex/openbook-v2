@@ -1,9 +1,8 @@
 use crate::logs::TotalOrderFillEvent;
-use crate::state::open_orders_account::OpenOrdersLoader;
-use crate::state::OpenOrdersAccountRefMut;
+use crate::state::MAX_OPEN_ORDERS;
 use crate::{
     error::*,
-    state::{orderbook::bookside::*, EventQueue, Market, OpenOrdersAccountFixed},
+    state::{orderbook::bookside::*, EventQueue, Market, OpenOrdersAccount},
 };
 use anchor_lang::prelude::*;
 use bytemuck::cast;
@@ -23,9 +22,11 @@ pub struct Orderbook<'a> {
 
 pub struct OrderWithAmounts {
     pub order_id: Option<u128>,
-    pub placed_quantity: i64,
+    pub posted_base_native: u64,
+    pub posted_quote_native: u64,
     pub total_base_taken_native: u64,
     pub total_quote_taken_native: u64,
+    pub taker_fees: u64,
     pub maker_fees: u64,
     pub referrer_amount: u64,
 }
@@ -34,6 +35,10 @@ impl<'a> Orderbook<'a> {
     pub fn init(&mut self) {
         self.bids.nodes.order_tree_type = OrderTreeType::Bids.into();
         self.asks.nodes.order_tree_type = OrderTreeType::Asks.into();
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.bids.is_empty() && self.asks.is_empty()
     }
 
     pub fn bookside_mut(&mut self, side: Side) -> &mut BookSide {
@@ -56,31 +61,25 @@ impl<'a> Orderbook<'a> {
         order: &Order,
         open_book_market: &mut Market,
         event_queue: &mut EventQueue,
-        oracle_price: I80F48,
-        mut open_orders_acc: &mut Option<OpenOrdersAccountRefMut>,
+        oracle_price: Option<I80F48>,
+        mut open_orders_account: Option<&mut OpenOrdersAccount>,
         owner: &Pubkey,
         now_ts: u64,
         mut limit: u8,
-        open_orders_admin_signer: Option<Pubkey>,
         remaining_accs: &[AccountInfo],
     ) -> std::result::Result<OrderWithAmounts, Error> {
         let market = open_book_market;
-        if let Some(open_orders_admin) = Option::<Pubkey>::from(market.open_orders_admin) {
-            let open_orders_admin_signer =
-                open_orders_admin_signer.ok_or(OpenBookError::MissingOpenOrdersAdmin)?;
-            require_eq!(
-                open_orders_admin,
-                open_orders_admin_signer,
-                OpenBookError::InvalidOpenOrdersAdmin
-            );
-        }
 
         let side = order.side;
 
         let other_side = side.invert_side();
-        let oracle_price_lots = market.native_price_to_lot(oracle_price);
         let post_only = order.is_post_only();
         let mut post_target = order.post_target();
+        let oracle_price_lots = if let Some(oracle_price) = oracle_price {
+            market.native_price_to_lot(oracle_price)?
+        } else {
+            0
+        };
         let (price_lots, price_data) = order.price(now_ts, oracle_price_lots, self)?;
 
         // generate new order id
@@ -90,24 +89,37 @@ impl<'a> Orderbook<'a> {
         //
         // Any changes to matching orders on the other side of the book are collected in
         // matched_changes/matched_deletes and then applied after this loop.
-        let mut remaining_base_lots = order.max_base_lots;
-        let mut remaining_quote_lots = order.max_quote_lots_including_fees;
+
+        let order_max_base_lots = order.max_base_lots;
+        let order_max_quote_lots = match side {
+            Side::Bid => market.subtract_taker_fees(order.max_quote_lots_including_fees),
+            Side::Ask => order.max_quote_lots_including_fees,
+        };
+
+        require_gte!(
+            market.max_base_lots(),
+            order_max_base_lots,
+            OpenBookError::InvalidInputLotsSize
+        );
+
+        require_gte!(
+            market.max_quote_lots(),
+            order_max_quote_lots,
+            OpenBookError::InvalidInputLotsSize
+        );
+
+        let mut remaining_base_lots = order_max_base_lots;
+        let mut remaining_quote_lots = order_max_quote_lots;
         let mut decremented_quote_lots = 0_i64;
 
-        let mut max_quote_lots = remaining_quote_lots;
+        let mut referrer_amount = 0_u64;
+        let mut maker_rebates_acc = 0_u64;
+
         let mut matched_order_changes: Vec<(BookSideOrderHandle, i64)> = vec![];
         let mut matched_order_deletes: Vec<(BookSideOrderTree, u128)> = vec![];
         let mut number_of_dropped_expired_orders = 0;
-        // In case of take order, need this
-        let mut referrer_amount: u64 = 0;
+
         let opposing_bookside = self.bookside_mut(other_side);
-
-        // Subtract fees in case of bid
-        if side == Side::Bid {
-            max_quote_lots = market.subtract_taker_fees(remaining_quote_lots);
-            remaining_quote_lots = max_quote_lots;
-        }
-
         for best_opposing in opposing_bookside.iter_all_including_invalid(now_ts, oracle_price_lots)
         {
             if remaining_base_lots == 0 || remaining_quote_lots == 0 {
@@ -131,7 +143,7 @@ impl<'a> Orderbook<'a> {
                         event,
                         market,
                         event_queue,
-                        open_orders_acc,
+                        open_orders_account.as_deref_mut(),
                         owner,
                         remaining_accs,
                     )?;
@@ -166,7 +178,7 @@ impl<'a> Orderbook<'a> {
             let match_quote_lots = match_base_lots * best_opposing_price;
 
             // Self-trade behaviour
-            if owner == &best_opposing.node.owner {
+            if open_orders_account.is_some() && owner == &best_opposing.node.owner {
                 match order.self_trade_behavior {
                     SelfTradeBehavior::DecrementTake => {
                         // remember all decremented quote lots to only charge fees on not-self-trades
@@ -174,7 +186,7 @@ impl<'a> Orderbook<'a> {
                     }
                     SelfTradeBehavior::CancelProvide => {
                         // The open orders acc is always present in this case, no need event_queue
-                        open_orders_acc.as_mut().unwrap().cancel_order(
+                        open_orders_account.as_mut().unwrap().cancel_order(
                             best_opposing.node.owner_slot as usize,
                             best_opposing.node.quantity,
                             *market,
@@ -190,6 +202,9 @@ impl<'a> Orderbook<'a> {
                     }
                 }
                 assert!(order.self_trade_behavior == SelfTradeBehavior::DecrementTake);
+            } else {
+                maker_rebates_acc +=
+                    market.maker_rebate_floor((match_quote_lots * market.quote_lot_size) as u64);
             }
 
             remaining_base_lots -= match_base_lots;
@@ -217,72 +232,61 @@ impl<'a> Orderbook<'a> {
                 *owner,
                 order.client_order_id,
                 best_opposing_price,
+                best_opposing.node.peg_limit,
                 match_base_lots,
             );
 
             process_fill_event(fill, market, event_queue, remaining_accs)?;
 
             limit -= 1;
-
-            if let Some(open_orders_acc) = open_orders_acc.as_mut() {
-                open_orders_acc.execute_taker(market, &fill)?
-            }
         }
-        let total_quote_lots_taken = max_quote_lots - remaining_quote_lots;
-        let total_base_lots_taken: i64 = order.max_base_lots - remaining_base_lots;
+
+        let total_quote_lots_taken = order_max_quote_lots - remaining_quote_lots;
+        let total_base_lots_taken = order.max_base_lots - remaining_base_lots;
         assert!(total_quote_lots_taken >= 0);
         assert!(total_base_lots_taken >= 0);
 
-        let total_base_taken_native = (market.base_lot_size * total_base_lots_taken) as u64;
-        let mut total_quote_taken_native = (market.quote_lot_size * total_quote_lots_taken) as u64;
-
-        let total_quote_taken_lots_wo_self = total_quote_lots_taken - decremented_quote_lots;
-        let total_quote_taken_native_wo_self =
-            (total_quote_taken_lots_wo_self * market.quote_lot_size) as u64;
+        let total_base_taken_native = (total_base_lots_taken * market.base_lot_size) as u64;
+        let total_quote_taken_native = (total_quote_lots_taken * market.quote_lot_size) as u64;
 
         // Record the taker trade in the account already, even though it will only be
         // realized when the fill event gets executed
+        let mut taker_fees = 0_u64;
         if total_quote_lots_taken > 0 || total_base_lots_taken > 0 {
-            // Calculations
-            let total_quantity_paid: u64;
-            let total_quantity_received: u64;
-            let taker_fees = (I80F48::from_num(total_quote_taken_native_wo_self)
-                * market.taker_fee)
-                .ceil()
-                .to_num::<u64>();
+            let total_quote_taken_native_wo_self =
+                ((total_quote_lots_taken - decremented_quote_lots) * market.quote_lot_size) as u64;
 
-            // taker fees should never be negative
-            require_gte!(taker_fees, 0);
-            match side {
-                Side::Bid => {
-                    total_quote_taken_native += taker_fees;
-                    total_quantity_paid = total_quote_taken_native;
-                    total_quantity_received = total_base_taken_native;
-                }
-                Side::Ask => {
-                    total_quote_taken_native -= taker_fees;
-                    total_quantity_paid = total_base_taken_native;
-                    total_quantity_received = total_quote_taken_native;
-                }
+            if total_quote_taken_native_wo_self > 0 {
+                taker_fees = market.taker_fees_ceil(total_quote_taken_native_wo_self);
+
+                // Only account taker fees now. Maker fees accounted once processing the event
+                referrer_amount = taker_fees - maker_rebates_acc;
+                market.fees_accrued += referrer_amount;
             };
 
-            if let Some(open_orders_acc) = &mut open_orders_acc {
-                release_funds_fees(
-                    side,
+            if let Some(open_orders_account) = &mut open_orders_account {
+                open_orders_account.execute_taker(
                     market,
-                    open_orders_acc,
+                    side,
                     total_base_taken_native,
-                    total_quote_taken_native_wo_self,
+                    total_quote_taken_native,
                     taker_fees,
-                )?;
+                    referrer_amount,
+                );
             } else {
-                // It's a taker order, transfer to referrer
-                referrer_amount += market.referrer_taker_rebate(total_quote_taken_native_wo_self);
+                market.taker_volume_wo_oo += total_quote_taken_native;
             }
-            // Only account taker fees now. Maker fees accounted once processing the event
-            market.fees_accrued += (I80F48::from_num(total_quote_taken_native_wo_self)
-                * market.taker_fee)
-                .to_num::<i64>();
+
+            let (total_quantity_paid, total_quantity_received) = match side {
+                Side::Bid => (
+                    total_quote_taken_native + taker_fees,
+                    total_base_taken_native,
+                ),
+                Side::Ask => (
+                    total_base_taken_native,
+                    total_quote_taken_native - taker_fees,
+                ),
+            };
 
             emit!(TotalOrderFillEvent {
                 side: side.into(),
@@ -291,15 +295,11 @@ impl<'a> Orderbook<'a> {
                 total_quantity_received,
                 fees: taker_fees,
             });
-        } else if order.needs_penalty_fee() {
-            // IOC orders have a fee penalty applied if not match to avoid spam
-            total_quote_taken_native += apply_penalty(market);
         }
 
         // Update remaining based on quote_lots taken. If nothing taken, same as the beginning
-        remaining_quote_lots = order.max_quote_lots_including_fees
-            - total_quote_lots_taken
-            - (market.taker_fee * I80F48::from_num(total_quote_taken_lots_wo_self)).to_num::<i64>();
+        remaining_quote_lots =
+            order.max_quote_lots_including_fees - total_quote_lots_taken - (taker_fees as i64);
 
         // Apply changes to matched asks (handles invalidate on delete!)
         for (handle, new_quantity) in matched_order_changes {
@@ -318,18 +318,17 @@ impl<'a> Orderbook<'a> {
         // Place remainder on the book if requested
         //
 
-        // To calculate max quantity to post, for oracle peg orders, take the peg_limit as it's the upper price limitation
-        let price = if order.peg_limit() != -1 {
+        // To calculate max quantity to post, for oracle peg orders & bids take the peg_limit as
+        // it's the upper price limitation
+        let price = if order.peg_limit() != -1 && order.side == Side::Bid {
             order.peg_limit()
         } else {
             price_lots
         };
         // If there are still quantity unmatched, place on the book
-        let book_base_quantity_lots = if market.maker_fee.is_positive() {
-            // Subtract fees
-            remaining_quote_lots -= remaining_quote_lots * market.maker_fee.to_num::<i64>();
-            remaining_base_lots.min(remaining_quote_lots / price)
-        } else {
+        let book_base_quantity_lots = {
+            // Subtract maker fees (if any)
+            remaining_quote_lots -= market.maker_fees_ceil(remaining_quote_lots);
             remaining_base_lots.min(remaining_quote_lots / price)
         };
 
@@ -338,21 +337,30 @@ impl<'a> Orderbook<'a> {
         }
 
         let mut maker_fees = 0;
+        let mut posted_base_native = 0;
+        let mut posted_quote_native = 0;
 
         if let Some(order_tree_target) = post_target {
-            // Subtract maker fees in bid.
-            if market.maker_fee.is_positive() && side == Side::Bid {
-                let book_price = match order_tree_target {
-                    BookSideOrderTree::Fixed => fixed_price_lots(price_data),
-                    BookSideOrderTree::OraclePegged => order.peg_limit(),
-                };
+            require_gte!(
+                market.max_quote_lots(),
+                book_base_quantity_lots * price,
+                OpenBookError::InvalidPostAmount
+            );
 
-                let book_quote_quantity_lots = book_base_quantity_lots * book_price;
-                maker_fees = (I80F48::from_num(book_quote_quantity_lots)
-                    * market.maker_fee
-                    * I80F48::from_num(market.quote_lot_size))
-                .ceil()
-                .to_num::<u64>();
+            posted_base_native = book_base_quantity_lots * market.base_lot_size;
+            posted_quote_native = book_base_quantity_lots * price * market.quote_lot_size;
+
+            // Open orders always exists in this case
+            let open_orders = open_orders_account.as_mut().unwrap();
+
+            // Subtract maker fees in bid.
+            if side == Side::Bid {
+                maker_fees = market
+                    .maker_fees_ceil(posted_quote_native)
+                    .try_into()
+                    .unwrap();
+
+                open_orders.position.locked_maker_fees += maker_fees;
             }
 
             let bookside = self.bookside_mut(side);
@@ -370,7 +378,7 @@ impl<'a> Orderbook<'a> {
                     event,
                     market,
                     event_queue,
-                    open_orders_acc,
+                    Some(open_orders),
                     owner,
                     remaining_accs,
                 )?;
@@ -397,14 +405,12 @@ impl<'a> Orderbook<'a> {
                     event,
                     market,
                     event_queue,
-                    open_orders_acc,
+                    Some(open_orders),
                     owner,
                     remaining_accs,
                 )?;
             }
 
-            // Open orders always exists in this case, unwrap
-            let open_orders = open_orders_acc.as_mut().unwrap();
             let owner_slot = open_orders.next_order_slot()?;
             let new_order = LeafNode::new(
                 owner_slot as u8,
@@ -412,46 +418,35 @@ impl<'a> Orderbook<'a> {
                 *owner,
                 book_base_quantity_lots,
                 now_ts,
-                PostOrderType::Limit, // TODO: Support order types? needed?
                 order.time_in_force,
                 order.peg_limit(),
                 order.client_order_id,
             );
             let _result = bookside.insert_leaf(order_tree_target, &new_order)?;
 
-            // TODO OPT remove if PlaceOrder needs more compute
-            msg!(
-                "{} on book order_id={} quantity={} price_lots={}",
-                match side {
-                    Side::Bid => "bid",
-                    Side::Ask => "ask",
-                },
-                order_id,
-                book_base_quantity_lots,
-                price_lots
-            );
-
             open_orders.add_order(
                 side,
                 order_tree_target,
                 &new_order,
                 order.client_order_id,
-                order.peg_limit(),
+                price,
             )?;
         }
 
-        let (placed_order_id, placed_quantity) = if post_target.is_some() {
-            (Some(order_id), book_base_quantity_lots)
+        let placed_order_id = if post_target.is_some() {
+            Some(order_id)
         } else {
-            (None, 0)
+            None
         };
 
         Ok(OrderWithAmounts {
             order_id: placed_order_id,
-            placed_quantity,
+            posted_base_native: posted_base_native as u64,
+            posted_quote_native: posted_quote_native as u64,
             total_base_taken_native,
             total_quote_taken_native,
             referrer_amount,
+            taker_fees,
             maker_fees,
         })
     }
@@ -461,13 +456,17 @@ impl<'a> Orderbook<'a> {
     /// The orders are removed from the book and from the openorders account open order list.
     pub fn cancel_all_orders(
         &mut self,
-        open_orders_acc: &mut OpenOrdersAccountRefMut,
+        open_orders_account: &mut OpenOrdersAccount,
         market: Market,
         mut limit: u8,
         side_to_cancel_option: Option<Side>,
-    ) -> Result<()> {
-        for i in 0..open_orders_acc.header.oo_count() {
-            let oo = open_orders_acc.order_by_raw_index(i);
+    ) -> Result<i64> {
+        let mut total_quantity = 0_i64;
+        for i in 0..MAX_OPEN_ORDERS {
+            let oo = open_orders_account.open_orders[i];
+            if oo.is_free() {
+                continue;
+            }
 
             let order_side_and_tree = oo.side_and_tree();
             if let Some(side_to_cancel) = side_to_cancel_option {
@@ -476,10 +475,20 @@ impl<'a> Orderbook<'a> {
                 }
             }
 
+            if limit == 0 {
+                msg!("Cancel orders limit reached");
+                break;
+            }
+
             let order_id = oo.id;
 
-            let cancel_result =
-                self.cancel_order(open_orders_acc, order_id, order_side_and_tree, market, None);
+            let cancel_result = self.cancel_order(
+                open_orders_account,
+                order_id,
+                order_side_and_tree,
+                market,
+                None,
+            );
             if cancel_result.is_anchor_error_with_code(OpenBookError::OrderIdNotFound.into()) {
                 // It's possible for the order to be filled or expired already.
                 // There will be an event on the queue, the perp order slot is freed once
@@ -489,21 +498,18 @@ impl<'a> Orderbook<'a> {
                     order_id
                 );
             } else {
-                cancel_result?;
+                total_quantity += cancel_result?.quantity;
             }
 
             limit -= 1;
-            if limit == 0 {
-                break;
-            }
         }
-        Ok(())
+        Ok(total_quantity)
     }
 
     /// Cancels an order on a side, removing it from the book and the openorders account orders list
     pub fn cancel_order(
         &mut self,
-        open_orders_acc: &mut OpenOrdersAccountRefMut,
+        open_orders_account: &mut OpenOrdersAccount,
         order_id: u128,
         side_and_tree: SideAndOrderTree,
         market: Market,
@@ -519,7 +525,11 @@ impl<'a> Orderbook<'a> {
         if let Some(owner) = expected_owner {
             require_keys_eq!(leaf_node.owner, owner);
         }
-        open_orders_acc.cancel_order(leaf_node.owner_slot as usize, leaf_node.quantity, market)?;
+        open_orders_account.cancel_order(
+            leaf_node.owner_slot as usize,
+            leaf_node.quantity,
+            market,
+        )?;
 
         Ok(leaf_node)
     }
@@ -529,11 +539,11 @@ pub fn process_out_event(
     event: OutEvent,
     market: &Market,
     event_queue: &mut EventQueue,
-    mut open_orders_acc: &mut Option<OpenOrdersAccountRefMut>,
+    open_orders_account: Option<&mut OpenOrdersAccount>,
     owner: &Pubkey,
     remaining_accs: &[AccountInfo],
 ) -> Result<()> {
-    if let Some(acc) = &mut open_orders_acc {
+    if let Some(acc) = open_orders_account {
         if owner == &event.owner {
             acc.cancel_order(event.owner_slot as usize, event.quantity, *market)?;
             // Already canceled, return
@@ -542,11 +552,11 @@ pub fn process_out_event(
     }
     // Check if remaining is available so no event is pushed to event_queue
     if let Some(acc) = remaining_accs.iter().find(|ai| ai.key == &event.owner) {
-        let ooa: AccountLoader<OpenOrdersAccountFixed> = AccountLoader::try_from(acc)?;
-        let mut acc = ooa.load_full_mut()?;
+        let ooa: AccountLoader<OpenOrdersAccount> = AccountLoader::try_from(acc)?;
+        let mut acc = ooa.load_mut()?;
         acc.cancel_order(event.owner_slot as usize, event.quantity, *market)?;
     } else {
-        event_queue.push_back(cast(event)).unwrap();
+        event_queue.push_back(cast(event));
     }
     Ok(())
 }
@@ -559,47 +569,12 @@ pub fn process_fill_event(
 ) -> Result<()> {
     let loader = remaining_accs.iter().find(|ai| ai.key == &event.maker);
     if let Some(acc) = loader {
-        let ooa: AccountLoader<OpenOrdersAccountFixed> = AccountLoader::try_from(acc)?;
-        let mut maker = ooa.load_full_mut()?;
+        let ooa: AccountLoader<OpenOrdersAccount> = AccountLoader::try_from(acc)?;
+        let mut maker = ooa.load_mut()?;
 
         maker.execute_maker(market, &event)?;
     } else {
-        event_queue.push_back(cast(event)).unwrap();
+        event_queue.push_back(cast(event));
     }
     Ok(())
-}
-
-/// Release funds and apply taker fees to the taker account. Account fees for referrer
-fn release_funds_fees(
-    taker_side: Side,
-    market: &mut Market,
-    open_orders_acc: &mut OpenOrdersAccountRefMut,
-    base_native: u64,
-    quote_native: u64,
-    taker_fees: u64,
-) -> Result<()> {
-    let pa = &mut open_orders_acc.fixed_mut().position;
-    // Update free_lots
-    match taker_side {
-        Side::Bid => {
-            pa.base_free_native += base_native;
-        }
-        Side::Ask => {
-            pa.quote_free_native += quote_native - taker_fees;
-        }
-    };
-
-    // Referrer rebates
-    pa.referrer_rebates_accrued += market.referrer_taker_rebate(quote_native);
-    market.referrer_rebates_accrued += market.referrer_taker_rebate(quote_native);
-
-    open_orders_acc.fixed.position.taker_volume += taker_fees;
-
-    Ok(())
-}
-
-/// Applies a fixed penalty fee to the account, and update the market's quote fees_accrued
-fn apply_penalty(market: &mut Market) -> u64 {
-    market.quote_fees_accrued += market.fee_penalty;
-    market.fee_penalty
 }
