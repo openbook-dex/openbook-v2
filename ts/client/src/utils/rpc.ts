@@ -43,7 +43,7 @@ export async function sendTransaction(
 
   if (
     typeof payer.signTransaction === 'function' &&
-    !(payer instanceof NodeWallet || payer.constructor.name == 'NodeWallet')
+    !(payer instanceof NodeWallet || payer.constructor.name === 'NodeWallet')
   ) {
     vtx = (await payer.signTransaction(
       vtx as any,

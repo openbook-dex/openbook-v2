@@ -100,10 +100,11 @@ export class OpenBookV2Client {
     baseMint: PublicKey,
     quoteLoteSize: BN,
     baseLoteSize: BN,
-    makerFee: number,
-    takerFee: number,
-    feePenalty: BN,
-    oracle: PublicKey,
+    makerFee: BN,
+    takerFee: BN,
+    timeExpiry: BN,
+    oracleA: PublicKey,
+    oracleB: PublicKey,
   ): Promise<TransactionSignature> {
     let bids = Keypair.generate().publicKey;
     let space = 123712;
@@ -132,13 +133,12 @@ export class OpenBookV2Client {
       programId: SystemProgram.programId,
     });
 
-    const seeds = [Buffer.from('Market'), Buffer.from(marketIndex.toString())];
+    let market = Keypair.generate();
 
-    const [market, _] = PublicKey.findProgramAddressSync(
-      seeds,
+    let [marketAuthority, _tmp2] = PublicKey.findProgramAddressSync(
+      [Buffer.from('Market'), market.publicKey.toBuffer()],
       this.program.programId,
     );
-
     // Usage
     const baseVault = await getOrCreateAssociatedTokenAccount(
       this.connection,
@@ -149,7 +149,7 @@ export class OpenBookV2Client {
       undefined,
       undefined,
       TOKEN_PROGRAM_ID,
-      market,
+      market.publicKey,
     );
     const quoteVault = await getOrCreateAssociatedTokenAccount(
       this.connection,
@@ -160,31 +160,27 @@ export class OpenBookV2Client {
       undefined,
       undefined,
       TOKEN_PROGRAM_ID,
-      market,
+      market.publicKey,
     );
 
-    let oracleConfig = {
-      confFilter: 0.1,
-      maxStalenessSlots: null,
-    };
     const ix = await this.program.methods
       .createMarket(
-        marketIndex,
         name,
-        oracleConfig,
+        {
+          confFilter: 0.1,
+          maxStalenessSlots: 100,
+        },
         quoteLoteSize,
         baseLoteSize,
         makerFee,
         takerFee,
-        feePenalty,
-        payer.publicKey,
-        null,
-        null,
-        null,
+        timeExpiry,
       )
       .accounts({
-        market,
-        oracle,
+        market: market.publicKey,
+        marketAuthority,
+        oracleA,
+        oracleB,
         bids,
         asks,
         eventQueue,
