@@ -304,11 +304,15 @@ impl ClientInstruction for CreateMarketInstruction {
             time_expiry: self.time_expiry,
         };
 
+        let event_authority =
+            Pubkey::find_program_address(&[b"__event_authority".as_ref()], &openbook_v2::id()).0;
+
         let market_authority = Pubkey::find_program_address(
             &[b"Market".as_ref(), self.market.pubkey().to_bytes().as_ref()],
             &openbook_v2::id(),
         )
         .0;
+
         let base_vault = spl_associated_token_account::get_associated_token_address(
             &market_authority,
             &self.base_mint,
@@ -336,6 +340,8 @@ impl ClientInstruction for CreateMarketInstruction {
             close_market_admin: self.close_market_admin,
             oracle_a: self.oracle_a,
             oracle_b: self.oracle_b,
+            event_authority,
+            program: openbook_v2::id(),
         };
 
         let instruction = make_instruction(program_id, &accounts, instruction);
