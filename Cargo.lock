@@ -112,14 +112,11 @@ dependencies = [
 [[package]]
 name = "anchor-attribute-access-control"
 version = "0.28.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "faa5be5b72abea167f87c868379ba3c2be356bfca9e6f474fd055fa0f7eeb4f2"
+source = "git+https://github.com/coral-xyz/anchor.git#2af9cc669b734ca4b3a1ef4f590eec2a2dc097e5"
 dependencies = [
  "anchor-syn 0.28.0",
- "anyhow",
  "proc-macro2 1.0.54",
  "quote 1.0.26",
- "regex",
  "syn 1.0.109",
 ]
 
@@ -141,15 +138,12 @@ dependencies = [
 [[package]]
 name = "anchor-attribute-account"
 version = "0.28.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f468970344c7c9f9d03b4da854fd7c54f21305059f53789d0045c1dd803f0018"
+source = "git+https://github.com/coral-xyz/anchor.git#2af9cc669b734ca4b3a1ef4f590eec2a2dc097e5"
 dependencies = [
  "anchor-syn 0.28.0",
- "anyhow",
  "bs58 0.5.0",
  "proc-macro2 1.0.54",
  "quote 1.0.26",
- "rustversion",
  "syn 1.0.109",
 ]
 
@@ -167,11 +161,10 @@ dependencies = [
 [[package]]
 name = "anchor-attribute-constant"
 version = "0.28.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "59948e7f9ef8144c2aefb3f32a40c5fce2798baeec765ba038389e82301017ef"
+source = "git+https://github.com/coral-xyz/anchor.git#2af9cc669b734ca4b3a1ef4f590eec2a2dc097e5"
 dependencies = [
  "anchor-syn 0.28.0",
- "proc-macro2 1.0.54",
+ "quote 1.0.26",
  "syn 1.0.109",
 ]
 
@@ -190,11 +183,9 @@ dependencies = [
 [[package]]
 name = "anchor-attribute-error"
 version = "0.28.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fc753c9d1c7981cb8948cf7e162fb0f64558999c0413058e2d43df1df5448086"
+source = "git+https://github.com/coral-xyz/anchor.git#2af9cc669b734ca4b3a1ef4f590eec2a2dc097e5"
 dependencies = [
  "anchor-syn 0.28.0",
- "proc-macro2 1.0.54",
  "quote 1.0.26",
  "syn 1.0.109",
 ]
@@ -215,11 +206,9 @@ dependencies = [
 [[package]]
 name = "anchor-attribute-event"
 version = "0.28.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f38b4e172ba1b52078f53fdc9f11e3dc0668ad27997838a0aad2d148afac8c97"
+source = "git+https://github.com/coral-xyz/anchor.git#2af9cc669b734ca4b3a1ef4f590eec2a2dc097e5"
 dependencies = [
  "anchor-syn 0.28.0",
- "anyhow",
  "proc-macro2 1.0.54",
  "quote 1.0.26",
  "syn 1.0.109",
@@ -241,12 +230,9 @@ dependencies = [
 [[package]]
 name = "anchor-attribute-program"
 version = "0.28.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4eebd21543606ab61e2d83d9da37d24d3886a49f390f9c43a1964735e8c0f0d5"
+source = "git+https://github.com/coral-xyz/anchor.git#2af9cc669b734ca4b3a1ef4f590eec2a2dc097e5"
 dependencies = [
  "anchor-syn 0.28.0",
- "anyhow",
- "proc-macro2 1.0.54",
  "quote 1.0.26",
  "syn 1.0.109",
 ]
@@ -254,8 +240,7 @@ dependencies = [
 [[package]]
 name = "anchor-client"
 version = "0.28.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8434a6bf33efba0c93157f7fa2fafac658cb26ab75396886dcedd87c2a8ad445"
+source = "git+https://github.com/coral-xyz/anchor.git#2af9cc669b734ca4b3a1ef4f590eec2a2dc097e5"
 dependencies = [
  "anchor-lang 0.28.0",
  "anyhow",
@@ -286,11 +271,20 @@ dependencies = [
 [[package]]
 name = "anchor-derive-accounts"
 version = "0.28.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ec4720d899b3686396cced9508f23dab420f1308344456ec78ef76f98fda42af"
+source = "git+https://github.com/coral-xyz/anchor.git#2af9cc669b734ca4b3a1ef4f590eec2a2dc097e5"
 dependencies = [
  "anchor-syn 0.28.0",
- "anyhow",
+ "quote 1.0.26",
+ "syn 1.0.109",
+]
+
+[[package]]
+name = "anchor-derive-serde"
+version = "0.28.0"
+source = "git+https://github.com/coral-xyz/anchor.git#2af9cc669b734ca4b3a1ef4f590eec2a2dc097e5"
+dependencies = [
+ "anchor-syn 0.28.0",
+ "borsh-derive-internal",
  "proc-macro2 1.0.54",
  "quote 1.0.26",
  "syn 1.0.109",
@@ -310,8 +304,7 @@ dependencies = [
 [[package]]
 name = "anchor-derive-space"
 version = "0.28.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f495e85480bd96ddeb77b71d499247c7d4e8b501e75ecb234e9ef7ae7bd6552a"
+source = "git+https://github.com/coral-xyz/anchor.git#2af9cc669b734ca4b3a1ef4f590eec2a2dc097e5"
 dependencies = [
  "proc-macro2 1.0.54",
  "quote 1.0.26",
@@ -344,8 +337,7 @@ dependencies = [
 [[package]]
 name = "anchor-lang"
 version = "0.28.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0d2d4b20100f1310a774aba3471ef268e5c4ba4d5c28c0bbe663c2658acbc414"
+source = "git+https://github.com/coral-xyz/anchor.git#2af9cc669b734ca4b3a1ef4f590eec2a2dc097e5"
 dependencies = [
  "anchor-attribute-access-control 0.28.0",
  "anchor-attribute-account 0.28.0",
@@ -354,6 +346,7 @@ dependencies = [
  "anchor-attribute-event 0.28.0",
  "anchor-attribute-program 0.28.0",
  "anchor-derive-accounts 0.28.0",
+ "anchor-derive-serde",
  "anchor-derive-space 0.28.0",
  "arrayref",
  "base64 0.13.1",
@@ -381,8 +374,7 @@ dependencies = [
 [[package]]
 name = "anchor-spl"
 version = "0.28.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "78f860599da1c2354e7234c768783049eb42e2f54509ecfc942d2e0076a2da7b"
+source = "git+https://github.com/coral-xyz/anchor.git#2af9cc669b734ca4b3a1ef4f590eec2a2dc097e5"
 dependencies = [
  "anchor-lang 0.28.0",
  "solana-program",
@@ -412,8 +404,7 @@ dependencies = [
 [[package]]
 name = "anchor-syn"
 version = "0.28.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a125e4b0cc046cfec58f5aa25038e34cf440151d58f0db3afc55308251fe936d"
+source = "git+https://github.com/coral-xyz/anchor.git#2af9cc669b734ca4b3a1ef4f590eec2a2dc097e5"
 dependencies = [
  "anyhow",
  "bs58 0.5.0",
