@@ -23,7 +23,7 @@ enable-gpl = []
 
 
 [dependencies]
-anchor-lang = { workspace = true }
+anchor-lang = { workspace = true, features = ["event-cpi"] }
 anchor-spl = { workspace = true }
 arrayref = "0.3.6"
 borsh = { version = "0.9.3", features = ["const-generics"] }
