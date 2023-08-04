@@ -109,7 +109,7 @@ pub fn create_market(
     let mut event_queue = ctx.accounts.event_queue.load_init()?;
     event_queue.init();
 
-    emit!(MarketMetaDataLog {
+    emit_cpi!(MarketMetaDataLog {
         market: ctx.accounts.market.key(),
         base_decimals: ctx.accounts.base_mint.decimals,
         quote_decimals: ctx.accounts.quote_mint.decimals,
