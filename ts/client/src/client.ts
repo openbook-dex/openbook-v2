@@ -1,7 +1,5 @@
-import { type AnchorProvider, BN, type Program, Provider } from '@coral-xyz/anchor';
+import { type AnchorProvider, BN, type Program } from '@coral-xyz/anchor';
 import {
-  ASSOCIATED_TOKEN_PROGRAM_ID,
-  AccountLayout,
   MintLayout,
   NATIVE_MINT,
   type RawAccount,
@@ -9,21 +7,15 @@ import {
   TOKEN_PROGRAM_ID,
   createCloseAccountInstruction,
   createInitializeAccount3Instruction,
-  getAssociatedTokenAddress,
   getOrCreateAssociatedTokenAccount,
 } from '@solana/spl-token';
 import {
   type AccountInfo,
-  AccountMeta,
-  AddressLookupTableAccount,
   type Cluster,
   type Commitment,
   type Connection,
   Keypair,
-  MemcmpFilter,
   PublicKey,
-  SYSVAR_INSTRUCTIONS_PUBKEY,
-  SYSVAR_RENT_PUBKEY,
   type Signer,
   SystemProgram,
   type TransactionInstruction,
@@ -32,6 +24,7 @@ import {
 import { IDL, type OpenbookV2 } from './openbook_v2';
 import { sendTransaction } from './utils/rpc';
 import { type OpenOrdersAccount } from './accounts/openOrdersAccount';
+import { type Market } from './accounts/market';
 
 export type IdsSource = 'api' | 'static' | 'get-program-accounts';
 
@@ -93,7 +86,6 @@ export class OpenBookV2Client {
   }
 
   public async createMarket(
-    marketIndex: number,
     payer: Keypair,
     name: string,
     quoteMint: PublicKey,
@@ -107,29 +99,35 @@ export class OpenBookV2Client {
     oracleB: PublicKey,
   ): Promise<TransactionSignature> {
     const bids = Keypair.generate().publicKey;
-    let space = 123712;
+    const booksideSpace = 123720;
     const ix0 = SystemProgram.createAccount({
       fromPubkey: payer.publicKey,
       newAccountPubkey: bids,
-      lamports: await this.connection.getMinimumBalanceForRentExemption(space),
-      space,
+      lamports: await this.connection.getMinimumBalanceForRentExemption(
+        booksideSpace,
+      ),
+      space: booksideSpace,
       programId: SystemProgram.programId,
     });
     const asks = Keypair.generate().publicKey;
     const ix1 = SystemProgram.createAccount({
       fromPubkey: payer.publicKey,
       newAccountPubkey: asks,
-      lamports: await this.connection.getMinimumBalanceForRentExemption(space),
-      space,
+      lamports: await this.connection.getMinimumBalanceForRentExemption(
+        booksideSpace,
+      ),
+      space: booksideSpace,
       programId: SystemProgram.programId,
     });
     const eventQueue = Keypair.generate().publicKey;
-    space = 97680;
+    const eventQueueSpace = 91288;
     const ix2 = SystemProgram.createAccount({
       fromPubkey: payer.publicKey,
       newAccountPubkey: eventQueue,
-      lamports: await this.connection.getMinimumBalanceForRentExemption(space),
-      space,
+      lamports: await this.connection.getMinimumBalanceForRentExemption(
+        eventQueueSpace,
+      ),
+      space: eventQueueSpace,
       programId: SystemProgram.programId,
     });
 
@@ -149,7 +147,7 @@ export class OpenBookV2Client {
       undefined,
       undefined,
       TOKEN_PROGRAM_ID,
-      market.publicKey,
+      marketAuthority,
     );
     const quoteVault = await getOrCreateAssociatedTokenAccount(
       this.connection,
@@ -160,7 +158,7 @@ export class OpenBookV2Client {
       undefined,
       undefined,
       TOKEN_PROGRAM_ID,
-      market.publicKey,
+      marketAuthority,
     );
 
     const ix = await this.program.methods
@@ -198,6 +196,7 @@ export class OpenBookV2Client {
 
   public async deposit(
     openOrdersAccount: OpenOrdersAccount,
+    market: PublicKey,
     tokenBaseAccount: PublicKey,
     tokenQuoteAccount: PublicKey,
     baseAmount: BN,
@@ -207,7 +206,7 @@ export class OpenBookV2Client {
       .deposit(baseAmount, quoteAmount)
       .accounts({
         owner: openOrdersAccount.owner,
-        market: openOrdersAccount.market,
+        market,
         openOrdersAccount: openOrdersAccount.publicKey,
         tokenBaseAccount,
         tokenQuoteAccount,
@@ -281,8 +280,86 @@ export class OpenBookV2Client {
     );
   }
 
-  public decodeMarket(program, data: Buffer): any {
+  public decodeMarket(data: Buffer): any {
     return this.program.coder.accounts.decode('Market', data);
+  }
+
+  public async placeOrder(
+    openOrdersAccount: OpenOrdersAccount,
+    market: Market,
+    userDepositAccount: PublicKey,
+    bid: boolean,
+    priceLots: BN,
+    maxBaseLots: BN,
+    maxQuoteLotsIncludingFees: BN,
+    clientOrderId: BN,
+    orderType: any,
+    expiryTimestamp: BN,
+    selfTradeBehavior: any,
+    limit: number,
+  ): Promise<TransactionSignature> {
+    let side;
+    if (bid) {
+      side = { bid: {} };
+    } else {
+      side = { ask: {} };
+    }
+    const args = {
+      side,
+      priceLots,
+      maxBaseLots,
+      maxQuoteLotsIncludingFees,
+      clientOrderId,
+      orderType,
+      expiryTimestamp,
+      selfTradeBehavior,
+      limit,
+    };
+    const ix = await this.program.methods
+      .placeOrder(args)
+      .accounts({
+        signer: openOrdersAccount.owner,
+        asks: market.asks,
+        bids: market.bids,
+        marketVault: openOrdersAccount.quoteVault,
+        eventQueue: market.eventQueue,
+        market: market.publicKey,
+        openOrdersAccount: openOrdersAccount.publicKey,
+        oracleA: market.oracleA,
+        oracleB: market.oracleB,
+        tokenDepositAccount: userDepositAccount,
+        systemProgram: SystemProgram.programId,
+        tokenProgram: TOKEN_PROGRAM_ID,
+        openOrdersAdmin: null,
+      })
+      .instruction();
+    const signers: Signer[] = [];
+    if (openOrdersAccount.ownerOrDelegateKeypair != null) {
+      signers.push(openOrdersAccount.ownerOrDelegateKeypair);
+    }
+    return await this.sendAndConfirmTransaction([ix], { signers });
+  }
+
+  public async cancelOrder(
+    openOrdersAccount: OpenOrdersAccount,
+    market: Market,
+    orderId: BN,
+  ): Promise<TransactionSignature> {
+    const ix = await this.program.methods
+      .cancelOrder(orderId)
+      .accounts({
+        signer: openOrdersAccount.owner,
+        asks: market.asks,
+        bids: market.bids,
+        market: market.publicKey,
+        openOrdersAccount: openOrdersAccount.publicKey,
+      })
+      .instruction();
+    const signers: Signer[] = [];
+    if (openOrdersAccount.ownerOrDelegateKeypair != null) {
+      signers.push(openOrdersAccount.ownerOrDelegateKeypair);
+    }
+    return await this.sendAndConfirmTransaction([ix], { signers });
   }
 }
 
