@@ -174,7 +174,7 @@ impl ClientInstruction for CreateOpenOrdersIndexerInstruction {
     }
 }
 
-pub struct InitOpenOrdersInstruction {
+pub struct CreateOpenOrdersAccountInstruction {
     pub account_num: u32,
     pub market: Pubkey,
     pub owner: TestKeypair,
@@ -182,15 +182,15 @@ pub struct InitOpenOrdersInstruction {
     pub delegate: Option<Pubkey>,
 }
 #[async_trait::async_trait(?Send)]
-impl ClientInstruction for InitOpenOrdersInstruction {
-    type Accounts = openbook_v2::accounts::InitOpenOrders;
-    type Instruction = openbook_v2::instruction::InitOpenOrders;
+impl ClientInstruction for CreateOpenOrdersAccountInstruction {
+    type Accounts = openbook_v2::accounts::CreateOpenOrdersAccount;
+    type Instruction = openbook_v2::instruction::CreateOpenOrdersAccount;
     async fn to_instruction(
         &self,
         _account_loader: impl ClientAccountLoader + 'async_trait,
     ) -> (Self::Accounts, instruction::Instruction) {
         let program_id = openbook_v2::id();
-        let instruction = openbook_v2::instruction::InitOpenOrders {};
+        let instruction = openbook_v2::instruction::CreateOpenOrdersAccount {};
 
         let open_orders_indexer = Pubkey::find_program_address(
             &[
@@ -213,7 +213,7 @@ impl ClientInstruction for InitOpenOrdersInstruction {
         )
         .0;
 
-        let accounts = openbook_v2::accounts::InitOpenOrders {
+        let accounts = openbook_v2::accounts::CreateOpenOrdersAccount {
             owner: self.owner.pubkey(),
             open_orders_indexer,
             open_orders_account,
