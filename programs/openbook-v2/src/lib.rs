@@ -183,7 +183,7 @@ pub mod openbook_v2 {
         );
 
         #[cfg(not(feature = "enable-gpl"))]
-        Ok(None)
+        Ok(vec![])
     }
 
     pub fn place_order_pegged(
