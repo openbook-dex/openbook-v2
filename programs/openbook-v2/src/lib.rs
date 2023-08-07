@@ -353,7 +353,7 @@ pub mod openbook_v2 {
         Ok(())
     }
 
-    /// Desposit a certain amount of `base` and `quote` lamports into one's
+    /// Deposit a certain amount of `base` and `quote` lamports into one's
     /// [`Position`](crate::state::Position).
     ///
     /// Makers might wish to `deposit`, rather than have actual tokens moved for
