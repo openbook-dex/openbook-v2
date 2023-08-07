@@ -7,8 +7,6 @@ declare_id!("8qkavBpvoHVYkmPhu6QRpXRX39Kcop9uMXvZorBAz43o");
 #[macro_use]
 pub mod util;
 
-use accounts_ix::*;
-
 pub mod accounts_ix;
 pub mod accounts_zerocopy;
 pub mod error;
@@ -19,13 +17,14 @@ pub mod state;
 pub mod token_utils;
 pub mod types;
 
-use error::*;
-use fixed::types::I80F48;
-use state::{OracleConfigParams, PlaceOrderType, SelfTradeBehavior, Side};
-use std::cmp;
-
 #[cfg(feature = "enable-gpl")]
 pub mod instructions;
+
+use accounts_ix::*;
+use error::*;
+use fixed::types::I80F48;
+use state::{OracleConfigParams, Order, OrderParams, PlaceOrderType, SelfTradeBehavior, Side};
+use std::cmp;
 
 #[cfg(all(not(feature = "no-entrypoint"), not(feature = "enable-gpl")))]
 compile_error!("compiling the program entrypoint without 'enable-gpl' makes no sense, enable it or use the 'cpi' or 'client' features");
@@ -60,6 +59,13 @@ pub mod openbook_v2 {
         Ok(())
     }
 
+    /// Close a [`Market`](crate::state::Market).
+    pub fn close_market(ctx: Context<CloseMarket>) -> Result<()> {
+        #[cfg(feature = "enable-gpl")]
+        instructions::close_market(ctx)?;
+        Ok(())
+    }
+
     pub fn create_open_orders_indexer(ctx: Context<CreateOpenOrdersIndexer>) -> Result<()> {
         #[cfg(feature = "enable-gpl")]
         instructions::create_open_orders_indexer(ctx)?;
@@ -72,9 +78,15 @@ pub mod openbook_v2 {
         Ok(())
     }
 
-    pub fn init_open_orders(ctx: Context<InitOpenOrders>) -> Result<()> {
+    pub fn create_open_orders_account(ctx: Context<CreateOpenOrdersAccount>) -> Result<()> {
         #[cfg(feature = "enable-gpl")]
-        instructions::init_open_orders(ctx)?;
+        instructions::create_open_orders_account(ctx)?;
+        Ok(())
+    }
+
+    pub fn close_open_orders_account(ctx: Context<CloseOpenOrdersAccount>) -> Result<()> {
+        #[cfg(feature = "enable-gpl")]
+        instructions::close_open_orders_account(ctx)?;
         Ok(())
     }
 
@@ -97,7 +109,6 @@ pub mod openbook_v2 {
     pub fn place_order(ctx: Context<PlaceOrder>, args: PlaceOrderArgs) -> Result<Option<u128>> {
         require_gte!(args.price_lots, 1, OpenBookError::InvalidInputPriceLots);
 
-        use crate::state::{Order, OrderParams};
         let time_in_force = match Order::tif_from_expiry(args.expiry_timestamp) {
             Some(t) => t,
             None => {
@@ -146,7 +157,6 @@ pub mod openbook_v2 {
                 OpenBookError::InvalidInputPriceLots
             );
 
-            use crate::state::{Order, OrderParams};
             let time_in_force = match Order::tif_from_expiry(place_order.expiry_timestamp) {
                 Some(t) => t,
                 None => {
@@ -183,7 +193,7 @@ pub mod openbook_v2 {
         );
 
         #[cfg(not(feature = "enable-gpl"))]
-        Ok(None)
+        Ok(vec![])
     }
 
     pub fn place_order_pegged(
@@ -196,13 +206,7 @@ pub mod openbook_v2 {
         );
 
         require_gt!(args.peg_limit, 0, OpenBookError::InvalidInputPegLimit);
-        require_eq!(
-            args.max_oracle_staleness_slots,
-            -1,
-            OpenBookError::InvalidInputStaleness
-        );
 
-        use crate::state::{Order, OrderParams};
         let time_in_force = match Order::tif_from_expiry(args.expiry_timestamp) {
             Some(t) => t,
             None => {
@@ -222,7 +226,6 @@ pub mod openbook_v2 {
                 price_offset_lots: args.price_offset_lots,
                 order_type: args.order_type.to_post_order_type()?,
                 peg_limit: args.peg_limit,
-                max_oracle_staleness_slots: args.max_oracle_staleness_slots,
             },
         };
         #[cfg(feature = "enable-gpl")]
@@ -242,7 +245,6 @@ pub mod openbook_v2 {
     ) -> Result<()> {
         require_gte!(args.price_lots, 1, OpenBookError::InvalidInputPriceLots);
 
-        use crate::state::{Order, OrderParams};
         let order = Order {
             side: args.side,
             max_base_lots: args.max_base_lots,
@@ -340,7 +342,7 @@ pub mod openbook_v2 {
         Ok(())
     }
 
-    /// Desposit a certain amount of `base` and `quote` lamports into one's
+    /// Deposit a certain amount of `base` and `quote` lamports into one's
     /// [`Position`](crate::state::Position).
     ///
     /// Makers might wish to `deposit`, rather than have actual tokens moved for
@@ -377,6 +379,15 @@ pub mod openbook_v2 {
         Ok(())
     }
 
+    /// Withdraw any available tokens when the market is expired (only `close_market_admin`)
+    pub fn settle_funds_expired<'info>(
+        ctx: Context<'_, '_, '_, 'info, SettleFundsExpired<'info>>,
+    ) -> Result<()> {
+        #[cfg(feature = "enable-gpl")]
+        instructions::settle_funds_expired(ctx)?;
+        Ok(())
+    }
+
     /// Sweep fees, as a [`Market`](crate::state::Market)'s admin.
     pub fn sweep_fees(ctx: Context<SweepFees>) -> Result<()> {
         #[cfg(feature = "enable-gpl")]
@@ -400,20 +411,6 @@ pub mod openbook_v2 {
     pub fn prune_orders(ctx: Context<PruneOrders>, limit: u8) -> Result<()> {
         #[cfg(feature = "enable-gpl")]
         instructions::prune_orders(ctx, limit)?;
-        Ok(())
-    }
-
-    /// Close a [`Market`](crate::state::Market).
-    pub fn close_market(ctx: Context<CloseMarket>) -> Result<()> {
-        #[cfg(feature = "enable-gpl")]
-        instructions::close_market(ctx)?;
-        Ok(())
-    }
-
-    /// Close a [`Market`](crate::state::Market).
-    pub fn close_open_orders_account(ctx: Context<CloseOpenOrdersAccount>) -> Result<()> {
-        #[cfg(feature = "enable-gpl")]
-        instructions::close_open_orders_account(ctx)?;
         Ok(())
     }
 
@@ -480,10 +477,6 @@ pub struct PlaceOrderPeggedArgs {
     // Timestamps in the future are reduced to now + 65535s.
     pub expiry_timestamp: u64,
 
-    // Oracle staleness limit, in slots. Set to -1 to disable.
-    //
-    // WARNING: Not currently implemented.
-    pub max_oracle_staleness_slots: i32,
     pub self_trade_behavior: SelfTradeBehavior,
     // Maximum number of orders from the book to fill.
     //

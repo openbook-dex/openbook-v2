@@ -86,7 +86,7 @@ pub async fn create_open_orders_account(
 ) -> Pubkey {
     send_tx(
         solana,
-        InitOpenOrdersInstruction {
+        CreateOpenOrdersAccountInstruction {
             account_num,
             market,
             owner,

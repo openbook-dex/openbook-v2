@@ -1,9 +1,9 @@
-use crate::accounts_ix::InitOpenOrders;
+use crate::accounts_ix::CreateOpenOrdersAccount;
 use crate::pubkey_option::NonZeroKey;
 use crate::state::*;
 use anchor_lang::prelude::*;
 
-pub fn init_open_orders(ctx: Context<InitOpenOrders>) -> Result<()> {
+pub fn create_open_orders_account(ctx: Context<CreateOpenOrdersAccount>) -> Result<()> {
     let mut account = ctx.accounts.open_orders_account.load_init()?;
     let mut indexer = ctx.accounts.open_orders_indexer.load_mut()?;
     indexer.created_counter += 1;

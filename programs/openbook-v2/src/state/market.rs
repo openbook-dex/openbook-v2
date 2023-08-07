@@ -160,6 +160,13 @@ impl Market {
         self.time_expiry != 0 && self.time_expiry < timestamp
     }
 
+    pub fn is_empty(&self) -> bool {
+        self.base_deposit_total == 0
+            && self.quote_deposit_total == 0
+            && self.fees_available == 0
+            && self.referrer_rebates_accrued == 0
+    }
+
     pub fn is_market_vault(&self, pubkey: Pubkey) -> bool {
         pubkey == self.quote_vault || pubkey == self.base_vault
     }

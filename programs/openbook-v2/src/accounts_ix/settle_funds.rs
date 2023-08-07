@@ -11,7 +11,6 @@ pub struct SettleFunds<'info> {
         has_one = market,
     )]
     pub open_orders_account: AccountLoader<'info, OpenOrdersAccount>,
-
     #[account(
         mut,
         has_one = base_vault,
@@ -25,7 +24,6 @@ pub struct SettleFunds<'info> {
     pub base_vault: Account<'info, TokenAccount>,
     #[account(mut)]
     pub quote_vault: Account<'info, TokenAccount>,
-
     #[account(
         mut,
         token::mint = base_vault.mint
@@ -41,7 +39,6 @@ pub struct SettleFunds<'info> {
         token::mint = quote_vault.mint
     )]
     pub referrer: Option<Box<Account<'info, TokenAccount>>>,
-
     pub token_program: Program<'info, Token>,
     pub system_program: Program<'info, System>,
 }

@@ -130,7 +130,7 @@ impl OpenBookClient {
                 Some(tuple) => tuple.1.account_num + 1,
                 None => 0u32,
             };
-            Self::init_open_orders(client, market, owner, payer, None, account_num)
+            Self::create_open_orders_account(client, market, owner, payer, None, account_num)
                 .await
                 .context("Failed to create account...")?;
         }
@@ -189,7 +189,7 @@ impl OpenBookClient {
         Ok((open_orders_indexer, txsig))
     }
 
-    pub async fn init_open_orders(
+    pub async fn create_open_orders_account(
         client: &Client,
         market: Pubkey,
         owner: &Keypair,
@@ -221,7 +221,7 @@ impl OpenBookClient {
         let ix = Instruction {
             program_id: openbook_v2::id(),
             accounts: anchor_lang::ToAccountMetas::to_account_metas(
-                &openbook_v2::accounts::InitOpenOrders {
+                &openbook_v2::accounts::CreateOpenOrdersAccount {
                     owner: owner.pubkey(),
                     open_orders_indexer,
                     open_orders_account: account,
@@ -232,7 +232,9 @@ impl OpenBookClient {
                 },
                 None,
             ),
-            data: anchor_lang::InstructionData::data(&openbook_v2::instruction::InitOpenOrders {}),
+            data: anchor_lang::InstructionData::data(
+                &openbook_v2::instruction::CreateOpenOrdersAccount {},
+            ),
         };
 
         let txsig = TransactionBuilder {
@@ -378,7 +380,6 @@ impl OpenBookClient {
         token_deposit_account: Pubkey,
         market_vault: Pubkey,
         self_trade_behavior: SelfTradeBehavior,
-        max_oracle_staleness_slots: i32,
     ) -> anyhow::Result<Signature> {
         let ix = Instruction {
             program_id: openbook_v2::id(),
@@ -407,7 +408,6 @@ impl OpenBookClient {
                     side,
                     price_offset_lots,
                     peg_limit,
-                    max_oracle_staleness_slots,
                     max_base_lots,
                     max_quote_lots_including_fees,
                     client_order_id,

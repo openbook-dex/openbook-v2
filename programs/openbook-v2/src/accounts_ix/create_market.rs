@@ -2,6 +2,7 @@ use crate::state::*;
 use anchor_lang::prelude::*;
 use anchor_spl::token::{Mint, TokenAccount};
 
+#[event_cpi]
 #[derive(Accounts)]
 pub struct CreateMarket<'info> {
     #[account(

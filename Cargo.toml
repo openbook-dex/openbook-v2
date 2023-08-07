@@ -5,9 +5,9 @@ members = [
 ]
 
 [workspace.dependencies]
-anchor-client = "0.27.0"
-anchor-lang = "0.27.0"
-anchor-spl = "0.27.0"
+anchor-client = { git = "https://github.com/coral-xyz/anchor.git" }
+anchor-lang = { git = "https://github.com/coral-xyz/anchor.git" }
+anchor-spl = { git = "https://github.com/coral-xyz/anchor.git"}
 fixed = {path = "./3rdparty/fixed", version = "1.11.0"}
 pyth-sdk-solana = "0.1.0"
 solana-account-decoder = "~1.14.17"
