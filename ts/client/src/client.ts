@@ -160,6 +160,10 @@ export class OpenBookV2Client {
       TOKEN_PROGRAM_ID,
       marketAuthority,
     );
+    const [eventAuthority, _tmp3] = PublicKey.findProgramAddressSync(
+      [Buffer.from('__event_authority')],
+      this.program.programId,
+    );
 
     const ix = await this.program.methods
       .createMarket(
@@ -188,6 +192,8 @@ export class OpenBookV2Client {
         baseMint,
         quoteMint,
         systemProgram: SystemProgram.programId,
+        eventAuthority,
+        program: this.programId,
       })
       .instruction();
 
@@ -365,10 +371,6 @@ export class OpenBookV2Client {
 
 export function decodeMint(data: Buffer): RawMint {
   return MintLayout.decode(data);
-}
-
-export function decodeAccount(data: Buffer): RawAccount {
-  return AccountLayout.decode(data);
 }
 
 export async function getFilteredProgramAccounts(
