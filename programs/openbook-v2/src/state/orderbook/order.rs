@@ -39,7 +39,6 @@ pub enum OrderParams {
         price_offset_lots: i64,
         order_type: PostOrderType,
         peg_limit: i64,
-        max_oracle_staleness_slots: i32,
     },
 }
 
