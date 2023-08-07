@@ -59,6 +59,7 @@ pub struct FuzzContext {
     pub quote_mint: Pubkey,
     pub market: Pubkey,
     pub market_authority: Pubkey,
+    pub event_authority: Pubkey,
     pub bids: Pubkey,
     pub asks: Pubkey,
     pub event_queue: Pubkey,
@@ -80,6 +81,9 @@ impl FuzzContext {
         let market = Pubkey::new_unique();
         let base_mint = Pubkey::new_unique();
         let quote_mint = Pubkey::new_unique();
+
+        let (event_authority, _bump) =
+            Pubkey::find_program_address(&[b"__event_authority".as_ref()], &openbook_v2::ID);
 
         let (market_authority, _bump) =
             Pubkey::find_program_address(&[b"Market".as_ref(), market.as_ref()], &openbook_v2::ID);
@@ -119,6 +123,7 @@ impl FuzzContext {
             quote_mint,
             market,
             market_authority,
+            event_authority,
             bids,
             asks,
             event_queue,
@@ -146,6 +151,7 @@ impl FuzzContext {
             .add_openbook_account::<EventQueue>(self.event_queue)
             .add_openbook_account::<Market>(self.market)
             .add_empty_system_account(self.market_authority)
+            .add_empty_system_account(self.event_authority)
             .add_program(openbook_v2::ID) // optional accounts use this pubkey
             .add_program(spl_token::ID)
             .add_program(system_program::ID)
@@ -231,7 +237,7 @@ impl FuzzContext {
             let data = openbook_v2::instruction::CreateOpenOrdersIndexer {};
             process_instruction(&mut self.state, &data, &accounts, &[]).unwrap();
 
-            let accounts = openbook_v2::accounts::InitOpenOrders {
+            let accounts = openbook_v2::accounts::CreateOpenOrdersAccount {
                 open_orders_indexer: indexer,
                 open_orders_account: open_orders,
                 owner,
@@ -240,7 +246,7 @@ impl FuzzContext {
                 market: self.market,
                 system_program: system_program::ID,
             };
-            let data = openbook_v2::instruction::InitOpenOrders {};
+            let data = openbook_v2::instruction::CreateOpenOrdersAccount {};
             process_instruction(&mut self.state, &data, &accounts, &[]).unwrap();
 
             UserAccounts {
@@ -309,6 +315,8 @@ impl FuzzContext {
             open_orders_admin: None,
             consume_events_admin: None,
             close_market_admin: None,
+            event_authority: self.event_authority,
+            program: openbook_v2::ID,
         };
         process_instruction(&mut self.state, &data, &accounts, &[])
     }
