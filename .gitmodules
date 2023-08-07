@@ -4,4 +4,4 @@
 [submodule "3rdparty/anchor"]
 	path = 3rdparty/anchor
 	url = git@github.com:openbook-dex/anchor.git
-	branch = v0.27.0-arbitrary
+	branch = v0.28.0_abfdc4e-arbitrary
