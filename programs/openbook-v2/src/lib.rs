@@ -60,6 +60,13 @@ pub mod openbook_v2 {
         Ok(())
     }
 
+    /// Close a [`Market`](crate::state::Market).
+    pub fn close_market(ctx: Context<CloseMarket>) -> Result<()> {
+        #[cfg(feature = "enable-gpl")]
+        instructions::close_market(ctx)?;
+        Ok(())
+    }
+
     pub fn create_open_orders_indexer(ctx: Context<CreateOpenOrdersIndexer>) -> Result<()> {
         #[cfg(feature = "enable-gpl")]
         instructions::create_open_orders_indexer(ctx)?;
@@ -72,9 +79,15 @@ pub mod openbook_v2 {
         Ok(())
     }
 
-    pub fn init_open_orders(ctx: Context<InitOpenOrders>) -> Result<()> {
+    pub fn create_open_orders_account(ctx: Context<CreateOpenOrdersAccount>) -> Result<()> {
         #[cfg(feature = "enable-gpl")]
-        instructions::init_open_orders(ctx)?;
+        instructions::create_open_orders_account(ctx)?;
+        Ok(())
+    }
+
+    pub fn close_open_orders_account(ctx: Context<CloseOpenOrdersAccount>) -> Result<()> {
+        #[cfg(feature = "enable-gpl")]
+        instructions::close_open_orders_account(ctx)?;
         Ok(())
     }
 
@@ -183,7 +196,7 @@ pub mod openbook_v2 {
         );
 
         #[cfg(not(feature = "enable-gpl"))]
-        Ok(None)
+        Ok(vec![])
     }
 
     pub fn place_order_pegged(
@@ -340,7 +353,7 @@ pub mod openbook_v2 {
         Ok(())
     }
 
-    /// Desposit a certain amount of `base` and `quote` lamports into one's
+    /// Deposit a certain amount of `base` and `quote` lamports into one's
     /// [`Position`](crate::state::Position).
     ///
     /// Makers might wish to `deposit`, rather than have actual tokens moved for
@@ -409,20 +422,6 @@ pub mod openbook_v2 {
     pub fn prune_orders(ctx: Context<PruneOrders>, limit: u8) -> Result<()> {
         #[cfg(feature = "enable-gpl")]
         instructions::prune_orders(ctx, limit)?;
-        Ok(())
-    }
-
-    /// Close a [`Market`](crate::state::Market).
-    pub fn close_market(ctx: Context<CloseMarket>) -> Result<()> {
-        #[cfg(feature = "enable-gpl")]
-        instructions::close_market(ctx)?;
-        Ok(())
-    }
-
-    /// Close a [`Market`](crate::state::Market).
-    pub fn close_open_orders_account(ctx: Context<CloseOpenOrdersAccount>) -> Result<()> {
-        #[cfg(feature = "enable-gpl")]
-        instructions::close_open_orders_account(ctx)?;
         Ok(())
     }
 
