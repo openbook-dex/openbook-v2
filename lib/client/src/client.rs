@@ -380,7 +380,6 @@ impl OpenBookClient {
         token_deposit_account: Pubkey,
         market_vault: Pubkey,
         self_trade_behavior: SelfTradeBehavior,
-        max_oracle_staleness_slots: i32,
     ) -> anyhow::Result<Signature> {
         let ix = Instruction {
             program_id: openbook_v2::id(),
@@ -409,7 +408,6 @@ impl OpenBookClient {
                     side,
                     price_offset_lots,
                     peg_limit,
-                    max_oracle_staleness_slots,
                     max_base_lots,
                     max_quote_lots_including_fees,
                     client_order_id,

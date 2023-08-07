@@ -7,8 +7,6 @@ declare_id!("8qkavBpvoHVYkmPhu6QRpXRX39Kcop9uMXvZorBAz43o");
 #[macro_use]
 pub mod util;
 
-use accounts_ix::*;
-
 pub mod accounts_ix;
 pub mod accounts_zerocopy;
 pub mod error;
@@ -19,13 +17,14 @@ pub mod state;
 pub mod token_utils;
 pub mod types;
 
-use error::*;
-use fixed::types::I80F48;
-use state::{OracleConfigParams, PlaceOrderType, SelfTradeBehavior, Side};
-use std::cmp;
-
 #[cfg(feature = "enable-gpl")]
 pub mod instructions;
+
+use accounts_ix::*;
+use error::*;
+use fixed::types::I80F48;
+use state::{OracleConfigParams, Order, OrderParams, PlaceOrderType, SelfTradeBehavior, Side};
+use std::cmp;
 
 #[cfg(all(not(feature = "no-entrypoint"), not(feature = "enable-gpl")))]
 compile_error!("compiling the program entrypoint without 'enable-gpl' makes no sense, enable it or use the 'cpi' or 'client' features");
@@ -110,7 +109,6 @@ pub mod openbook_v2 {
     pub fn place_order(ctx: Context<PlaceOrder>, args: PlaceOrderArgs) -> Result<Option<u128>> {
         require_gte!(args.price_lots, 1, OpenBookError::InvalidInputPriceLots);
 
-        use crate::state::{Order, OrderParams};
         let time_in_force = match Order::tif_from_expiry(args.expiry_timestamp) {
             Some(t) => t,
             None => {
@@ -159,7 +157,6 @@ pub mod openbook_v2 {
                 OpenBookError::InvalidInputPriceLots
             );
 
-            use crate::state::{Order, OrderParams};
             let time_in_force = match Order::tif_from_expiry(place_order.expiry_timestamp) {
                 Some(t) => t,
                 None => {
@@ -209,13 +206,7 @@ pub mod openbook_v2 {
         );
 
         require_gt!(args.peg_limit, 0, OpenBookError::InvalidInputPegLimit);
-        require_eq!(
-            args.max_oracle_staleness_slots,
-            -1,
-            OpenBookError::InvalidInputStaleness
-        );
 
-        use crate::state::{Order, OrderParams};
         let time_in_force = match Order::tif_from_expiry(args.expiry_timestamp) {
             Some(t) => t,
             None => {
@@ -235,7 +226,6 @@ pub mod openbook_v2 {
                 price_offset_lots: args.price_offset_lots,
                 order_type: args.order_type.to_post_order_type()?,
                 peg_limit: args.peg_limit,
-                max_oracle_staleness_slots: args.max_oracle_staleness_slots,
             },
         };
         #[cfg(feature = "enable-gpl")]
@@ -255,7 +245,6 @@ pub mod openbook_v2 {
     ) -> Result<()> {
         require_gte!(args.price_lots, 1, OpenBookError::InvalidInputPriceLots);
 
-        use crate::state::{Order, OrderParams};
         let order = Order {
             side: args.side,
             max_base_lots: args.max_base_lots,
@@ -486,10 +475,6 @@ pub struct PlaceOrderPeggedArgs {
     // Timestamps in the future are reduced to now + 65535s.
     pub expiry_timestamp: u64,
 
-    // Oracle staleness limit, in slots. Set to -1 to disable.
-    //
-    // WARNING: Not currently implemented.
-    pub max_oracle_staleness_slots: i32,
     pub self_trade_behavior: SelfTradeBehavior,
     // Maximum number of orders from the book to fill.
     //
