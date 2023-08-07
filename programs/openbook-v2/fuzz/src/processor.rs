@@ -56,6 +56,11 @@ impl program_stubs::SyscallStubs for TestSyscallStubs {
                 &new_account_infos,
                 &instruction.data,
             ),
+            id if id == openbook_v2::ID => openbook_v2::entry(
+                &instruction.program_id,
+                &new_account_infos,
+                &instruction.data,
+            ),
             _ => Err(ProgramError::IncorrectProgramId),
         }
     }
