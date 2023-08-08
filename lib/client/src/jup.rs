@@ -128,19 +128,20 @@ impl Amm for OpenBookMarket {
         } else {
             Side::Ask
         };
+
+        let input_amount = i64::try_from(quote_params.in_amount)?;
+
         // quote params can have exact in (which is implemented here) and exact out which is not implemented
         // check with jupiter to add to their API exact_out support
         let (max_base_lots, max_quote_lots_including_fees) = match side {
             Side::Bid => (
-                0,
-                TryInto::<i64>::try_into(quote_params.in_amount).unwrap()
-                    / self.market.quote_lot_size,
+                self.market.max_base_lots(),
+                input_amount / self.market.quote_lot_size
+                    + input_amount % self.market.quote_lot_size,
             ),
-
             Side::Ask => (
-                TryInto::<i64>::try_into(quote_params.in_amount).unwrap()
-                    / self.market.base_lot_size,
-                0,
+                input_amount / self.market.base_lot_size,
+                self.market.max_quote_lots(),
             ),
         };
 
@@ -160,14 +161,15 @@ impl Amm for OpenBookMarket {
             self.oracle_price,
             self.timestamp,
         )?;
+
         let (in_amount, out_amount) = match side {
             Side::Bid => (
-                order_amounts.total_quote_taken_native,
+                order_amounts.total_quote_taken_native - order_amounts.fee,
                 order_amounts.total_base_taken_native,
             ),
             Side::Ask => (
                 order_amounts.total_base_taken_native,
-                order_amounts.total_quote_taken_native,
+                order_amounts.total_quote_taken_native + order_amounts.fee,
             ),
         };
 
@@ -176,6 +178,7 @@ impl Amm for OpenBookMarket {
             out_amount,
             fee_mint: self.market.quote_mint,
             fee_amount: order_amounts.fee,
+            not_enough_liquidity: order_amounts.not_enough_liquidity,
             ..Quote::default()
         })
     }
@@ -224,5 +227,68 @@ impl Amm for OpenBookMarket {
 
     fn clone_amm(&self) -> Box<dyn Amm + Send + Sync> {
         Box::new(self.clone())
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use solana_client::rpc_client::RpcClient;
+    use std::str::FromStr;
+
+    #[test]
+    // TODO replace std::env by mainnet market after audit deploy
+    fn test_jupiter_local() -> Result<()> {
+        let market = match std::env::var("MARKET_PUBKEY") {
+            Ok(key) => Pubkey::from_str(&key)?,
+            Err(_) => {
+                println!("missing MARKET_PUBKEY env with an existing market in the local validator, skipping test");
+                return Ok(());
+            }
+        };
+
+        let rpc = RpcClient::new("http://127.0.0.1:8899");
+        let account = rpc.get_account(&market)?;
+
+        let market_account = KeyedAccount {
+            key: market,
+            account,
+            params: None,
+        };
+
+        let mut openbook = OpenBookMarket::from_keyed_account(&market_account).unwrap();
+
+        let pubkeys = openbook.get_accounts_to_update();
+        let accounts: AccountMap = pubkeys
+            .iter()
+            .zip(rpc.get_multiple_accounts(&pubkeys)?)
+            .map(|(key, acc)| (*key, acc.unwrap()))
+            .collect();
+
+        openbook.update(&accounts)?;
+
+        let (base_mint, quote_mint) = {
+            let reserves = openbook.get_reserve_mints();
+            (reserves[0], reserves[1])
+        };
+
+        let quote_params = QuoteParams {
+            in_amount: 80,
+            input_mint: base_mint,
+            output_mint: quote_mint,
+        };
+
+        let quote = openbook.quote(&quote_params)?;
+
+        println!(
+            "Market with base_lot_size = {}, quote_lot_size = {}, taker_fee = {}",
+            openbook.market.base_lot_size,
+            openbook.market.quote_lot_size,
+            openbook.market.taker_fee
+        );
+        println!("{:#?}", quote_params);
+        println!("{:#?}", quote);
+
+        Ok(())
     }
 }
