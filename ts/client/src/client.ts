@@ -2,7 +2,6 @@ import { type AnchorProvider, BN, type Program } from '@coral-xyz/anchor';
 import {
   MintLayout,
   NATIVE_MINT,
-  type RawAccount,
   type RawMint,
   TOKEN_PROGRAM_ID,
   createCloseAccountInstruction,
@@ -47,7 +46,11 @@ export class OpenBookV2Client {
     public cluster: Cluster,
     public opts: OpenBookClientOptions = {},
   ) {
-    this.idsSource = opts?.idsSource || 'get-program-accounts';
+    this.idsSource = opts
+      ? opts.idsSource
+        ? opts.idsSource
+        : 'get-program-accounts'
+      : 'get-program-accounts';
     this.prioritizationFee = opts?.prioritizationFee || 0;
     this.postSendTxCallback = opts?.postSendTxCallback;
     this.txConfirmationCommitment =

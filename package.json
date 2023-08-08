@@ -9,9 +9,9 @@
         "url": "https://github.com/openbook-dex"
     },
     "sideEffects": false,
-    "main": "./dist/cjs/src/index.js",
-    "module": "./dist/esm/src/index.js",
-    "types": "./dist/types/src/index.d.ts",
+    "main": "./dist/cjs/index.js",
+    "module": "./dist/esm/index.js",
+    "types": "./dist/types/index.d.ts",
     "files": [
         "dist"
     ],
@@ -30,7 +30,7 @@
         "trailingComma": "all"
     },
     "dependencies": {
-        "@coral-xyz/anchor": "^0.27.0",
+        "@coral-xyz/anchor": "^0.28.0",
         "@solana/spl-token": "0.3.8",
         "@solana/web3.js": "^1.77.3",
         "eslint-config-prettier": "^8.10.0"
