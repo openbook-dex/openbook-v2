@@ -1,13 +1,6 @@
-import {
-  PublicKey,
-  type Connection,
-} from '@solana/web3.js';
+import { PublicKey, type Connection } from '@solana/web3.js';
 import { getFilteredProgramAccounts } from './client';
-import {
-  utils,
-  getProvider,
-  Program,
-} from '@coral-xyz/anchor';
+import { utils, getProvider, Program } from '@coral-xyz/anchor';
 
 import { IDL, type OpenbookV2 } from './openbook_v2';
 
@@ -34,41 +27,63 @@ export async function findAccountsByMints(
   return await getFilteredProgramAccounts(connection, programId, filters);
 }
 
+interface Market {
+  market: string;
+  baseMint: string;
+  quoteMint: string;
+  name: string;
+}
 export async function findAllMarkets(
   connection: Connection,
   programId: PublicKey,
-): Promise<any[]> {
-  const program = new Program<OpenbookV2>(
-    IDL ,
-    programId,
-    getProvider(),
-  );
+): Promise<Market[]> {
+  const program = new Program<OpenbookV2>(IDL, programId, getProvider());
 
   const [eventAuthority, tmp3] = PublicKey.findProgramAddressSync(
     [Buffer.from('__event_authority')],
     programId,
   );
-  console.log('eventAuthority', eventAuthority.toString());
 
   const signatures = await connection.getSignaturesForAddress(eventAuthority);
-  const marketsAll: string[] = [];
+  const marketsAll: Market[] = [];
   for (const signature of signatures) {
     const tx = await connection.getTransaction(signature.signature, {
       commitment: 'confirmed',
     });
     if (
-      ((tx?.meta?.innerInstructions) != null) &&
+      tx?.meta?.innerInstructions != null &&
       tx.meta.innerInstructions[0].instructions.length == 2
     ) {
-      const ixData = utils.bytes.bs58.decode(
-        tx.meta.innerInstructions[0].instructions[1].data,
-      );
-      const eventData = utils.bytes.base64.encode(ixData.slice(8));
-      const event = program.coder.events.decode(eventData);
+      // validate key and program key
+      const eventAuthorityKey =
+        tx.meta.innerInstructions[0].instructions[1].accounts[0];
+      const programKey =
+        tx.meta.innerInstructions[0].instructions[1].programIdIndex;
 
-      if (event != null) {
-        const market = (event.data.market as PublicKey).toString();
-        marketsAll.push(market);
+      if (
+        tx.transaction.message.accountKeys[eventAuthorityKey].toString() !=
+          eventAuthority.toString() ||
+        tx.transaction.message.accountKeys[programKey].toString() !=
+          programId.toString()
+      ) {
+        console.log('This is not a valid event!');
+        continue;
+      } else {
+        const ixData = utils.bytes.bs58.decode(
+          tx.meta.innerInstructions[0].instructions[1].data,
+        );
+        const eventData = utils.bytes.base64.encode(ixData.slice(8));
+        const event = program.coder.events.decode(eventData);
+
+        if (event != null) {
+          const market: Market = {
+            market: (event.data.market as PublicKey).toString(),
+            baseMint: (event.data.baseMint as PublicKey).toString(),
+            quoteMint: (event.data.quoteMint as PublicKey).toString(),
+            name: event.data.name as string,
+          };
+          marketsAll.push(market);
+        }
       }
     }
   }

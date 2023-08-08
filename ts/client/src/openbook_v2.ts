@@ -2651,10 +2651,6 @@ export interface OpenbookV2 {
             "type": "u64"
           },
           {
-            "name": "maxOracleStalenessSlots",
-            "type": "i32"
-          },
-          {
             "name": "selfTradeBehavior",
             "type": {
               "defined": "SelfTradeBehavior"
@@ -2924,10 +2920,6 @@ export interface OpenbookV2 {
               {
                 "name": "peg_limit",
                 "type": "i64"
-              },
-              {
-                "name": "max_oracle_staleness_slots",
-                "type": "i32"
               }
             ]
           }
@@ -3073,6 +3065,21 @@ export interface OpenbookV2 {
           "index": false
         },
         {
+          "name": "name",
+          "type": "string",
+          "index": false
+        },
+        {
+          "name": "baseMint",
+          "type": "publicKey",
+          "index": false
+        },
+        {
+          "name": "quoteMint",
+          "type": "publicKey",
+          "index": false
+        },
+        {
           "name": "baseDecimals",
           "type": "u8",
           "index": false
@@ -3090,20 +3097,6 @@ export interface OpenbookV2 {
         {
           "name": "quoteLotSize",
           "type": "i64",
-          "index": false
-        },
-        {
-          "name": "oracleA",
-          "type": {
-            "option": "publicKey"
-          },
-          "index": false
-        },
-        {
-          "name": "oracleB",
-          "type": {
-            "option": "publicKey"
-          },
           "index": false
         }
       ]
@@ -6152,10 +6145,6 @@ export const IDL: OpenbookV2 = {
             "type": "u64"
           },
           {
-            "name": "maxOracleStalenessSlots",
-            "type": "i32"
-          },
-          {
             "name": "selfTradeBehavior",
             "type": {
               "defined": "SelfTradeBehavior"
@@ -6425,10 +6414,6 @@ export const IDL: OpenbookV2 = {
               {
                 "name": "peg_limit",
                 "type": "i64"
-              },
-              {
-                "name": "max_oracle_staleness_slots",
-                "type": "i32"
               }
             ]
           }
@@ -6574,6 +6559,21 @@ export const IDL: OpenbookV2 = {
           "index": false
         },
         {
+          "name": "name",
+          "type": "string",
+          "index": false
+        },
+        {
+          "name": "baseMint",
+          "type": "publicKey",
+          "index": false
+        },
+        {
+          "name": "quoteMint",
+          "type": "publicKey",
+          "index": false
+        },
+        {
           "name": "baseDecimals",
           "type": "u8",
           "index": false
@@ -6591,20 +6591,6 @@ export const IDL: OpenbookV2 = {
         {
           "name": "quoteLotSize",
           "type": "i64",
-          "index": false
-        },
-        {
-          "name": "oracleA",
-          "type": {
-            "option": "publicKey"
-          },
-          "index": false
-        },
-        {
-          "name": "oracleB",
-          "type": {
-            "option": "publicKey"
-          },
           "index": false
         }
       ]
