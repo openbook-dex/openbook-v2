@@ -35,12 +35,13 @@ pub struct FillLog {
 #[event]
 pub struct MarketMetaDataLog {
     pub market: Pubkey,
+    pub name: String,
+    pub base_mint: Pubkey,
+    pub quote_mint: Pubkey,
     pub base_decimals: u8,
     pub quote_decimals: u8,
     pub base_lot_size: i64,
     pub quote_lot_size: i64,
-    pub oracle_a: Option<Pubkey>,
-    pub oracle_b: Option<Pubkey>,
 }
 
 #[event]
