@@ -468,7 +468,6 @@ impl ClientInstruction for PlaceOrderPeggedInstruction {
                 client_order_id: self.client_order_id,
                 order_type: PlaceOrderType::Limit,
                 expiry_timestamp: 0,
-                max_oracle_staleness_slots: -1,
                 self_trade_behavior: SelfTradeBehavior::default(),
                 limit: 10,
             },

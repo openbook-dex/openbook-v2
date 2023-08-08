@@ -111,12 +111,13 @@ pub fn create_market(
 
     emit_cpi!(MarketMetaDataLog {
         market: ctx.accounts.market.key(),
+        name,
+        base_mint: ctx.accounts.base_mint.key(),
+        quote_mint: ctx.accounts.quote_mint.key(),
         base_decimals: ctx.accounts.base_mint.decimals,
         quote_decimals: ctx.accounts.quote_mint.decimals,
         base_lot_size,
         quote_lot_size,
-        oracle_a: oracle_a.into(),
-        oracle_b: oracle_b.into(),
     });
 
     Ok(())

@@ -29,9 +29,9 @@ available under GPL.
 
 | tag       | network |
 | --------- | ------- |
-| test-v0.3 | devnet  |
-| test-v0.3 | testnet |
-| test-v0.3 | mainnet |
+| test-v0.5 | devnet  |
+| test-v0.5 | testnet |
+| test-v0.5 | mainnet |
 
 ## Building & testing
 

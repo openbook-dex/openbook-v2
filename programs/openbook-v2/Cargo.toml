@@ -25,6 +25,7 @@ enable-gpl = []
 [dependencies]
 anchor-lang = { workspace = true, features = ["event-cpi"] }
 anchor-spl = { workspace = true }
+arbitrary = { version = "~1.0", features = ["derive"], optional = true }
 arrayref = "0.3.6"
 borsh = { version = "0.9.3", features = ["const-generics"] }
 bytemuck = { version = "^1.7.2", features = ["derive", "min_const_generics"] }
