@@ -625,6 +625,48 @@ impl FuzzContext {
         process_instruction(&mut self.state, data, &accounts, &[])
     }
 
+    pub fn cancel_and_place_orders(
+        &mut self,
+        user_id: &UserId,
+        data: &openbook_v2::instruction::CancelAndPlaceOrders,
+        makers: Option<&HashSet<UserId>>,
+    ) -> ProgramResult {
+        let user = self.get_or_create_new_user(user_id);
+
+        let accounts = openbook_v2::accounts::CancelAndPlaceOrders {
+            open_orders_account: user.open_orders,
+            signer: user.owner,
+            token_base_deposit_account: user.base_vault,
+            token_quote_deposit_account: user.quote_vault,
+            open_orders_admin: None,
+            market: self.market,
+            bids: self.bids,
+            asks: self.asks,
+            event_queue: self.event_queue,
+            market_base_vault: self.base_vault,
+            market_quote_vault: self.quote_vault,
+            oracle_a: self.oracle_a,
+            oracle_b: self.oracle_b,
+            token_program: spl_token::ID,
+            system_program: system_program::ID,
+        };
+
+        let remaining = makers.map_or_else(Vec::new, |makers| {
+            makers
+                .iter()
+                .filter(|id| id != &user_id)
+                .filter_map(|id| self.users.get(id))
+                .map(|user| AccountMeta {
+                    pubkey: user.open_orders,
+                    is_signer: false,
+                    is_writable: true,
+                })
+                .collect::<Vec<_>>()
+        });
+
+        process_instruction(&mut self.state, data, &accounts, &remaining)
+    }
+
     pub fn settle_funds(
         &mut self,
         user_id: &UserId,
