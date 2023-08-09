@@ -54,14 +54,23 @@ pub fn cancel_and_place_orders(
         if let Some(oo) = oo {
             let order_id = oo.id;
             let order_side_and_tree = oo.side_and_tree();
-            let leaf_node = book.cancel_order(
+
+            let cancel_result = book.cancel_order(
                 &mut open_orders_account,
                 order_id,
                 order_side_and_tree,
                 *market,
                 Some(ctx.accounts.open_orders_account.key()),
-            )?;
-            canceled_quantity += leaf_node.quantity;
+            );
+
+            if cancel_result.is_anchor_error_with_code(OpenBookError::OrderIdNotFound.into()) {
+                msg!(
+                    "order {} was not found on orderbook, expired or filled already",
+                    order_id
+                );
+            } else {
+                canceled_quantity += cancel_result?.quantity;
+            }
         };
     }
     if canceled_quantity > 0 {
