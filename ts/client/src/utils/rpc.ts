@@ -24,20 +24,20 @@ export async function sendTransaction(
         'finalized',
     ));
 
-  const payer = (provider ).wallet;
+  const payer = provider.wallet;
 
-  if (opts.prioritizationFee) {
+  if (opts.prioritizationFee !== null && opts.prioritizationFee !== 0) {
     ixs = [createComputeBudgetIx(opts.prioritizationFee), ...ixs];
   }
 
   const message = MessageV0.compile({
-    payerKey: (provider ).wallet.publicKey,
+    payerKey: provider.wallet.publicKey,
     instructions: ixs,
     recentBlockhash: latestBlockhash.blockhash,
     addressLookupTableAccounts: alts,
   });
   let vtx = new VersionedTransaction(message);
-  if (opts?.additionalSigners?.length) {
+  if (opts?.additionalSigners?.length !== 0) {
     vtx.sign([...opts?.additionalSigners]);
   }
 
@@ -64,11 +64,14 @@ export async function sendTransaction(
   //   },
   // );
 
-  if (opts.postSendTxCallback) {
+  if (
+    opts.postSendTxCallback !== null &&
+    opts.postSendTxCallback !== undefined
+  ) {
     try {
       opts.postSendTxCallback({ txid: signature });
     } catch (e) {
-      console.warn(`postSendTxCallback error ${e}`);
+      console.warn(`postSendTxCallback error`, e);
     }
   }
 
@@ -94,7 +97,7 @@ export async function sendTransaction(
     ).value;
   }
 
-  if (status.err) {
+  if (status.err !== '') {
     console.warn('Tx status: ', status);
     throw new MangoError({
       txid: signature,

@@ -1,6 +1,6 @@
-import { PublicKey, type Connection } from '@solana/web3.js';
+import { PublicKey, type Connection, type AccountInfo } from '@solana/web3.js';
 import { getFilteredProgramAccounts } from './client';
-import { utils, getProvider, Program } from '@coral-xyz/anchor';
+import { utils, getProvider, Program, type Provider } from '@coral-xyz/anchor';
 
 import { IDL, type OpenbookV2 } from './openbook_v2';
 
@@ -9,7 +9,7 @@ export async function findAccountsByMints(
   baseMintAddress: PublicKey,
   quoteMintAddress: PublicKey,
   programId: PublicKey,
-) {
+): Promise<Array<{ publicKey: PublicKey; accountInfo: AccountInfo<Buffer> }>> {
   const filters = [
     {
       memcmp: {
@@ -36,10 +36,14 @@ interface Market {
 export async function findAllMarkets(
   connection: Connection,
   programId: PublicKey,
+  provider?: Provider,
 ): Promise<Market[]> {
-  const program = new Program<OpenbookV2>(IDL, programId, getProvider());
+  if (provider === null) {
+    provider = getProvider();
+  }
+  const program = new Program<OpenbookV2>(IDL, programId, provider);
 
-  const [eventAuthority, tmp3] = PublicKey.findProgramAddressSync(
+  const [eventAuthority] = PublicKey.findProgramAddressSync(
     [Buffer.from('__event_authority')],
     programId,
   );
@@ -51,8 +55,9 @@ export async function findAllMarkets(
       commitment: 'confirmed',
     });
     if (
-      tx?.meta?.innerInstructions != null &&
-      tx.meta.innerInstructions[0].instructions.length == 2
+      tx?.meta?.innerInstructions !== null &&
+      tx?.meta?.innerInstructions !== undefined &&
+      tx.meta.innerInstructions[0].instructions.length === 2
     ) {
       // validate key and program key
       const eventAuthorityKey =
@@ -61,9 +66,9 @@ export async function findAllMarkets(
         tx.meta.innerInstructions[0].instructions[1].programIdIndex;
 
       if (
-        tx.transaction.message.accountKeys[eventAuthorityKey].toString() !=
+        tx.transaction.message.accountKeys[eventAuthorityKey].toString() !==
           eventAuthority.toString() ||
-        tx.transaction.message.accountKeys[programKey].toString() !=
+        tx.transaction.message.accountKeys[programKey].toString() !==
           programId.toString()
       ) {
         console.log('This is not a valid event!');

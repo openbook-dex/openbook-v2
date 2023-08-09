@@ -20,7 +20,7 @@ import {
   type TransactionInstruction,
   type TransactionSignature,
 } from '@solana/web3.js';
-import { IDL, type OpenbookV2 } from './openbook_v2';
+import { type OpenbookV2 } from './openbook_v2';
 import { sendTransaction } from './utils/rpc';
 import { type OpenOrdersAccount } from './accounts/openOrdersAccount';
 import { type Market } from './accounts/market';
@@ -46,12 +46,8 @@ export class OpenBookV2Client {
     public cluster: Cluster,
     public opts: OpenBookClientOptions = {},
   ) {
-    this.idsSource = opts
-      ? opts.idsSource
-        ? opts.idsSource
-        : 'get-program-accounts'
-      : 'get-program-accounts';
-    this.prioritizationFee = opts?.prioritizationFee || 0;
+    this.idsSource = opts.idsSource ?? 'get-program-accounts';
+    this.prioritizationFee = opts?.prioritizationFee ?? 0;
     this.postSendTxCallback = opts?.postSendTxCallback;
     this.txConfirmationCommitment =
       opts?.txConfirmationCommitment ??
@@ -136,7 +132,7 @@ export class OpenBookV2Client {
 
     const market = Keypair.generate();
 
-    const [marketAuthority, _tmp2] = PublicKey.findProgramAddressSync(
+    const [marketAuthority] = PublicKey.findProgramAddressSync(
       [Buffer.from('Market'), market.publicKey.toBuffer()],
       this.program.programId,
     );
@@ -163,7 +159,7 @@ export class OpenBookV2Client {
       TOKEN_PROGRAM_ID,
       marketAuthority,
     );
-    const [eventAuthority, _tmp3] = PublicKey.findProgramAddressSync(
+    const [eventAuthority] = PublicKey.findProgramAddressSync(
       [Buffer.from('__event_authority')],
       this.program.programId,
     );
@@ -237,12 +233,11 @@ export class OpenBookV2Client {
     baseAmount: BN,
     quoteAmount: BN,
   ): Promise<TransactionSignature> {
-    let wrappedSolAccount: Keypair | undefined;
+    const wrappedSolAccount: Keypair | undefined = new Keypair();
     let preInstructions: TransactionInstruction[] = [];
     let postInstructions: TransactionInstruction[] = [];
     const additionalSigners: Signer[] = [];
 
-    wrappedSolAccount = new Keypair();
     const lamports = baseAmount.add(new BN(1e7));
 
     preInstructions = [
@@ -381,7 +376,7 @@ export async function getFilteredProgramAccounts(
   programId: PublicKey,
   filters,
 ): Promise<Array<{ publicKey: PublicKey; accountInfo: AccountInfo<Buffer> }>> {
-  // @ts-expect-error
+  // @ts-expect-error not need check
   const resp = await connection._rpcRequest('getProgramAccounts', [
     programId.toBase58(),
     {
@@ -390,7 +385,7 @@ export async function getFilteredProgramAccounts(
       encoding: 'base64',
     },
   ]);
-  if (resp.error) {
+  if (resp.error !== null) {
     throw new Error(resp.error.message);
   }
   return resp.result.map(

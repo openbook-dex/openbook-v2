@@ -1,6987 +1,6679 @@
 export interface OpenbookV2 {
-  "version": "0.1.0",
-  "name": "openbook_v2",
-  "instructions": [
+  version: '0.1.0';
+  name: 'openbook_v2';
+  instructions: [
     {
-      "name": "createMarket",
-      "docs": [
-        "Create a [`Market`](crate::state::Market) for a given token pair."
-      ],
-      "accounts": [
+      name: 'createMarket';
+      docs: [
+        'Create a [`Market`](crate::state::Market) for a given token pair.',
+      ];
+      accounts: [
         {
-          "name": "market",
-          "isMut": true,
-          "isSigner": true
+          name: 'market';
+          isMut: true;
+          isSigner: true;
         },
         {
-          "name": "marketAuthority",
-          "isMut": false,
-          "isSigner": false
+          name: 'marketAuthority';
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "bids",
-          "isMut": true,
-          "isSigner": false,
-          "docs": [
-            "Accounts are initialized by client,",
-            "anchor discriminator is set first when ix exits,"
-          ]
+          name: 'bids';
+          isMut: true;
+          isSigner: false;
+          docs: [
+            'Accounts are initialized by client,',
+            'anchor discriminator is set first when ix exits,',
+          ];
         },
         {
-          "name": "asks",
-          "isMut": true,
-          "isSigner": false
+          name: 'asks';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "eventQueue",
-          "isMut": true,
-          "isSigner": false
+          name: 'eventQueue';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "payer",
-          "isMut": true,
-          "isSigner": true
+          name: 'payer';
+          isMut: true;
+          isSigner: true;
         },
         {
-          "name": "baseVault",
-          "isMut": true,
-          "isSigner": false
+          name: 'baseVault';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "quoteVault",
-          "isMut": true,
-          "isSigner": false
+          name: 'quoteVault';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "baseMint",
-          "isMut": false,
-          "isSigner": false
+          name: 'baseMint';
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "quoteMint",
-          "isMut": false,
-          "isSigner": false
+          name: 'quoteMint';
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
+          name: 'systemProgram';
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "oracleA",
-          "isMut": false,
-          "isSigner": false,
-          "isOptional": true
+          name: 'oracleA';
+          isMut: false;
+          isSigner: false;
+          isOptional: true;
         },
         {
-          "name": "oracleB",
-          "isMut": false,
-          "isSigner": false,
-          "isOptional": true
+          name: 'oracleB';
+          isMut: false;
+          isSigner: false;
+          isOptional: true;
         },
         {
-          "name": "collectFeeAdmin",
-          "isMut": false,
-          "isSigner": false
+          name: 'collectFeeAdmin';
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "openOrdersAdmin",
-          "isMut": false,
-          "isSigner": false,
-          "isOptional": true
+          name: 'openOrdersAdmin';
+          isMut: false;
+          isSigner: false;
+          isOptional: true;
         },
         {
-          "name": "consumeEventsAdmin",
-          "isMut": false,
-          "isSigner": false,
-          "isOptional": true
+          name: 'consumeEventsAdmin';
+          isMut: false;
+          isSigner: false;
+          isOptional: true;
         },
         {
-          "name": "closeMarketAdmin",
-          "isMut": false,
-          "isSigner": false,
-          "isOptional": true
+          name: 'closeMarketAdmin';
+          isMut: false;
+          isSigner: false;
+          isOptional: true;
         },
         {
-          "name": "eventAuthority",
-          "isMut": false,
-          "isSigner": false
+          name: 'eventAuthority';
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "program",
-          "isMut": false,
-          "isSigner": false
-        }
-      ],
-      "args": [
+          name: 'program';
+          isMut: false;
+          isSigner: false;
+        },
+      ];
+      args: [
         {
-          "name": "name",
-          "type": "string"
+          name: 'name';
+          type: 'string';
         },
         {
-          "name": "oracleConfig",
-          "type": {
-            "defined": "OracleConfigParams"
-          }
+          name: 'oracleConfig';
+          type: {
+            defined: 'OracleConfigParams';
+          };
         },
         {
-          "name": "quoteLotSize",
-          "type": "i64"
+          name: 'quoteLotSize';
+          type: 'i64';
         },
         {
-          "name": "baseLotSize",
-          "type": "i64"
+          name: 'baseLotSize';
+          type: 'i64';
         },
         {
-          "name": "makerFee",
-          "type": "i64"
+          name: 'makerFee';
+          type: 'i64';
         },
         {
-          "name": "takerFee",
-          "type": "i64"
+          name: 'takerFee';
+          type: 'i64';
         },
         {
-          "name": "timeExpiry",
-          "type": "i64"
-        }
-      ]
+          name: 'timeExpiry';
+          type: 'i64';
+        },
+      ];
     },
     {
-      "name": "closeMarket",
-      "docs": [
-        "Close a [`Market`](crate::state::Market)."
-      ],
-      "accounts": [
+      name: 'closeMarket';
+      docs: ['Close a [`Market`](crate::state::Market).'];
+      accounts: [
         {
-          "name": "closeMarketAdmin",
-          "isMut": false,
-          "isSigner": true
+          name: 'closeMarketAdmin';
+          isMut: false;
+          isSigner: true;
         },
         {
-          "name": "market",
-          "isMut": true,
-          "isSigner": false
+          name: 'market';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "bids",
-          "isMut": true,
-          "isSigner": false
+          name: 'bids';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "asks",
-          "isMut": true,
-          "isSigner": false
+          name: 'asks';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "eventQueue",
-          "isMut": true,
-          "isSigner": false
+          name: 'eventQueue';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "solDestination",
-          "isMut": true,
-          "isSigner": false
+          name: 'solDestination';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "tokenProgram",
-          "isMut": false,
-          "isSigner": false
-        }
-      ],
-      "args": []
+          name: 'tokenProgram';
+          isMut: false;
+          isSigner: false;
+        },
+      ];
+      args: [];
     },
     {
-      "name": "createOpenOrdersIndexer",
-      "accounts": [
+      name: 'createOpenOrdersIndexer';
+      accounts: [
         {
-          "name": "payer",
-          "isMut": true,
-          "isSigner": true
+          name: 'payer';
+          isMut: true;
+          isSigner: true;
         },
         {
-          "name": "owner",
-          "isMut": false,
-          "isSigner": true
+          name: 'owner';
+          isMut: false;
+          isSigner: true;
         },
         {
-          "name": "openOrdersIndexer",
-          "isMut": true,
-          "isSigner": false
+          name: 'openOrdersIndexer';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "market",
-          "isMut": false,
-          "isSigner": false
+          name: 'market';
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
-        }
-      ],
-      "args": []
+          name: 'systemProgram';
+          isMut: false;
+          isSigner: false;
+        },
+      ];
+      args: [];
     },
     {
-      "name": "closeOpenOrdersIndexer",
-      "accounts": [
+      name: 'closeOpenOrdersIndexer';
+      accounts: [
         {
-          "name": "owner",
-          "isMut": false,
-          "isSigner": true
+          name: 'owner';
+          isMut: false;
+          isSigner: true;
         },
         {
-          "name": "openOrdersIndexer",
-          "isMut": true,
-          "isSigner": false
+          name: 'openOrdersIndexer';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "solDestination",
-          "isMut": true,
-          "isSigner": false
+          name: 'solDestination';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "tokenProgram",
-          "isMut": false,
-          "isSigner": false
-        }
-      ],
-      "args": []
+          name: 'tokenProgram';
+          isMut: false;
+          isSigner: false;
+        },
+      ];
+      args: [];
     },
     {
-      "name": "createOpenOrdersAccount",
-      "accounts": [
+      name: 'createOpenOrdersAccount';
+      accounts: [
         {
-          "name": "payer",
-          "isMut": true,
-          "isSigner": true
+          name: 'payer';
+          isMut: true;
+          isSigner: true;
         },
         {
-          "name": "owner",
-          "isMut": false,
-          "isSigner": true
+          name: 'owner';
+          isMut: false;
+          isSigner: true;
         },
         {
-          "name": "delegateAccount",
-          "isMut": false,
-          "isSigner": false,
-          "isOptional": true
+          name: 'delegateAccount';
+          isMut: false;
+          isSigner: false;
+          isOptional: true;
         },
         {
-          "name": "openOrdersIndexer",
-          "isMut": true,
-          "isSigner": false
+          name: 'openOrdersIndexer';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "openOrdersAccount",
-          "isMut": true,
-          "isSigner": false
+          name: 'openOrdersAccount';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "market",
-          "isMut": false,
-          "isSigner": false
+          name: 'market';
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
-        }
-      ],
-      "args": []
+          name: 'systemProgram';
+          isMut: false;
+          isSigner: false;
+        },
+      ];
+      args: [];
     },
     {
-      "name": "closeOpenOrdersAccount",
-      "accounts": [
+      name: 'closeOpenOrdersAccount';
+      accounts: [
         {
-          "name": "owner",
-          "isMut": false,
-          "isSigner": true
+          name: 'owner';
+          isMut: false;
+          isSigner: true;
         },
         {
-          "name": "openOrdersIndexer",
-          "isMut": true,
-          "isSigner": false
+          name: 'openOrdersIndexer';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "openOrdersAccount",
-          "isMut": true,
-          "isSigner": false
+          name: 'openOrdersAccount';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "solDestination",
-          "isMut": true,
-          "isSigner": false
-        }
-      ],
-      "args": []
+          name: 'solDestination';
+          isMut: true;
+          isSigner: false;
+        },
+      ];
+      args: [];
     },
     {
-      "name": "placeOrder",
-      "docs": [
-        "Place an order.",
-        "",
-        "Different types of orders have different effects on the order book,",
-        "as described in [`PlaceOrderType`](crate::state::PlaceOrderType).",
-        "",
-        "`price_lots` refers to the price in lots: the number of quote lots",
-        "per base lot. It is ignored for `PlaceOrderType::Market` orders.",
-        "",
-        "`expiry_timestamp` is a unix timestamp for when this order should",
-        "expire. If 0 is passed in, the order will never expire. If the time",
-        "is in the past, the instruction is skipped. Timestamps in the future",
-        "are reduced to now + 65,535s.",
-        "",
-        "`limit` determines the maximum number of orders from the book to fill,",
-        "and can be used to limit CU spent. When the limit is reached, processing",
-        "stops and the instruction succeeds."
-      ],
-      "accounts": [
+      name: 'placeOrder';
+      docs: [
+        'Place an order.',
+        '',
+        'Different types of orders have different effects on the order book,',
+        'as described in [`PlaceOrderType`](crate::state::PlaceOrderType).',
+        '',
+        '`price_lots` refers to the price in lots: the number of quote lots',
+        'per base lot. It is ignored for `PlaceOrderType::Market` orders.',
+        '',
+        '`expiry_timestamp` is a unix timestamp for when this order should',
+        'expire. If 0 is passed in, the order will never expire. If the time',
+        'is in the past, the instruction is skipped. Timestamps in the future',
+        'are reduced to now + 65,535s.',
+        '',
+        '`limit` determines the maximum number of orders from the book to fill,',
+        'and can be used to limit CU spent. When the limit is reached, processing',
+        'stops and the instruction succeeds.',
+      ];
+      accounts: [
         {
-          "name": "signer",
-          "isMut": false,
-          "isSigner": true
+          name: 'signer';
+          isMut: false;
+          isSigner: true;
         },
         {
-          "name": "openOrdersAccount",
-          "isMut": true,
-          "isSigner": false
+          name: 'openOrdersAccount';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "openOrdersAdmin",
-          "isMut": false,
-          "isSigner": true,
-          "isOptional": true
+          name: 'openOrdersAdmin';
+          isMut: false;
+          isSigner: true;
+          isOptional: true;
         },
         {
-          "name": "tokenDepositAccount",
-          "isMut": true,
-          "isSigner": false
+          name: 'tokenDepositAccount';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "market",
-          "isMut": true,
-          "isSigner": false
+          name: 'market';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "bids",
-          "isMut": true,
-          "isSigner": false
+          name: 'bids';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "asks",
-          "isMut": true,
-          "isSigner": false
+          name: 'asks';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "eventQueue",
-          "isMut": true,
-          "isSigner": false
+          name: 'eventQueue';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "marketVault",
-          "isMut": true,
-          "isSigner": false
+          name: 'marketVault';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "oracleA",
-          "isMut": false,
-          "isSigner": false,
-          "isOptional": true
+          name: 'oracleA';
+          isMut: false;
+          isSigner: false;
+          isOptional: true;
         },
         {
-          "name": "oracleB",
-          "isMut": false,
-          "isSigner": false,
-          "isOptional": true
+          name: 'oracleB';
+          isMut: false;
+          isSigner: false;
+          isOptional: true;
         },
         {
-          "name": "tokenProgram",
-          "isMut": false,
-          "isSigner": false
+          name: 'tokenProgram';
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
-        }
-      ],
-      "args": [
+          name: 'systemProgram';
+          isMut: false;
+          isSigner: false;
+        },
+      ];
+      args: [
         {
-          "name": "args",
-          "type": {
-            "defined": "PlaceOrderArgs"
-          }
-        }
-      ],
-      "returns": {
-        "option": "u128"
-      }
+          name: 'args';
+          type: {
+            defined: 'PlaceOrderArgs';
+          };
+        },
+      ];
+      returns: {
+        option: 'u128';
+      };
     },
     {
-      "name": "cancelAndPlaceOrders",
-      "docs": [
-        "Cancel orders and place multiple orders.",
-        ""
-      ],
-      "accounts": [
+      name: 'cancelAndPlaceOrders';
+      docs: ['Cancel orders and place multiple orders.', ''];
+      accounts: [
         {
-          "name": "signer",
-          "isMut": false,
-          "isSigner": true
+          name: 'signer';
+          isMut: false;
+          isSigner: true;
         },
         {
-          "name": "openOrdersAccount",
-          "isMut": true,
-          "isSigner": false
+          name: 'openOrdersAccount';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "openOrdersAdmin",
-          "isMut": false,
-          "isSigner": true,
-          "isOptional": true
+          name: 'openOrdersAdmin';
+          isMut: false;
+          isSigner: true;
+          isOptional: true;
         },
         {
-          "name": "tokenQuoteDepositAccount",
-          "isMut": true,
-          "isSigner": false
+          name: 'tokenQuoteDepositAccount';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "tokenBaseDepositAccount",
-          "isMut": true,
-          "isSigner": false
+          name: 'tokenBaseDepositAccount';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "market",
-          "isMut": true,
-          "isSigner": false
+          name: 'market';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "bids",
-          "isMut": true,
-          "isSigner": false
+          name: 'bids';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "asks",
-          "isMut": true,
-          "isSigner": false
+          name: 'asks';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "eventQueue",
-          "isMut": true,
-          "isSigner": false
+          name: 'eventQueue';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "marketQuoteVault",
-          "isMut": true,
-          "isSigner": false
+          name: 'marketQuoteVault';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "marketBaseVault",
-          "isMut": true,
-          "isSigner": false
+          name: 'marketBaseVault';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "oracleA",
-          "isMut": false,
-          "isSigner": false,
-          "isOptional": true
+          name: 'oracleA';
+          isMut: false;
+          isSigner: false;
+          isOptional: true;
         },
         {
-          "name": "oracleB",
-          "isMut": false,
-          "isSigner": false,
-          "isOptional": true
+          name: 'oracleB';
+          isMut: false;
+          isSigner: false;
+          isOptional: true;
         },
         {
-          "name": "tokenProgram",
-          "isMut": false,
-          "isSigner": false
+          name: 'tokenProgram';
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
-        }
-      ],
-      "args": [
+          name: 'systemProgram';
+          isMut: false;
+          isSigner: false;
+        },
+      ];
+      args: [
         {
-          "name": "cancelClientOrdersIds",
-          "type": {
-            "vec": "u64"
-          }
+          name: 'cancelClientOrdersIds';
+          type: {
+            vec: 'u64';
+          };
         },
         {
-          "name": "placeOrders",
-          "type": {
-            "vec": {
-              "defined": "PlaceOrderArgs"
-            }
-          }
-        }
-      ],
-      "returns": {
-        "vec": {
-          "option": "u128"
-        }
-      }
+          name: 'placeOrders';
+          type: {
+            vec: {
+              defined: 'PlaceOrderArgs';
+            };
+          };
+        },
+      ];
+      returns: {
+        vec: {
+          option: 'u128';
+        };
+      };
     },
     {
-      "name": "placeOrderPegged",
-      "accounts": [
+      name: 'placeOrderPegged';
+      accounts: [
         {
-          "name": "signer",
-          "isMut": false,
-          "isSigner": true
+          name: 'signer';
+          isMut: false;
+          isSigner: true;
         },
         {
-          "name": "openOrdersAccount",
-          "isMut": true,
-          "isSigner": false
+          name: 'openOrdersAccount';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "openOrdersAdmin",
-          "isMut": false,
-          "isSigner": true,
-          "isOptional": true
+          name: 'openOrdersAdmin';
+          isMut: false;
+          isSigner: true;
+          isOptional: true;
         },
         {
-          "name": "tokenDepositAccount",
-          "isMut": true,
-          "isSigner": false
+          name: 'tokenDepositAccount';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "market",
-          "isMut": true,
-          "isSigner": false
+          name: 'market';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "bids",
-          "isMut": true,
-          "isSigner": false
+          name: 'bids';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "asks",
-          "isMut": true,
-          "isSigner": false
+          name: 'asks';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "eventQueue",
-          "isMut": true,
-          "isSigner": false
+          name: 'eventQueue';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "marketVault",
-          "isMut": true,
-          "isSigner": false
+          name: 'marketVault';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "oracleA",
-          "isMut": false,
-          "isSigner": false,
-          "isOptional": true
+          name: 'oracleA';
+          isMut: false;
+          isSigner: false;
+          isOptional: true;
         },
         {
-          "name": "oracleB",
-          "isMut": false,
-          "isSigner": false,
-          "isOptional": true
+          name: 'oracleB';
+          isMut: false;
+          isSigner: false;
+          isOptional: true;
         },
         {
-          "name": "tokenProgram",
-          "isMut": false,
-          "isSigner": false
+          name: 'tokenProgram';
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
-        }
-      ],
-      "args": [
+          name: 'systemProgram';
+          isMut: false;
+          isSigner: false;
+        },
+      ];
+      args: [
         {
-          "name": "args",
-          "type": {
-            "defined": "PlaceOrderPeggedArgs"
-          }
-        }
-      ],
-      "returns": {
-        "option": "u128"
-      }
+          name: 'args';
+          type: {
+            defined: 'PlaceOrderPeggedArgs';
+          };
+        },
+      ];
+      returns: {
+        option: 'u128';
+      };
     },
     {
-      "name": "placeTakeOrder",
-      "docs": [
-        "Place an order that shall take existing liquidity off of the book, not",
-        "add a new order off the book.",
-        "",
-        "This type of order allows for instant token settlement for the taker."
-      ],
-      "accounts": [
+      name: 'placeTakeOrder';
+      docs: [
+        'Place an order that shall take existing liquidity off of the book, not',
+        'add a new order off the book.',
+        '',
+        'This type of order allows for instant token settlement for the taker.',
+      ];
+      accounts: [
         {
-          "name": "signer",
-          "isMut": false,
-          "isSigner": true
+          name: 'signer';
+          isMut: false;
+          isSigner: true;
         },
         {
-          "name": "market",
-          "isMut": true,
-          "isSigner": false
+          name: 'market';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "marketAuthority",
-          "isMut": false,
-          "isSigner": false
+          name: 'marketAuthority';
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "bids",
-          "isMut": true,
-          "isSigner": false
+          name: 'bids';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "asks",
-          "isMut": true,
-          "isSigner": false
+          name: 'asks';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "baseVault",
-          "isMut": true,
-          "isSigner": false
+          name: 'baseVault';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "quoteVault",
-          "isMut": true,
-          "isSigner": false
+          name: 'quoteVault';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "eventQueue",
-          "isMut": true,
-          "isSigner": false
+          name: 'eventQueue';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "tokenDepositAccount",
-          "isMut": true,
-          "isSigner": false
+          name: 'tokenDepositAccount';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "tokenReceiverAccount",
-          "isMut": true,
-          "isSigner": false
+          name: 'tokenReceiverAccount';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "referrer",
-          "isMut": true,
-          "isSigner": false,
-          "isOptional": true
+          name: 'referrer';
+          isMut: true;
+          isSigner: false;
+          isOptional: true;
         },
         {
-          "name": "oracleA",
-          "isMut": false,
-          "isSigner": false,
-          "isOptional": true
+          name: 'oracleA';
+          isMut: false;
+          isSigner: false;
+          isOptional: true;
         },
         {
-          "name": "oracleB",
-          "isMut": false,
-          "isSigner": false,
-          "isOptional": true
+          name: 'oracleB';
+          isMut: false;
+          isSigner: false;
+          isOptional: true;
         },
         {
-          "name": "tokenProgram",
-          "isMut": false,
-          "isSigner": false
+          name: 'tokenProgram';
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
+          name: 'systemProgram';
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "openOrdersAdmin",
-          "isMut": false,
-          "isSigner": true,
-          "isOptional": true
-        }
-      ],
-      "args": [
+          name: 'openOrdersAdmin';
+          isMut: false;
+          isSigner: true;
+          isOptional: true;
+        },
+      ];
+      args: [
         {
-          "name": "args",
-          "type": {
-            "defined": "PlaceTakeOrderArgs"
-          }
-        }
-      ]
+          name: 'args';
+          type: {
+            defined: 'PlaceTakeOrderArgs';
+          };
+        },
+      ];
     },
     {
-      "name": "consumeEvents",
-      "docs": [
-        "Process up to `limit` [events](crate::state::AnyEvent).",
-        "",
+      name: 'consumeEvents';
+      docs: [
+        'Process up to `limit` [events](crate::state::AnyEvent).',
+        '',
         "When a user places a 'take' order, they do not know beforehand which",
         "market maker will have placed the 'make' order that they get executed",
         "against. This prevents them from passing in a market maker's",
-        "[`OpenOrdersAccount`](crate::state::OpenOrdersAccount), which is needed",
-        "to credit/debit the relevant tokens to/from the maker. As such, Openbook",
+        '[`OpenOrdersAccount`](crate::state::OpenOrdersAccount), which is needed',
+        'to credit/debit the relevant tokens to/from the maker. As such, Openbook',
         "uses a 'crank' system, where `place_order` only emits events, and",
-        "`consume_events` handles token settlement.",
-        "",
-        "Currently, there are two types of events: [`FillEvent`](crate::state::FillEvent)s",
-        "and [`OutEvent`](crate::state::OutEvent)s.",
-        "",
-        "A `FillEvent` is emitted when an order is filled, and it is handled by",
-        "debiting whatever the taker is selling from the taker and crediting",
-        "it to the maker, and debiting whatever the taker is buying from the",
-        "maker and crediting it to the taker. Note that *no tokens are moved*,",
+        '`consume_events` handles token settlement.',
+        '',
+        'Currently, there are two types of events: [`FillEvent`](crate::state::FillEvent)s',
+        'and [`OutEvent`](crate::state::OutEvent)s.',
+        '',
+        'A `FillEvent` is emitted when an order is filled, and it is handled by',
+        'debiting whatever the taker is selling from the taker and crediting',
+        'it to the maker, and debiting whatever the taker is buying from the',
+        'maker and crediting it to the taker. Note that *no tokens are moved*,',
         "these are just debits and credits to each party's [`Position`](crate::state::Position).",
-        "",
-        "An `OutEvent` is emitted when a limit order needs to be removed from",
-        "the book during a `place_order` invocation, and it is handled by",
-        "crediting whatever the maker would have sold (quote token in a bid,",
-        "base token in an ask) back to the maker."
-      ],
-      "accounts": [
+        '',
+        'An `OutEvent` is emitted when a limit order needs to be removed from',
+        'the book during a `place_order` invocation, and it is handled by',
+        'crediting whatever the maker would have sold (quote token in a bid,',
+        'base token in an ask) back to the maker.',
+      ];
+      accounts: [
         {
-          "name": "consumeEventsAdmin",
-          "isMut": false,
-          "isSigner": true,
-          "isOptional": true
+          name: 'consumeEventsAdmin';
+          isMut: false;
+          isSigner: true;
+          isOptional: true;
         },
         {
-          "name": "market",
-          "isMut": true,
-          "isSigner": false
+          name: 'market';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "eventQueue",
-          "isMut": true,
-          "isSigner": false
-        }
-      ],
-      "args": [
+          name: 'eventQueue';
+          isMut: true;
+          isSigner: false;
+        },
+      ];
+      args: [
         {
-          "name": "limit",
-          "type": "u64"
-        }
-      ]
+          name: 'limit';
+          type: 'u64';
+        },
+      ];
     },
     {
-      "name": "consumeGivenEvents",
-      "docs": [
-        "Process the [events](crate::state::AnyEvent) at the given positions."
-      ],
-      "accounts": [
+      name: 'consumeGivenEvents';
+      docs: [
+        'Process the [events](crate::state::AnyEvent) at the given positions.',
+      ];
+      accounts: [
         {
-          "name": "consumeEventsAdmin",
-          "isMut": false,
-          "isSigner": true,
-          "isOptional": true
+          name: 'consumeEventsAdmin';
+          isMut: false;
+          isSigner: true;
+          isOptional: true;
         },
         {
-          "name": "market",
-          "isMut": true,
-          "isSigner": false
+          name: 'market';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "eventQueue",
-          "isMut": true,
-          "isSigner": false
-        }
-      ],
-      "args": [
+          name: 'eventQueue';
+          isMut: true;
+          isSigner: false;
+        },
+      ];
+      args: [
         {
-          "name": "slots",
-          "type": {
-            "vec": "u64"
-          }
-        }
-      ]
+          name: 'slots';
+          type: {
+            vec: 'u64';
+          };
+        },
+      ];
     },
     {
-      "name": "cancelOrder",
-      "docs": [
-        "Cancel an order by its `order_id`.",
-        "",
+      name: 'cancelOrder';
+      docs: [
+        'Cancel an order by its `order_id`.',
+        '',
         "Note that this doesn't emit an [`OutEvent`](crate::state::OutEvent) because a",
-        "maker knows that they will be passing in their own [`OpenOrdersAccount`](crate::state::OpenOrdersAccount)."
-      ],
-      "accounts": [
+        'maker knows that they will be passing in their own [`OpenOrdersAccount`](crate::state::OpenOrdersAccount).',
+      ];
+      accounts: [
         {
-          "name": "signer",
-          "isMut": false,
-          "isSigner": true
+          name: 'signer';
+          isMut: false;
+          isSigner: true;
         },
         {
-          "name": "openOrdersAccount",
-          "isMut": true,
-          "isSigner": false
+          name: 'openOrdersAccount';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "market",
-          "isMut": false,
-          "isSigner": false
+          name: 'market';
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "bids",
-          "isMut": true,
-          "isSigner": false
+          name: 'bids';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "asks",
-          "isMut": true,
-          "isSigner": false
-        }
-      ],
-      "args": [
+          name: 'asks';
+          isMut: true;
+          isSigner: false;
+        },
+      ];
+      args: [
         {
-          "name": "orderId",
-          "type": "u128"
-        }
-      ]
+          name: 'orderId';
+          type: 'u128';
+        },
+      ];
     },
     {
-      "name": "cancelOrderByClientOrderId",
-      "docs": [
-        "Cancel an order by its `client_order_id`.",
-        "",
+      name: 'cancelOrderByClientOrderId';
+      docs: [
+        'Cancel an order by its `client_order_id`.',
+        '',
         "Note that this doesn't emit an [`OutEvent`](crate::state::OutEvent) because a",
-        "maker knows that they will be passing in their own [`OpenOrdersAccount`](crate::state::OpenOrdersAccount)."
-      ],
-      "accounts": [
+        'maker knows that they will be passing in their own [`OpenOrdersAccount`](crate::state::OpenOrdersAccount).',
+      ];
+      accounts: [
         {
-          "name": "signer",
-          "isMut": false,
-          "isSigner": true
+          name: 'signer';
+          isMut: false;
+          isSigner: true;
         },
         {
-          "name": "openOrdersAccount",
-          "isMut": true,
-          "isSigner": false
+          name: 'openOrdersAccount';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "market",
-          "isMut": false,
-          "isSigner": false
+          name: 'market';
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "bids",
-          "isMut": true,
-          "isSigner": false
+          name: 'bids';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "asks",
-          "isMut": true,
-          "isSigner": false
-        }
-      ],
-      "args": [
+          name: 'asks';
+          isMut: true;
+          isSigner: false;
+        },
+      ];
+      args: [
         {
-          "name": "clientOrderId",
-          "type": "u64"
-        }
-      ]
+          name: 'clientOrderId';
+          type: 'u64';
+        },
+      ];
     },
     {
-      "name": "cancelAllOrders",
-      "docs": [
-        "Cancel up to `limit` orders, optionally filtering by side"
-      ],
-      "accounts": [
+      name: 'cancelAllOrders';
+      docs: ['Cancel up to `limit` orders, optionally filtering by side'];
+      accounts: [
         {
-          "name": "signer",
-          "isMut": false,
-          "isSigner": true
+          name: 'signer';
+          isMut: false;
+          isSigner: true;
         },
         {
-          "name": "openOrdersAccount",
-          "isMut": true,
-          "isSigner": false
+          name: 'openOrdersAccount';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "market",
-          "isMut": false,
-          "isSigner": false
+          name: 'market';
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "bids",
-          "isMut": true,
-          "isSigner": false
+          name: 'bids';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "asks",
-          "isMut": true,
-          "isSigner": false
-        }
-      ],
-      "args": [
+          name: 'asks';
+          isMut: true;
+          isSigner: false;
+        },
+      ];
+      args: [
         {
-          "name": "sideOption",
-          "type": {
-            "option": {
-              "defined": "Side"
-            }
-          }
+          name: 'sideOption';
+          type: {
+            option: {
+              defined: 'Side';
+            };
+          };
         },
         {
-          "name": "limit",
-          "type": "u8"
-        }
-      ]
+          name: 'limit';
+          type: 'u8';
+        },
+      ];
     },
     {
-      "name": "deposit",
-      "docs": [
+      name: 'deposit';
+      docs: [
         "Deposit a certain amount of `base` and `quote` lamports into one's",
-        "[`Position`](crate::state::Position).",
-        "",
-        "Makers might wish to `deposit`, rather than have actual tokens moved for",
-        "each trade, in order to reduce CUs."
-      ],
-      "accounts": [
+        '[`Position`](crate::state::Position).',
+        '',
+        'Makers might wish to `deposit`, rather than have actual tokens moved for',
+        'each trade, in order to reduce CUs.',
+      ];
+      accounts: [
         {
-          "name": "owner",
-          "isMut": false,
-          "isSigner": true
+          name: 'owner';
+          isMut: false;
+          isSigner: true;
         },
         {
-          "name": "tokenBaseAccount",
-          "isMut": true,
-          "isSigner": false
+          name: 'tokenBaseAccount';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "tokenQuoteAccount",
-          "isMut": true,
-          "isSigner": false
+          name: 'tokenQuoteAccount';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "openOrdersAccount",
-          "isMut": true,
-          "isSigner": false
+          name: 'openOrdersAccount';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "market",
-          "isMut": true,
-          "isSigner": false
+          name: 'market';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "baseVault",
-          "isMut": true,
-          "isSigner": false
+          name: 'baseVault';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "quoteVault",
-          "isMut": true,
-          "isSigner": false
+          name: 'quoteVault';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "tokenProgram",
-          "isMut": false,
-          "isSigner": false
+          name: 'tokenProgram';
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
-        }
-      ],
-      "args": [
+          name: 'systemProgram';
+          isMut: false;
+          isSigner: false;
+        },
+      ];
+      args: [
         {
-          "name": "baseAmount",
-          "type": "u64"
+          name: 'baseAmount';
+          type: 'u64';
         },
         {
-          "name": "quoteAmount",
-          "type": "u64"
-        }
-      ]
+          name: 'quoteAmount';
+          type: 'u64';
+        },
+      ];
     },
     {
-      "name": "refill",
-      "docs": [
-        "Refill a certain amount of `base` and `quote` lamports. The amount being passed is the",
-        "total lamports that the [`Position`](crate::state::Position) will have.",
-        "",
-        "Makers might wish to `refill`, rather than have actual tokens moved for",
-        "each trade, in order to reduce CUs."
-      ],
-      "accounts": [
+      name: 'refill';
+      docs: [
+        'Refill a certain amount of `base` and `quote` lamports. The amount being passed is the',
+        'total lamports that the [`Position`](crate::state::Position) will have.',
+        '',
+        'Makers might wish to `refill`, rather than have actual tokens moved for',
+        'each trade, in order to reduce CUs.',
+      ];
+      accounts: [
         {
-          "name": "owner",
-          "isMut": false,
-          "isSigner": true
+          name: 'owner';
+          isMut: false;
+          isSigner: true;
         },
         {
-          "name": "tokenBaseAccount",
-          "isMut": true,
-          "isSigner": false
+          name: 'tokenBaseAccount';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "tokenQuoteAccount",
-          "isMut": true,
-          "isSigner": false
+          name: 'tokenQuoteAccount';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "openOrdersAccount",
-          "isMut": true,
-          "isSigner": false
+          name: 'openOrdersAccount';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "market",
-          "isMut": true,
-          "isSigner": false
+          name: 'market';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "baseVault",
-          "isMut": true,
-          "isSigner": false
+          name: 'baseVault';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "quoteVault",
-          "isMut": true,
-          "isSigner": false
+          name: 'quoteVault';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "tokenProgram",
-          "isMut": false,
-          "isSigner": false
+          name: 'tokenProgram';
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
-        }
-      ],
-      "args": [
+          name: 'systemProgram';
+          isMut: false;
+          isSigner: false;
+        },
+      ];
+      args: [
         {
-          "name": "baseAmount",
-          "type": "u64"
+          name: 'baseAmount';
+          type: 'u64';
         },
         {
-          "name": "quoteAmount",
-          "type": "u64"
-        }
-      ]
+          name: 'quoteAmount';
+          type: 'u64';
+        },
+      ];
     },
     {
-      "name": "settleFunds",
-      "docs": [
-        "Withdraw any available tokens."
-      ],
-      "accounts": [
+      name: 'settleFunds';
+      docs: ['Withdraw any available tokens.'];
+      accounts: [
         {
-          "name": "owner",
-          "isMut": false,
-          "isSigner": true
+          name: 'owner';
+          isMut: false;
+          isSigner: true;
         },
         {
-          "name": "openOrdersAccount",
-          "isMut": true,
-          "isSigner": false
+          name: 'openOrdersAccount';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "market",
-          "isMut": true,
-          "isSigner": false
+          name: 'market';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "marketAuthority",
-          "isMut": false,
-          "isSigner": false
+          name: 'marketAuthority';
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "baseVault",
-          "isMut": true,
-          "isSigner": false
+          name: 'baseVault';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "quoteVault",
-          "isMut": true,
-          "isSigner": false
+          name: 'quoteVault';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "tokenBaseAccount",
-          "isMut": true,
-          "isSigner": false
+          name: 'tokenBaseAccount';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "tokenQuoteAccount",
-          "isMut": true,
-          "isSigner": false
+          name: 'tokenQuoteAccount';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "referrer",
-          "isMut": true,
-          "isSigner": false,
-          "isOptional": true
+          name: 'referrer';
+          isMut: true;
+          isSigner: false;
+          isOptional: true;
         },
         {
-          "name": "tokenProgram",
-          "isMut": false,
-          "isSigner": false
+          name: 'tokenProgram';
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
-        }
-      ],
-      "args": []
+          name: 'systemProgram';
+          isMut: false;
+          isSigner: false;
+        },
+      ];
+      args: [];
     },
     {
-      "name": "settleFundsExpired",
-      "docs": [
-        "Withdraw any available tokens when the market is expired (only `close_market_admin`)"
-      ],
-      "accounts": [
+      name: 'settleFundsExpired';
+      docs: [
+        'Withdraw any available tokens when the market is expired (only `close_market_admin`)',
+      ];
+      accounts: [
         {
-          "name": "closeMarketAdmin",
-          "isMut": false,
-          "isSigner": true
+          name: 'closeMarketAdmin';
+          isMut: false;
+          isSigner: true;
         },
         {
-          "name": "openOrdersAccount",
-          "isMut": true,
-          "isSigner": false
+          name: 'openOrdersAccount';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "market",
-          "isMut": true,
-          "isSigner": false
+          name: 'market';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "marketAuthority",
-          "isMut": false,
-          "isSigner": false
+          name: 'marketAuthority';
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "baseVault",
-          "isMut": true,
-          "isSigner": false
+          name: 'baseVault';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "quoteVault",
-          "isMut": true,
-          "isSigner": false
+          name: 'quoteVault';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "tokenBaseAccount",
-          "isMut": true,
-          "isSigner": false
+          name: 'tokenBaseAccount';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "tokenQuoteAccount",
-          "isMut": true,
-          "isSigner": false
+          name: 'tokenQuoteAccount';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "referrer",
-          "isMut": true,
-          "isSigner": false,
-          "isOptional": true
+          name: 'referrer';
+          isMut: true;
+          isSigner: false;
+          isOptional: true;
         },
         {
-          "name": "tokenProgram",
-          "isMut": false,
-          "isSigner": false
+          name: 'tokenProgram';
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
-        }
-      ],
-      "args": []
+          name: 'systemProgram';
+          isMut: false;
+          isSigner: false;
+        },
+      ];
+      args: [];
     },
     {
-      "name": "sweepFees",
-      "docs": [
-        "Sweep fees, as a [`Market`](crate::state::Market)'s admin."
-      ],
-      "accounts": [
+      name: 'sweepFees';
+      docs: ["Sweep fees, as a [`Market`](crate::state::Market)'s admin."];
+      accounts: [
         {
-          "name": "collectFeeAdmin",
-          "isMut": false,
-          "isSigner": true
+          name: 'collectFeeAdmin';
+          isMut: false;
+          isSigner: true;
         },
         {
-          "name": "market",
-          "isMut": true,
-          "isSigner": false
+          name: 'market';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "marketAuthority",
-          "isMut": false,
-          "isSigner": false
+          name: 'marketAuthority';
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "quoteVault",
-          "isMut": true,
-          "isSigner": false
+          name: 'quoteVault';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "tokenReceiverAccount",
-          "isMut": true,
-          "isSigner": false
+          name: 'tokenReceiverAccount';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "tokenProgram",
-          "isMut": false,
-          "isSigner": false
+          name: 'tokenProgram';
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
-        }
-      ],
-      "args": []
+          name: 'systemProgram';
+          isMut: false;
+          isSigner: false;
+        },
+      ];
+      args: [];
     },
     {
-      "name": "setDelegate",
-      "accounts": [
+      name: 'setDelegate';
+      accounts: [
         {
-          "name": "owner",
-          "isMut": true,
-          "isSigner": true
+          name: 'owner';
+          isMut: true;
+          isSigner: true;
         },
         {
-          "name": "openOrdersAccount",
-          "isMut": true,
-          "isSigner": false
+          name: 'openOrdersAccount';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "delegateAccount",
-          "isMut": false,
-          "isSigner": false,
-          "isOptional": true
-        }
-      ],
-      "args": []
+          name: 'delegateAccount';
+          isMut: false;
+          isSigner: false;
+          isOptional: true;
+        },
+      ];
+      args: [];
     },
     {
-      "name": "setMarketExpired",
-      "docs": [
-        "Set market to expired before pruning orders and closing the market"
-      ],
-      "accounts": [
+      name: 'setMarketExpired';
+      docs: [
+        'Set market to expired before pruning orders and closing the market',
+      ];
+      accounts: [
         {
-          "name": "closeMarketAdmin",
-          "isMut": false,
-          "isSigner": true
+          name: 'closeMarketAdmin';
+          isMut: false;
+          isSigner: true;
         },
         {
-          "name": "market",
-          "isMut": true,
-          "isSigner": false
-        }
-      ],
-      "args": []
+          name: 'market';
+          isMut: true;
+          isSigner: false;
+        },
+      ];
+      args: [];
     },
     {
-      "name": "pruneOrders",
-      "accounts": [
+      name: 'pruneOrders';
+      accounts: [
         {
-          "name": "closeMarketAdmin",
-          "isMut": false,
-          "isSigner": true
+          name: 'closeMarketAdmin';
+          isMut: false;
+          isSigner: true;
         },
         {
-          "name": "openOrdersAccount",
-          "isMut": true,
-          "isSigner": false
+          name: 'openOrdersAccount';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "market",
-          "isMut": false,
-          "isSigner": false
+          name: 'market';
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "bids",
-          "isMut": true,
-          "isSigner": false
+          name: 'bids';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "asks",
-          "isMut": true,
-          "isSigner": false
-        }
-      ],
-      "args": [
+          name: 'asks';
+          isMut: true;
+          isSigner: false;
+        },
+      ];
+      args: [
         {
-          "name": "limit",
-          "type": "u8"
-        }
-      ]
+          name: 'limit';
+          type: 'u8';
+        },
+      ];
     },
     {
-      "name": "stubOracleCreate",
-      "accounts": [
+      name: 'stubOracleCreate';
+      accounts: [
         {
-          "name": "payer",
-          "isMut": true,
-          "isSigner": true
+          name: 'payer';
+          isMut: true;
+          isSigner: true;
         },
         {
-          "name": "owner",
-          "isMut": false,
-          "isSigner": true
+          name: 'owner';
+          isMut: false;
+          isSigner: true;
         },
         {
-          "name": "oracle",
-          "isMut": true,
-          "isSigner": false
+          name: 'oracle';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "mint",
-          "isMut": false,
-          "isSigner": false
+          name: 'mint';
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
-        }
-      ],
-      "args": [
+          name: 'systemProgram';
+          isMut: false;
+          isSigner: false;
+        },
+      ];
+      args: [
         {
-          "name": "price",
-          "type": {
-            "defined": "I80F48"
-          }
-        }
-      ]
+          name: 'price';
+          type: {
+            defined: 'I80F48';
+          };
+        },
+      ];
     },
     {
-      "name": "stubOracleClose",
-      "accounts": [
+      name: 'stubOracleClose';
+      accounts: [
         {
-          "name": "owner",
-          "isMut": false,
-          "isSigner": true
+          name: 'owner';
+          isMut: false;
+          isSigner: true;
         },
         {
-          "name": "oracle",
-          "isMut": true,
-          "isSigner": false
+          name: 'oracle';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "solDestination",
-          "isMut": true,
-          "isSigner": false
+          name: 'solDestination';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "tokenProgram",
-          "isMut": false,
-          "isSigner": false
-        }
-      ],
-      "args": []
+          name: 'tokenProgram';
+          isMut: false;
+          isSigner: false;
+        },
+      ];
+      args: [];
     },
     {
-      "name": "stubOracleSet",
-      "accounts": [
+      name: 'stubOracleSet';
+      accounts: [
         {
-          "name": "owner",
-          "isMut": false,
-          "isSigner": true
+          name: 'owner';
+          isMut: false;
+          isSigner: true;
         },
         {
-          "name": "oracle",
-          "isMut": true,
-          "isSigner": false
-        }
-      ],
-      "args": [
+          name: 'oracle';
+          isMut: true;
+          isSigner: false;
+        },
+      ];
+      args: [
         {
-          "name": "price",
-          "type": {
-            "defined": "I80F48"
-          }
-        }
-      ]
-    }
-  ],
-  "accounts": [
+          name: 'price';
+          type: {
+            defined: 'I80F48';
+          };
+        },
+      ];
+    },
+  ];
+  accounts: [
     {
-      "name": "market",
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: 'market';
+      type: {
+        kind: 'struct';
+        fields: [
           {
-            "name": "bump",
-            "docs": [
-              "PDA bump"
-            ],
-            "type": "u8"
+            name: 'bump';
+            docs: ['PDA bump'];
+            type: 'u8';
           },
           {
-            "name": "baseDecimals",
-            "docs": [
-              "Number of decimals used for the base token.",
-              "",
-              "Used to convert the oracle's price into a native/native price."
-            ],
-            "type": "u8"
+            name: 'baseDecimals';
+            docs: [
+              'Number of decimals used for the base token.',
+              '',
+              "Used to convert the oracle's price into a native/native price.",
+            ];
+            type: 'u8';
           },
           {
-            "name": "quoteDecimals",
-            "type": "u8"
+            name: 'quoteDecimals';
+            type: 'u8';
           },
           {
-            "name": "padding1",
-            "type": {
-              "array": [
-                "u8",
-                5
-              ]
-            }
+            name: 'padding1';
+            type: {
+              array: ['u8', 5];
+            };
           },
           {
-            "name": "marketAuthority",
-            "type": "publicKey"
+            name: 'marketAuthority';
+            type: 'publicKey';
           },
           {
-            "name": "timeExpiry",
-            "docs": [
-              "No expiry = 0. Market will expire and no trading allowed after time_expiry"
-            ],
-            "type": "i64"
+            name: 'timeExpiry';
+            docs: [
+              'No expiry = 0. Market will expire and no trading allowed after time_expiry',
+            ];
+            type: 'i64';
           },
           {
-            "name": "collectFeeAdmin",
-            "docs": [
-              "Admin who can collect fees from the market"
-            ],
-            "type": "publicKey"
+            name: 'collectFeeAdmin';
+            docs: ['Admin who can collect fees from the market'];
+            type: 'publicKey';
           },
           {
-            "name": "openOrdersAdmin",
-            "docs": [
-              "Admin who must sign off on all order creations"
-            ],
-            "type": {
-              "defined": "NonZeroPubkeyOption"
-            }
+            name: 'openOrdersAdmin';
+            docs: ['Admin who must sign off on all order creations'];
+            type: {
+              defined: 'NonZeroPubkeyOption';
+            };
           },
           {
-            "name": "consumeEventsAdmin",
-            "docs": [
-              "Admin who must sign off on all event consumptions"
-            ],
-            "type": {
-              "defined": "NonZeroPubkeyOption"
-            }
+            name: 'consumeEventsAdmin';
+            docs: ['Admin who must sign off on all event consumptions'];
+            type: {
+              defined: 'NonZeroPubkeyOption';
+            };
           },
           {
-            "name": "closeMarketAdmin",
-            "docs": [
-              "Admin who can set market expired, prune orders and close the market"
-            ],
-            "type": {
-              "defined": "NonZeroPubkeyOption"
-            }
+            name: 'closeMarketAdmin';
+            docs: [
+              'Admin who can set market expired, prune orders and close the market',
+            ];
+            type: {
+              defined: 'NonZeroPubkeyOption';
+            };
           },
           {
-            "name": "name",
-            "docs": [
-              "Name. Trailing zero bytes are ignored."
-            ],
-            "type": {
-              "array": [
-                "u8",
-                16
-              ]
-            }
+            name: 'name';
+            docs: ['Name. Trailing zero bytes are ignored.'];
+            type: {
+              array: ['u8', 16];
+            };
           },
           {
-            "name": "bids",
-            "docs": [
-              "Address of the BookSide account for bids"
-            ],
-            "type": "publicKey"
+            name: 'bids';
+            docs: ['Address of the BookSide account for bids'];
+            type: 'publicKey';
           },
           {
-            "name": "asks",
-            "docs": [
-              "Address of the BookSide account for asks"
-            ],
-            "type": "publicKey"
+            name: 'asks';
+            docs: ['Address of the BookSide account for asks'];
+            type: 'publicKey';
           },
           {
-            "name": "eventQueue",
-            "docs": [
-              "Address of the EventQueue account"
-            ],
-            "type": "publicKey"
+            name: 'eventQueue';
+            docs: ['Address of the EventQueue account'];
+            type: 'publicKey';
           },
           {
-            "name": "oracleA",
-            "docs": [
-              "Oracles account address"
-            ],
-            "type": {
-              "defined": "NonZeroPubkeyOption"
-            }
+            name: 'oracleA';
+            docs: ['Oracles account address'];
+            type: {
+              defined: 'NonZeroPubkeyOption';
+            };
           },
           {
-            "name": "oracleB",
-            "type": {
-              "defined": "NonZeroPubkeyOption"
-            }
+            name: 'oracleB';
+            type: {
+              defined: 'NonZeroPubkeyOption';
+            };
           },
           {
-            "name": "oracleConfig",
-            "docs": [
-              "Oracle configuration"
-            ],
-            "type": {
-              "defined": "OracleConfig"
-            }
+            name: 'oracleConfig';
+            docs: ['Oracle configuration'];
+            type: {
+              defined: 'OracleConfig';
+            };
           },
           {
-            "name": "quoteLotSize",
-            "docs": [
-              "Number of quote native in a quote lot. Must be a power of 10.",
-              "",
-              "Primarily useful for increasing the tick size on the market: A lot price",
-              "of 1 becomes a native price of quote_lot_size/base_lot_size becomes a",
-              "ui price of quote_lot_size*base_decimals/base_lot_size/quote_decimals."
-            ],
-            "type": "i64"
+            name: 'quoteLotSize';
+            docs: [
+              'Number of quote native in a quote lot. Must be a power of 10.',
+              '',
+              'Primarily useful for increasing the tick size on the market: A lot price',
+              'of 1 becomes a native price of quote_lot_size/base_lot_size becomes a',
+              'ui price of quote_lot_size*base_decimals/base_lot_size/quote_decimals.',
+            ];
+            type: 'i64';
           },
           {
-            "name": "baseLotSize",
-            "docs": [
-              "Number of base native in a base lot. Must be a power of 10.",
-              "",
-              "Example: If base decimals for the underlying asset is 6, base lot size",
-              "is 100 and and base position lots is 10_000 then base position native is",
-              "1_000_000 and base position ui is 1."
-            ],
-            "type": "i64"
+            name: 'baseLotSize';
+            docs: [
+              'Number of base native in a base lot. Must be a power of 10.',
+              '',
+              'Example: If base decimals for the underlying asset is 6, base lot size',
+              'is 100 and and base position lots is 10_000 then base position native is',
+              '1_000_000 and base position ui is 1.',
+            ];
+            type: 'i64';
           },
           {
-            "name": "seqNum",
-            "docs": [
-              "Total number of orders seen"
-            ],
-            "type": "u64"
+            name: 'seqNum';
+            docs: ['Total number of orders seen'];
+            type: 'u64';
           },
           {
-            "name": "registrationTime",
-            "docs": [
-              "Timestamp in seconds that the market was registered at."
-            ],
-            "type": "u64"
+            name: 'registrationTime';
+            docs: ['Timestamp in seconds that the market was registered at.'];
+            type: 'u64';
           },
           {
-            "name": "makerFee",
-            "docs": [
-              "Fees",
-              "",
-              "Fee (in 10^-6) when matching maker orders.",
-              "maker_fee < 0 it means some of the taker_fees goes to the maker",
-              "maker_fee > 0, it means no taker_fee to the maker, and maker fee goes to the referral"
-            ],
-            "type": "i64"
+            name: 'makerFee';
+            docs: [
+              'Fees',
+              '',
+              'Fee (in 10^-6) when matching maker orders.',
+              'maker_fee < 0 it means some of the taker_fees goes to the maker',
+              'maker_fee > 0, it means no taker_fee to the maker, and maker fee goes to the referral',
+            ];
+            type: 'i64';
           },
           {
-            "name": "takerFee",
-            "docs": [
-              "Fee (in 10^-6) for taker orders, always >= 0."
-            ],
-            "type": "i64"
+            name: 'takerFee';
+            docs: ['Fee (in 10^-6) for taker orders, always >= 0.'];
+            type: 'i64';
           },
           {
-            "name": "feesAccrued",
-            "docs": [
-              "Total fees accrued in native quote"
-            ],
-            "type": "u64"
+            name: 'feesAccrued';
+            docs: ['Total fees accrued in native quote'];
+            type: 'u64';
           },
           {
-            "name": "feesToReferrers",
-            "type": "u64"
+            name: 'feesToReferrers';
+            type: 'u64';
           },
           {
-            "name": "referrerRebatesAccrued",
-            "type": "u64"
+            name: 'referrerRebatesAccrued';
+            type: 'u64';
           },
           {
-            "name": "feesAvailable",
-            "type": "u64"
+            name: 'feesAvailable';
+            type: 'u64';
           },
           {
-            "name": "takerVolumeWoOo",
-            "docs": [
-              "Cumulative taker volume in quote native units due to place take orders"
-            ],
-            "type": "u64"
+            name: 'takerVolumeWoOo';
+            docs: [
+              'Cumulative taker volume in quote native units due to place take orders',
+            ];
+            type: 'u64';
           },
           {
-            "name": "baseMint",
-            "type": "publicKey"
+            name: 'baseMint';
+            type: 'publicKey';
           },
           {
-            "name": "quoteMint",
-            "type": "publicKey"
+            name: 'quoteMint';
+            type: 'publicKey';
           },
           {
-            "name": "baseVault",
-            "type": "publicKey"
+            name: 'baseVault';
+            type: 'publicKey';
           },
           {
-            "name": "baseDepositTotal",
-            "type": "u64"
+            name: 'baseDepositTotal';
+            type: 'u64';
           },
           {
-            "name": "quoteVault",
-            "type": "publicKey"
+            name: 'quoteVault';
+            type: 'publicKey';
           },
           {
-            "name": "quoteDepositTotal",
-            "type": "u64"
+            name: 'quoteDepositTotal';
+            type: 'u64';
           },
           {
-            "name": "reserved",
-            "type": {
-              "array": [
-                "u8",
-                1768
-              ]
-            }
-          }
-        ]
-      }
+            name: 'reserved';
+            type: {
+              array: ['u8', 1768];
+            };
+          },
+        ];
+      };
     },
     {
-      "name": "openOrdersAccount",
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: 'openOrdersAccount';
+      type: {
+        kind: 'struct';
+        fields: [
           {
-            "name": "owner",
-            "type": "publicKey"
+            name: 'owner';
+            type: 'publicKey';
           },
           {
-            "name": "market",
-            "type": "publicKey"
+            name: 'market';
+            type: 'publicKey';
           },
           {
-            "name": "name",
-            "type": {
-              "array": [
-                "u8",
-                32
-              ]
-            }
+            name: 'name';
+            type: {
+              array: ['u8', 32];
+            };
           },
           {
-            "name": "delegate",
-            "type": {
-              "defined": "NonZeroPubkeyOption"
-            }
+            name: 'delegate';
+            type: {
+              defined: 'NonZeroPubkeyOption';
+            };
           },
           {
-            "name": "accountNum",
-            "type": "u32"
+            name: 'accountNum';
+            type: 'u32';
           },
           {
-            "name": "bump",
-            "type": "u8"
+            name: 'bump';
+            type: 'u8';
           },
           {
-            "name": "padding",
-            "type": {
-              "array": [
-                "u8",
-                3
-              ]
-            }
+            name: 'padding';
+            type: {
+              array: ['u8', 3];
+            };
           },
           {
-            "name": "position",
-            "type": {
-              "defined": "Position"
-            }
+            name: 'position';
+            type: {
+              defined: 'Position';
+            };
           },
           {
-            "name": "openOrders",
-            "type": {
-              "array": [
+            name: 'openOrders';
+            type: {
+              array: [
                 {
-                  "defined": "OpenOrder"
+                  defined: 'OpenOrder';
                 },
-                128
-              ]
-            }
-          }
-        ]
-      }
+                128,
+              ];
+            };
+          },
+        ];
+      };
     },
     {
-      "name": "openOrdersIndexer",
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: 'openOrdersIndexer';
+      type: {
+        kind: 'struct';
+        fields: [
           {
-            "name": "owner",
-            "type": "publicKey"
+            name: 'owner';
+            type: 'publicKey';
           },
           {
-            "name": "market",
-            "type": "publicKey"
+            name: 'market';
+            type: 'publicKey';
           },
           {
-            "name": "bump",
-            "type": "u8"
+            name: 'bump';
+            type: 'u8';
           },
           {
-            "name": "padding",
-            "type": {
-              "array": [
-                "u8",
-                3
-              ]
-            }
+            name: 'padding';
+            type: {
+              array: ['u8', 3];
+            };
           },
           {
-            "name": "createdCounter",
-            "type": "u32"
+            name: 'createdCounter';
+            type: 'u32';
           },
           {
-            "name": "closedCounter",
-            "type": "u32"
+            name: 'closedCounter';
+            type: 'u32';
           },
           {
-            "name": "reserved",
-            "type": {
-              "array": [
-                "u8",
-                20
-              ]
-            }
-          }
-        ]
-      }
+            name: 'reserved';
+            type: {
+              array: ['u8', 20];
+            };
+          },
+        ];
+      };
     },
     {
-      "name": "stubOracle",
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: 'stubOracle';
+      type: {
+        kind: 'struct';
+        fields: [
           {
-            "name": "owner",
-            "type": "publicKey"
+            name: 'owner';
+            type: 'publicKey';
           },
           {
-            "name": "mint",
-            "type": "publicKey"
+            name: 'mint';
+            type: 'publicKey';
           },
           {
-            "name": "price",
-            "type": {
-              "defined": "I80F48"
-            }
+            name: 'price';
+            type: {
+              defined: 'I80F48';
+            };
           },
           {
-            "name": "lastUpdated",
-            "type": "i64"
+            name: 'lastUpdated';
+            type: 'i64';
           },
           {
-            "name": "reserved",
-            "type": {
-              "array": [
-                "u8",
-                128
-              ]
-            }
-          }
-        ]
-      }
+            name: 'reserved';
+            type: {
+              array: ['u8', 128];
+            };
+          },
+        ];
+      };
     },
     {
-      "name": "bookSide",
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: 'bookSide';
+      type: {
+        kind: 'struct';
+        fields: [
           {
-            "name": "roots",
-            "type": {
-              "array": [
+            name: 'roots';
+            type: {
+              array: [
                 {
-                  "defined": "OrderTreeRoot"
+                  defined: 'OrderTreeRoot';
                 },
-                2
-              ]
-            }
+                2,
+              ];
+            };
           },
           {
-            "name": "reservedRoots",
-            "type": {
-              "array": [
+            name: 'reservedRoots';
+            type: {
+              array: [
                 {
-                  "defined": "OrderTreeRoot"
+                  defined: 'OrderTreeRoot';
                 },
-                4
-              ]
-            }
+                4,
+              ];
+            };
           },
           {
-            "name": "reserved",
-            "type": {
-              "array": [
-                "u8",
-                256
-              ]
-            }
+            name: 'reserved';
+            type: {
+              array: ['u8', 256];
+            };
           },
           {
-            "name": "nodes",
-            "type": {
-              "defined": "OrderTreeNodes"
-            }
-          }
-        ]
-      }
+            name: 'nodes';
+            type: {
+              defined: 'OrderTreeNodes';
+            };
+          },
+        ];
+      };
     },
     {
-      "name": "eventQueue",
-      "docs": [
-        "Container for the different EventTypes.",
-        "",
-        "Events are stored in a fixed-array of nodes. Free nodes are connected by a single-linked list",
-        "starting at free_head while used nodes form a circular doubly-linked list starting at",
-        "used_head."
-      ],
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: 'eventQueue';
+      docs: [
+        'Container for the different EventTypes.',
+        '',
+        'Events are stored in a fixed-array of nodes. Free nodes are connected by a single-linked list',
+        'starting at free_head while used nodes form a circular doubly-linked list starting at',
+        'used_head.',
+      ];
+      type: {
+        kind: 'struct';
+        fields: [
           {
-            "name": "header",
-            "type": {
-              "defined": "EventQueueHeader"
-            }
+            name: 'header';
+            type: {
+              defined: 'EventQueueHeader';
+            };
           },
           {
-            "name": "nodes",
-            "type": {
-              "array": [
+            name: 'nodes';
+            type: {
+              array: [
                 {
-                  "defined": "EventNode"
+                  defined: 'EventNode';
                 },
-                600
-              ]
-            }
+                600,
+              ];
+            };
           },
           {
-            "name": "reserved",
-            "type": {
-              "array": [
-                "u8",
-                64
-              ]
-            }
-          }
-        ]
-      }
-    }
-  ],
-  "types": [
+            name: 'reserved';
+            type: {
+              array: ['u8', 64];
+            };
+          },
+        ];
+      };
+    },
+  ];
+  types: [
     {
-      "name": "NonZeroPubkeyOption",
-      "docs": [
-        "Like `Option`, but implemented for `Pubkey`."
-      ],
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: 'NonZeroPubkeyOption';
+      docs: ['Like `Option`, but implemented for `Pubkey`.'];
+      type: {
+        kind: 'struct';
+        fields: [
           {
-            "name": "key",
-            "type": "publicKey"
-          }
-        ]
-      }
+            name: 'key';
+            type: 'publicKey';
+          },
+        ];
+      };
     },
     {
-      "name": "Position",
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: 'Position';
+      type: {
+        kind: 'struct';
+        fields: [
           {
-            "name": "bidsBaseLots",
-            "docs": [
-              "Base lots in open bids"
-            ],
-            "type": "i64"
+            name: 'bidsBaseLots';
+            docs: ['Base lots in open bids'];
+            type: 'i64';
           },
           {
-            "name": "asksBaseLots",
-            "docs": [
-              "Base lots in open asks"
-            ],
-            "type": "i64"
+            name: 'asksBaseLots';
+            docs: ['Base lots in open asks'];
+            type: 'i64';
           },
           {
-            "name": "baseFreeNative",
-            "type": "u64"
+            name: 'baseFreeNative';
+            type: 'u64';
           },
           {
-            "name": "quoteFreeNative",
-            "type": "u64"
+            name: 'quoteFreeNative';
+            type: 'u64';
           },
           {
-            "name": "lockedMakerFees",
-            "type": "u64"
+            name: 'lockedMakerFees';
+            type: 'u64';
           },
           {
-            "name": "referrerRebatesAvailable",
-            "type": "u64"
+            name: 'referrerRebatesAvailable';
+            type: 'u64';
           },
           {
-            "name": "makerVolume",
-            "docs": [
-              "Cumulative maker volume in quote native units (display only)"
-            ],
-            "type": "u64"
+            name: 'makerVolume';
+            docs: [
+              'Cumulative maker volume in quote native units (display only)',
+            ];
+            type: 'u64';
           },
           {
-            "name": "takerVolume",
-            "docs": [
-              "Cumulative taker volume in quote native units (display only)"
-            ],
-            "type": "u64"
+            name: 'takerVolume';
+            docs: [
+              'Cumulative taker volume in quote native units (display only)',
+            ];
+            type: 'u64';
           },
           {
-            "name": "reserved",
-            "type": {
-              "array": [
-                "u8",
-                88
-              ]
-            }
-          }
-        ]
-      }
+            name: 'reserved';
+            type: {
+              array: ['u8', 88];
+            };
+          },
+        ];
+      };
     },
     {
-      "name": "OpenOrder",
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: 'OpenOrder';
+      type: {
+        kind: 'struct';
+        fields: [
           {
-            "name": "id",
-            "type": "u128"
+            name: 'id';
+            type: 'u128';
           },
           {
-            "name": "clientId",
-            "type": "u64"
+            name: 'clientId';
+            type: 'u64';
           },
           {
-            "name": "lockedPrice",
-            "docs": [
-              "Price at which user's assets were locked"
-            ],
-            "type": "i64"
+            name: 'lockedPrice';
+            docs: ["Price at which user's assets were locked"];
+            type: 'i64';
           },
           {
-            "name": "isFree",
-            "type": "u8"
+            name: 'isFree';
+            type: 'u8';
           },
           {
-            "name": "sideAndTree",
-            "type": "u8"
+            name: 'sideAndTree';
+            type: 'u8';
           },
           {
-            "name": "padding",
-            "type": {
-              "array": [
-                "u8",
-                6
-              ]
-            }
+            name: 'padding';
+            type: {
+              array: ['u8', 6];
+            };
           },
           {
-            "name": "reserved",
-            "type": {
-              "array": [
-                "u8",
-                32
-              ]
-            }
-          }
-        ]
-      }
+            name: 'reserved';
+            type: {
+              array: ['u8', 32];
+            };
+          },
+        ];
+      };
     },
     {
-      "name": "OracleConfig",
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: 'OracleConfig';
+      type: {
+        kind: 'struct';
+        fields: [
           {
-            "name": "confFilter",
-            "type": {
-              "defined": "I80F48"
-            }
+            name: 'confFilter';
+            type: {
+              defined: 'I80F48';
+            };
           },
           {
-            "name": "maxStalenessSlots",
-            "type": "i64"
+            name: 'maxStalenessSlots';
+            type: 'i64';
           },
           {
-            "name": "reserved",
-            "type": {
-              "array": [
-                "u8",
-                72
-              ]
-            }
-          }
-        ]
-      }
+            name: 'reserved';
+            type: {
+              array: ['u8', 72];
+            };
+          },
+        ];
+      };
     },
     {
-      "name": "OracleConfigParams",
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: 'OracleConfigParams';
+      type: {
+        kind: 'struct';
+        fields: [
           {
-            "name": "confFilter",
-            "type": "f32"
+            name: 'confFilter';
+            type: 'f32';
           },
           {
-            "name": "maxStalenessSlots",
-            "type": {
-              "option": "u32"
-            }
-          }
-        ]
-      }
+            name: 'maxStalenessSlots';
+            type: {
+              option: 'u32';
+            };
+          },
+        ];
+      };
     },
     {
-      "name": "InnerNode",
-      "docs": [
-        "InnerNodes and LeafNodes compose the binary tree of orders.",
-        "",
-        "Each InnerNode has exactly two children, which are either InnerNodes themselves,",
-        "or LeafNodes. The children share the top `prefix_len` bits of `key`. The left",
-        "child has a 0 in the next bit, and the right a 1."
-      ],
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: 'InnerNode';
+      docs: [
+        'InnerNodes and LeafNodes compose the binary tree of orders.',
+        '',
+        'Each InnerNode has exactly two children, which are either InnerNodes themselves,',
+        'or LeafNodes. The children share the top `prefix_len` bits of `key`. The left',
+        'child has a 0 in the next bit, and the right a 1.',
+      ];
+      type: {
+        kind: 'struct';
+        fields: [
           {
-            "name": "tag",
-            "type": "u8"
+            name: 'tag';
+            type: 'u8';
           },
           {
-            "name": "padding",
-            "type": {
-              "array": [
-                "u8",
-                3
-              ]
-            }
+            name: 'padding';
+            type: {
+              array: ['u8', 3];
+            };
           },
           {
-            "name": "prefixLen",
-            "docs": [
-              "number of highest `key` bits that all children share",
-              "e.g. if it's 2, the two highest bits of `key` will be the same on all children"
-            ],
-            "type": "u32"
+            name: 'prefixLen';
+            docs: [
+              'number of highest `key` bits that all children share',
+              "e.g. if it's 2, the two highest bits of `key` will be the same on all children",
+            ];
+            type: 'u32';
           },
           {
-            "name": "key",
-            "docs": [
-              "only the top `prefix_len` bits of `key` are relevant"
-            ],
-            "type": "u128"
+            name: 'key';
+            docs: ['only the top `prefix_len` bits of `key` are relevant'];
+            type: 'u128';
           },
           {
-            "name": "children",
-            "docs": [
-              "indexes into `BookSide::nodes`"
-            ],
-            "type": {
-              "array": [
-                "u32",
-                2
-              ]
-            }
+            name: 'children';
+            docs: ['indexes into `BookSide::nodes`'];
+            type: {
+              array: ['u32', 2];
+            };
           },
           {
-            "name": "childEarliestExpiry",
-            "docs": [
-              "The earliest expiry timestamp for the left and right subtrees.",
-              "",
-              "Needed to be able to find and remove expired orders without having to",
-              "iterate through the whole bookside."
-            ],
-            "type": {
-              "array": [
-                "u64",
-                2
-              ]
-            }
+            name: 'childEarliestExpiry';
+            docs: [
+              'The earliest expiry timestamp for the left and right subtrees.',
+              '',
+              'Needed to be able to find and remove expired orders without having to',
+              'iterate through the whole bookside.',
+            ];
+            type: {
+              array: ['u64', 2];
+            };
           },
           {
-            "name": "reserved",
-            "type": {
-              "array": [
-                "u8",
-                72
-              ]
-            }
-          }
-        ]
-      }
+            name: 'reserved';
+            type: {
+              array: ['u8', 72];
+            };
+          },
+        ];
+      };
     },
     {
-      "name": "LeafNode",
-      "docs": [
-        "LeafNodes represent an order in the binary tree"
-      ],
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: 'LeafNode';
+      docs: ['LeafNodes represent an order in the binary tree'];
+      type: {
+        kind: 'struct';
+        fields: [
           {
-            "name": "tag",
-            "docs": [
-              "NodeTag"
-            ],
-            "type": "u8"
+            name: 'tag';
+            docs: ['NodeTag'];
+            type: 'u8';
           },
           {
-            "name": "ownerSlot",
-            "docs": [
-              "Index into the owning OpenOrdersAccount's OpenOrders"
-            ],
-            "type": "u8"
+            name: 'ownerSlot';
+            docs: ["Index into the owning OpenOrdersAccount's OpenOrders"];
+            type: 'u8';
           },
           {
-            "name": "timeInForce",
-            "docs": [
-              "Time in seconds after `timestamp` at which the order expires.",
-              "A value of 0 means no expiry."
-            ],
-            "type": "u16"
+            name: 'timeInForce';
+            docs: [
+              'Time in seconds after `timestamp` at which the order expires.',
+              'A value of 0 means no expiry.',
+            ];
+            type: 'u16';
           },
           {
-            "name": "padding",
-            "type": {
-              "array": [
-                "u8",
-                4
-              ]
-            }
+            name: 'padding';
+            type: {
+              array: ['u8', 4];
+            };
           },
           {
-            "name": "key",
-            "docs": [
-              "The binary tree key, see new_node_key()"
-            ],
-            "type": "u128"
+            name: 'key';
+            docs: ['The binary tree key, see new_node_key()'];
+            type: 'u128';
           },
           {
-            "name": "owner",
-            "docs": [
-              "Address of the owning OpenOrdersAccount"
-            ],
-            "type": "publicKey"
+            name: 'owner';
+            docs: ['Address of the owning OpenOrdersAccount'];
+            type: 'publicKey';
           },
           {
-            "name": "quantity",
-            "docs": [
-              "Number of base lots to buy or sell, always >=1"
-            ],
-            "type": "i64"
+            name: 'quantity';
+            docs: ['Number of base lots to buy or sell, always >=1'];
+            type: 'i64';
           },
           {
-            "name": "timestamp",
-            "docs": [
-              "The time the order was placed"
-            ],
-            "type": "u64"
+            name: 'timestamp';
+            docs: ['The time the order was placed'];
+            type: 'u64';
           },
           {
-            "name": "pegLimit",
-            "docs": [
-              "If the effective price of an oracle pegged order exceeds this limit,",
-              "it will be considered invalid and may be removed.",
-              "",
-              "Only applicable in the oracle_pegged OrderTree"
-            ],
-            "type": "i64"
+            name: 'pegLimit';
+            docs: [
+              'If the effective price of an oracle pegged order exceeds this limit,',
+              'it will be considered invalid and may be removed.',
+              '',
+              'Only applicable in the oracle_pegged OrderTree',
+            ];
+            type: 'i64';
           },
           {
-            "name": "clientOrderId",
-            "docs": [
-              "User defined id for this order, used in FillEvents"
-            ],
-            "type": "u64"
+            name: 'clientOrderId';
+            docs: ['User defined id for this order, used in FillEvents'];
+            type: 'u64';
           },
           {
-            "name": "reserved",
-            "type": {
-              "array": [
-                "u8",
-                32
-              ]
-            }
-          }
-        ]
-      }
+            name: 'reserved';
+            type: {
+              array: ['u8', 32];
+            };
+          },
+        ];
+      };
     },
     {
-      "name": "AnyNode",
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: 'AnyNode';
+      type: {
+        kind: 'struct';
+        fields: [
           {
-            "name": "tag",
-            "type": "u8"
+            name: 'tag';
+            type: 'u8';
           },
           {
-            "name": "data",
-            "type": {
-              "array": [
-                "u8",
-                119
-              ]
-            }
-          }
-        ]
-      }
+            name: 'data';
+            type: {
+              array: ['u8', 119];
+            };
+          },
+        ];
+      };
     },
     {
-      "name": "OrderTreeRoot",
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: 'OrderTreeRoot';
+      type: {
+        kind: 'struct';
+        fields: [
           {
-            "name": "maybeNode",
-            "type": "u32"
+            name: 'maybeNode';
+            type: 'u32';
           },
           {
-            "name": "leafCount",
-            "type": "u32"
-          }
-        ]
-      }
+            name: 'leafCount';
+            type: 'u32';
+          },
+        ];
+      };
     },
     {
-      "name": "OrderTreeNodes",
-      "docs": [
-        "A binary tree on AnyNode::key()",
-        "",
-        "The key encodes the price in the top 64 bits."
-      ],
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: 'OrderTreeNodes';
+      docs: [
+        'A binary tree on AnyNode::key()',
+        '',
+        'The key encodes the price in the top 64 bits.',
+      ];
+      type: {
+        kind: 'struct';
+        fields: [
           {
-            "name": "orderTreeType",
-            "type": "u8"
+            name: 'orderTreeType';
+            type: 'u8';
           },
           {
-            "name": "padding",
-            "type": {
-              "array": [
-                "u8",
-                3
-              ]
-            }
+            name: 'padding';
+            type: {
+              array: ['u8', 3];
+            };
           },
           {
-            "name": "bumpIndex",
-            "type": "u32"
+            name: 'bumpIndex';
+            type: 'u32';
           },
           {
-            "name": "freeListLen",
-            "type": "u32"
+            name: 'freeListLen';
+            type: 'u32';
           },
           {
-            "name": "freeListHead",
-            "type": "u32"
+            name: 'freeListHead';
+            type: 'u32';
           },
           {
-            "name": "reserved",
-            "type": {
-              "array": [
-                "u8",
-                512
-              ]
-            }
+            name: 'reserved';
+            type: {
+              array: ['u8', 512];
+            };
           },
           {
-            "name": "nodes",
-            "type": {
-              "array": [
+            name: 'nodes';
+            type: {
+              array: [
                 {
-                  "defined": "AnyNode"
+                  defined: 'AnyNode';
                 },
-                1024
-              ]
-            }
-          }
-        ]
-      }
+                1024,
+              ];
+            };
+          },
+        ];
+      };
     },
     {
-      "name": "EventQueueHeader",
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: 'EventQueueHeader';
+      type: {
+        kind: 'struct';
+        fields: [
           {
-            "name": "freeHead",
-            "type": "u16"
+            name: 'freeHead';
+            type: 'u16';
           },
           {
-            "name": "usedHead",
-            "type": "u16"
+            name: 'usedHead';
+            type: 'u16';
           },
           {
-            "name": "count",
-            "type": "u16"
+            name: 'count';
+            type: 'u16';
           },
           {
-            "name": "padd",
-            "type": "u16"
+            name: 'padd';
+            type: 'u16';
           },
           {
-            "name": "seqNum",
-            "type": "u64"
-          }
-        ]
-      }
+            name: 'seqNum';
+            type: 'u64';
+          },
+        ];
+      };
     },
     {
-      "name": "EventNode",
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: 'EventNode';
+      type: {
+        kind: 'struct';
+        fields: [
           {
-            "name": "next",
-            "type": "u16"
+            name: 'next';
+            type: 'u16';
           },
           {
-            "name": "prev",
-            "type": "u16"
+            name: 'prev';
+            type: 'u16';
           },
           {
-            "name": "pad",
-            "type": {
-              "array": [
-                "u8",
-                4
-              ]
-            }
+            name: 'pad';
+            type: {
+              array: ['u8', 4];
+            };
           },
           {
-            "name": "event",
-            "type": {
-              "defined": "AnyEvent"
-            }
-          }
-        ]
-      }
+            name: 'event';
+            type: {
+              defined: 'AnyEvent';
+            };
+          },
+        ];
+      };
     },
     {
-      "name": "AnyEvent",
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: 'AnyEvent';
+      type: {
+        kind: 'struct';
+        fields: [
           {
-            "name": "eventType",
-            "type": "u8"
+            name: 'eventType';
+            type: 'u8';
           },
           {
-            "name": "padding",
-            "type": {
-              "array": [
-                "u8",
-                143
-              ]
-            }
-          }
-        ]
-      }
+            name: 'padding';
+            type: {
+              array: ['u8', 143];
+            };
+          },
+        ];
+      };
     },
     {
-      "name": "FillEvent",
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: 'FillEvent';
+      type: {
+        kind: 'struct';
+        fields: [
           {
-            "name": "eventType",
-            "type": "u8"
+            name: 'eventType';
+            type: 'u8';
           },
           {
-            "name": "takerSide",
-            "type": "u8"
+            name: 'takerSide';
+            type: 'u8';
           },
           {
-            "name": "makerOut",
-            "type": "u8"
+            name: 'makerOut';
+            type: 'u8';
           },
           {
-            "name": "makerSlot",
-            "type": "u8"
+            name: 'makerSlot';
+            type: 'u8';
           },
           {
-            "name": "padding",
-            "type": {
-              "array": [
-                "u8",
-                4
-              ]
-            }
+            name: 'padding';
+            type: {
+              array: ['u8', 4];
+            };
           },
           {
-            "name": "timestamp",
-            "type": "u64"
+            name: 'timestamp';
+            type: 'u64';
           },
           {
-            "name": "seqNum",
-            "type": "u64"
+            name: 'seqNum';
+            type: 'u64';
           },
           {
-            "name": "maker",
-            "type": "publicKey"
+            name: 'maker';
+            type: 'publicKey';
           },
           {
-            "name": "makerTimestamp",
-            "type": "u64"
+            name: 'makerTimestamp';
+            type: 'u64';
           },
           {
-            "name": "taker",
-            "type": "publicKey"
+            name: 'taker';
+            type: 'publicKey';
           },
           {
-            "name": "takerClientOrderId",
-            "type": "u64"
+            name: 'takerClientOrderId';
+            type: 'u64';
           },
           {
-            "name": "price",
-            "type": "i64"
+            name: 'price';
+            type: 'i64';
           },
           {
-            "name": "pegLimit",
-            "type": "i64"
+            name: 'pegLimit';
+            type: 'i64';
           },
           {
-            "name": "quantity",
-            "type": "i64"
+            name: 'quantity';
+            type: 'i64';
           },
           {
-            "name": "makerClientOrderId",
-            "type": "u64"
+            name: 'makerClientOrderId';
+            type: 'u64';
           },
           {
-            "name": "reserved",
-            "type": {
-              "array": [
-                "u8",
-                8
-              ]
-            }
-          }
-        ]
-      }
+            name: 'reserved';
+            type: {
+              array: ['u8', 8];
+            };
+          },
+        ];
+      };
     },
     {
-      "name": "OutEvent",
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: 'OutEvent';
+      type: {
+        kind: 'struct';
+        fields: [
           {
-            "name": "eventType",
-            "type": "u8"
+            name: 'eventType';
+            type: 'u8';
           },
           {
-            "name": "side",
-            "type": "u8"
+            name: 'side';
+            type: 'u8';
           },
           {
-            "name": "ownerSlot",
-            "type": "u8"
+            name: 'ownerSlot';
+            type: 'u8';
           },
           {
-            "name": "padding0",
-            "type": {
-              "array": [
-                "u8",
-                5
-              ]
-            }
+            name: 'padding0';
+            type: {
+              array: ['u8', 5];
+            };
           },
           {
-            "name": "timestamp",
-            "type": "u64"
+            name: 'timestamp';
+            type: 'u64';
           },
           {
-            "name": "seqNum",
-            "type": "u64"
+            name: 'seqNum';
+            type: 'u64';
           },
           {
-            "name": "owner",
-            "type": "publicKey"
+            name: 'owner';
+            type: 'publicKey';
           },
           {
-            "name": "quantity",
-            "type": "i64"
+            name: 'quantity';
+            type: 'i64';
           },
           {
-            "name": "padding1",
-            "type": {
-              "array": [
-                "u8",
-                80
-              ]
-            }
-          }
-        ]
-      }
+            name: 'padding1';
+            type: {
+              array: ['u8', 80];
+            };
+          },
+        ];
+      };
     },
     {
-      "name": "I80F48",
-      "docs": [
-        "Nothing in Rust shall use these types. They only exist so that the Anchor IDL",
-        "knows about them and typescript can deserialize it."
-      ],
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: 'I80F48';
+      docs: [
+        'Nothing in Rust shall use these types. They only exist so that the Anchor IDL',
+        'knows about them and typescript can deserialize it.',
+      ];
+      type: {
+        kind: 'struct';
+        fields: [
           {
-            "name": "val",
-            "type": "i128"
-          }
-        ]
-      }
+            name: 'val';
+            type: 'i128';
+          },
+        ];
+      };
     },
     {
-      "name": "PlaceOrderArgs",
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: 'PlaceOrderArgs';
+      type: {
+        kind: 'struct';
+        fields: [
           {
-            "name": "side",
-            "type": {
-              "defined": "Side"
-            }
+            name: 'side';
+            type: {
+              defined: 'Side';
+            };
           },
           {
-            "name": "priceLots",
-            "type": "i64"
+            name: 'priceLots';
+            type: 'i64';
           },
           {
-            "name": "maxBaseLots",
-            "type": "i64"
+            name: 'maxBaseLots';
+            type: 'i64';
           },
           {
-            "name": "maxQuoteLotsIncludingFees",
-            "type": "i64"
+            name: 'maxQuoteLotsIncludingFees';
+            type: 'i64';
           },
           {
-            "name": "clientOrderId",
-            "type": "u64"
+            name: 'clientOrderId';
+            type: 'u64';
           },
           {
-            "name": "orderType",
-            "type": {
-              "defined": "PlaceOrderType"
-            }
+            name: 'orderType';
+            type: {
+              defined: 'PlaceOrderType';
+            };
           },
           {
-            "name": "expiryTimestamp",
-            "type": "u64"
+            name: 'expiryTimestamp';
+            type: 'u64';
           },
           {
-            "name": "selfTradeBehavior",
-            "type": {
-              "defined": "SelfTradeBehavior"
-            }
+            name: 'selfTradeBehavior';
+            type: {
+              defined: 'SelfTradeBehavior';
+            };
           },
           {
-            "name": "limit",
-            "type": "u8"
-          }
-        ]
-      }
+            name: 'limit';
+            type: 'u8';
+          },
+        ];
+      };
     },
     {
-      "name": "PlaceOrderPeggedArgs",
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: 'PlaceOrderPeggedArgs';
+      type: {
+        kind: 'struct';
+        fields: [
           {
-            "name": "side",
-            "type": {
-              "defined": "Side"
-            }
+            name: 'side';
+            type: {
+              defined: 'Side';
+            };
           },
           {
-            "name": "priceOffsetLots",
-            "type": "i64"
+            name: 'priceOffsetLots';
+            type: 'i64';
           },
           {
-            "name": "pegLimit",
-            "type": "i64"
+            name: 'pegLimit';
+            type: 'i64';
           },
           {
-            "name": "maxBaseLots",
-            "type": "i64"
+            name: 'maxBaseLots';
+            type: 'i64';
           },
           {
-            "name": "maxQuoteLotsIncludingFees",
-            "type": "i64"
+            name: 'maxQuoteLotsIncludingFees';
+            type: 'i64';
           },
           {
-            "name": "clientOrderId",
-            "type": "u64"
+            name: 'clientOrderId';
+            type: 'u64';
           },
           {
-            "name": "orderType",
-            "type": {
-              "defined": "PlaceOrderType"
-            }
+            name: 'orderType';
+            type: {
+              defined: 'PlaceOrderType';
+            };
           },
           {
-            "name": "expiryTimestamp",
-            "type": "u64"
+            name: 'expiryTimestamp';
+            type: 'u64';
           },
           {
-            "name": "selfTradeBehavior",
-            "type": {
-              "defined": "SelfTradeBehavior"
-            }
+            name: 'selfTradeBehavior';
+            type: {
+              defined: 'SelfTradeBehavior';
+            };
           },
           {
-            "name": "limit",
-            "type": "u8"
-          }
-        ]
-      }
+            name: 'limit';
+            type: 'u8';
+          },
+        ];
+      };
     },
     {
-      "name": "PlaceTakeOrderArgs",
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: 'PlaceTakeOrderArgs';
+      type: {
+        kind: 'struct';
+        fields: [
           {
-            "name": "side",
-            "type": {
-              "defined": "Side"
-            }
+            name: 'side';
+            type: {
+              defined: 'Side';
+            };
           },
           {
-            "name": "priceLots",
-            "type": "i64"
+            name: 'priceLots';
+            type: 'i64';
           },
           {
-            "name": "maxBaseLots",
-            "type": "i64"
+            name: 'maxBaseLots';
+            type: 'i64';
           },
           {
-            "name": "maxQuoteLotsIncludingFees",
-            "type": "i64"
+            name: 'maxQuoteLotsIncludingFees';
+            type: 'i64';
           },
           {
-            "name": "orderType",
-            "type": {
-              "defined": "PlaceOrderType"
-            }
+            name: 'orderType';
+            type: {
+              defined: 'PlaceOrderType';
+            };
           },
           {
-            "name": "limit",
-            "type": "u8"
-          }
-        ]
-      }
+            name: 'limit';
+            type: 'u8';
+          },
+        ];
+      };
     },
     {
-      "name": "OracleType",
-      "type": {
-        "kind": "enum",
-        "variants": [
+      name: 'OracleType';
+      type: {
+        kind: 'enum';
+        variants: [
           {
-            "name": "Pyth"
+            name: 'Pyth';
           },
           {
-            "name": "Stub"
+            name: 'Stub';
           },
           {
-            "name": "SwitchboardV1"
+            name: 'SwitchboardV1';
           },
           {
-            "name": "SwitchboardV2"
-          }
-        ]
-      }
+            name: 'SwitchboardV2';
+          },
+        ];
+      };
     },
     {
-      "name": "OrderState",
-      "type": {
-        "kind": "enum",
-        "variants": [
+      name: 'OrderState';
+      type: {
+        kind: 'enum';
+        variants: [
           {
-            "name": "Valid"
+            name: 'Valid';
           },
           {
-            "name": "Invalid"
+            name: 'Invalid';
           },
           {
-            "name": "Skipped"
-          }
-        ]
-      }
+            name: 'Skipped';
+          },
+        ];
+      };
     },
     {
-      "name": "BookSideOrderTree",
-      "type": {
-        "kind": "enum",
-        "variants": [
+      name: 'BookSideOrderTree';
+      type: {
+        kind: 'enum';
+        variants: [
           {
-            "name": "Fixed"
+            name: 'Fixed';
           },
           {
-            "name": "OraclePegged"
-          }
-        ]
-      }
+            name: 'OraclePegged';
+          },
+        ];
+      };
     },
     {
-      "name": "NodeTag",
-      "type": {
-        "kind": "enum",
-        "variants": [
+      name: 'NodeTag';
+      type: {
+        kind: 'enum';
+        variants: [
           {
-            "name": "Uninitialized"
+            name: 'Uninitialized';
           },
           {
-            "name": "InnerNode"
+            name: 'InnerNode';
           },
           {
-            "name": "LeafNode"
+            name: 'LeafNode';
           },
           {
-            "name": "FreeNode"
+            name: 'FreeNode';
           },
           {
-            "name": "LastFreeNode"
-          }
-        ]
-      }
+            name: 'LastFreeNode';
+          },
+        ];
+      };
     },
     {
-      "name": "PlaceOrderType",
-      "type": {
-        "kind": "enum",
-        "variants": [
+      name: 'PlaceOrderType';
+      type: {
+        kind: 'enum';
+        variants: [
           {
-            "name": "Limit"
+            name: 'Limit';
           },
           {
-            "name": "ImmediateOrCancel"
+            name: 'ImmediateOrCancel';
           },
           {
-            "name": "PostOnly"
+            name: 'PostOnly';
           },
           {
-            "name": "Market"
+            name: 'Market';
           },
           {
-            "name": "PostOnlySlide"
-          }
-        ]
-      }
+            name: 'PostOnlySlide';
+          },
+        ];
+      };
     },
     {
-      "name": "PostOrderType",
-      "type": {
-        "kind": "enum",
-        "variants": [
+      name: 'PostOrderType';
+      type: {
+        kind: 'enum';
+        variants: [
           {
-            "name": "Limit"
+            name: 'Limit';
           },
           {
-            "name": "PostOnly"
+            name: 'PostOnly';
           },
           {
-            "name": "PostOnlySlide"
-          }
-        ]
-      }
+            name: 'PostOnlySlide';
+          },
+        ];
+      };
     },
     {
-      "name": "SelfTradeBehavior",
-      "docs": [
-        "Self trade behavior controls how taker orders interact with resting limit orders of the same account.",
-        "This setting has no influence on placing a resting or oracle pegged limit order that does not match",
-        "immediately, instead it's the responsibility of the user to correctly configure his taker orders."
-      ],
-      "type": {
-        "kind": "enum",
-        "variants": [
+      name: 'SelfTradeBehavior';
+      docs: [
+        'Self trade behavior controls how taker orders interact with resting limit orders of the same account.',
+        'This setting has no influence on placing a resting or oracle pegged limit order that does not match',
+        "immediately, instead it's the responsibility of the user to correctly configure his taker orders.",
+      ];
+      type: {
+        kind: 'enum';
+        variants: [
           {
-            "name": "DecrementTake"
+            name: 'DecrementTake';
           },
           {
-            "name": "CancelProvide"
+            name: 'CancelProvide';
           },
           {
-            "name": "AbortTransaction"
-          }
-        ]
-      }
+            name: 'AbortTransaction';
+          },
+        ];
+      };
     },
     {
-      "name": "Side",
-      "type": {
-        "kind": "enum",
-        "variants": [
+      name: 'Side';
+      type: {
+        kind: 'enum';
+        variants: [
           {
-            "name": "Bid"
+            name: 'Bid';
           },
           {
-            "name": "Ask"
-          }
-        ]
-      }
+            name: 'Ask';
+          },
+        ];
+      };
     },
     {
-      "name": "SideAndOrderTree",
-      "docs": [
-        "SideAndOrderTree is a storage optimization, so we don't need two bytes for the data"
-      ],
-      "type": {
-        "kind": "enum",
-        "variants": [
+      name: 'SideAndOrderTree';
+      docs: [
+        "SideAndOrderTree is a storage optimization, so we don't need two bytes for the data",
+      ];
+      type: {
+        kind: 'enum';
+        variants: [
           {
-            "name": "BidFixed"
+            name: 'BidFixed';
           },
           {
-            "name": "AskFixed"
+            name: 'AskFixed';
           },
           {
-            "name": "BidOraclePegged"
+            name: 'BidOraclePegged';
           },
           {
-            "name": "AskOraclePegged"
-          }
-        ]
-      }
+            name: 'AskOraclePegged';
+          },
+        ];
+      };
     },
     {
-      "name": "OrderParams",
-      "type": {
-        "kind": "enum",
-        "variants": [
+      name: 'OrderParams';
+      type: {
+        kind: 'enum';
+        variants: [
           {
-            "name": "Market"
+            name: 'Market';
           },
           {
-            "name": "ImmediateOrCancel",
-            "fields": [
+            name: 'ImmediateOrCancel';
+            fields: [
               {
-                "name": "price_lots",
-                "type": "i64"
-              }
-            ]
+                name: 'price_lots';
+                type: 'i64';
+              },
+            ];
           },
           {
-            "name": "Fixed",
-            "fields": [
+            name: 'Fixed';
+            fields: [
               {
-                "name": "price_lots",
-                "type": "i64"
+                name: 'price_lots';
+                type: 'i64';
               },
               {
-                "name": "order_type",
-                "type": {
-                  "defined": "PostOrderType"
-                }
-              }
-            ]
+                name: 'order_type';
+                type: {
+                  defined: 'PostOrderType';
+                };
+              },
+            ];
           },
           {
-            "name": "OraclePegged",
-            "fields": [
+            name: 'OraclePegged';
+            fields: [
               {
-                "name": "price_offset_lots",
-                "type": "i64"
+                name: 'price_offset_lots';
+                type: 'i64';
               },
               {
-                "name": "order_type",
-                "type": {
-                  "defined": "PostOrderType"
-                }
+                name: 'order_type';
+                type: {
+                  defined: 'PostOrderType';
+                };
               },
               {
-                "name": "peg_limit",
-                "type": "i64"
-              }
-            ]
-          }
-        ]
-      }
-    },
-    {
-      "name": "OrderTreeType",
-      "type": {
-        "kind": "enum",
-        "variants": [
-          {
-            "name": "Bids"
+                name: 'peg_limit';
+                type: 'i64';
+              },
+            ];
           },
-          {
-            "name": "Asks"
-          }
-        ]
-      }
+        ];
+      };
     },
     {
-      "name": "EventType",
-      "type": {
-        "kind": "enum",
-        "variants": [
+      name: 'OrderTreeType';
+      type: {
+        kind: 'enum';
+        variants: [
           {
-            "name": "Fill"
+            name: 'Bids';
           },
           {
-            "name": "Out"
-          }
-        ]
-      }
-    }
-  ],
-  "events": [
-    {
-      "name": "DepositLog",
-      "fields": [
-        {
-          "name": "openOrdersAccount",
-          "type": "publicKey",
-          "index": false
-        },
-        {
-          "name": "signer",
-          "type": "publicKey",
-          "index": false
-        },
-        {
-          "name": "baseAmount",
-          "type": "u64",
-          "index": false
-        },
-        {
-          "name": "quoteAmount",
-          "type": "u64",
-          "index": false
-        }
-      ]
-    },
-    {
-      "name": "FillLog",
-      "fields": [
-        {
-          "name": "takerSide",
-          "type": "u8",
-          "index": false
-        },
-        {
-          "name": "makerSlot",
-          "type": "u8",
-          "index": false
-        },
-        {
-          "name": "makerOut",
-          "type": "bool",
-          "index": false
-        },
-        {
-          "name": "timestamp",
-          "type": "u64",
-          "index": false
-        },
-        {
-          "name": "seqNum",
-          "type": "u64",
-          "index": false
-        },
-        {
-          "name": "maker",
-          "type": "publicKey",
-          "index": false
-        },
-        {
-          "name": "makerClientOrderId",
-          "type": "u64",
-          "index": false
-        },
-        {
-          "name": "makerFee",
-          "type": "i64",
-          "index": false
-        },
-        {
-          "name": "makerTimestamp",
-          "type": "u64",
-          "index": false
-        },
-        {
-          "name": "taker",
-          "type": "publicKey",
-          "index": false
-        },
-        {
-          "name": "takerClientOrderId",
-          "type": "u64",
-          "index": false
-        },
-        {
-          "name": "takerFee",
-          "type": "i64",
-          "index": false
-        },
-        {
-          "name": "price",
-          "type": "i64",
-          "index": false
-        },
-        {
-          "name": "quantity",
-          "type": "i64",
-          "index": false
-        }
-      ]
-    },
-    {
-      "name": "MarketMetaDataLog",
-      "fields": [
-        {
-          "name": "market",
-          "type": "publicKey",
-          "index": false
-        },
-        {
-          "name": "name",
-          "type": "string",
-          "index": false
-        },
-        {
-          "name": "baseMint",
-          "type": "publicKey",
-          "index": false
-        },
-        {
-          "name": "quoteMint",
-          "type": "publicKey",
-          "index": false
-        },
-        {
-          "name": "baseDecimals",
-          "type": "u8",
-          "index": false
-        },
-        {
-          "name": "quoteDecimals",
-          "type": "u8",
-          "index": false
-        },
-        {
-          "name": "baseLotSize",
-          "type": "i64",
-          "index": false
-        },
-        {
-          "name": "quoteLotSize",
-          "type": "i64",
-          "index": false
-        }
-      ]
-    },
-    {
-      "name": "TotalOrderFillEvent",
-      "fields": [
-        {
-          "name": "side",
-          "type": "u8",
-          "index": false
-        },
-        {
-          "name": "taker",
-          "type": "publicKey",
-          "index": false
-        },
-        {
-          "name": "totalQuantityPaid",
-          "type": "u64",
-          "index": false
-        },
-        {
-          "name": "totalQuantityReceived",
-          "type": "u64",
-          "index": false
-        },
-        {
-          "name": "fees",
-          "type": "u64",
-          "index": false
-        }
-      ]
-    },
-    {
-      "name": "CancelOrderLog",
-      "fields": [
-        {
-          "name": "openOrdersAccount",
-          "type": "publicKey",
-          "index": false
-        },
-        {
-          "name": "slot",
-          "type": "u8",
-          "index": false
-        },
-        {
-          "name": "side",
-          "type": "u8",
-          "index": false
-        },
-        {
-          "name": "quantity",
-          "type": "i64",
-          "index": false
-        }
-      ]
-    },
-    {
-      "name": "CancelOrdersLog",
-      "fields": [
-        {
-          "name": "openOrdersAccount",
-          "type": "publicKey",
-          "index": false
-        },
-        {
-          "name": "totalQuantity",
-          "type": "i64",
-          "index": false
-        }
-      ]
-    },
-    {
-      "name": "CancelAllOrdersLog",
-      "fields": [
-        {
-          "name": "openOrdersAccount",
-          "type": "publicKey",
-          "index": false
-        },
-        {
-          "name": "side",
-          "type": {
-            "option": "u8"
+            name: 'Asks';
           },
-          "index": false
-        },
-        {
-          "name": "quantity",
-          "type": "i64",
-          "index": false
-        },
-        {
-          "name": "limit",
-          "type": "u8",
-          "index": false
-        }
-      ]
+        ];
+      };
     },
     {
-      "name": "PruneOrdersLog",
-      "fields": [
-        {
-          "name": "openOrdersAccount",
-          "type": "publicKey",
-          "index": false
-        },
-        {
-          "name": "quantity",
-          "type": "i64",
-          "index": false
-        },
-        {
-          "name": "limit",
-          "type": "u8",
-          "index": false
-        }
-      ]
-    },
-    {
-      "name": "SetDelegateLog",
-      "fields": [
-        {
-          "name": "openOrdersAccount",
-          "type": "publicKey",
-          "index": false
-        },
-        {
-          "name": "delegate",
-          "type": {
-            "option": "publicKey"
+      name: 'EventType';
+      type: {
+        kind: 'enum';
+        variants: [
+          {
+            name: 'Fill';
           },
-          "index": false
-        }
-      ]
-    },
-    {
-      "name": "SettleFundsLog",
-      "fields": [
-        {
-          "name": "openOrdersAccount",
-          "type": "publicKey",
-          "index": false
-        },
-        {
-          "name": "baseNative",
-          "type": "u64",
-          "index": false
-        },
-        {
-          "name": "quoteNative",
-          "type": "u64",
-          "index": false
-        },
-        {
-          "name": "referrerRebate",
-          "type": "u64",
-          "index": false
-        },
-        {
-          "name": "referrer",
-          "type": {
-            "option": "publicKey"
+          {
+            name: 'Out';
           },
-          "index": false
-        }
-      ]
+        ];
+      };
     },
+  ];
+  events: [
     {
-      "name": "SweepFeesLog",
-      "fields": [
+      name: 'DepositLog';
+      fields: [
         {
-          "name": "market",
-          "type": "publicKey",
-          "index": false
+          name: 'openOrdersAccount';
+          type: 'publicKey';
+          index: false;
         },
         {
-          "name": "amount",
-          "type": "u64",
-          "index": false
+          name: 'signer';
+          type: 'publicKey';
+          index: false;
         },
         {
-          "name": "receiver",
-          "type": "publicKey",
-          "index": false
-        }
-      ]
-    }
-  ],
-  "errors": [
-    {
-      "code": 6000,
-      "name": "SomeError",
-      "msg": ""
+          name: 'baseAmount';
+          type: 'u64';
+          index: false;
+        },
+        {
+          name: 'quoteAmount';
+          type: 'u64';
+          index: false;
+        },
+      ];
     },
     {
-      "code": 6001,
-      "name": "InvalidInputNameLength",
-      "msg": "Name lenght above limit"
+      name: 'FillLog';
+      fields: [
+        {
+          name: 'takerSide';
+          type: 'u8';
+          index: false;
+        },
+        {
+          name: 'makerSlot';
+          type: 'u8';
+          index: false;
+        },
+        {
+          name: 'makerOut';
+          type: 'bool';
+          index: false;
+        },
+        {
+          name: 'timestamp';
+          type: 'u64';
+          index: false;
+        },
+        {
+          name: 'seqNum';
+          type: 'u64';
+          index: false;
+        },
+        {
+          name: 'maker';
+          type: 'publicKey';
+          index: false;
+        },
+        {
+          name: 'makerClientOrderId';
+          type: 'u64';
+          index: false;
+        },
+        {
+          name: 'makerFee';
+          type: 'i64';
+          index: false;
+        },
+        {
+          name: 'makerTimestamp';
+          type: 'u64';
+          index: false;
+        },
+        {
+          name: 'taker';
+          type: 'publicKey';
+          index: false;
+        },
+        {
+          name: 'takerClientOrderId';
+          type: 'u64';
+          index: false;
+        },
+        {
+          name: 'takerFee';
+          type: 'i64';
+          index: false;
+        },
+        {
+          name: 'price';
+          type: 'i64';
+          index: false;
+        },
+        {
+          name: 'quantity';
+          type: 'i64';
+          index: false;
+        },
+      ];
     },
     {
-      "code": 6002,
-      "name": "InvalidInputMarketExpired",
-      "msg": "Market cannot be created as expired"
+      name: 'MarketMetaDataLog';
+      fields: [
+        {
+          name: 'market';
+          type: 'publicKey';
+          index: false;
+        },
+        {
+          name: 'name';
+          type: 'string';
+          index: false;
+        },
+        {
+          name: 'baseMint';
+          type: 'publicKey';
+          index: false;
+        },
+        {
+          name: 'quoteMint';
+          type: 'publicKey';
+          index: false;
+        },
+        {
+          name: 'baseDecimals';
+          type: 'u8';
+          index: false;
+        },
+        {
+          name: 'quoteDecimals';
+          type: 'u8';
+          index: false;
+        },
+        {
+          name: 'baseLotSize';
+          type: 'i64';
+          index: false;
+        },
+        {
+          name: 'quoteLotSize';
+          type: 'i64';
+          index: false;
+        },
+      ];
     },
     {
-      "code": 6003,
-      "name": "InvalidInputMarketFees",
-      "msg": "Taker fees should be positive and if maker fees are negative, greater or equal to their abs value"
+      name: 'TotalOrderFillEvent';
+      fields: [
+        {
+          name: 'side';
+          type: 'u8';
+          index: false;
+        },
+        {
+          name: 'taker';
+          type: 'publicKey';
+          index: false;
+        },
+        {
+          name: 'totalQuantityPaid';
+          type: 'u64';
+          index: false;
+        },
+        {
+          name: 'totalQuantityReceived';
+          type: 'u64';
+          index: false;
+        },
+        {
+          name: 'fees';
+          type: 'u64';
+          index: false;
+        },
+      ];
     },
     {
-      "code": 6004,
-      "name": "InvalidInputLots",
-      "msg": "Lots cannot be negative"
+      name: 'CancelOrderLog';
+      fields: [
+        {
+          name: 'openOrdersAccount';
+          type: 'publicKey';
+          index: false;
+        },
+        {
+          name: 'slot';
+          type: 'u8';
+          index: false;
+        },
+        {
+          name: 'side';
+          type: 'u8';
+          index: false;
+        },
+        {
+          name: 'quantity';
+          type: 'i64';
+          index: false;
+        },
+      ];
     },
     {
-      "code": 6005,
-      "name": "InvalidInputLotsSize",
-      "msg": "Lots size above market limits"
+      name: 'CancelOrdersLog';
+      fields: [
+        {
+          name: 'openOrdersAccount';
+          type: 'publicKey';
+          index: false;
+        },
+        {
+          name: 'totalQuantity';
+          type: 'i64';
+          index: false;
+        },
+      ];
     },
     {
-      "code": 6006,
-      "name": "InvalidInputPriceLots",
-      "msg": "Price lots should be greater than zero"
+      name: 'CancelAllOrdersLog';
+      fields: [
+        {
+          name: 'openOrdersAccount';
+          type: 'publicKey';
+          index: false;
+        },
+        {
+          name: 'side';
+          type: {
+            option: 'u8';
+          };
+          index: false;
+        },
+        {
+          name: 'quantity';
+          type: 'i64';
+          index: false;
+        },
+        {
+          name: 'limit';
+          type: 'u8';
+          index: false;
+        },
+      ];
     },
     {
-      "code": 6007,
-      "name": "InvalidInputPegLimit",
-      "msg": "Peg limit should be greater than zero"
+      name: 'PruneOrdersLog';
+      fields: [
+        {
+          name: 'openOrdersAccount';
+          type: 'publicKey';
+          index: false;
+        },
+        {
+          name: 'quantity';
+          type: 'i64';
+          index: false;
+        },
+        {
+          name: 'limit';
+          type: 'u8';
+          index: false;
+        },
+      ];
     },
     {
-      "code": 6008,
-      "name": "InvalidInputOrderType",
-      "msg": "The order type is invalid. A taker order must be Market or ImmediateOrCancel"
+      name: 'SetDelegateLog';
+      fields: [
+        {
+          name: 'openOrdersAccount';
+          type: 'publicKey';
+          index: false;
+        },
+        {
+          name: 'delegate';
+          type: {
+            option: 'publicKey';
+          };
+          index: false;
+        },
+      ];
     },
     {
-      "code": 6009,
-      "name": "InvalidInputOrderId",
-      "msg": "Order id cannot be zero"
+      name: 'SettleFundsLog';
+      fields: [
+        {
+          name: 'openOrdersAccount';
+          type: 'publicKey';
+          index: false;
+        },
+        {
+          name: 'baseNative';
+          type: 'u64';
+          index: false;
+        },
+        {
+          name: 'quoteNative';
+          type: 'u64';
+          index: false;
+        },
+        {
+          name: 'referrerRebate';
+          type: 'u64';
+          index: false;
+        },
+        {
+          name: 'referrer';
+          type: {
+            option: 'publicKey';
+          };
+          index: false;
+        },
+      ];
     },
     {
-      "code": 6010,
-      "name": "InvalidInputStaleness",
-      "msg": "Oracle staleness limit is currently unimplemented"
+      name: 'SweepFeesLog';
+      fields: [
+        {
+          name: 'market';
+          type: 'publicKey';
+          index: false;
+        },
+        {
+          name: 'amount';
+          type: 'u64';
+          index: false;
+        },
+        {
+          name: 'receiver';
+          type: 'publicKey';
+          index: false;
+        },
+      ];
+    },
+  ];
+  errors: [
+    {
+      code: 6000;
+      name: 'SomeError';
+      msg: '';
     },
     {
-      "code": 6011,
-      "name": "InvalidInputQueueSlots",
-      "msg": "Slot above queue limit"
+      code: 6001;
+      name: 'InvalidInputNameLength';
+      msg: 'Name lenght above limit';
     },
     {
-      "code": 6012,
-      "name": "InvalidOracleTypes",
-      "msg": "Cannot combine two oracles of different providers"
+      code: 6002;
+      name: 'InvalidInputMarketExpired';
+      msg: 'Market cannot be created as expired';
     },
     {
-      "code": 6013,
-      "name": "InvalidSecondOracle",
-      "msg": "Cannot configure secondary oracle without primary"
+      code: 6003;
+      name: 'InvalidInputMarketFees';
+      msg: 'Taker fees should be positive and if maker fees are negative, greater or equal to their abs value';
     },
     {
-      "code": 6014,
-      "name": "NoCloseMarketAdmin",
-      "msg": "This market does not have a `close_market_admin` and thus cannot be closed."
+      code: 6004;
+      name: 'InvalidInputLots';
+      msg: 'Lots cannot be negative';
     },
     {
-      "code": 6015,
-      "name": "InvalidCloseMarketAdmin",
-      "msg": "The signer of this transaction is not this market's `close_market_admin`."
+      code: 6005;
+      name: 'InvalidInputLotsSize';
+      msg: 'Lots size above market limits';
     },
     {
-      "code": 6016,
-      "name": "InvalidOpenOrdersAdmin",
-      "msg": "The `open_orders_admin` required by this market to sign all instructions that creates orders is missing or is not valid"
+      code: 6006;
+      name: 'InvalidInputPriceLots';
+      msg: 'Price lots should be greater than zero';
     },
     {
-      "code": 6017,
-      "name": "InvalidConsumeEventsAdmin",
-      "msg": "The `consume_events_admin` required by this market to sign all instructions that consume events is missing or is not valid"
+      code: 6007;
+      name: 'InvalidInputPegLimit';
+      msg: 'Peg limit should be greater than zero';
     },
     {
-      "code": 6018,
-      "name": "IndexerActiveOO",
-      "msg": "Cannot be closed due to the existence of open orders accounts"
+      code: 6008;
+      name: 'InvalidInputOrderType';
+      msg: 'The order type is invalid. A taker order must be Market or ImmediateOrCancel';
     },
     {
-      "code": 6019,
-      "name": "UnknownOracleType",
-      "msg": "oracle type cannot be determined"
+      code: 6009;
+      name: 'InvalidInputOrderId';
+      msg: 'Order id cannot be zero';
     },
     {
-      "code": 6020,
-      "name": "OracleConfidence",
-      "msg": "an oracle does not reach the confidence threshold"
+      code: 6010;
+      name: 'InvalidInputStaleness';
+      msg: 'Oracle staleness limit is currently unimplemented';
     },
     {
-      "code": 6021,
-      "name": "OracleStale",
-      "msg": "an oracle is stale"
+      code: 6011;
+      name: 'InvalidInputQueueSlots';
+      msg: 'Slot above queue limit';
     },
     {
-      "code": 6022,
-      "name": "OrderIdNotFound",
-      "msg": "Order id not found on the orderbook"
+      code: 6012;
+      name: 'InvalidOracleTypes';
+      msg: 'Cannot combine two oracles of different providers';
     },
     {
-      "code": 6023,
-      "name": "EventQueueContainsElements",
-      "msg": "Event queue contains elements and market can't be closed"
+      code: 6013;
+      name: 'InvalidSecondOracle';
+      msg: 'Cannot configure secondary oracle without primary';
     },
     {
-      "code": 6024,
-      "name": "InvalidOrderPostIOC",
-      "msg": "ImmediateOrCancel is not a PostOrderType"
+      code: 6014;
+      name: 'NoCloseMarketAdmin';
+      msg: 'This market does not have a `close_market_admin` and thus cannot be closed.';
     },
     {
-      "code": 6025,
-      "name": "InvalidOrderPostMarket",
-      "msg": "Market is not a PostOrderType"
+      code: 6015;
+      name: 'InvalidCloseMarketAdmin';
+      msg: "The signer of this transaction is not this market's `close_market_admin`.";
     },
     {
-      "code": 6026,
-      "name": "WouldSelfTrade",
-      "msg": "would self trade"
+      code: 6016;
+      name: 'InvalidOpenOrdersAdmin';
+      msg: 'The `open_orders_admin` required by this market to sign all instructions that creates orders is missing or is not valid';
     },
     {
-      "code": 6027,
-      "name": "MarketHasExpired",
-      "msg": "The Market has already expired."
+      code: 6017;
+      name: 'InvalidConsumeEventsAdmin';
+      msg: 'The `consume_events_admin` required by this market to sign all instructions that consume events is missing or is not valid';
     },
     {
-      "code": 6028,
-      "name": "InvalidPriceLots",
-      "msg": "Price lots should be greater than zero"
+      code: 6018;
+      name: 'IndexerActiveOO';
+      msg: 'Cannot be closed due to the existence of open orders accounts';
     },
     {
-      "code": 6029,
-      "name": "InvalidOraclePrice",
-      "msg": "Oracle price above market limits"
+      code: 6019;
+      name: 'UnknownOracleType';
+      msg: 'oracle type cannot be determined';
     },
     {
-      "code": 6030,
-      "name": "MarketHasNotExpired",
-      "msg": "The Market has not expired yet."
+      code: 6020;
+      name: 'OracleConfidence';
+      msg: 'an oracle does not reach the confidence threshold';
     },
     {
-      "code": 6031,
-      "name": "NoOwnerOrDelegate",
-      "msg": "No correct owner or delegate."
+      code: 6021;
+      name: 'OracleStale';
+      msg: 'an oracle is stale';
     },
     {
-      "code": 6032,
-      "name": "NoOwner",
-      "msg": "No correct owner"
+      code: 6022;
+      name: 'OrderIdNotFound';
+      msg: 'Order id not found on the orderbook';
     },
     {
-      "code": 6033,
-      "name": "OpenOrdersFull",
-      "msg": "No free order index in open orders account"
+      code: 6023;
+      name: 'EventQueueContainsElements';
+      msg: "Event queue contains elements and market can't be closed";
     },
     {
-      "code": 6034,
-      "name": "BookContainsElements",
-      "msg": "Book contains elements"
+      code: 6024;
+      name: 'InvalidOrderPostIOC';
+      msg: 'ImmediateOrCancel is not a PostOrderType';
     },
     {
-      "code": 6035,
-      "name": "OpenOrdersOrderNotFound",
-      "msg": "Could not find order in user account"
+      code: 6025;
+      name: 'InvalidOrderPostMarket';
+      msg: 'Market is not a PostOrderType';
     },
     {
-      "code": 6036,
-      "name": "InvalidPostAmount",
-      "msg": "Amount to post above book limits"
+      code: 6026;
+      name: 'WouldSelfTrade';
+      msg: 'would self trade';
     },
     {
-      "code": 6037,
-      "name": "DisabledOraclePeg",
-      "msg": "Oracle peg orders are not enabled for this market"
+      code: 6027;
+      name: 'MarketHasExpired';
+      msg: 'The Market has already expired.';
     },
     {
-      "code": 6038,
-      "name": "NonEmptyMarket",
-      "msg": "Cannot close a non-empty market"
+      code: 6028;
+      name: 'InvalidPriceLots';
+      msg: 'Price lots should be greater than zero';
     },
     {
-      "code": 6039,
-      "name": "NonEmptyOpenOrdersPosition",
-      "msg": "Cannot close a non-empty open orders account"
-    }
-  ]
+      code: 6029;
+      name: 'InvalidOraclePrice';
+      msg: 'Oracle price above market limits';
+    },
+    {
+      code: 6030;
+      name: 'MarketHasNotExpired';
+      msg: 'The Market has not expired yet.';
+    },
+    {
+      code: 6031;
+      name: 'NoOwnerOrDelegate';
+      msg: 'No correct owner or delegate.';
+    },
+    {
+      code: 6032;
+      name: 'NoOwner';
+      msg: 'No correct owner';
+    },
+    {
+      code: 6033;
+      name: 'OpenOrdersFull';
+      msg: 'No free order index in open orders account';
+    },
+    {
+      code: 6034;
+      name: 'BookContainsElements';
+      msg: 'Book contains elements';
+    },
+    {
+      code: 6035;
+      name: 'OpenOrdersOrderNotFound';
+      msg: 'Could not find order in user account';
+    },
+    {
+      code: 6036;
+      name: 'InvalidPostAmount';
+      msg: 'Amount to post above book limits';
+    },
+    {
+      code: 6037;
+      name: 'DisabledOraclePeg';
+      msg: 'Oracle peg orders are not enabled for this market';
+    },
+    {
+      code: 6038;
+      name: 'NonEmptyMarket';
+      msg: 'Cannot close a non-empty market';
+    },
+    {
+      code: 6039;
+      name: 'NonEmptyOpenOrdersPosition';
+      msg: 'Cannot close a non-empty open orders account';
+    },
+  ];
 }
 
 export const IDL: OpenbookV2 = {
-  "version": "0.1.0",
-  "name": "openbook_v2",
-  "instructions": [
+  version: '0.1.0',
+  name: 'openbook_v2',
+  instructions: [
     {
-      "name": "createMarket",
-      "docs": [
-        "Create a [`Market`](crate::state::Market) for a given token pair."
+      name: 'createMarket',
+      docs: [
+        'Create a [`Market`](crate::state::Market) for a given token pair.',
       ],
-      "accounts": [
+      accounts: [
         {
-          "name": "market",
-          "isMut": true,
-          "isSigner": true
+          name: 'market',
+          isMut: true,
+          isSigner: true,
         },
         {
-          "name": "marketAuthority",
-          "isMut": false,
-          "isSigner": false
+          name: 'marketAuthority',
+          isMut: false,
+          isSigner: false,
         },
         {
-          "name": "bids",
-          "isMut": true,
-          "isSigner": false,
-          "docs": [
-            "Accounts are initialized by client,",
-            "anchor discriminator is set first when ix exits,"
-          ]
+          name: 'bids',
+          isMut: true,
+          isSigner: false,
+          docs: [
+            'Accounts are initialized by client,',
+            'anchor discriminator is set first when ix exits,',
+          ],
         },
         {
-          "name": "asks",
-          "isMut": true,
-          "isSigner": false
+          name: 'asks',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "eventQueue",
-          "isMut": true,
-          "isSigner": false
+          name: 'eventQueue',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "payer",
-          "isMut": true,
-          "isSigner": true
+          name: 'payer',
+          isMut: true,
+          isSigner: true,
         },
         {
-          "name": "baseVault",
-          "isMut": true,
-          "isSigner": false
+          name: 'baseVault',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "quoteVault",
-          "isMut": true,
-          "isSigner": false
+          name: 'quoteVault',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "baseMint",
-          "isMut": false,
-          "isSigner": false
+          name: 'baseMint',
+          isMut: false,
+          isSigner: false,
         },
         {
-          "name": "quoteMint",
-          "isMut": false,
-          "isSigner": false
+          name: 'quoteMint',
+          isMut: false,
+          isSigner: false,
         },
         {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
+          name: 'systemProgram',
+          isMut: false,
+          isSigner: false,
         },
         {
-          "name": "oracleA",
-          "isMut": false,
-          "isSigner": false,
-          "isOptional": true
+          name: 'oracleA',
+          isMut: false,
+          isSigner: false,
+          isOptional: true,
         },
         {
-          "name": "oracleB",
-          "isMut": false,
-          "isSigner": false,
-          "isOptional": true
+          name: 'oracleB',
+          isMut: false,
+          isSigner: false,
+          isOptional: true,
         },
         {
-          "name": "collectFeeAdmin",
-          "isMut": false,
-          "isSigner": false
+          name: 'collectFeeAdmin',
+          isMut: false,
+          isSigner: false,
         },
         {
-          "name": "openOrdersAdmin",
-          "isMut": false,
-          "isSigner": false,
-          "isOptional": true
+          name: 'openOrdersAdmin',
+          isMut: false,
+          isSigner: false,
+          isOptional: true,
         },
         {
-          "name": "consumeEventsAdmin",
-          "isMut": false,
-          "isSigner": false,
-          "isOptional": true
+          name: 'consumeEventsAdmin',
+          isMut: false,
+          isSigner: false,
+          isOptional: true,
         },
         {
-          "name": "closeMarketAdmin",
-          "isMut": false,
-          "isSigner": false,
-          "isOptional": true
+          name: 'closeMarketAdmin',
+          isMut: false,
+          isSigner: false,
+          isOptional: true,
         },
         {
-          "name": "eventAuthority",
-          "isMut": false,
-          "isSigner": false
+          name: 'eventAuthority',
+          isMut: false,
+          isSigner: false,
         },
         {
-          "name": "program",
-          "isMut": false,
-          "isSigner": false
-        }
+          name: 'program',
+          isMut: false,
+          isSigner: false,
+        },
       ],
-      "args": [
+      args: [
         {
-          "name": "name",
-          "type": "string"
+          name: 'name',
+          type: 'string',
         },
         {
-          "name": "oracleConfig",
-          "type": {
-            "defined": "OracleConfigParams"
-          }
+          name: 'oracleConfig',
+          type: {
+            defined: 'OracleConfigParams',
+          },
         },
         {
-          "name": "quoteLotSize",
-          "type": "i64"
+          name: 'quoteLotSize',
+          type: 'i64',
         },
         {
-          "name": "baseLotSize",
-          "type": "i64"
+          name: 'baseLotSize',
+          type: 'i64',
         },
         {
-          "name": "makerFee",
-          "type": "i64"
+          name: 'makerFee',
+          type: 'i64',
         },
         {
-          "name": "takerFee",
-          "type": "i64"
+          name: 'takerFee',
+          type: 'i64',
         },
         {
-          "name": "timeExpiry",
-          "type": "i64"
-        }
-      ]
+          name: 'timeExpiry',
+          type: 'i64',
+        },
+      ],
     },
     {
-      "name": "closeMarket",
-      "docs": [
-        "Close a [`Market`](crate::state::Market)."
+      name: 'closeMarket',
+      docs: ['Close a [`Market`](crate::state::Market).'],
+      accounts: [
+        {
+          name: 'closeMarketAdmin',
+          isMut: false,
+          isSigner: true,
+        },
+        {
+          name: 'market',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'bids',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'asks',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'eventQueue',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'solDestination',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'tokenProgram',
+          isMut: false,
+          isSigner: false,
+        },
       ],
-      "accounts": [
-        {
-          "name": "closeMarketAdmin",
-          "isMut": false,
-          "isSigner": true
-        },
-        {
-          "name": "market",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "bids",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "asks",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "eventQueue",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "solDestination",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "tokenProgram",
-          "isMut": false,
-          "isSigner": false
-        }
-      ],
-      "args": []
+      args: [],
     },
     {
-      "name": "createOpenOrdersIndexer",
-      "accounts": [
+      name: 'createOpenOrdersIndexer',
+      accounts: [
         {
-          "name": "payer",
-          "isMut": true,
-          "isSigner": true
+          name: 'payer',
+          isMut: true,
+          isSigner: true,
         },
         {
-          "name": "owner",
-          "isMut": false,
-          "isSigner": true
+          name: 'owner',
+          isMut: false,
+          isSigner: true,
         },
         {
-          "name": "openOrdersIndexer",
-          "isMut": true,
-          "isSigner": false
+          name: 'openOrdersIndexer',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "market",
-          "isMut": false,
-          "isSigner": false
+          name: 'market',
+          isMut: false,
+          isSigner: false,
         },
         {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
-        }
+          name: 'systemProgram',
+          isMut: false,
+          isSigner: false,
+        },
       ],
-      "args": []
+      args: [],
     },
     {
-      "name": "closeOpenOrdersIndexer",
-      "accounts": [
+      name: 'closeOpenOrdersIndexer',
+      accounts: [
         {
-          "name": "owner",
-          "isMut": false,
-          "isSigner": true
+          name: 'owner',
+          isMut: false,
+          isSigner: true,
         },
         {
-          "name": "openOrdersIndexer",
-          "isMut": true,
-          "isSigner": false
+          name: 'openOrdersIndexer',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "solDestination",
-          "isMut": true,
-          "isSigner": false
+          name: 'solDestination',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "tokenProgram",
-          "isMut": false,
-          "isSigner": false
-        }
+          name: 'tokenProgram',
+          isMut: false,
+          isSigner: false,
+        },
       ],
-      "args": []
+      args: [],
     },
     {
-      "name": "createOpenOrdersAccount",
-      "accounts": [
+      name: 'createOpenOrdersAccount',
+      accounts: [
         {
-          "name": "payer",
-          "isMut": true,
-          "isSigner": true
+          name: 'payer',
+          isMut: true,
+          isSigner: true,
         },
         {
-          "name": "owner",
-          "isMut": false,
-          "isSigner": true
+          name: 'owner',
+          isMut: false,
+          isSigner: true,
         },
         {
-          "name": "delegateAccount",
-          "isMut": false,
-          "isSigner": false,
-          "isOptional": true
+          name: 'delegateAccount',
+          isMut: false,
+          isSigner: false,
+          isOptional: true,
         },
         {
-          "name": "openOrdersIndexer",
-          "isMut": true,
-          "isSigner": false
+          name: 'openOrdersIndexer',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "openOrdersAccount",
-          "isMut": true,
-          "isSigner": false
+          name: 'openOrdersAccount',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "market",
-          "isMut": false,
-          "isSigner": false
+          name: 'market',
+          isMut: false,
+          isSigner: false,
         },
         {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
-        }
+          name: 'systemProgram',
+          isMut: false,
+          isSigner: false,
+        },
       ],
-      "args": []
+      args: [],
     },
     {
-      "name": "closeOpenOrdersAccount",
-      "accounts": [
+      name: 'closeOpenOrdersAccount',
+      accounts: [
         {
-          "name": "owner",
-          "isMut": false,
-          "isSigner": true
+          name: 'owner',
+          isMut: false,
+          isSigner: true,
         },
         {
-          "name": "openOrdersIndexer",
-          "isMut": true,
-          "isSigner": false
+          name: 'openOrdersIndexer',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "openOrdersAccount",
-          "isMut": true,
-          "isSigner": false
+          name: 'openOrdersAccount',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "solDestination",
-          "isMut": true,
-          "isSigner": false
-        }
+          name: 'solDestination',
+          isMut: true,
+          isSigner: false,
+        },
       ],
-      "args": []
+      args: [],
     },
     {
-      "name": "placeOrder",
-      "docs": [
-        "Place an order.",
-        "",
-        "Different types of orders have different effects on the order book,",
-        "as described in [`PlaceOrderType`](crate::state::PlaceOrderType).",
-        "",
-        "`price_lots` refers to the price in lots: the number of quote lots",
-        "per base lot. It is ignored for `PlaceOrderType::Market` orders.",
-        "",
-        "`expiry_timestamp` is a unix timestamp for when this order should",
-        "expire. If 0 is passed in, the order will never expire. If the time",
-        "is in the past, the instruction is skipped. Timestamps in the future",
-        "are reduced to now + 65,535s.",
-        "",
-        "`limit` determines the maximum number of orders from the book to fill,",
-        "and can be used to limit CU spent. When the limit is reached, processing",
-        "stops and the instruction succeeds."
+      name: 'placeOrder',
+      docs: [
+        'Place an order.',
+        '',
+        'Different types of orders have different effects on the order book,',
+        'as described in [`PlaceOrderType`](crate::state::PlaceOrderType).',
+        '',
+        '`price_lots` refers to the price in lots: the number of quote lots',
+        'per base lot. It is ignored for `PlaceOrderType::Market` orders.',
+        '',
+        '`expiry_timestamp` is a unix timestamp for when this order should',
+        'expire. If 0 is passed in, the order will never expire. If the time',
+        'is in the past, the instruction is skipped. Timestamps in the future',
+        'are reduced to now + 65,535s.',
+        '',
+        '`limit` determines the maximum number of orders from the book to fill,',
+        'and can be used to limit CU spent. When the limit is reached, processing',
+        'stops and the instruction succeeds.',
       ],
-      "accounts": [
+      accounts: [
         {
-          "name": "signer",
-          "isMut": false,
-          "isSigner": true
+          name: 'signer',
+          isMut: false,
+          isSigner: true,
         },
         {
-          "name": "openOrdersAccount",
-          "isMut": true,
-          "isSigner": false
+          name: 'openOrdersAccount',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "openOrdersAdmin",
-          "isMut": false,
-          "isSigner": true,
-          "isOptional": true
+          name: 'openOrdersAdmin',
+          isMut: false,
+          isSigner: true,
+          isOptional: true,
         },
         {
-          "name": "tokenDepositAccount",
-          "isMut": true,
-          "isSigner": false
+          name: 'tokenDepositAccount',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "market",
-          "isMut": true,
-          "isSigner": false
+          name: 'market',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "bids",
-          "isMut": true,
-          "isSigner": false
+          name: 'bids',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "asks",
-          "isMut": true,
-          "isSigner": false
+          name: 'asks',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "eventQueue",
-          "isMut": true,
-          "isSigner": false
+          name: 'eventQueue',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "marketVault",
-          "isMut": true,
-          "isSigner": false
+          name: 'marketVault',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "oracleA",
-          "isMut": false,
-          "isSigner": false,
-          "isOptional": true
+          name: 'oracleA',
+          isMut: false,
+          isSigner: false,
+          isOptional: true,
         },
         {
-          "name": "oracleB",
-          "isMut": false,
-          "isSigner": false,
-          "isOptional": true
+          name: 'oracleB',
+          isMut: false,
+          isSigner: false,
+          isOptional: true,
         },
         {
-          "name": "tokenProgram",
-          "isMut": false,
-          "isSigner": false
+          name: 'tokenProgram',
+          isMut: false,
+          isSigner: false,
         },
         {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
-        }
+          name: 'systemProgram',
+          isMut: false,
+          isSigner: false,
+        },
       ],
-      "args": [
+      args: [
         {
-          "name": "args",
-          "type": {
-            "defined": "PlaceOrderArgs"
-          }
-        }
+          name: 'args',
+          type: {
+            defined: 'PlaceOrderArgs',
+          },
+        },
       ],
-      "returns": {
-        "option": "u128"
-      }
+      returns: {
+        option: 'u128',
+      },
     },
     {
-      "name": "cancelAndPlaceOrders",
-      "docs": [
-        "Cancel orders and place multiple orders.",
-        ""
+      name: 'cancelAndPlaceOrders',
+      docs: ['Cancel orders and place multiple orders.', ''],
+      accounts: [
+        {
+          name: 'signer',
+          isMut: false,
+          isSigner: true,
+        },
+        {
+          name: 'openOrdersAccount',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'openOrdersAdmin',
+          isMut: false,
+          isSigner: true,
+          isOptional: true,
+        },
+        {
+          name: 'tokenQuoteDepositAccount',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'tokenBaseDepositAccount',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'market',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'bids',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'asks',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'eventQueue',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'marketQuoteVault',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'marketBaseVault',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'oracleA',
+          isMut: false,
+          isSigner: false,
+          isOptional: true,
+        },
+        {
+          name: 'oracleB',
+          isMut: false,
+          isSigner: false,
+          isOptional: true,
+        },
+        {
+          name: 'tokenProgram',
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: 'systemProgram',
+          isMut: false,
+          isSigner: false,
+        },
       ],
-      "accounts": [
+      args: [
         {
-          "name": "signer",
-          "isMut": false,
-          "isSigner": true
+          name: 'cancelClientOrdersIds',
+          type: {
+            vec: 'u64',
+          },
         },
         {
-          "name": "openOrdersAccount",
-          "isMut": true,
-          "isSigner": false
+          name: 'placeOrders',
+          type: {
+            vec: {
+              defined: 'PlaceOrderArgs',
+            },
+          },
         },
-        {
-          "name": "openOrdersAdmin",
-          "isMut": false,
-          "isSigner": true,
-          "isOptional": true
-        },
-        {
-          "name": "tokenQuoteDepositAccount",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "tokenBaseDepositAccount",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "market",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "bids",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "asks",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "eventQueue",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "marketQuoteVault",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "marketBaseVault",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "oracleA",
-          "isMut": false,
-          "isSigner": false,
-          "isOptional": true
-        },
-        {
-          "name": "oracleB",
-          "isMut": false,
-          "isSigner": false,
-          "isOptional": true
-        },
-        {
-          "name": "tokenProgram",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
-        }
       ],
-      "args": [
-        {
-          "name": "cancelClientOrdersIds",
-          "type": {
-            "vec": "u64"
-          }
+      returns: {
+        vec: {
+          option: 'u128',
         },
-        {
-          "name": "placeOrders",
-          "type": {
-            "vec": {
-              "defined": "PlaceOrderArgs"
-            }
-          }
-        }
-      ],
-      "returns": {
-        "vec": {
-          "option": "u128"
-        }
-      }
+      },
     },
     {
-      "name": "placeOrderPegged",
-      "accounts": [
+      name: 'placeOrderPegged',
+      accounts: [
         {
-          "name": "signer",
-          "isMut": false,
-          "isSigner": true
+          name: 'signer',
+          isMut: false,
+          isSigner: true,
         },
         {
-          "name": "openOrdersAccount",
-          "isMut": true,
-          "isSigner": false
+          name: 'openOrdersAccount',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "openOrdersAdmin",
-          "isMut": false,
-          "isSigner": true,
-          "isOptional": true
+          name: 'openOrdersAdmin',
+          isMut: false,
+          isSigner: true,
+          isOptional: true,
         },
         {
-          "name": "tokenDepositAccount",
-          "isMut": true,
-          "isSigner": false
+          name: 'tokenDepositAccount',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "market",
-          "isMut": true,
-          "isSigner": false
+          name: 'market',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "bids",
-          "isMut": true,
-          "isSigner": false
+          name: 'bids',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "asks",
-          "isMut": true,
-          "isSigner": false
+          name: 'asks',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "eventQueue",
-          "isMut": true,
-          "isSigner": false
+          name: 'eventQueue',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "marketVault",
-          "isMut": true,
-          "isSigner": false
+          name: 'marketVault',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "oracleA",
-          "isMut": false,
-          "isSigner": false,
-          "isOptional": true
+          name: 'oracleA',
+          isMut: false,
+          isSigner: false,
+          isOptional: true,
         },
         {
-          "name": "oracleB",
-          "isMut": false,
-          "isSigner": false,
-          "isOptional": true
+          name: 'oracleB',
+          isMut: false,
+          isSigner: false,
+          isOptional: true,
         },
         {
-          "name": "tokenProgram",
-          "isMut": false,
-          "isSigner": false
+          name: 'tokenProgram',
+          isMut: false,
+          isSigner: false,
         },
         {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
-        }
+          name: 'systemProgram',
+          isMut: false,
+          isSigner: false,
+        },
       ],
-      "args": [
+      args: [
         {
-          "name": "args",
-          "type": {
-            "defined": "PlaceOrderPeggedArgs"
-          }
-        }
+          name: 'args',
+          type: {
+            defined: 'PlaceOrderPeggedArgs',
+          },
+        },
       ],
-      "returns": {
-        "option": "u128"
-      }
+      returns: {
+        option: 'u128',
+      },
     },
     {
-      "name": "placeTakeOrder",
-      "docs": [
-        "Place an order that shall take existing liquidity off of the book, not",
-        "add a new order off the book.",
-        "",
-        "This type of order allows for instant token settlement for the taker."
+      name: 'placeTakeOrder',
+      docs: [
+        'Place an order that shall take existing liquidity off of the book, not',
+        'add a new order off the book.',
+        '',
+        'This type of order allows for instant token settlement for the taker.',
       ],
-      "accounts": [
+      accounts: [
         {
-          "name": "signer",
-          "isMut": false,
-          "isSigner": true
+          name: 'signer',
+          isMut: false,
+          isSigner: true,
         },
         {
-          "name": "market",
-          "isMut": true,
-          "isSigner": false
+          name: 'market',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "marketAuthority",
-          "isMut": false,
-          "isSigner": false
+          name: 'marketAuthority',
+          isMut: false,
+          isSigner: false,
         },
         {
-          "name": "bids",
-          "isMut": true,
-          "isSigner": false
+          name: 'bids',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "asks",
-          "isMut": true,
-          "isSigner": false
+          name: 'asks',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "baseVault",
-          "isMut": true,
-          "isSigner": false
+          name: 'baseVault',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "quoteVault",
-          "isMut": true,
-          "isSigner": false
+          name: 'quoteVault',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "eventQueue",
-          "isMut": true,
-          "isSigner": false
+          name: 'eventQueue',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "tokenDepositAccount",
-          "isMut": true,
-          "isSigner": false
+          name: 'tokenDepositAccount',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "tokenReceiverAccount",
-          "isMut": true,
-          "isSigner": false
+          name: 'tokenReceiverAccount',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "referrer",
-          "isMut": true,
-          "isSigner": false,
-          "isOptional": true
+          name: 'referrer',
+          isMut: true,
+          isSigner: false,
+          isOptional: true,
         },
         {
-          "name": "oracleA",
-          "isMut": false,
-          "isSigner": false,
-          "isOptional": true
+          name: 'oracleA',
+          isMut: false,
+          isSigner: false,
+          isOptional: true,
         },
         {
-          "name": "oracleB",
-          "isMut": false,
-          "isSigner": false,
-          "isOptional": true
+          name: 'oracleB',
+          isMut: false,
+          isSigner: false,
+          isOptional: true,
         },
         {
-          "name": "tokenProgram",
-          "isMut": false,
-          "isSigner": false
+          name: 'tokenProgram',
+          isMut: false,
+          isSigner: false,
         },
         {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
+          name: 'systemProgram',
+          isMut: false,
+          isSigner: false,
         },
         {
-          "name": "openOrdersAdmin",
-          "isMut": false,
-          "isSigner": true,
-          "isOptional": true
-        }
+          name: 'openOrdersAdmin',
+          isMut: false,
+          isSigner: true,
+          isOptional: true,
+        },
       ],
-      "args": [
+      args: [
         {
-          "name": "args",
-          "type": {
-            "defined": "PlaceTakeOrderArgs"
-          }
-        }
-      ]
+          name: 'args',
+          type: {
+            defined: 'PlaceTakeOrderArgs',
+          },
+        },
+      ],
     },
     {
-      "name": "consumeEvents",
-      "docs": [
-        "Process up to `limit` [events](crate::state::AnyEvent).",
-        "",
+      name: 'consumeEvents',
+      docs: [
+        'Process up to `limit` [events](crate::state::AnyEvent).',
+        '',
         "When a user places a 'take' order, they do not know beforehand which",
         "market maker will have placed the 'make' order that they get executed",
         "against. This prevents them from passing in a market maker's",
-        "[`OpenOrdersAccount`](crate::state::OpenOrdersAccount), which is needed",
-        "to credit/debit the relevant tokens to/from the maker. As such, Openbook",
+        '[`OpenOrdersAccount`](crate::state::OpenOrdersAccount), which is needed',
+        'to credit/debit the relevant tokens to/from the maker. As such, Openbook',
         "uses a 'crank' system, where `place_order` only emits events, and",
-        "`consume_events` handles token settlement.",
-        "",
-        "Currently, there are two types of events: [`FillEvent`](crate::state::FillEvent)s",
-        "and [`OutEvent`](crate::state::OutEvent)s.",
-        "",
-        "A `FillEvent` is emitted when an order is filled, and it is handled by",
-        "debiting whatever the taker is selling from the taker and crediting",
-        "it to the maker, and debiting whatever the taker is buying from the",
-        "maker and crediting it to the taker. Note that *no tokens are moved*,",
+        '`consume_events` handles token settlement.',
+        '',
+        'Currently, there are two types of events: [`FillEvent`](crate::state::FillEvent)s',
+        'and [`OutEvent`](crate::state::OutEvent)s.',
+        '',
+        'A `FillEvent` is emitted when an order is filled, and it is handled by',
+        'debiting whatever the taker is selling from the taker and crediting',
+        'it to the maker, and debiting whatever the taker is buying from the',
+        'maker and crediting it to the taker. Note that *no tokens are moved*,',
         "these are just debits and credits to each party's [`Position`](crate::state::Position).",
-        "",
-        "An `OutEvent` is emitted when a limit order needs to be removed from",
-        "the book during a `place_order` invocation, and it is handled by",
-        "crediting whatever the maker would have sold (quote token in a bid,",
-        "base token in an ask) back to the maker."
+        '',
+        'An `OutEvent` is emitted when a limit order needs to be removed from',
+        'the book during a `place_order` invocation, and it is handled by',
+        'crediting whatever the maker would have sold (quote token in a bid,',
+        'base token in an ask) back to the maker.',
       ],
-      "accounts": [
+      accounts: [
         {
-          "name": "consumeEventsAdmin",
-          "isMut": false,
-          "isSigner": true,
-          "isOptional": true
+          name: 'consumeEventsAdmin',
+          isMut: false,
+          isSigner: true,
+          isOptional: true,
         },
         {
-          "name": "market",
-          "isMut": true,
-          "isSigner": false
+          name: 'market',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "eventQueue",
-          "isMut": true,
-          "isSigner": false
-        }
+          name: 'eventQueue',
+          isMut: true,
+          isSigner: false,
+        },
       ],
-      "args": [
+      args: [
         {
-          "name": "limit",
-          "type": "u64"
-        }
-      ]
+          name: 'limit',
+          type: 'u64',
+        },
+      ],
     },
     {
-      "name": "consumeGivenEvents",
-      "docs": [
-        "Process the [events](crate::state::AnyEvent) at the given positions."
+      name: 'consumeGivenEvents',
+      docs: [
+        'Process the [events](crate::state::AnyEvent) at the given positions.',
       ],
-      "accounts": [
+      accounts: [
         {
-          "name": "consumeEventsAdmin",
-          "isMut": false,
-          "isSigner": true,
-          "isOptional": true
+          name: 'consumeEventsAdmin',
+          isMut: false,
+          isSigner: true,
+          isOptional: true,
         },
         {
-          "name": "market",
-          "isMut": true,
-          "isSigner": false
+          name: 'market',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "eventQueue",
-          "isMut": true,
-          "isSigner": false
-        }
+          name: 'eventQueue',
+          isMut: true,
+          isSigner: false,
+        },
       ],
-      "args": [
+      args: [
         {
-          "name": "slots",
-          "type": {
-            "vec": "u64"
-          }
-        }
-      ]
+          name: 'slots',
+          type: {
+            vec: 'u64',
+          },
+        },
+      ],
     },
     {
-      "name": "cancelOrder",
-      "docs": [
-        "Cancel an order by its `order_id`.",
-        "",
+      name: 'cancelOrder',
+      docs: [
+        'Cancel an order by its `order_id`.',
+        '',
         "Note that this doesn't emit an [`OutEvent`](crate::state::OutEvent) because a",
-        "maker knows that they will be passing in their own [`OpenOrdersAccount`](crate::state::OpenOrdersAccount)."
+        'maker knows that they will be passing in their own [`OpenOrdersAccount`](crate::state::OpenOrdersAccount).',
       ],
-      "accounts": [
+      accounts: [
         {
-          "name": "signer",
-          "isMut": false,
-          "isSigner": true
+          name: 'signer',
+          isMut: false,
+          isSigner: true,
         },
         {
-          "name": "openOrdersAccount",
-          "isMut": true,
-          "isSigner": false
+          name: 'openOrdersAccount',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "market",
-          "isMut": false,
-          "isSigner": false
+          name: 'market',
+          isMut: false,
+          isSigner: false,
         },
         {
-          "name": "bids",
-          "isMut": true,
-          "isSigner": false
+          name: 'bids',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "asks",
-          "isMut": true,
-          "isSigner": false
-        }
+          name: 'asks',
+          isMut: true,
+          isSigner: false,
+        },
       ],
-      "args": [
+      args: [
         {
-          "name": "orderId",
-          "type": "u128"
-        }
-      ]
+          name: 'orderId',
+          type: 'u128',
+        },
+      ],
     },
     {
-      "name": "cancelOrderByClientOrderId",
-      "docs": [
-        "Cancel an order by its `client_order_id`.",
-        "",
+      name: 'cancelOrderByClientOrderId',
+      docs: [
+        'Cancel an order by its `client_order_id`.',
+        '',
         "Note that this doesn't emit an [`OutEvent`](crate::state::OutEvent) because a",
-        "maker knows that they will be passing in their own [`OpenOrdersAccount`](crate::state::OpenOrdersAccount)."
+        'maker knows that they will be passing in their own [`OpenOrdersAccount`](crate::state::OpenOrdersAccount).',
       ],
-      "accounts": [
+      accounts: [
         {
-          "name": "signer",
-          "isMut": false,
-          "isSigner": true
+          name: 'signer',
+          isMut: false,
+          isSigner: true,
         },
         {
-          "name": "openOrdersAccount",
-          "isMut": true,
-          "isSigner": false
+          name: 'openOrdersAccount',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "market",
-          "isMut": false,
-          "isSigner": false
+          name: 'market',
+          isMut: false,
+          isSigner: false,
         },
         {
-          "name": "bids",
-          "isMut": true,
-          "isSigner": false
+          name: 'bids',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "asks",
-          "isMut": true,
-          "isSigner": false
-        }
+          name: 'asks',
+          isMut: true,
+          isSigner: false,
+        },
       ],
-      "args": [
+      args: [
         {
-          "name": "clientOrderId",
-          "type": "u64"
-        }
-      ]
+          name: 'clientOrderId',
+          type: 'u64',
+        },
+      ],
     },
     {
-      "name": "cancelAllOrders",
-      "docs": [
-        "Cancel up to `limit` orders, optionally filtering by side"
+      name: 'cancelAllOrders',
+      docs: ['Cancel up to `limit` orders, optionally filtering by side'],
+      accounts: [
+        {
+          name: 'signer',
+          isMut: false,
+          isSigner: true,
+        },
+        {
+          name: 'openOrdersAccount',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'market',
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: 'bids',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'asks',
+          isMut: true,
+          isSigner: false,
+        },
       ],
-      "accounts": [
+      args: [
         {
-          "name": "signer",
-          "isMut": false,
-          "isSigner": true
+          name: 'sideOption',
+          type: {
+            option: {
+              defined: 'Side',
+            },
+          },
         },
         {
-          "name": "openOrdersAccount",
-          "isMut": true,
-          "isSigner": false
+          name: 'limit',
+          type: 'u8',
         },
-        {
-          "name": "market",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "bids",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "asks",
-          "isMut": true,
-          "isSigner": false
-        }
       ],
-      "args": [
-        {
-          "name": "sideOption",
-          "type": {
-            "option": {
-              "defined": "Side"
-            }
-          }
-        },
-        {
-          "name": "limit",
-          "type": "u8"
-        }
-      ]
     },
     {
-      "name": "deposit",
-      "docs": [
+      name: 'deposit',
+      docs: [
         "Deposit a certain amount of `base` and `quote` lamports into one's",
-        "[`Position`](crate::state::Position).",
-        "",
-        "Makers might wish to `deposit`, rather than have actual tokens moved for",
-        "each trade, in order to reduce CUs."
+        '[`Position`](crate::state::Position).',
+        '',
+        'Makers might wish to `deposit`, rather than have actual tokens moved for',
+        'each trade, in order to reduce CUs.',
       ],
-      "accounts": [
+      accounts: [
         {
-          "name": "owner",
-          "isMut": false,
-          "isSigner": true
+          name: 'owner',
+          isMut: false,
+          isSigner: true,
         },
         {
-          "name": "tokenBaseAccount",
-          "isMut": true,
-          "isSigner": false
+          name: 'tokenBaseAccount',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "tokenQuoteAccount",
-          "isMut": true,
-          "isSigner": false
+          name: 'tokenQuoteAccount',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "openOrdersAccount",
-          "isMut": true,
-          "isSigner": false
+          name: 'openOrdersAccount',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "market",
-          "isMut": true,
-          "isSigner": false
+          name: 'market',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "baseVault",
-          "isMut": true,
-          "isSigner": false
+          name: 'baseVault',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "quoteVault",
-          "isMut": true,
-          "isSigner": false
+          name: 'quoteVault',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "tokenProgram",
-          "isMut": false,
-          "isSigner": false
+          name: 'tokenProgram',
+          isMut: false,
+          isSigner: false,
         },
         {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
-        }
+          name: 'systemProgram',
+          isMut: false,
+          isSigner: false,
+        },
       ],
-      "args": [
+      args: [
         {
-          "name": "baseAmount",
-          "type": "u64"
+          name: 'baseAmount',
+          type: 'u64',
         },
         {
-          "name": "quoteAmount",
-          "type": "u64"
-        }
-      ]
+          name: 'quoteAmount',
+          type: 'u64',
+        },
+      ],
     },
     {
-      "name": "refill",
-      "docs": [
-        "Refill a certain amount of `base` and `quote` lamports. The amount being passed is the",
-        "total lamports that the [`Position`](crate::state::Position) will have.",
-        "",
-        "Makers might wish to `refill`, rather than have actual tokens moved for",
-        "each trade, in order to reduce CUs."
+      name: 'refill',
+      docs: [
+        'Refill a certain amount of `base` and `quote` lamports. The amount being passed is the',
+        'total lamports that the [`Position`](crate::state::Position) will have.',
+        '',
+        'Makers might wish to `refill`, rather than have actual tokens moved for',
+        'each trade, in order to reduce CUs.',
       ],
-      "accounts": [
+      accounts: [
         {
-          "name": "owner",
-          "isMut": false,
-          "isSigner": true
+          name: 'owner',
+          isMut: false,
+          isSigner: true,
         },
         {
-          "name": "tokenBaseAccount",
-          "isMut": true,
-          "isSigner": false
+          name: 'tokenBaseAccount',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "tokenQuoteAccount",
-          "isMut": true,
-          "isSigner": false
+          name: 'tokenQuoteAccount',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "openOrdersAccount",
-          "isMut": true,
-          "isSigner": false
+          name: 'openOrdersAccount',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "market",
-          "isMut": true,
-          "isSigner": false
+          name: 'market',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "baseVault",
-          "isMut": true,
-          "isSigner": false
+          name: 'baseVault',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "quoteVault",
-          "isMut": true,
-          "isSigner": false
+          name: 'quoteVault',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "tokenProgram",
-          "isMut": false,
-          "isSigner": false
+          name: 'tokenProgram',
+          isMut: false,
+          isSigner: false,
         },
         {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
-        }
+          name: 'systemProgram',
+          isMut: false,
+          isSigner: false,
+        },
       ],
-      "args": [
+      args: [
         {
-          "name": "baseAmount",
-          "type": "u64"
+          name: 'baseAmount',
+          type: 'u64',
         },
         {
-          "name": "quoteAmount",
-          "type": "u64"
-        }
-      ]
+          name: 'quoteAmount',
+          type: 'u64',
+        },
+      ],
     },
     {
-      "name": "settleFunds",
-      "docs": [
-        "Withdraw any available tokens."
+      name: 'settleFunds',
+      docs: ['Withdraw any available tokens.'],
+      accounts: [
+        {
+          name: 'owner',
+          isMut: false,
+          isSigner: true,
+        },
+        {
+          name: 'openOrdersAccount',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'market',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'marketAuthority',
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: 'baseVault',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'quoteVault',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'tokenBaseAccount',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'tokenQuoteAccount',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'referrer',
+          isMut: true,
+          isSigner: false,
+          isOptional: true,
+        },
+        {
+          name: 'tokenProgram',
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: 'systemProgram',
+          isMut: false,
+          isSigner: false,
+        },
       ],
-      "accounts": [
-        {
-          "name": "owner",
-          "isMut": false,
-          "isSigner": true
-        },
-        {
-          "name": "openOrdersAccount",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "market",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "marketAuthority",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "baseVault",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "quoteVault",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "tokenBaseAccount",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "tokenQuoteAccount",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "referrer",
-          "isMut": true,
-          "isSigner": false,
-          "isOptional": true
-        },
-        {
-          "name": "tokenProgram",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
-        }
-      ],
-      "args": []
+      args: [],
     },
     {
-      "name": "settleFundsExpired",
-      "docs": [
-        "Withdraw any available tokens when the market is expired (only `close_market_admin`)"
+      name: 'settleFundsExpired',
+      docs: [
+        'Withdraw any available tokens when the market is expired (only `close_market_admin`)',
       ],
-      "accounts": [
+      accounts: [
         {
-          "name": "closeMarketAdmin",
-          "isMut": false,
-          "isSigner": true
+          name: 'closeMarketAdmin',
+          isMut: false,
+          isSigner: true,
         },
         {
-          "name": "openOrdersAccount",
-          "isMut": true,
-          "isSigner": false
+          name: 'openOrdersAccount',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "market",
-          "isMut": true,
-          "isSigner": false
+          name: 'market',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "marketAuthority",
-          "isMut": false,
-          "isSigner": false
+          name: 'marketAuthority',
+          isMut: false,
+          isSigner: false,
         },
         {
-          "name": "baseVault",
-          "isMut": true,
-          "isSigner": false
+          name: 'baseVault',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "quoteVault",
-          "isMut": true,
-          "isSigner": false
+          name: 'quoteVault',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "tokenBaseAccount",
-          "isMut": true,
-          "isSigner": false
+          name: 'tokenBaseAccount',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "tokenQuoteAccount",
-          "isMut": true,
-          "isSigner": false
+          name: 'tokenQuoteAccount',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "referrer",
-          "isMut": true,
-          "isSigner": false,
-          "isOptional": true
+          name: 'referrer',
+          isMut: true,
+          isSigner: false,
+          isOptional: true,
         },
         {
-          "name": "tokenProgram",
-          "isMut": false,
-          "isSigner": false
+          name: 'tokenProgram',
+          isMut: false,
+          isSigner: false,
         },
         {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
-        }
+          name: 'systemProgram',
+          isMut: false,
+          isSigner: false,
+        },
       ],
-      "args": []
+      args: [],
     },
     {
-      "name": "sweepFees",
-      "docs": [
-        "Sweep fees, as a [`Market`](crate::state::Market)'s admin."
+      name: 'sweepFees',
+      docs: ["Sweep fees, as a [`Market`](crate::state::Market)'s admin."],
+      accounts: [
+        {
+          name: 'collectFeeAdmin',
+          isMut: false,
+          isSigner: true,
+        },
+        {
+          name: 'market',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'marketAuthority',
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: 'quoteVault',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'tokenReceiverAccount',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'tokenProgram',
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: 'systemProgram',
+          isMut: false,
+          isSigner: false,
+        },
       ],
-      "accounts": [
-        {
-          "name": "collectFeeAdmin",
-          "isMut": false,
-          "isSigner": true
-        },
-        {
-          "name": "market",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "marketAuthority",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "quoteVault",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "tokenReceiverAccount",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "tokenProgram",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
-        }
-      ],
-      "args": []
+      args: [],
     },
     {
-      "name": "setDelegate",
-      "accounts": [
+      name: 'setDelegate',
+      accounts: [
         {
-          "name": "owner",
-          "isMut": true,
-          "isSigner": true
+          name: 'owner',
+          isMut: true,
+          isSigner: true,
         },
         {
-          "name": "openOrdersAccount",
-          "isMut": true,
-          "isSigner": false
+          name: 'openOrdersAccount',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "delegateAccount",
-          "isMut": false,
-          "isSigner": false,
-          "isOptional": true
-        }
+          name: 'delegateAccount',
+          isMut: false,
+          isSigner: false,
+          isOptional: true,
+        },
       ],
-      "args": []
+      args: [],
     },
     {
-      "name": "setMarketExpired",
-      "docs": [
-        "Set market to expired before pruning orders and closing the market"
+      name: 'setMarketExpired',
+      docs: [
+        'Set market to expired before pruning orders and closing the market',
       ],
-      "accounts": [
+      accounts: [
         {
-          "name": "closeMarketAdmin",
-          "isMut": false,
-          "isSigner": true
+          name: 'closeMarketAdmin',
+          isMut: false,
+          isSigner: true,
         },
         {
-          "name": "market",
-          "isMut": true,
-          "isSigner": false
-        }
+          name: 'market',
+          isMut: true,
+          isSigner: false,
+        },
       ],
-      "args": []
+      args: [],
     },
     {
-      "name": "pruneOrders",
-      "accounts": [
+      name: 'pruneOrders',
+      accounts: [
         {
-          "name": "closeMarketAdmin",
-          "isMut": false,
-          "isSigner": true
+          name: 'closeMarketAdmin',
+          isMut: false,
+          isSigner: true,
         },
         {
-          "name": "openOrdersAccount",
-          "isMut": true,
-          "isSigner": false
+          name: 'openOrdersAccount',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "market",
-          "isMut": false,
-          "isSigner": false
+          name: 'market',
+          isMut: false,
+          isSigner: false,
         },
         {
-          "name": "bids",
-          "isMut": true,
-          "isSigner": false
+          name: 'bids',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "asks",
-          "isMut": true,
-          "isSigner": false
-        }
+          name: 'asks',
+          isMut: true,
+          isSigner: false,
+        },
       ],
-      "args": [
+      args: [
         {
-          "name": "limit",
-          "type": "u8"
-        }
-      ]
+          name: 'limit',
+          type: 'u8',
+        },
+      ],
     },
     {
-      "name": "stubOracleCreate",
-      "accounts": [
+      name: 'stubOracleCreate',
+      accounts: [
         {
-          "name": "payer",
-          "isMut": true,
-          "isSigner": true
+          name: 'payer',
+          isMut: true,
+          isSigner: true,
         },
         {
-          "name": "owner",
-          "isMut": false,
-          "isSigner": true
+          name: 'owner',
+          isMut: false,
+          isSigner: true,
         },
         {
-          "name": "oracle",
-          "isMut": true,
-          "isSigner": false
+          name: 'oracle',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "mint",
-          "isMut": false,
-          "isSigner": false
+          name: 'mint',
+          isMut: false,
+          isSigner: false,
         },
         {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
-        }
+          name: 'systemProgram',
+          isMut: false,
+          isSigner: false,
+        },
       ],
-      "args": [
+      args: [
         {
-          "name": "price",
-          "type": {
-            "defined": "I80F48"
-          }
-        }
-      ]
+          name: 'price',
+          type: {
+            defined: 'I80F48',
+          },
+        },
+      ],
     },
     {
-      "name": "stubOracleClose",
-      "accounts": [
+      name: 'stubOracleClose',
+      accounts: [
         {
-          "name": "owner",
-          "isMut": false,
-          "isSigner": true
+          name: 'owner',
+          isMut: false,
+          isSigner: true,
         },
         {
-          "name": "oracle",
-          "isMut": true,
-          "isSigner": false
+          name: 'oracle',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "solDestination",
-          "isMut": true,
-          "isSigner": false
+          name: 'solDestination',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "tokenProgram",
-          "isMut": false,
-          "isSigner": false
-        }
+          name: 'tokenProgram',
+          isMut: false,
+          isSigner: false,
+        },
       ],
-      "args": []
+      args: [],
     },
     {
-      "name": "stubOracleSet",
-      "accounts": [
+      name: 'stubOracleSet',
+      accounts: [
         {
-          "name": "owner",
-          "isMut": false,
-          "isSigner": true
+          name: 'owner',
+          isMut: false,
+          isSigner: true,
         },
         {
-          "name": "oracle",
-          "isMut": true,
-          "isSigner": false
-        }
+          name: 'oracle',
+          isMut: true,
+          isSigner: false,
+        },
       ],
-      "args": [
+      args: [
         {
-          "name": "price",
-          "type": {
-            "defined": "I80F48"
-          }
-        }
-      ]
-    }
+          name: 'price',
+          type: {
+            defined: 'I80F48',
+          },
+        },
+      ],
+    },
   ],
-  "accounts": [
+  accounts: [
     {
-      "name": "market",
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: 'market',
+      type: {
+        kind: 'struct',
+        fields: [
           {
-            "name": "bump",
-            "docs": [
-              "PDA bump"
+            name: 'bump',
+            docs: ['PDA bump'],
+            type: 'u8',
+          },
+          {
+            name: 'baseDecimals',
+            docs: [
+              'Number of decimals used for the base token.',
+              '',
+              "Used to convert the oracle's price into a native/native price.",
             ],
-            "type": "u8"
+            type: 'u8',
           },
           {
-            "name": "baseDecimals",
-            "docs": [
-              "Number of decimals used for the base token.",
-              "",
-              "Used to convert the oracle's price into a native/native price."
+            name: 'quoteDecimals',
+            type: 'u8',
+          },
+          {
+            name: 'padding1',
+            type: {
+              array: ['u8', 5],
+            },
+          },
+          {
+            name: 'marketAuthority',
+            type: 'publicKey',
+          },
+          {
+            name: 'timeExpiry',
+            docs: [
+              'No expiry = 0. Market will expire and no trading allowed after time_expiry',
             ],
-            "type": "u8"
+            type: 'i64',
           },
           {
-            "name": "quoteDecimals",
-            "type": "u8"
+            name: 'collectFeeAdmin',
+            docs: ['Admin who can collect fees from the market'],
+            type: 'publicKey',
           },
           {
-            "name": "padding1",
-            "type": {
-              "array": [
-                "u8",
-                5
-              ]
-            }
+            name: 'openOrdersAdmin',
+            docs: ['Admin who must sign off on all order creations'],
+            type: {
+              defined: 'NonZeroPubkeyOption',
+            },
           },
           {
-            "name": "marketAuthority",
-            "type": "publicKey"
+            name: 'consumeEventsAdmin',
+            docs: ['Admin who must sign off on all event consumptions'],
+            type: {
+              defined: 'NonZeroPubkeyOption',
+            },
           },
           {
-            "name": "timeExpiry",
-            "docs": [
-              "No expiry = 0. Market will expire and no trading allowed after time_expiry"
+            name: 'closeMarketAdmin',
+            docs: [
+              'Admin who can set market expired, prune orders and close the market',
             ],
-            "type": "i64"
+            type: {
+              defined: 'NonZeroPubkeyOption',
+            },
           },
           {
-            "name": "collectFeeAdmin",
-            "docs": [
-              "Admin who can collect fees from the market"
+            name: 'name',
+            docs: ['Name. Trailing zero bytes are ignored.'],
+            type: {
+              array: ['u8', 16],
+            },
+          },
+          {
+            name: 'bids',
+            docs: ['Address of the BookSide account for bids'],
+            type: 'publicKey',
+          },
+          {
+            name: 'asks',
+            docs: ['Address of the BookSide account for asks'],
+            type: 'publicKey',
+          },
+          {
+            name: 'eventQueue',
+            docs: ['Address of the EventQueue account'],
+            type: 'publicKey',
+          },
+          {
+            name: 'oracleA',
+            docs: ['Oracles account address'],
+            type: {
+              defined: 'NonZeroPubkeyOption',
+            },
+          },
+          {
+            name: 'oracleB',
+            type: {
+              defined: 'NonZeroPubkeyOption',
+            },
+          },
+          {
+            name: 'oracleConfig',
+            docs: ['Oracle configuration'],
+            type: {
+              defined: 'OracleConfig',
+            },
+          },
+          {
+            name: 'quoteLotSize',
+            docs: [
+              'Number of quote native in a quote lot. Must be a power of 10.',
+              '',
+              'Primarily useful for increasing the tick size on the market: A lot price',
+              'of 1 becomes a native price of quote_lot_size/base_lot_size becomes a',
+              'ui price of quote_lot_size*base_decimals/base_lot_size/quote_decimals.',
             ],
-            "type": "publicKey"
+            type: 'i64',
           },
           {
-            "name": "openOrdersAdmin",
-            "docs": [
-              "Admin who must sign off on all order creations"
+            name: 'baseLotSize',
+            docs: [
+              'Number of base native in a base lot. Must be a power of 10.',
+              '',
+              'Example: If base decimals for the underlying asset is 6, base lot size',
+              'is 100 and and base position lots is 10_000 then base position native is',
+              '1_000_000 and base position ui is 1.',
             ],
-            "type": {
-              "defined": "NonZeroPubkeyOption"
-            }
+            type: 'i64',
           },
           {
-            "name": "consumeEventsAdmin",
-            "docs": [
-              "Admin who must sign off on all event consumptions"
+            name: 'seqNum',
+            docs: ['Total number of orders seen'],
+            type: 'u64',
+          },
+          {
+            name: 'registrationTime',
+            docs: ['Timestamp in seconds that the market was registered at.'],
+            type: 'u64',
+          },
+          {
+            name: 'makerFee',
+            docs: [
+              'Fees',
+              '',
+              'Fee (in 10^-6) when matching maker orders.',
+              'maker_fee < 0 it means some of the taker_fees goes to the maker',
+              'maker_fee > 0, it means no taker_fee to the maker, and maker fee goes to the referral',
             ],
-            "type": {
-              "defined": "NonZeroPubkeyOption"
-            }
+            type: 'i64',
           },
           {
-            "name": "closeMarketAdmin",
-            "docs": [
-              "Admin who can set market expired, prune orders and close the market"
+            name: 'takerFee',
+            docs: ['Fee (in 10^-6) for taker orders, always >= 0.'],
+            type: 'i64',
+          },
+          {
+            name: 'feesAccrued',
+            docs: ['Total fees accrued in native quote'],
+            type: 'u64',
+          },
+          {
+            name: 'feesToReferrers',
+            type: 'u64',
+          },
+          {
+            name: 'referrerRebatesAccrued',
+            type: 'u64',
+          },
+          {
+            name: 'feesAvailable',
+            type: 'u64',
+          },
+          {
+            name: 'takerVolumeWoOo',
+            docs: [
+              'Cumulative taker volume in quote native units due to place take orders',
             ],
-            "type": {
-              "defined": "NonZeroPubkeyOption"
-            }
+            type: 'u64',
           },
           {
-            "name": "name",
-            "docs": [
-              "Name. Trailing zero bytes are ignored."
-            ],
-            "type": {
-              "array": [
-                "u8",
-                16
-              ]
-            }
+            name: 'baseMint',
+            type: 'publicKey',
           },
           {
-            "name": "bids",
-            "docs": [
-              "Address of the BookSide account for bids"
-            ],
-            "type": "publicKey"
+            name: 'quoteMint',
+            type: 'publicKey',
           },
           {
-            "name": "asks",
-            "docs": [
-              "Address of the BookSide account for asks"
-            ],
-            "type": "publicKey"
+            name: 'baseVault',
+            type: 'publicKey',
           },
           {
-            "name": "eventQueue",
-            "docs": [
-              "Address of the EventQueue account"
-            ],
-            "type": "publicKey"
+            name: 'baseDepositTotal',
+            type: 'u64',
           },
           {
-            "name": "oracleA",
-            "docs": [
-              "Oracles account address"
-            ],
-            "type": {
-              "defined": "NonZeroPubkeyOption"
-            }
+            name: 'quoteVault',
+            type: 'publicKey',
           },
           {
-            "name": "oracleB",
-            "type": {
-              "defined": "NonZeroPubkeyOption"
-            }
+            name: 'quoteDepositTotal',
+            type: 'u64',
           },
           {
-            "name": "oracleConfig",
-            "docs": [
-              "Oracle configuration"
-            ],
-            "type": {
-              "defined": "OracleConfig"
-            }
+            name: 'reserved',
+            type: {
+              array: ['u8', 1768],
+            },
           },
-          {
-            "name": "quoteLotSize",
-            "docs": [
-              "Number of quote native in a quote lot. Must be a power of 10.",
-              "",
-              "Primarily useful for increasing the tick size on the market: A lot price",
-              "of 1 becomes a native price of quote_lot_size/base_lot_size becomes a",
-              "ui price of quote_lot_size*base_decimals/base_lot_size/quote_decimals."
-            ],
-            "type": "i64"
-          },
-          {
-            "name": "baseLotSize",
-            "docs": [
-              "Number of base native in a base lot. Must be a power of 10.",
-              "",
-              "Example: If base decimals for the underlying asset is 6, base lot size",
-              "is 100 and and base position lots is 10_000 then base position native is",
-              "1_000_000 and base position ui is 1."
-            ],
-            "type": "i64"
-          },
-          {
-            "name": "seqNum",
-            "docs": [
-              "Total number of orders seen"
-            ],
-            "type": "u64"
-          },
-          {
-            "name": "registrationTime",
-            "docs": [
-              "Timestamp in seconds that the market was registered at."
-            ],
-            "type": "u64"
-          },
-          {
-            "name": "makerFee",
-            "docs": [
-              "Fees",
-              "",
-              "Fee (in 10^-6) when matching maker orders.",
-              "maker_fee < 0 it means some of the taker_fees goes to the maker",
-              "maker_fee > 0, it means no taker_fee to the maker, and maker fee goes to the referral"
-            ],
-            "type": "i64"
-          },
-          {
-            "name": "takerFee",
-            "docs": [
-              "Fee (in 10^-6) for taker orders, always >= 0."
-            ],
-            "type": "i64"
-          },
-          {
-            "name": "feesAccrued",
-            "docs": [
-              "Total fees accrued in native quote"
-            ],
-            "type": "u64"
-          },
-          {
-            "name": "feesToReferrers",
-            "type": "u64"
-          },
-          {
-            "name": "referrerRebatesAccrued",
-            "type": "u64"
-          },
-          {
-            "name": "feesAvailable",
-            "type": "u64"
-          },
-          {
-            "name": "takerVolumeWoOo",
-            "docs": [
-              "Cumulative taker volume in quote native units due to place take orders"
-            ],
-            "type": "u64"
-          },
-          {
-            "name": "baseMint",
-            "type": "publicKey"
-          },
-          {
-            "name": "quoteMint",
-            "type": "publicKey"
-          },
-          {
-            "name": "baseVault",
-            "type": "publicKey"
-          },
-          {
-            "name": "baseDepositTotal",
-            "type": "u64"
-          },
-          {
-            "name": "quoteVault",
-            "type": "publicKey"
-          },
-          {
-            "name": "quoteDepositTotal",
-            "type": "u64"
-          },
-          {
-            "name": "reserved",
-            "type": {
-              "array": [
-                "u8",
-                1768
-              ]
-            }
-          }
-        ]
-      }
+        ],
+      },
     },
     {
-      "name": "openOrdersAccount",
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: 'openOrdersAccount',
+      type: {
+        kind: 'struct',
+        fields: [
           {
-            "name": "owner",
-            "type": "publicKey"
+            name: 'owner',
+            type: 'publicKey',
           },
           {
-            "name": "market",
-            "type": "publicKey"
+            name: 'market',
+            type: 'publicKey',
           },
           {
-            "name": "name",
-            "type": {
-              "array": [
-                "u8",
-                32
-              ]
-            }
+            name: 'name',
+            type: {
+              array: ['u8', 32],
+            },
           },
           {
-            "name": "delegate",
-            "type": {
-              "defined": "NonZeroPubkeyOption"
-            }
+            name: 'delegate',
+            type: {
+              defined: 'NonZeroPubkeyOption',
+            },
           },
           {
-            "name": "accountNum",
-            "type": "u32"
+            name: 'accountNum',
+            type: 'u32',
           },
           {
-            "name": "bump",
-            "type": "u8"
+            name: 'bump',
+            type: 'u8',
           },
           {
-            "name": "padding",
-            "type": {
-              "array": [
-                "u8",
-                3
-              ]
-            }
+            name: 'padding',
+            type: {
+              array: ['u8', 3],
+            },
           },
           {
-            "name": "position",
-            "type": {
-              "defined": "Position"
-            }
+            name: 'position',
+            type: {
+              defined: 'Position',
+            },
           },
           {
-            "name": "openOrders",
-            "type": {
-              "array": [
+            name: 'openOrders',
+            type: {
+              array: [
                 {
-                  "defined": "OpenOrder"
+                  defined: 'OpenOrder',
                 },
-                128
-              ]
-            }
-          }
-        ]
-      }
+                128,
+              ],
+            },
+          },
+        ],
+      },
     },
     {
-      "name": "openOrdersIndexer",
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: 'openOrdersIndexer',
+      type: {
+        kind: 'struct',
+        fields: [
           {
-            "name": "owner",
-            "type": "publicKey"
+            name: 'owner',
+            type: 'publicKey',
           },
           {
-            "name": "market",
-            "type": "publicKey"
+            name: 'market',
+            type: 'publicKey',
           },
           {
-            "name": "bump",
-            "type": "u8"
+            name: 'bump',
+            type: 'u8',
           },
           {
-            "name": "padding",
-            "type": {
-              "array": [
-                "u8",
-                3
-              ]
-            }
+            name: 'padding',
+            type: {
+              array: ['u8', 3],
+            },
           },
           {
-            "name": "createdCounter",
-            "type": "u32"
+            name: 'createdCounter',
+            type: 'u32',
           },
           {
-            "name": "closedCounter",
-            "type": "u32"
+            name: 'closedCounter',
+            type: 'u32',
           },
           {
-            "name": "reserved",
-            "type": {
-              "array": [
-                "u8",
-                20
-              ]
-            }
-          }
-        ]
-      }
+            name: 'reserved',
+            type: {
+              array: ['u8', 20],
+            },
+          },
+        ],
+      },
     },
     {
-      "name": "stubOracle",
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: 'stubOracle',
+      type: {
+        kind: 'struct',
+        fields: [
           {
-            "name": "owner",
-            "type": "publicKey"
+            name: 'owner',
+            type: 'publicKey',
           },
           {
-            "name": "mint",
-            "type": "publicKey"
+            name: 'mint',
+            type: 'publicKey',
           },
           {
-            "name": "price",
-            "type": {
-              "defined": "I80F48"
-            }
+            name: 'price',
+            type: {
+              defined: 'I80F48',
+            },
           },
           {
-            "name": "lastUpdated",
-            "type": "i64"
+            name: 'lastUpdated',
+            type: 'i64',
           },
           {
-            "name": "reserved",
-            "type": {
-              "array": [
-                "u8",
-                128
-              ]
-            }
-          }
-        ]
-      }
+            name: 'reserved',
+            type: {
+              array: ['u8', 128],
+            },
+          },
+        ],
+      },
     },
     {
-      "name": "bookSide",
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: 'bookSide',
+      type: {
+        kind: 'struct',
+        fields: [
           {
-            "name": "roots",
-            "type": {
-              "array": [
+            name: 'roots',
+            type: {
+              array: [
                 {
-                  "defined": "OrderTreeRoot"
+                  defined: 'OrderTreeRoot',
                 },
-                2
-              ]
-            }
+                2,
+              ],
+            },
           },
           {
-            "name": "reservedRoots",
-            "type": {
-              "array": [
+            name: 'reservedRoots',
+            type: {
+              array: [
                 {
-                  "defined": "OrderTreeRoot"
+                  defined: 'OrderTreeRoot',
                 },
-                4
-              ]
-            }
+                4,
+              ],
+            },
           },
           {
-            "name": "reserved",
-            "type": {
-              "array": [
-                "u8",
-                256
-              ]
-            }
+            name: 'reserved',
+            type: {
+              array: ['u8', 256],
+            },
           },
           {
-            "name": "nodes",
-            "type": {
-              "defined": "OrderTreeNodes"
-            }
-          }
-        ]
-      }
+            name: 'nodes',
+            type: {
+              defined: 'OrderTreeNodes',
+            },
+          },
+        ],
+      },
     },
     {
-      "name": "eventQueue",
-      "docs": [
-        "Container for the different EventTypes.",
-        "",
-        "Events are stored in a fixed-array of nodes. Free nodes are connected by a single-linked list",
-        "starting at free_head while used nodes form a circular doubly-linked list starting at",
-        "used_head."
+      name: 'eventQueue',
+      docs: [
+        'Container for the different EventTypes.',
+        '',
+        'Events are stored in a fixed-array of nodes. Free nodes are connected by a single-linked list',
+        'starting at free_head while used nodes form a circular doubly-linked list starting at',
+        'used_head.',
       ],
-      "type": {
-        "kind": "struct",
-        "fields": [
+      type: {
+        kind: 'struct',
+        fields: [
           {
-            "name": "header",
-            "type": {
-              "defined": "EventQueueHeader"
-            }
+            name: 'header',
+            type: {
+              defined: 'EventQueueHeader',
+            },
           },
           {
-            "name": "nodes",
-            "type": {
-              "array": [
+            name: 'nodes',
+            type: {
+              array: [
                 {
-                  "defined": "EventNode"
+                  defined: 'EventNode',
                 },
-                600
-              ]
-            }
+                600,
+              ],
+            },
           },
           {
-            "name": "reserved",
-            "type": {
-              "array": [
-                "u8",
-                64
-              ]
-            }
-          }
-        ]
-      }
-    }
+            name: 'reserved',
+            type: {
+              array: ['u8', 64],
+            },
+          },
+        ],
+      },
+    },
   ],
-  "types": [
+  types: [
     {
-      "name": "NonZeroPubkeyOption",
-      "docs": [
-        "Like `Option`, but implemented for `Pubkey`."
+      name: 'NonZeroPubkeyOption',
+      docs: ['Like `Option`, but implemented for `Pubkey`.'],
+      type: {
+        kind: 'struct',
+        fields: [
+          {
+            name: 'key',
+            type: 'publicKey',
+          },
+        ],
+      },
+    },
+    {
+      name: 'Position',
+      type: {
+        kind: 'struct',
+        fields: [
+          {
+            name: 'bidsBaseLots',
+            docs: ['Base lots in open bids'],
+            type: 'i64',
+          },
+          {
+            name: 'asksBaseLots',
+            docs: ['Base lots in open asks'],
+            type: 'i64',
+          },
+          {
+            name: 'baseFreeNative',
+            type: 'u64',
+          },
+          {
+            name: 'quoteFreeNative',
+            type: 'u64',
+          },
+          {
+            name: 'lockedMakerFees',
+            type: 'u64',
+          },
+          {
+            name: 'referrerRebatesAvailable',
+            type: 'u64',
+          },
+          {
+            name: 'makerVolume',
+            docs: [
+              'Cumulative maker volume in quote native units (display only)',
+            ],
+            type: 'u64',
+          },
+          {
+            name: 'takerVolume',
+            docs: [
+              'Cumulative taker volume in quote native units (display only)',
+            ],
+            type: 'u64',
+          },
+          {
+            name: 'reserved',
+            type: {
+              array: ['u8', 88],
+            },
+          },
+        ],
+      },
+    },
+    {
+      name: 'OpenOrder',
+      type: {
+        kind: 'struct',
+        fields: [
+          {
+            name: 'id',
+            type: 'u128',
+          },
+          {
+            name: 'clientId',
+            type: 'u64',
+          },
+          {
+            name: 'lockedPrice',
+            docs: ["Price at which user's assets were locked"],
+            type: 'i64',
+          },
+          {
+            name: 'isFree',
+            type: 'u8',
+          },
+          {
+            name: 'sideAndTree',
+            type: 'u8',
+          },
+          {
+            name: 'padding',
+            type: {
+              array: ['u8', 6],
+            },
+          },
+          {
+            name: 'reserved',
+            type: {
+              array: ['u8', 32],
+            },
+          },
+        ],
+      },
+    },
+    {
+      name: 'OracleConfig',
+      type: {
+        kind: 'struct',
+        fields: [
+          {
+            name: 'confFilter',
+            type: {
+              defined: 'I80F48',
+            },
+          },
+          {
+            name: 'maxStalenessSlots',
+            type: 'i64',
+          },
+          {
+            name: 'reserved',
+            type: {
+              array: ['u8', 72],
+            },
+          },
+        ],
+      },
+    },
+    {
+      name: 'OracleConfigParams',
+      type: {
+        kind: 'struct',
+        fields: [
+          {
+            name: 'confFilter',
+            type: 'f32',
+          },
+          {
+            name: 'maxStalenessSlots',
+            type: {
+              option: 'u32',
+            },
+          },
+        ],
+      },
+    },
+    {
+      name: 'InnerNode',
+      docs: [
+        'InnerNodes and LeafNodes compose the binary tree of orders.',
+        '',
+        'Each InnerNode has exactly two children, which are either InnerNodes themselves,',
+        'or LeafNodes. The children share the top `prefix_len` bits of `key`. The left',
+        'child has a 0 in the next bit, and the right a 1.',
       ],
-      "type": {
-        "kind": "struct",
-        "fields": [
+      type: {
+        kind: 'struct',
+        fields: [
           {
-            "name": "key",
-            "type": "publicKey"
-          }
-        ]
-      }
+            name: 'tag',
+            type: 'u8',
+          },
+          {
+            name: 'padding',
+            type: {
+              array: ['u8', 3],
+            },
+          },
+          {
+            name: 'prefixLen',
+            docs: [
+              'number of highest `key` bits that all children share',
+              "e.g. if it's 2, the two highest bits of `key` will be the same on all children",
+            ],
+            type: 'u32',
+          },
+          {
+            name: 'key',
+            docs: ['only the top `prefix_len` bits of `key` are relevant'],
+            type: 'u128',
+          },
+          {
+            name: 'children',
+            docs: ['indexes into `BookSide::nodes`'],
+            type: {
+              array: ['u32', 2],
+            },
+          },
+          {
+            name: 'childEarliestExpiry',
+            docs: [
+              'The earliest expiry timestamp for the left and right subtrees.',
+              '',
+              'Needed to be able to find and remove expired orders without having to',
+              'iterate through the whole bookside.',
+            ],
+            type: {
+              array: ['u64', 2],
+            },
+          },
+          {
+            name: 'reserved',
+            type: {
+              array: ['u8', 72],
+            },
+          },
+        ],
+      },
     },
     {
-      "name": "Position",
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: 'LeafNode',
+      docs: ['LeafNodes represent an order in the binary tree'],
+      type: {
+        kind: 'struct',
+        fields: [
           {
-            "name": "bidsBaseLots",
-            "docs": [
-              "Base lots in open bids"
+            name: 'tag',
+            docs: ['NodeTag'],
+            type: 'u8',
+          },
+          {
+            name: 'ownerSlot',
+            docs: ["Index into the owning OpenOrdersAccount's OpenOrders"],
+            type: 'u8',
+          },
+          {
+            name: 'timeInForce',
+            docs: [
+              'Time in seconds after `timestamp` at which the order expires.',
+              'A value of 0 means no expiry.',
             ],
-            "type": "i64"
+            type: 'u16',
           },
           {
-            "name": "asksBaseLots",
-            "docs": [
-              "Base lots in open asks"
+            name: 'padding',
+            type: {
+              array: ['u8', 4],
+            },
+          },
+          {
+            name: 'key',
+            docs: ['The binary tree key, see new_node_key()'],
+            type: 'u128',
+          },
+          {
+            name: 'owner',
+            docs: ['Address of the owning OpenOrdersAccount'],
+            type: 'publicKey',
+          },
+          {
+            name: 'quantity',
+            docs: ['Number of base lots to buy or sell, always >=1'],
+            type: 'i64',
+          },
+          {
+            name: 'timestamp',
+            docs: ['The time the order was placed'],
+            type: 'u64',
+          },
+          {
+            name: 'pegLimit',
+            docs: [
+              'If the effective price of an oracle pegged order exceeds this limit,',
+              'it will be considered invalid and may be removed.',
+              '',
+              'Only applicable in the oracle_pegged OrderTree',
             ],
-            "type": "i64"
+            type: 'i64',
           },
           {
-            "name": "baseFreeNative",
-            "type": "u64"
+            name: 'clientOrderId',
+            docs: ['User defined id for this order, used in FillEvents'],
+            type: 'u64',
           },
           {
-            "name": "quoteFreeNative",
-            "type": "u64"
+            name: 'reserved',
+            type: {
+              array: ['u8', 32],
+            },
           },
-          {
-            "name": "lockedMakerFees",
-            "type": "u64"
-          },
-          {
-            "name": "referrerRebatesAvailable",
-            "type": "u64"
-          },
-          {
-            "name": "makerVolume",
-            "docs": [
-              "Cumulative maker volume in quote native units (display only)"
-            ],
-            "type": "u64"
-          },
-          {
-            "name": "takerVolume",
-            "docs": [
-              "Cumulative taker volume in quote native units (display only)"
-            ],
-            "type": "u64"
-          },
-          {
-            "name": "reserved",
-            "type": {
-              "array": [
-                "u8",
-                88
-              ]
-            }
-          }
-        ]
-      }
+        ],
+      },
     },
     {
-      "name": "OpenOrder",
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: 'AnyNode',
+      type: {
+        kind: 'struct',
+        fields: [
           {
-            "name": "id",
-            "type": "u128"
+            name: 'tag',
+            type: 'u8',
           },
           {
-            "name": "clientId",
-            "type": "u64"
+            name: 'data',
+            type: {
+              array: ['u8', 119],
+            },
           },
-          {
-            "name": "lockedPrice",
-            "docs": [
-              "Price at which user's assets were locked"
-            ],
-            "type": "i64"
-          },
-          {
-            "name": "isFree",
-            "type": "u8"
-          },
-          {
-            "name": "sideAndTree",
-            "type": "u8"
-          },
-          {
-            "name": "padding",
-            "type": {
-              "array": [
-                "u8",
-                6
-              ]
-            }
-          },
-          {
-            "name": "reserved",
-            "type": {
-              "array": [
-                "u8",
-                32
-              ]
-            }
-          }
-        ]
-      }
+        ],
+      },
     },
     {
-      "name": "OracleConfig",
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: 'OrderTreeRoot',
+      type: {
+        kind: 'struct',
+        fields: [
           {
-            "name": "confFilter",
-            "type": {
-              "defined": "I80F48"
-            }
+            name: 'maybeNode',
+            type: 'u32',
           },
           {
-            "name": "maxStalenessSlots",
-            "type": "i64"
+            name: 'leafCount',
+            type: 'u32',
           },
-          {
-            "name": "reserved",
-            "type": {
-              "array": [
-                "u8",
-                72
-              ]
-            }
-          }
-        ]
-      }
+        ],
+      },
     },
     {
-      "name": "OracleConfigParams",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "confFilter",
-            "type": "f32"
-          },
-          {
-            "name": "maxStalenessSlots",
-            "type": {
-              "option": "u32"
-            }
-          }
-        ]
-      }
-    },
-    {
-      "name": "InnerNode",
-      "docs": [
-        "InnerNodes and LeafNodes compose the binary tree of orders.",
-        "",
-        "Each InnerNode has exactly two children, which are either InnerNodes themselves,",
-        "or LeafNodes. The children share the top `prefix_len` bits of `key`. The left",
-        "child has a 0 in the next bit, and the right a 1."
+      name: 'OrderTreeNodes',
+      docs: [
+        'A binary tree on AnyNode::key()',
+        '',
+        'The key encodes the price in the top 64 bits.',
       ],
-      "type": {
-        "kind": "struct",
-        "fields": [
+      type: {
+        kind: 'struct',
+        fields: [
           {
-            "name": "tag",
-            "type": "u8"
+            name: 'orderTreeType',
+            type: 'u8',
           },
           {
-            "name": "padding",
-            "type": {
-              "array": [
-                "u8",
-                3
-              ]
-            }
+            name: 'padding',
+            type: {
+              array: ['u8', 3],
+            },
           },
           {
-            "name": "prefixLen",
-            "docs": [
-              "number of highest `key` bits that all children share",
-              "e.g. if it's 2, the two highest bits of `key` will be the same on all children"
-            ],
-            "type": "u32"
+            name: 'bumpIndex',
+            type: 'u32',
           },
           {
-            "name": "key",
-            "docs": [
-              "only the top `prefix_len` bits of `key` are relevant"
-            ],
-            "type": "u128"
+            name: 'freeListLen',
+            type: 'u32',
           },
           {
-            "name": "children",
-            "docs": [
-              "indexes into `BookSide::nodes`"
-            ],
-            "type": {
-              "array": [
-                "u32",
-                2
-              ]
-            }
+            name: 'freeListHead',
+            type: 'u32',
           },
           {
-            "name": "childEarliestExpiry",
-            "docs": [
-              "The earliest expiry timestamp for the left and right subtrees.",
-              "",
-              "Needed to be able to find and remove expired orders without having to",
-              "iterate through the whole bookside."
-            ],
-            "type": {
-              "array": [
-                "u64",
-                2
-              ]
-            }
+            name: 'reserved',
+            type: {
+              array: ['u8', 512],
+            },
           },
           {
-            "name": "reserved",
-            "type": {
-              "array": [
-                "u8",
-                72
-              ]
-            }
-          }
-        ]
-      }
-    },
-    {
-      "name": "LeafNode",
-      "docs": [
-        "LeafNodes represent an order in the binary tree"
-      ],
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "tag",
-            "docs": [
-              "NodeTag"
-            ],
-            "type": "u8"
-          },
-          {
-            "name": "ownerSlot",
-            "docs": [
-              "Index into the owning OpenOrdersAccount's OpenOrders"
-            ],
-            "type": "u8"
-          },
-          {
-            "name": "timeInForce",
-            "docs": [
-              "Time in seconds after `timestamp` at which the order expires.",
-              "A value of 0 means no expiry."
-            ],
-            "type": "u16"
-          },
-          {
-            "name": "padding",
-            "type": {
-              "array": [
-                "u8",
-                4
-              ]
-            }
-          },
-          {
-            "name": "key",
-            "docs": [
-              "The binary tree key, see new_node_key()"
-            ],
-            "type": "u128"
-          },
-          {
-            "name": "owner",
-            "docs": [
-              "Address of the owning OpenOrdersAccount"
-            ],
-            "type": "publicKey"
-          },
-          {
-            "name": "quantity",
-            "docs": [
-              "Number of base lots to buy or sell, always >=1"
-            ],
-            "type": "i64"
-          },
-          {
-            "name": "timestamp",
-            "docs": [
-              "The time the order was placed"
-            ],
-            "type": "u64"
-          },
-          {
-            "name": "pegLimit",
-            "docs": [
-              "If the effective price of an oracle pegged order exceeds this limit,",
-              "it will be considered invalid and may be removed.",
-              "",
-              "Only applicable in the oracle_pegged OrderTree"
-            ],
-            "type": "i64"
-          },
-          {
-            "name": "clientOrderId",
-            "docs": [
-              "User defined id for this order, used in FillEvents"
-            ],
-            "type": "u64"
-          },
-          {
-            "name": "reserved",
-            "type": {
-              "array": [
-                "u8",
-                32
-              ]
-            }
-          }
-        ]
-      }
-    },
-    {
-      "name": "AnyNode",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "tag",
-            "type": "u8"
-          },
-          {
-            "name": "data",
-            "type": {
-              "array": [
-                "u8",
-                119
-              ]
-            }
-          }
-        ]
-      }
-    },
-    {
-      "name": "OrderTreeRoot",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "maybeNode",
-            "type": "u32"
-          },
-          {
-            "name": "leafCount",
-            "type": "u32"
-          }
-        ]
-      }
-    },
-    {
-      "name": "OrderTreeNodes",
-      "docs": [
-        "A binary tree on AnyNode::key()",
-        "",
-        "The key encodes the price in the top 64 bits."
-      ],
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "orderTreeType",
-            "type": "u8"
-          },
-          {
-            "name": "padding",
-            "type": {
-              "array": [
-                "u8",
-                3
-              ]
-            }
-          },
-          {
-            "name": "bumpIndex",
-            "type": "u32"
-          },
-          {
-            "name": "freeListLen",
-            "type": "u32"
-          },
-          {
-            "name": "freeListHead",
-            "type": "u32"
-          },
-          {
-            "name": "reserved",
-            "type": {
-              "array": [
-                "u8",
-                512
-              ]
-            }
-          },
-          {
-            "name": "nodes",
-            "type": {
-              "array": [
+            name: 'nodes',
+            type: {
+              array: [
                 {
-                  "defined": "AnyNode"
+                  defined: 'AnyNode',
                 },
-                1024
-              ]
-            }
-          }
-        ]
-      }
+                1024,
+              ],
+            },
+          },
+        ],
+      },
     },
     {
-      "name": "EventQueueHeader",
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: 'EventQueueHeader',
+      type: {
+        kind: 'struct',
+        fields: [
           {
-            "name": "freeHead",
-            "type": "u16"
+            name: 'freeHead',
+            type: 'u16',
           },
           {
-            "name": "usedHead",
-            "type": "u16"
+            name: 'usedHead',
+            type: 'u16',
           },
           {
-            "name": "count",
-            "type": "u16"
+            name: 'count',
+            type: 'u16',
           },
           {
-            "name": "padd",
-            "type": "u16"
+            name: 'padd',
+            type: 'u16',
           },
           {
-            "name": "seqNum",
-            "type": "u64"
-          }
-        ]
-      }
+            name: 'seqNum',
+            type: 'u64',
+          },
+        ],
+      },
     },
     {
-      "name": "EventNode",
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: 'EventNode',
+      type: {
+        kind: 'struct',
+        fields: [
           {
-            "name": "next",
-            "type": "u16"
+            name: 'next',
+            type: 'u16',
           },
           {
-            "name": "prev",
-            "type": "u16"
+            name: 'prev',
+            type: 'u16',
           },
           {
-            "name": "pad",
-            "type": {
-              "array": [
-                "u8",
-                4
-              ]
-            }
+            name: 'pad',
+            type: {
+              array: ['u8', 4],
+            },
           },
           {
-            "name": "event",
-            "type": {
-              "defined": "AnyEvent"
-            }
-          }
-        ]
-      }
+            name: 'event',
+            type: {
+              defined: 'AnyEvent',
+            },
+          },
+        ],
+      },
     },
     {
-      "name": "AnyEvent",
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: 'AnyEvent',
+      type: {
+        kind: 'struct',
+        fields: [
           {
-            "name": "eventType",
-            "type": "u8"
+            name: 'eventType',
+            type: 'u8',
           },
           {
-            "name": "padding",
-            "type": {
-              "array": [
-                "u8",
-                143
-              ]
-            }
-          }
-        ]
-      }
+            name: 'padding',
+            type: {
+              array: ['u8', 143],
+            },
+          },
+        ],
+      },
     },
     {
-      "name": "FillEvent",
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: 'FillEvent',
+      type: {
+        kind: 'struct',
+        fields: [
           {
-            "name": "eventType",
-            "type": "u8"
+            name: 'eventType',
+            type: 'u8',
           },
           {
-            "name": "takerSide",
-            "type": "u8"
+            name: 'takerSide',
+            type: 'u8',
           },
           {
-            "name": "makerOut",
-            "type": "u8"
+            name: 'makerOut',
+            type: 'u8',
           },
           {
-            "name": "makerSlot",
-            "type": "u8"
+            name: 'makerSlot',
+            type: 'u8',
           },
           {
-            "name": "padding",
-            "type": {
-              "array": [
-                "u8",
-                4
-              ]
-            }
+            name: 'padding',
+            type: {
+              array: ['u8', 4],
+            },
           },
           {
-            "name": "timestamp",
-            "type": "u64"
+            name: 'timestamp',
+            type: 'u64',
           },
           {
-            "name": "seqNum",
-            "type": "u64"
+            name: 'seqNum',
+            type: 'u64',
           },
           {
-            "name": "maker",
-            "type": "publicKey"
+            name: 'maker',
+            type: 'publicKey',
           },
           {
-            "name": "makerTimestamp",
-            "type": "u64"
+            name: 'makerTimestamp',
+            type: 'u64',
           },
           {
-            "name": "taker",
-            "type": "publicKey"
+            name: 'taker',
+            type: 'publicKey',
           },
           {
-            "name": "takerClientOrderId",
-            "type": "u64"
+            name: 'takerClientOrderId',
+            type: 'u64',
           },
           {
-            "name": "price",
-            "type": "i64"
+            name: 'price',
+            type: 'i64',
           },
           {
-            "name": "pegLimit",
-            "type": "i64"
+            name: 'pegLimit',
+            type: 'i64',
           },
           {
-            "name": "quantity",
-            "type": "i64"
+            name: 'quantity',
+            type: 'i64',
           },
           {
-            "name": "makerClientOrderId",
-            "type": "u64"
+            name: 'makerClientOrderId',
+            type: 'u64',
           },
           {
-            "name": "reserved",
-            "type": {
-              "array": [
-                "u8",
-                8
-              ]
-            }
-          }
-        ]
-      }
+            name: 'reserved',
+            type: {
+              array: ['u8', 8],
+            },
+          },
+        ],
+      },
     },
     {
-      "name": "OutEvent",
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: 'OutEvent',
+      type: {
+        kind: 'struct',
+        fields: [
           {
-            "name": "eventType",
-            "type": "u8"
+            name: 'eventType',
+            type: 'u8',
           },
           {
-            "name": "side",
-            "type": "u8"
+            name: 'side',
+            type: 'u8',
           },
           {
-            "name": "ownerSlot",
-            "type": "u8"
+            name: 'ownerSlot',
+            type: 'u8',
           },
           {
-            "name": "padding0",
-            "type": {
-              "array": [
-                "u8",
-                5
-              ]
-            }
+            name: 'padding0',
+            type: {
+              array: ['u8', 5],
+            },
           },
           {
-            "name": "timestamp",
-            "type": "u64"
+            name: 'timestamp',
+            type: 'u64',
           },
           {
-            "name": "seqNum",
-            "type": "u64"
+            name: 'seqNum',
+            type: 'u64',
           },
           {
-            "name": "owner",
-            "type": "publicKey"
+            name: 'owner',
+            type: 'publicKey',
           },
           {
-            "name": "quantity",
-            "type": "i64"
+            name: 'quantity',
+            type: 'i64',
           },
           {
-            "name": "padding1",
-            "type": {
-              "array": [
-                "u8",
-                80
-              ]
-            }
-          }
-        ]
-      }
+            name: 'padding1',
+            type: {
+              array: ['u8', 80],
+            },
+          },
+        ],
+      },
     },
     {
-      "name": "I80F48",
-      "docs": [
-        "Nothing in Rust shall use these types. They only exist so that the Anchor IDL",
-        "knows about them and typescript can deserialize it."
+      name: 'I80F48',
+      docs: [
+        'Nothing in Rust shall use these types. They only exist so that the Anchor IDL',
+        'knows about them and typescript can deserialize it.',
       ],
-      "type": {
-        "kind": "struct",
-        "fields": [
+      type: {
+        kind: 'struct',
+        fields: [
           {
-            "name": "val",
-            "type": "i128"
-          }
-        ]
-      }
+            name: 'val',
+            type: 'i128',
+          },
+        ],
+      },
     },
     {
-      "name": "PlaceOrderArgs",
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: 'PlaceOrderArgs',
+      type: {
+        kind: 'struct',
+        fields: [
           {
-            "name": "side",
-            "type": {
-              "defined": "Side"
-            }
+            name: 'side',
+            type: {
+              defined: 'Side',
+            },
           },
           {
-            "name": "priceLots",
-            "type": "i64"
+            name: 'priceLots',
+            type: 'i64',
           },
           {
-            "name": "maxBaseLots",
-            "type": "i64"
+            name: 'maxBaseLots',
+            type: 'i64',
           },
           {
-            "name": "maxQuoteLotsIncludingFees",
-            "type": "i64"
+            name: 'maxQuoteLotsIncludingFees',
+            type: 'i64',
           },
           {
-            "name": "clientOrderId",
-            "type": "u64"
+            name: 'clientOrderId',
+            type: 'u64',
           },
           {
-            "name": "orderType",
-            "type": {
-              "defined": "PlaceOrderType"
-            }
+            name: 'orderType',
+            type: {
+              defined: 'PlaceOrderType',
+            },
           },
           {
-            "name": "expiryTimestamp",
-            "type": "u64"
+            name: 'expiryTimestamp',
+            type: 'u64',
           },
           {
-            "name": "selfTradeBehavior",
-            "type": {
-              "defined": "SelfTradeBehavior"
-            }
+            name: 'selfTradeBehavior',
+            type: {
+              defined: 'SelfTradeBehavior',
+            },
           },
           {
-            "name": "limit",
-            "type": "u8"
-          }
-        ]
-      }
+            name: 'limit',
+            type: 'u8',
+          },
+        ],
+      },
     },
     {
-      "name": "PlaceOrderPeggedArgs",
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: 'PlaceOrderPeggedArgs',
+      type: {
+        kind: 'struct',
+        fields: [
           {
-            "name": "side",
-            "type": {
-              "defined": "Side"
-            }
+            name: 'side',
+            type: {
+              defined: 'Side',
+            },
           },
           {
-            "name": "priceOffsetLots",
-            "type": "i64"
+            name: 'priceOffsetLots',
+            type: 'i64',
           },
           {
-            "name": "pegLimit",
-            "type": "i64"
+            name: 'pegLimit',
+            type: 'i64',
           },
           {
-            "name": "maxBaseLots",
-            "type": "i64"
+            name: 'maxBaseLots',
+            type: 'i64',
           },
           {
-            "name": "maxQuoteLotsIncludingFees",
-            "type": "i64"
+            name: 'maxQuoteLotsIncludingFees',
+            type: 'i64',
           },
           {
-            "name": "clientOrderId",
-            "type": "u64"
+            name: 'clientOrderId',
+            type: 'u64',
           },
           {
-            "name": "orderType",
-            "type": {
-              "defined": "PlaceOrderType"
-            }
+            name: 'orderType',
+            type: {
+              defined: 'PlaceOrderType',
+            },
           },
           {
-            "name": "expiryTimestamp",
-            "type": "u64"
+            name: 'expiryTimestamp',
+            type: 'u64',
           },
           {
-            "name": "selfTradeBehavior",
-            "type": {
-              "defined": "SelfTradeBehavior"
-            }
+            name: 'selfTradeBehavior',
+            type: {
+              defined: 'SelfTradeBehavior',
+            },
           },
           {
-            "name": "limit",
-            "type": "u8"
-          }
-        ]
-      }
+            name: 'limit',
+            type: 'u8',
+          },
+        ],
+      },
     },
     {
-      "name": "PlaceTakeOrderArgs",
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: 'PlaceTakeOrderArgs',
+      type: {
+        kind: 'struct',
+        fields: [
           {
-            "name": "side",
-            "type": {
-              "defined": "Side"
-            }
+            name: 'side',
+            type: {
+              defined: 'Side',
+            },
           },
           {
-            "name": "priceLots",
-            "type": "i64"
+            name: 'priceLots',
+            type: 'i64',
           },
           {
-            "name": "maxBaseLots",
-            "type": "i64"
+            name: 'maxBaseLots',
+            type: 'i64',
           },
           {
-            "name": "maxQuoteLotsIncludingFees",
-            "type": "i64"
+            name: 'maxQuoteLotsIncludingFees',
+            type: 'i64',
           },
           {
-            "name": "orderType",
-            "type": {
-              "defined": "PlaceOrderType"
-            }
+            name: 'orderType',
+            type: {
+              defined: 'PlaceOrderType',
+            },
           },
           {
-            "name": "limit",
-            "type": "u8"
-          }
-        ]
-      }
+            name: 'limit',
+            type: 'u8',
+          },
+        ],
+      },
     },
     {
-      "name": "OracleType",
-      "type": {
-        "kind": "enum",
-        "variants": [
+      name: 'OracleType',
+      type: {
+        kind: 'enum',
+        variants: [
           {
-            "name": "Pyth"
+            name: 'Pyth',
           },
           {
-            "name": "Stub"
+            name: 'Stub',
           },
           {
-            "name": "SwitchboardV1"
+            name: 'SwitchboardV1',
           },
           {
-            "name": "SwitchboardV2"
-          }
-        ]
-      }
+            name: 'SwitchboardV2',
+          },
+        ],
+      },
     },
     {
-      "name": "OrderState",
-      "type": {
-        "kind": "enum",
-        "variants": [
+      name: 'OrderState',
+      type: {
+        kind: 'enum',
+        variants: [
           {
-            "name": "Valid"
+            name: 'Valid',
           },
           {
-            "name": "Invalid"
+            name: 'Invalid',
           },
           {
-            "name": "Skipped"
-          }
-        ]
-      }
+            name: 'Skipped',
+          },
+        ],
+      },
     },
     {
-      "name": "BookSideOrderTree",
-      "type": {
-        "kind": "enum",
-        "variants": [
+      name: 'BookSideOrderTree',
+      type: {
+        kind: 'enum',
+        variants: [
           {
-            "name": "Fixed"
+            name: 'Fixed',
           },
           {
-            "name": "OraclePegged"
-          }
-        ]
-      }
+            name: 'OraclePegged',
+          },
+        ],
+      },
     },
     {
-      "name": "NodeTag",
-      "type": {
-        "kind": "enum",
-        "variants": [
+      name: 'NodeTag',
+      type: {
+        kind: 'enum',
+        variants: [
           {
-            "name": "Uninitialized"
+            name: 'Uninitialized',
           },
           {
-            "name": "InnerNode"
+            name: 'InnerNode',
           },
           {
-            "name": "LeafNode"
+            name: 'LeafNode',
           },
           {
-            "name": "FreeNode"
+            name: 'FreeNode',
           },
           {
-            "name": "LastFreeNode"
-          }
-        ]
-      }
+            name: 'LastFreeNode',
+          },
+        ],
+      },
     },
     {
-      "name": "PlaceOrderType",
-      "type": {
-        "kind": "enum",
-        "variants": [
+      name: 'PlaceOrderType',
+      type: {
+        kind: 'enum',
+        variants: [
           {
-            "name": "Limit"
+            name: 'Limit',
           },
           {
-            "name": "ImmediateOrCancel"
+            name: 'ImmediateOrCancel',
           },
           {
-            "name": "PostOnly"
+            name: 'PostOnly',
           },
           {
-            "name": "Market"
+            name: 'Market',
           },
           {
-            "name": "PostOnlySlide"
-          }
-        ]
-      }
+            name: 'PostOnlySlide',
+          },
+        ],
+      },
     },
     {
-      "name": "PostOrderType",
-      "type": {
-        "kind": "enum",
-        "variants": [
+      name: 'PostOrderType',
+      type: {
+        kind: 'enum',
+        variants: [
           {
-            "name": "Limit"
+            name: 'Limit',
           },
           {
-            "name": "PostOnly"
+            name: 'PostOnly',
           },
           {
-            "name": "PostOnlySlide"
-          }
-        ]
-      }
+            name: 'PostOnlySlide',
+          },
+        ],
+      },
     },
     {
-      "name": "SelfTradeBehavior",
-      "docs": [
-        "Self trade behavior controls how taker orders interact with resting limit orders of the same account.",
-        "This setting has no influence on placing a resting or oracle pegged limit order that does not match",
-        "immediately, instead it's the responsibility of the user to correctly configure his taker orders."
+      name: 'SelfTradeBehavior',
+      docs: [
+        'Self trade behavior controls how taker orders interact with resting limit orders of the same account.',
+        'This setting has no influence on placing a resting or oracle pegged limit order that does not match',
+        "immediately, instead it's the responsibility of the user to correctly configure his taker orders.",
       ],
-      "type": {
-        "kind": "enum",
-        "variants": [
+      type: {
+        kind: 'enum',
+        variants: [
           {
-            "name": "DecrementTake"
+            name: 'DecrementTake',
           },
           {
-            "name": "CancelProvide"
+            name: 'CancelProvide',
           },
           {
-            "name": "AbortTransaction"
-          }
-        ]
-      }
+            name: 'AbortTransaction',
+          },
+        ],
+      },
     },
     {
-      "name": "Side",
-      "type": {
-        "kind": "enum",
-        "variants": [
+      name: 'Side',
+      type: {
+        kind: 'enum',
+        variants: [
           {
-            "name": "Bid"
+            name: 'Bid',
           },
           {
-            "name": "Ask"
-          }
-        ]
-      }
+            name: 'Ask',
+          },
+        ],
+      },
     },
     {
-      "name": "SideAndOrderTree",
-      "docs": [
-        "SideAndOrderTree is a storage optimization, so we don't need two bytes for the data"
+      name: 'SideAndOrderTree',
+      docs: [
+        "SideAndOrderTree is a storage optimization, so we don't need two bytes for the data",
       ],
-      "type": {
-        "kind": "enum",
-        "variants": [
+      type: {
+        kind: 'enum',
+        variants: [
           {
-            "name": "BidFixed"
+            name: 'BidFixed',
           },
           {
-            "name": "AskFixed"
+            name: 'AskFixed',
           },
           {
-            "name": "BidOraclePegged"
+            name: 'BidOraclePegged',
           },
           {
-            "name": "AskOraclePegged"
-          }
-        ]
-      }
+            name: 'AskOraclePegged',
+          },
+        ],
+      },
     },
     {
-      "name": "OrderParams",
-      "type": {
-        "kind": "enum",
-        "variants": [
+      name: 'OrderParams',
+      type: {
+        kind: 'enum',
+        variants: [
           {
-            "name": "Market"
+            name: 'Market',
           },
           {
-            "name": "ImmediateOrCancel",
-            "fields": [
+            name: 'ImmediateOrCancel',
+            fields: [
               {
-                "name": "price_lots",
-                "type": "i64"
-              }
-            ]
+                name: 'price_lots',
+                type: 'i64',
+              },
+            ],
           },
           {
-            "name": "Fixed",
-            "fields": [
+            name: 'Fixed',
+            fields: [
               {
-                "name": "price_lots",
-                "type": "i64"
+                name: 'price_lots',
+                type: 'i64',
               },
               {
-                "name": "order_type",
-                "type": {
-                  "defined": "PostOrderType"
-                }
-              }
-            ]
+                name: 'order_type',
+                type: {
+                  defined: 'PostOrderType',
+                },
+              },
+            ],
           },
           {
-            "name": "OraclePegged",
-            "fields": [
+            name: 'OraclePegged',
+            fields: [
               {
-                "name": "price_offset_lots",
-                "type": "i64"
+                name: 'price_offset_lots',
+                type: 'i64',
               },
               {
-                "name": "order_type",
-                "type": {
-                  "defined": "PostOrderType"
-                }
+                name: 'order_type',
+                type: {
+                  defined: 'PostOrderType',
+                },
               },
               {
-                "name": "peg_limit",
-                "type": "i64"
-              }
-            ]
-          }
-        ]
-      }
+                name: 'peg_limit',
+                type: 'i64',
+              },
+            ],
+          },
+        ],
+      },
     },
     {
-      "name": "OrderTreeType",
-      "type": {
-        "kind": "enum",
-        "variants": [
+      name: 'OrderTreeType',
+      type: {
+        kind: 'enum',
+        variants: [
           {
-            "name": "Bids"
+            name: 'Bids',
           },
           {
-            "name": "Asks"
-          }
-        ]
-      }
+            name: 'Asks',
+          },
+        ],
+      },
     },
     {
-      "name": "EventType",
-      "type": {
-        "kind": "enum",
-        "variants": [
+      name: 'EventType',
+      type: {
+        kind: 'enum',
+        variants: [
           {
-            "name": "Fill"
+            name: 'Fill',
           },
           {
-            "name": "Out"
-          }
-        ]
-      }
-    }
+            name: 'Out',
+          },
+        ],
+      },
+    },
   ],
-  "events": [
+  events: [
     {
-      "name": "DepositLog",
-      "fields": [
+      name: 'DepositLog',
+      fields: [
         {
-          "name": "openOrdersAccount",
-          "type": "publicKey",
-          "index": false
+          name: 'openOrdersAccount',
+          type: 'publicKey',
+          index: false,
         },
         {
-          "name": "signer",
-          "type": "publicKey",
-          "index": false
+          name: 'signer',
+          type: 'publicKey',
+          index: false,
         },
         {
-          "name": "baseAmount",
-          "type": "u64",
-          "index": false
+          name: 'baseAmount',
+          type: 'u64',
+          index: false,
         },
         {
-          "name": "quoteAmount",
-          "type": "u64",
-          "index": false
-        }
-      ]
+          name: 'quoteAmount',
+          type: 'u64',
+          index: false,
+        },
+      ],
     },
     {
-      "name": "FillLog",
-      "fields": [
+      name: 'FillLog',
+      fields: [
         {
-          "name": "takerSide",
-          "type": "u8",
-          "index": false
+          name: 'takerSide',
+          type: 'u8',
+          index: false,
         },
         {
-          "name": "makerSlot",
-          "type": "u8",
-          "index": false
+          name: 'makerSlot',
+          type: 'u8',
+          index: false,
         },
         {
-          "name": "makerOut",
-          "type": "bool",
-          "index": false
+          name: 'makerOut',
+          type: 'bool',
+          index: false,
         },
         {
-          "name": "timestamp",
-          "type": "u64",
-          "index": false
+          name: 'timestamp',
+          type: 'u64',
+          index: false,
         },
         {
-          "name": "seqNum",
-          "type": "u64",
-          "index": false
+          name: 'seqNum',
+          type: 'u64',
+          index: false,
         },
         {
-          "name": "maker",
-          "type": "publicKey",
-          "index": false
+          name: 'maker',
+          type: 'publicKey',
+          index: false,
         },
         {
-          "name": "makerClientOrderId",
-          "type": "u64",
-          "index": false
+          name: 'makerClientOrderId',
+          type: 'u64',
+          index: false,
         },
         {
-          "name": "makerFee",
-          "type": "i64",
-          "index": false
+          name: 'makerFee',
+          type: 'i64',
+          index: false,
         },
         {
-          "name": "makerTimestamp",
-          "type": "u64",
-          "index": false
+          name: 'makerTimestamp',
+          type: 'u64',
+          index: false,
         },
         {
-          "name": "taker",
-          "type": "publicKey",
-          "index": false
+          name: 'taker',
+          type: 'publicKey',
+          index: false,
         },
         {
-          "name": "takerClientOrderId",
-          "type": "u64",
-          "index": false
+          name: 'takerClientOrderId',
+          type: 'u64',
+          index: false,
         },
         {
-          "name": "takerFee",
-          "type": "i64",
-          "index": false
+          name: 'takerFee',
+          type: 'i64',
+          index: false,
         },
         {
-          "name": "price",
-          "type": "i64",
-          "index": false
+          name: 'price',
+          type: 'i64',
+          index: false,
         },
         {
-          "name": "quantity",
-          "type": "i64",
-          "index": false
-        }
-      ]
+          name: 'quantity',
+          type: 'i64',
+          index: false,
+        },
+      ],
     },
     {
-      "name": "MarketMetaDataLog",
-      "fields": [
+      name: 'MarketMetaDataLog',
+      fields: [
         {
-          "name": "market",
-          "type": "publicKey",
-          "index": false
+          name: 'market',
+          type: 'publicKey',
+          index: false,
         },
         {
-          "name": "name",
-          "type": "string",
-          "index": false
+          name: 'name',
+          type: 'string',
+          index: false,
         },
         {
-          "name": "baseMint",
-          "type": "publicKey",
-          "index": false
+          name: 'baseMint',
+          type: 'publicKey',
+          index: false,
         },
         {
-          "name": "quoteMint",
-          "type": "publicKey",
-          "index": false
+          name: 'quoteMint',
+          type: 'publicKey',
+          index: false,
         },
         {
-          "name": "baseDecimals",
-          "type": "u8",
-          "index": false
+          name: 'baseDecimals',
+          type: 'u8',
+          index: false,
         },
         {
-          "name": "quoteDecimals",
-          "type": "u8",
-          "index": false
+          name: 'quoteDecimals',
+          type: 'u8',
+          index: false,
         },
         {
-          "name": "baseLotSize",
-          "type": "i64",
-          "index": false
+          name: 'baseLotSize',
+          type: 'i64',
+          index: false,
         },
         {
-          "name": "quoteLotSize",
-          "type": "i64",
-          "index": false
-        }
-      ]
+          name: 'quoteLotSize',
+          type: 'i64',
+          index: false,
+        },
+      ],
     },
     {
-      "name": "TotalOrderFillEvent",
-      "fields": [
+      name: 'TotalOrderFillEvent',
+      fields: [
         {
-          "name": "side",
-          "type": "u8",
-          "index": false
+          name: 'side',
+          type: 'u8',
+          index: false,
         },
         {
-          "name": "taker",
-          "type": "publicKey",
-          "index": false
+          name: 'taker',
+          type: 'publicKey',
+          index: false,
         },
         {
-          "name": "totalQuantityPaid",
-          "type": "u64",
-          "index": false
+          name: 'totalQuantityPaid',
+          type: 'u64',
+          index: false,
         },
         {
-          "name": "totalQuantityReceived",
-          "type": "u64",
-          "index": false
+          name: 'totalQuantityReceived',
+          type: 'u64',
+          index: false,
         },
         {
-          "name": "fees",
-          "type": "u64",
-          "index": false
-        }
-      ]
+          name: 'fees',
+          type: 'u64',
+          index: false,
+        },
+      ],
     },
     {
-      "name": "CancelOrderLog",
-      "fields": [
+      name: 'CancelOrderLog',
+      fields: [
         {
-          "name": "openOrdersAccount",
-          "type": "publicKey",
-          "index": false
+          name: 'openOrdersAccount',
+          type: 'publicKey',
+          index: false,
         },
         {
-          "name": "slot",
-          "type": "u8",
-          "index": false
+          name: 'slot',
+          type: 'u8',
+          index: false,
         },
         {
-          "name": "side",
-          "type": "u8",
-          "index": false
+          name: 'side',
+          type: 'u8',
+          index: false,
         },
         {
-          "name": "quantity",
-          "type": "i64",
-          "index": false
-        }
-      ]
+          name: 'quantity',
+          type: 'i64',
+          index: false,
+        },
+      ],
     },
     {
-      "name": "CancelOrdersLog",
-      "fields": [
+      name: 'CancelOrdersLog',
+      fields: [
         {
-          "name": "openOrdersAccount",
-          "type": "publicKey",
-          "index": false
+          name: 'openOrdersAccount',
+          type: 'publicKey',
+          index: false,
         },
         {
-          "name": "totalQuantity",
-          "type": "i64",
-          "index": false
-        }
-      ]
+          name: 'totalQuantity',
+          type: 'i64',
+          index: false,
+        },
+      ],
     },
     {
-      "name": "CancelAllOrdersLog",
-      "fields": [
+      name: 'CancelAllOrdersLog',
+      fields: [
         {
-          "name": "openOrdersAccount",
-          "type": "publicKey",
-          "index": false
+          name: 'openOrdersAccount',
+          type: 'publicKey',
+          index: false,
         },
         {
-          "name": "side",
-          "type": {
-            "option": "u8"
+          name: 'side',
+          type: {
+            option: 'u8',
           },
-          "index": false
+          index: false,
         },
         {
-          "name": "quantity",
-          "type": "i64",
-          "index": false
+          name: 'quantity',
+          type: 'i64',
+          index: false,
         },
         {
-          "name": "limit",
-          "type": "u8",
-          "index": false
-        }
-      ]
+          name: 'limit',
+          type: 'u8',
+          index: false,
+        },
+      ],
     },
     {
-      "name": "PruneOrdersLog",
-      "fields": [
+      name: 'PruneOrdersLog',
+      fields: [
         {
-          "name": "openOrdersAccount",
-          "type": "publicKey",
-          "index": false
+          name: 'openOrdersAccount',
+          type: 'publicKey',
+          index: false,
         },
         {
-          "name": "quantity",
-          "type": "i64",
-          "index": false
+          name: 'quantity',
+          type: 'i64',
+          index: false,
         },
         {
-          "name": "limit",
-          "type": "u8",
-          "index": false
-        }
-      ]
+          name: 'limit',
+          type: 'u8',
+          index: false,
+        },
+      ],
     },
     {
-      "name": "SetDelegateLog",
-      "fields": [
+      name: 'SetDelegateLog',
+      fields: [
         {
-          "name": "openOrdersAccount",
-          "type": "publicKey",
-          "index": false
+          name: 'openOrdersAccount',
+          type: 'publicKey',
+          index: false,
         },
         {
-          "name": "delegate",
-          "type": {
-            "option": "publicKey"
+          name: 'delegate',
+          type: {
+            option: 'publicKey',
           },
-          "index": false
-        }
-      ]
+          index: false,
+        },
+      ],
     },
     {
-      "name": "SettleFundsLog",
-      "fields": [
+      name: 'SettleFundsLog',
+      fields: [
         {
-          "name": "openOrdersAccount",
-          "type": "publicKey",
-          "index": false
+          name: 'openOrdersAccount',
+          type: 'publicKey',
+          index: false,
         },
         {
-          "name": "baseNative",
-          "type": "u64",
-          "index": false
+          name: 'baseNative',
+          type: 'u64',
+          index: false,
         },
         {
-          "name": "quoteNative",
-          "type": "u64",
-          "index": false
+          name: 'quoteNative',
+          type: 'u64',
+          index: false,
         },
         {
-          "name": "referrerRebate",
-          "type": "u64",
-          "index": false
+          name: 'referrerRebate',
+          type: 'u64',
+          index: false,
         },
         {
-          "name": "referrer",
-          "type": {
-            "option": "publicKey"
+          name: 'referrer',
+          type: {
+            option: 'publicKey',
           },
-          "index": false
-        }
-      ]
+          index: false,
+        },
+      ],
     },
     {
-      "name": "SweepFeesLog",
-      "fields": [
+      name: 'SweepFeesLog',
+      fields: [
         {
-          "name": "market",
-          "type": "publicKey",
-          "index": false
+          name: 'market',
+          type: 'publicKey',
+          index: false,
         },
         {
-          "name": "amount",
-          "type": "u64",
-          "index": false
+          name: 'amount',
+          type: 'u64',
+          index: false,
         },
         {
-          "name": "receiver",
-          "type": "publicKey",
-          "index": false
-        }
-      ]
-    }
+          name: 'receiver',
+          type: 'publicKey',
+          index: false,
+        },
+      ],
+    },
   ],
-  "errors": [
+  errors: [
     {
-      "code": 6000,
-      "name": "SomeError",
-      "msg": ""
+      code: 6000,
+      name: 'SomeError',
+      msg: '',
     },
     {
-      "code": 6001,
-      "name": "InvalidInputNameLength",
-      "msg": "Name lenght above limit"
+      code: 6001,
+      name: 'InvalidInputNameLength',
+      msg: 'Name lenght above limit',
     },
     {
-      "code": 6002,
-      "name": "InvalidInputMarketExpired",
-      "msg": "Market cannot be created as expired"
+      code: 6002,
+      name: 'InvalidInputMarketExpired',
+      msg: 'Market cannot be created as expired',
     },
     {
-      "code": 6003,
-      "name": "InvalidInputMarketFees",
-      "msg": "Taker fees should be positive and if maker fees are negative, greater or equal to their abs value"
+      code: 6003,
+      name: 'InvalidInputMarketFees',
+      msg: 'Taker fees should be positive and if maker fees are negative, greater or equal to their abs value',
     },
     {
-      "code": 6004,
-      "name": "InvalidInputLots",
-      "msg": "Lots cannot be negative"
+      code: 6004,
+      name: 'InvalidInputLots',
+      msg: 'Lots cannot be negative',
     },
     {
-      "code": 6005,
-      "name": "InvalidInputLotsSize",
-      "msg": "Lots size above market limits"
+      code: 6005,
+      name: 'InvalidInputLotsSize',
+      msg: 'Lots size above market limits',
     },
     {
-      "code": 6006,
-      "name": "InvalidInputPriceLots",
-      "msg": "Price lots should be greater than zero"
+      code: 6006,
+      name: 'InvalidInputPriceLots',
+      msg: 'Price lots should be greater than zero',
     },
     {
-      "code": 6007,
-      "name": "InvalidInputPegLimit",
-      "msg": "Peg limit should be greater than zero"
+      code: 6007,
+      name: 'InvalidInputPegLimit',
+      msg: 'Peg limit should be greater than zero',
     },
     {
-      "code": 6008,
-      "name": "InvalidInputOrderType",
-      "msg": "The order type is invalid. A taker order must be Market or ImmediateOrCancel"
+      code: 6008,
+      name: 'InvalidInputOrderType',
+      msg: 'The order type is invalid. A taker order must be Market or ImmediateOrCancel',
     },
     {
-      "code": 6009,
-      "name": "InvalidInputOrderId",
-      "msg": "Order id cannot be zero"
+      code: 6009,
+      name: 'InvalidInputOrderId',
+      msg: 'Order id cannot be zero',
     },
     {
-      "code": 6010,
-      "name": "InvalidInputStaleness",
-      "msg": "Oracle staleness limit is currently unimplemented"
+      code: 6010,
+      name: 'InvalidInputStaleness',
+      msg: 'Oracle staleness limit is currently unimplemented',
     },
     {
-      "code": 6011,
-      "name": "InvalidInputQueueSlots",
-      "msg": "Slot above queue limit"
+      code: 6011,
+      name: 'InvalidInputQueueSlots',
+      msg: 'Slot above queue limit',
     },
     {
-      "code": 6012,
-      "name": "InvalidOracleTypes",
-      "msg": "Cannot combine two oracles of different providers"
+      code: 6012,
+      name: 'InvalidOracleTypes',
+      msg: 'Cannot combine two oracles of different providers',
     },
     {
-      "code": 6013,
-      "name": "InvalidSecondOracle",
-      "msg": "Cannot configure secondary oracle without primary"
+      code: 6013,
+      name: 'InvalidSecondOracle',
+      msg: 'Cannot configure secondary oracle without primary',
     },
     {
-      "code": 6014,
-      "name": "NoCloseMarketAdmin",
-      "msg": "This market does not have a `close_market_admin` and thus cannot be closed."
+      code: 6014,
+      name: 'NoCloseMarketAdmin',
+      msg: 'This market does not have a `close_market_admin` and thus cannot be closed.',
     },
     {
-      "code": 6015,
-      "name": "InvalidCloseMarketAdmin",
-      "msg": "The signer of this transaction is not this market's `close_market_admin`."
+      code: 6015,
+      name: 'InvalidCloseMarketAdmin',
+      msg: "The signer of this transaction is not this market's `close_market_admin`.",
     },
     {
-      "code": 6016,
-      "name": "InvalidOpenOrdersAdmin",
-      "msg": "The `open_orders_admin` required by this market to sign all instructions that creates orders is missing or is not valid"
+      code: 6016,
+      name: 'InvalidOpenOrdersAdmin',
+      msg: 'The `open_orders_admin` required by this market to sign all instructions that creates orders is missing or is not valid',
     },
     {
-      "code": 6017,
-      "name": "InvalidConsumeEventsAdmin",
-      "msg": "The `consume_events_admin` required by this market to sign all instructions that consume events is missing or is not valid"
+      code: 6017,
+      name: 'InvalidConsumeEventsAdmin',
+      msg: 'The `consume_events_admin` required by this market to sign all instructions that consume events is missing or is not valid',
     },
     {
-      "code": 6018,
-      "name": "IndexerActiveOO",
-      "msg": "Cannot be closed due to the existence of open orders accounts"
+      code: 6018,
+      name: 'IndexerActiveOO',
+      msg: 'Cannot be closed due to the existence of open orders accounts',
     },
     {
-      "code": 6019,
-      "name": "UnknownOracleType",
-      "msg": "oracle type cannot be determined"
+      code: 6019,
+      name: 'UnknownOracleType',
+      msg: 'oracle type cannot be determined',
     },
     {
-      "code": 6020,
-      "name": "OracleConfidence",
-      "msg": "an oracle does not reach the confidence threshold"
+      code: 6020,
+      name: 'OracleConfidence',
+      msg: 'an oracle does not reach the confidence threshold',
     },
     {
-      "code": 6021,
-      "name": "OracleStale",
-      "msg": "an oracle is stale"
+      code: 6021,
+      name: 'OracleStale',
+      msg: 'an oracle is stale',
     },
     {
-      "code": 6022,
-      "name": "OrderIdNotFound",
-      "msg": "Order id not found on the orderbook"
+      code: 6022,
+      name: 'OrderIdNotFound',
+      msg: 'Order id not found on the orderbook',
     },
     {
-      "code": 6023,
-      "name": "EventQueueContainsElements",
-      "msg": "Event queue contains elements and market can't be closed"
+      code: 6023,
+      name: 'EventQueueContainsElements',
+      msg: "Event queue contains elements and market can't be closed",
     },
     {
-      "code": 6024,
-      "name": "InvalidOrderPostIOC",
-      "msg": "ImmediateOrCancel is not a PostOrderType"
+      code: 6024,
+      name: 'InvalidOrderPostIOC',
+      msg: 'ImmediateOrCancel is not a PostOrderType',
     },
     {
-      "code": 6025,
-      "name": "InvalidOrderPostMarket",
-      "msg": "Market is not a PostOrderType"
+      code: 6025,
+      name: 'InvalidOrderPostMarket',
+      msg: 'Market is not a PostOrderType',
     },
     {
-      "code": 6026,
-      "name": "WouldSelfTrade",
-      "msg": "would self trade"
+      code: 6026,
+      name: 'WouldSelfTrade',
+      msg: 'would self trade',
     },
     {
-      "code": 6027,
-      "name": "MarketHasExpired",
-      "msg": "The Market has already expired."
+      code: 6027,
+      name: 'MarketHasExpired',
+      msg: 'The Market has already expired.',
     },
     {
-      "code": 6028,
-      "name": "InvalidPriceLots",
-      "msg": "Price lots should be greater than zero"
+      code: 6028,
+      name: 'InvalidPriceLots',
+      msg: 'Price lots should be greater than zero',
     },
     {
-      "code": 6029,
-      "name": "InvalidOraclePrice",
-      "msg": "Oracle price above market limits"
+      code: 6029,
+      name: 'InvalidOraclePrice',
+      msg: 'Oracle price above market limits',
     },
     {
-      "code": 6030,
-      "name": "MarketHasNotExpired",
-      "msg": "The Market has not expired yet."
+      code: 6030,
+      name: 'MarketHasNotExpired',
+      msg: 'The Market has not expired yet.',
     },
     {
-      "code": 6031,
-      "name": "NoOwnerOrDelegate",
-      "msg": "No correct owner or delegate."
+      code: 6031,
+      name: 'NoOwnerOrDelegate',
+      msg: 'No correct owner or delegate.',
     },
     {
-      "code": 6032,
-      "name": "NoOwner",
-      "msg": "No correct owner"
+      code: 6032,
+      name: 'NoOwner',
+      msg: 'No correct owner',
     },
     {
-      "code": 6033,
-      "name": "OpenOrdersFull",
-      "msg": "No free order index in open orders account"
+      code: 6033,
+      name: 'OpenOrdersFull',
+      msg: 'No free order index in open orders account',
     },
     {
-      "code": 6034,
-      "name": "BookContainsElements",
-      "msg": "Book contains elements"
+      code: 6034,
+      name: 'BookContainsElements',
+      msg: 'Book contains elements',
     },
     {
-      "code": 6035,
-      "name": "OpenOrdersOrderNotFound",
-      "msg": "Could not find order in user account"
+      code: 6035,
+      name: 'OpenOrdersOrderNotFound',
+      msg: 'Could not find order in user account',
     },
     {
-      "code": 6036,
-      "name": "InvalidPostAmount",
-      "msg": "Amount to post above book limits"
+      code: 6036,
+      name: 'InvalidPostAmount',
+      msg: 'Amount to post above book limits',
     },
     {
-      "code": 6037,
-      "name": "DisabledOraclePeg",
-      "msg": "Oracle peg orders are not enabled for this market"
+      code: 6037,
+      name: 'DisabledOraclePeg',
+      msg: 'Oracle peg orders are not enabled for this market',
     },
     {
-      "code": 6038,
-      "name": "NonEmptyMarket",
-      "msg": "Cannot close a non-empty market"
+      code: 6038,
+      name: 'NonEmptyMarket',
+      msg: 'Cannot close a non-empty market',
     },
     {
-      "code": 6039,
-      "name": "NonEmptyOpenOrdersPosition",
-      "msg": "Cannot close a non-empty open orders account"
-    }
-  ]
+      code: 6039,
+      name: 'NonEmptyOpenOrdersPosition',
+      msg: 'Cannot close a non-empty open orders account',
+    },
+  ],
 };
