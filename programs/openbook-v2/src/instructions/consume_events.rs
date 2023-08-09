@@ -80,12 +80,12 @@ pub fn consume_events(
             EventType::Fill => {
                 let fill: &FillEvent = cast_ref(event);
                 load_open_orders_account!(maker, fill.maker, remaining_accs, event_queue);
-                maker.execute_maker(&mut market, fill)?;
+                maker.execute_maker(&mut market, fill);
             }
             EventType::Out => {
                 let out: &OutEvent = cast_ref(event);
                 load_open_orders_account!(owner, out.owner, remaining_accs, event_queue);
-                owner.cancel_order(out.owner_slot as usize, out.quantity, *market)?;
+                owner.cancel_order(out.owner_slot as usize, out.quantity, *market);
             }
         }
 

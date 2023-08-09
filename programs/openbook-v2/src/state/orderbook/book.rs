@@ -190,7 +190,7 @@ impl<'a> Orderbook<'a> {
                             best_opposing.node.owner_slot as usize,
                             best_opposing.node.quantity,
                             *market,
-                        )?;
+                        );
                         matched_order_deletes
                             .push((best_opposing.handle.order_tree, best_opposing.node.key));
 
@@ -430,7 +430,7 @@ impl<'a> Orderbook<'a> {
                 &new_order,
                 order.client_order_id,
                 price,
-            )?;
+            );
         }
 
         let placed_order_id = if post_target.is_some() {
@@ -525,11 +525,7 @@ impl<'a> Orderbook<'a> {
         if let Some(owner) = expected_owner {
             require_keys_eq!(leaf_node.owner, owner);
         }
-        open_orders_account.cancel_order(
-            leaf_node.owner_slot as usize,
-            leaf_node.quantity,
-            market,
-        )?;
+        open_orders_account.cancel_order(leaf_node.owner_slot as usize, leaf_node.quantity, market);
 
         Ok(leaf_node)
     }
@@ -545,7 +541,7 @@ pub fn process_out_event(
 ) -> Result<()> {
     if let Some(acc) = open_orders_account {
         if owner == &event.owner {
-            acc.cancel_order(event.owner_slot as usize, event.quantity, *market)?;
+            acc.cancel_order(event.owner_slot as usize, event.quantity, *market);
             // Already canceled, return
             return Ok(());
         }
@@ -554,7 +550,7 @@ pub fn process_out_event(
     if let Some(acc) = remaining_accs.iter().find(|ai| ai.key == &event.owner) {
         let ooa: AccountLoader<OpenOrdersAccount> = AccountLoader::try_from(acc)?;
         let mut acc = ooa.load_mut()?;
-        acc.cancel_order(event.owner_slot as usize, event.quantity, *market)?;
+        acc.cancel_order(event.owner_slot as usize, event.quantity, *market);
     } else {
         event_queue.push_back(cast(event));
     }
@@ -571,8 +567,7 @@ pub fn process_fill_event(
     if let Some(acc) = loader {
         let ooa: AccountLoader<OpenOrdersAccount> = AccountLoader::try_from(acc)?;
         let mut maker = ooa.load_mut()?;
-
-        maker.execute_maker(market, &event)?;
+        maker.execute_maker(market, &event);
     } else {
         event_queue.push_back(cast(event));
     }

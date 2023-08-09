@@ -55,8 +55,8 @@ const_assert_eq!(size_of::<OpenOrdersAccount>() % 8, 0);
 
 impl OpenOrdersAccount {
     /// Number of bytes needed for the OpenOrdersAccount, including the discriminator
-    pub fn space() -> Result<usize> {
-        Ok(8 + size_of::<OpenOrdersAccount>())
+    pub fn space() -> usize {
+        8 + size_of::<OpenOrdersAccount>()
     }
 
     pub fn name(&self) -> &str {
@@ -122,7 +122,7 @@ impl OpenOrdersAccount {
         &mut self.open_orders[raw_index]
     }
 
-    pub fn execute_maker(&mut self, market: &mut Market, fill: &FillEvent) -> Result<()> {
+    pub fn execute_maker(&mut self, market: &mut Market, fill: &FillEvent) {
         let is_self_trade = fill.maker == fill.taker;
 
         let side = fill.taker_side().invert_side();
@@ -172,7 +172,7 @@ impl OpenOrdersAccount {
         market.fees_accrued += maker_fees;
 
         if fill.maker_out() {
-            self.remove_order(fill.maker_slot as usize, fill.quantity)?;
+            self.remove_order(fill.maker_slot as usize, fill.quantity);
         } else {
             match side {
                 Side::Bid => pa.bids_base_lots -= fill.quantity,
@@ -196,8 +196,6 @@ impl OpenOrdersAccount {
             price: fill.price,
             quantity: fill.quantity,
         });
-
-        Ok(())
     }
 
     /// Release funds and apply taker fees to the taker account. Account fees for referrer
@@ -228,7 +226,7 @@ impl OpenOrdersAccount {
         order: &LeafNode,
         client_order_id: u64,
         locked_price: i64,
-    ) -> Result<()> {
+    ) {
         let position = &mut self.position;
         match side {
             Side::Bid => position.bids_base_lots += order.quantity,
@@ -242,10 +240,9 @@ impl OpenOrdersAccount {
         oo.id = order.key;
         oo.client_id = client_order_id;
         oo.locked_price = locked_price;
-        Ok(())
     }
 
-    pub fn remove_order(&mut self, slot: usize, base_quantity: i64) -> Result<()> {
+    pub fn remove_order(&mut self, slot: usize, base_quantity: i64) {
         let oo = self.open_order_by_raw_index(slot);
         assert!(!oo.is_free());
 
@@ -260,11 +257,9 @@ impl OpenOrdersAccount {
 
         // release space
         *self.open_order_mut_by_raw_index(slot) = OpenOrder::default();
-
-        Ok(())
     }
 
-    pub fn cancel_order(&mut self, slot: usize, base_quantity: i64, market: Market) -> Result<()> {
+    pub fn cancel_order(&mut self, slot: usize, base_quantity: i64, market: Market) {
         let oo = self.open_order_by_raw_index(slot);
         let price = oo.locked_price;
         let order_side = oo.side_and_tree().side();
@@ -282,6 +277,6 @@ impl OpenOrdersAccount {
             Side::Ask => position.base_free_native += base_quantity_native,
         }
 
-        self.remove_order(slot, base_quantity)
+        self.remove_order(slot, base_quantity);
     }
 }
