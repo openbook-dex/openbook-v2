@@ -320,19 +320,29 @@ impl<'a> Orderbook<'a> {
 
         // To calculate max quantity to post, for oracle peg orders & bids take the peg_limit as
         // it's the upper price limitation
-        let price = if order.peg_limit() != -1 && order.side == Side::Bid {
+        let is_oracle_peg = order.peg_limit() != -1;
+        let price = if is_oracle_peg && order.side == Side::Bid {
             order.peg_limit()
         } else {
             price_lots
         };
+
         // If there are still quantity unmatched, place on the book
         let book_base_quantity_lots = {
-            // Subtract maker fees (if any)
             remaining_quote_lots -= market.maker_fees_ceil(remaining_quote_lots);
             remaining_base_lots.min(remaining_quote_lots / price)
         };
 
         if book_base_quantity_lots <= 0 {
+            post_target = None;
+        }
+
+        if is_oracle_peg && side.is_price_better(price_lots, order.peg_limit()) {
+            msg!(
+                "Posting on book disallowed due to peg_limit, order price {:?}, limit {:?}",
+                price_lots,
+                order.peg_limit(),
+            );
             post_target = None;
         }
 

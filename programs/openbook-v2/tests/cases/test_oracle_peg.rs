@@ -74,21 +74,32 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
     };
     assert_eq!(price_lots, market_base_lot_size / market_quote_lot_size);
 
-    // TEST: Place and cancel order with order_id
+    let place_pegged_ix = PlaceOrderPeggedInstruction {
+        open_orders_account: account_1,
+        market,
+        signer: owner,
+        token_deposit_account: owner_token_1,
+        market_vault: quote_vault,
+        side: Side::Bid,
+        price_offset: -1,
+        peg_limit: 1,
+        max_base_lots: 1,
+        max_quote_lots_including_fees: 100_000,
+        client_order_id: 0,
+    };
+
+    // posting invalid orderes by peg_limit are skipped
+    send_tx(solana, place_pegged_ix.clone()).await.unwrap();
+
+    let bids_data = solana.get_account_boxed::<BookSide>(bids).await;
+    assert_eq!(bids_data.roots[1].leaf_count, 0);
+
+    // but not if they are inside the peg_limit
     send_tx(
         solana,
         PlaceOrderPeggedInstruction {
-            open_orders_account: account_1,
-            market,
-            signer: owner,
-            token_deposit_account: owner_token_1,
-            market_vault: quote_vault,
-            side: Side::Bid,
-            price_offset: -1,
-            peg_limit: 1,
-            max_base_lots: 1,
-            max_quote_lots_including_fees: 100_000,
-            client_order_id: 0,
+            peg_limit: 1000,
+            ..place_pegged_ix
         },
     )
     .await
@@ -557,6 +568,7 @@ async fn test_locked_amounts() -> Result<(), TransportError> {
 
     let place_ask_1_ix = PlaceOrderPeggedInstruction {
         side: Side::Ask,
+        peg_limit: 10,
         market_vault: base_vault,
         token_deposit_account: owner_base_ata,
         open_orders_account: account_2,
