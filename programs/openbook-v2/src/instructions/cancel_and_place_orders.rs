@@ -63,12 +63,7 @@ pub fn cancel_and_place_orders(
                 Some(ctx.accounts.open_orders_account.key()),
             );
 
-            if cancel_result.is_anchor_error_with_code(OpenBookError::OrderIdNotFound.into()) {
-                msg!(
-                    "order {} was not found on orderbook, expired or filled already",
-                    order_id
-                );
-            } else {
+            if !cancel_result.is_anchor_error_with_code(OpenBookError::OrderIdNotFound.into()) {
                 canceled_quantity += cancel_result?.quantity;
             }
         };
