@@ -55,8 +55,8 @@ async fn test_take_ask_order() -> Result<(), TransportError> {
         PlaceTakeOrderInstruction {
             market,
             signer: owner,
-            token_deposit_account: owner_token_0,
-            token_receiver_account: owner_token_1,
+            user_base_account: owner_token_0,
+            user_quote_account: owner_token_1,
             market_base_vault,
             market_quote_vault,
             side: Side::Ask,
@@ -207,8 +207,8 @@ async fn test_take_bid_order() -> Result<(), TransportError> {
         PlaceTakeOrderInstruction {
             market,
             signer: owner,
-            token_deposit_account: owner_token_1,
-            token_receiver_account: owner_token_0,
+            user_base_account: owner_token_0,
+            user_quote_account: owner_token_1,
             market_base_vault,
             market_quote_vault,
             side: Side::Bid,

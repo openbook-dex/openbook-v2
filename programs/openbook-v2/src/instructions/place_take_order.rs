@@ -70,28 +70,18 @@ pub fn place_take_order<'info>(
         ctx.remaining_accounts,
     )?;
 
-    let (from_vault, to_vault, deposit_amount, withdraw_amount) = match side {
+    let (deposit_amount, withdraw_amount) = match side {
         Side::Bid => {
             let total_quote_including_fees = total_quote_taken_native + taker_fees;
             market.base_deposit_total -= total_base_taken_native;
             market.quote_deposit_total += total_quote_including_fees;
-            (
-                &ctx.accounts.market_base_vault,
-                &ctx.accounts.market_quote_vault,
-                total_quote_including_fees,
-                total_base_taken_native,
-            )
+            (total_quote_including_fees, total_base_taken_native)
         }
         Side::Ask => {
             let total_quote_discounting_fees = total_quote_taken_native - taker_fees;
             market.base_deposit_total += total_base_taken_native;
             market.quote_deposit_total -= total_quote_discounting_fees;
-            (
-                &ctx.accounts.market_quote_vault,
-                &ctx.accounts.market_base_vault,
-                total_base_taken_native,
-                total_quote_discounting_fees,
-            )
+            (total_base_taken_native, total_quote_discounting_fees)
         }
     };
 
@@ -105,25 +95,39 @@ pub fn place_take_order<'info>(
     let seeds = market_seeds!(market, ctx.accounts.market.key());
     drop(market);
 
-    // Transfer funds from token_deposit_account to vault
+    let (user_deposit_acc, user_withdraw_acc, market_deposit_acc, market_withdraw_acc) = match side
+    {
+        Side::Bid => (
+            &ctx.accounts.user_quote_account,
+            &ctx.accounts.user_base_account,
+            &ctx.accounts.market_quote_vault,
+            &ctx.accounts.market_base_vault,
+        ),
+        Side::Ask => (
+            &ctx.accounts.user_base_account,
+            &ctx.accounts.user_quote_account,
+            &ctx.accounts.market_base_vault,
+            &ctx.accounts.market_quote_vault,
+        ),
+    };
+
     token_transfer(
         deposit_amount,
         &ctx.accounts.token_program,
-        ctx.accounts.token_deposit_account.as_ref(),
-        to_vault,
+        user_deposit_acc.as_ref(),
+        market_deposit_acc,
         &ctx.accounts.signer,
     )?;
 
     token_transfer_signed(
         withdraw_amount,
         &ctx.accounts.token_program,
-        from_vault,
-        ctx.accounts.token_receiver_account.as_ref(),
+        market_withdraw_acc,
+        user_withdraw_acc.as_ref(),
         &ctx.accounts.market_authority,
         seeds,
     )?;
 
-    // Transfer to referrer
     if let Some(referrer) = &ctx.accounts.referrer {
         token_transfer_signed(
             referrer_amount,

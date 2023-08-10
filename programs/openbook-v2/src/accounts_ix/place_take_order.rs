@@ -36,15 +36,14 @@ pub struct PlaceTakeOrder<'info> {
 
     #[account(
         mut,
-        token::authority = signer.key(),
-        constraint = token_deposit_account.mint == market_base_vault.mint || token_deposit_account.mint == market_quote_vault.mint
+        constraint = user_base_account.mint == market_base_vault.mint
     )]
-    pub token_deposit_account: Box<Account<'info, TokenAccount>>,
+    pub user_base_account: Box<Account<'info, TokenAccount>>,
     #[account(
         mut,
-        constraint = token_deposit_account.mint == market_base_vault.mint || token_deposit_account.mint == market_quote_vault.mint
+        constraint = user_quote_account.mint == market_quote_vault.mint
     )]
-    pub token_receiver_account: Box<Account<'info, TokenAccount>>,
+    pub user_quote_account: Box<Account<'info, TokenAccount>>,
 
     #[account(
         mut,
