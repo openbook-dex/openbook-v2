@@ -105,7 +105,7 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<
     token_transfer(
         deposit_amount,
         &ctx.accounts.token_program,
-        &ctx.accounts.token_deposit_account,
+        &ctx.accounts.user_token_account,
         &ctx.accounts.market_vault,
         &ctx.accounts.signer,
     )?;
