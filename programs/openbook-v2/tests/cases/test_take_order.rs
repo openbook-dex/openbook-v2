@@ -63,7 +63,7 @@ async fn test_take_ask_order() -> Result<(), TransportError> {
             price_lots,
             max_base_lots: 1,
             max_quote_lots_including_fees: 10000,
-            referrer: None,
+            referrer_account: None,
             open_orders_admin: None,
         },
     )
@@ -127,7 +127,7 @@ async fn test_take_ask_order() -> Result<(), TransportError> {
             market_quote_vault,
             user_base_account: owner_token_0,
             user_quote_account: owner_token_1,
-            referrer: None,
+            referrer_account: None,
         },
     )
     .await
@@ -215,7 +215,7 @@ async fn test_take_bid_order() -> Result<(), TransportError> {
             price_lots,
             max_base_lots: 1,
             max_quote_lots_including_fees: 10040,
-            referrer: Some(admin_token_1),
+            referrer_account: Some(admin_token_1),
             open_orders_admin: None,
         },
     )
@@ -283,7 +283,7 @@ async fn test_take_bid_order() -> Result<(), TransportError> {
             market_quote_vault,
             user_base_account: owner_token_0,
             user_quote_account: owner_token_1,
-            referrer: None,
+            referrer_account: None,
         },
     )
     .await

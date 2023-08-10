@@ -85,7 +85,7 @@ pub fn place_take_order<'info>(
         }
     };
 
-    if ctx.accounts.referrer.is_some() {
+    if ctx.accounts.referrer_account.is_some() {
         market.fees_to_referrers += referrer_amount;
         market.quote_deposit_total -= referrer_amount;
     } else {
@@ -128,12 +128,12 @@ pub fn place_take_order<'info>(
         seeds,
     )?;
 
-    if let Some(referrer) = &ctx.accounts.referrer {
+    if let Some(referrer_account) = &ctx.accounts.referrer_account {
         token_transfer_signed(
             referrer_amount,
             &ctx.accounts.token_program,
             &ctx.accounts.market_quote_vault,
-            referrer,
+            referrer_account,
             &ctx.accounts.market_authority,
             seeds,
         )?;

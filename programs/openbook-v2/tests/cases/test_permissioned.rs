@@ -370,7 +370,7 @@ async fn test_close_market_admin() -> Result<(), TransportError> {
         market_quote_vault,
         user_base_account: owner_token_0,
         user_quote_account: owner_token_1,
-        referrer: None,
+        referrer_account: None,
     };
 
     // Can't close yet, market not market as expired
@@ -464,7 +464,7 @@ async fn test_close_market_admin() -> Result<(), TransportError> {
             market_quote_vault,
             user_base_account: owner_token_0,
             user_quote_account: owner_token_1,
-            referrer: None,
+            referrer_account: None,
         },
     )
     .await

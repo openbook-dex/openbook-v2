@@ -49,7 +49,7 @@ pub struct PlaceTakeOrder<'info> {
         mut,
         token::mint = market_quote_vault.mint
     )]
-    pub referrer: Option<Box<Account<'info, TokenAccount>>>,
+    pub referrer_account: Option<Box<Account<'info, TokenAccount>>>,
 
     /// CHECK: The oracle can be one of several different account types and the pubkey is checked above
     pub oracle_a: Option<UncheckedAccount<'info>>,

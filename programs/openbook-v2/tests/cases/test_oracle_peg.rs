@@ -583,7 +583,7 @@ async fn test_locked_amounts() -> Result<(), TransportError> {
         market_quote_vault,
         user_base_account: owner_base_ata,
         user_quote_account: owner_quote_ata,
-        referrer: None,
+        referrer_account: None,
     };
 
     let settle_funds_1_ix = SettleFundsInstruction {

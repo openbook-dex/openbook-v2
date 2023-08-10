@@ -128,7 +128,7 @@ async fn test_fees_accrued() -> Result<(), TransportError> {
             market_quote_vault,
             user_base_account: owner_token_0,
             user_quote_account: owner_token_1,
-            referrer: None,
+            referrer_account: None,
         },
     )
     .await
@@ -344,7 +344,7 @@ async fn test_maker_fees() -> Result<(), TransportError> {
             market_quote_vault,
             user_base_account: owner_token_0,
             user_quote_account: owner_token_1,
-            referrer: None,
+            referrer_account: None,
         },
     )
     .await
@@ -367,7 +367,7 @@ async fn test_maker_fees() -> Result<(), TransportError> {
             market_quote_vault,
             user_base_account: owner_token_0,
             user_quote_account: owner_token_1,
-            referrer: Some(owner_token_1),
+            referrer_account: Some(owner_token_1),
         },
     )
     .await
@@ -537,7 +537,7 @@ async fn test_no_maker_fees_ask() -> Result<(), TransportError> {
             market_quote_vault,
             user_base_account: owner_token_0,
             user_quote_account: owner_token_1,
-            referrer: None,
+            referrer_account: None,
         },
     )
     .await
@@ -560,7 +560,7 @@ async fn test_no_maker_fees_ask() -> Result<(), TransportError> {
             market_quote_vault,
             user_base_account: owner_token_0,
             user_quote_account: owner_token_1,
-            referrer: Some(owner_token_1),
+            referrer_account: Some(owner_token_1),
         },
     )
     .await
@@ -730,7 +730,7 @@ async fn test_maker_fees_ask() -> Result<(), TransportError> {
             market_quote_vault,
             user_base_account: owner_token_0,
             user_quote_account: owner_token_1,
-            referrer: None,
+            referrer_account: None,
         },
     )
     .await
@@ -753,7 +753,7 @@ async fn test_maker_fees_ask() -> Result<(), TransportError> {
             market_quote_vault,
             user_base_account: owner_token_0,
             user_quote_account: owner_token_1,
-            referrer: Some(owner_token_1),
+            referrer_account: Some(owner_token_1),
         },
     )
     .await
@@ -904,7 +904,7 @@ async fn test_fees_half() -> Result<(), TransportError> {
             market_quote_vault,
             user_base_account: owner_token_0,
             user_quote_account: owner_token_1,
-            referrer: None,
+            referrer_account: None,
         },
     )
     .await
@@ -920,7 +920,7 @@ async fn test_fees_half() -> Result<(), TransportError> {
             market_quote_vault,
             user_base_account: owner_token_0,
             user_quote_account: owner_token_1,
-            referrer: None,
+            referrer_account: None,
         },
     )
     .await
@@ -1066,7 +1066,7 @@ async fn test_fees_half() -> Result<(), TransportError> {
             market_quote_vault,
             user_base_account: owner_token_0,
             user_quote_account: owner_token_1,
-            referrer: None,
+            referrer_account: None,
         },
     )
     .await
@@ -1082,7 +1082,7 @@ async fn test_fees_half() -> Result<(), TransportError> {
             market_quote_vault,
             user_base_account: owner_token_0,
             user_quote_account: owner_token_1,
-            referrer: None,
+            referrer_account: None,
         },
     )
     .await
@@ -1179,7 +1179,7 @@ async fn test_locked_maker_fees() -> Result<(), TransportError> {
         market_quote_vault,
         user_base_account: owner_base_ata,
         user_quote_account: owner_quote_ata,
-        referrer: None,
+        referrer_account: None,
     };
 
     send_tx(solana, place_maker_bid.clone()).await.unwrap();

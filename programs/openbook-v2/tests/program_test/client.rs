@@ -512,7 +512,7 @@ pub struct PlaceTakeOrderInstruction {
     pub price_lots: i64,
     pub max_base_lots: i64,
     pub max_quote_lots_including_fees: i64,
-    pub referrer: Option<Pubkey>,
+    pub referrer_account: Option<Pubkey>,
 }
 #[async_trait::async_trait(?Send)]
 impl ClientInstruction for PlaceTakeOrderInstruction {
@@ -550,7 +550,7 @@ impl ClientInstruction for PlaceTakeOrderInstruction {
             user_quote_account: self.user_quote_account,
             market_base_vault: self.market_base_vault,
             market_quote_vault: self.market_quote_vault,
-            referrer: self.referrer,
+            referrer_account: self.referrer_account,
             token_program: Token::id(),
             system_program: System::id(),
         };
@@ -775,7 +775,7 @@ pub struct SettleFundsInstruction {
     pub market_quote_vault: Pubkey,
     pub user_base_account: Pubkey,
     pub user_quote_account: Pubkey,
-    pub referrer: Option<Pubkey>,
+    pub referrer_account: Option<Pubkey>,
 }
 #[async_trait::async_trait(?Send)]
 impl ClientInstruction for SettleFundsInstruction {
@@ -797,7 +797,7 @@ impl ClientInstruction for SettleFundsInstruction {
             market_quote_vault: self.market_quote_vault,
             user_base_account: self.user_base_account,
             user_quote_account: self.user_quote_account,
-            referrer: self.referrer,
+            referrer_account: self.referrer_account,
             token_program: Token::id(),
             system_program: System::id(),
         };
@@ -820,7 +820,7 @@ pub struct SettleFundsExpiredInstruction {
     pub market_quote_vault: Pubkey,
     pub user_base_account: Pubkey,
     pub user_quote_account: Pubkey,
-    pub referrer: Option<Pubkey>,
+    pub referrer_account: Option<Pubkey>,
 }
 #[async_trait::async_trait(?Send)]
 impl ClientInstruction for SettleFundsExpiredInstruction {
@@ -842,7 +842,7 @@ impl ClientInstruction for SettleFundsExpiredInstruction {
             market_quote_vault: self.market_quote_vault,
             user_base_account: self.user_base_account,
             user_quote_account: self.user_quote_account,
-            referrer: self.referrer,
+            referrer_account: self.referrer_account,
             token_program: Token::id(),
             system_program: System::id(),
         };

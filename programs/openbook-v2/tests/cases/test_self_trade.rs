@@ -116,7 +116,7 @@ async fn test_self_trade_decrement_take() -> Result<(), TransportError> {
             market_quote_vault,
             user_base_account: owner_token_0,
             user_quote_account: owner_token_1,
-            referrer: None,
+            referrer_account: None,
         },
     )
     .await
@@ -506,7 +506,7 @@ async fn test_self_trade_no_fees() -> Result<(), TransportError> {
         market_quote_vault,
         user_base_account: owner_base_ata,
         user_quote_account: owner_quote_ata,
-        referrer: None,
+        referrer_account: None,
     };
 
     let balances_before = (
