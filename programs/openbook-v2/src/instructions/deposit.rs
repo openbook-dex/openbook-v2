@@ -15,7 +15,7 @@ pub fn deposit(ctx: Context<Deposit>, base_amount: u64, quote_amount: u64) -> Re
     token_transfer(
         base_amount,
         &ctx.accounts.token_program,
-        &ctx.accounts.token_base_account,
+        &ctx.accounts.user_base_account,
         &ctx.accounts.market_base_vault,
         &ctx.accounts.owner,
     )?;
@@ -25,7 +25,7 @@ pub fn deposit(ctx: Context<Deposit>, base_amount: u64, quote_amount: u64) -> Re
     token_transfer(
         quote_amount,
         &ctx.accounts.token_program,
-        &ctx.accounts.token_quote_account,
+        &ctx.accounts.user_quote_account,
         &ctx.accounts.market_quote_vault,
         &ctx.accounts.owner,
     )?;

@@ -144,14 +144,14 @@ pub fn cancel_and_place_orders(
     token_transfer(
         deposit_quote_amount,
         &ctx.accounts.token_program,
-        &ctx.accounts.token_quote_deposit_account,
+        &ctx.accounts.user_quote_account,
         &ctx.accounts.market_quote_vault,
         &ctx.accounts.signer,
     )?;
     token_transfer(
         deposit_base_amount,
         &ctx.accounts.token_program,
-        &ctx.accounts.token_base_deposit_account,
+        &ctx.accounts.user_base_account,
         &ctx.accounts.market_base_vault,
         &ctx.accounts.signer,
     )?;

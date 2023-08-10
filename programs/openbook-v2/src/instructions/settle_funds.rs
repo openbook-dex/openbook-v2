@@ -49,7 +49,7 @@ pub fn settle_funds<'info>(ctx: Context<'_, '_, '_, 'info, SettleFunds<'info>>) 
         pa.base_free_native,
         &ctx.accounts.token_program,
         &ctx.accounts.market_base_vault,
-        &ctx.accounts.token_base_account,
+        &ctx.accounts.user_base_account,
         &ctx.accounts.market_authority,
         seeds,
     )?;
@@ -58,7 +58,7 @@ pub fn settle_funds<'info>(ctx: Context<'_, '_, '_, 'info, SettleFunds<'info>>) 
         pa.quote_free_native,
         &ctx.accounts.token_program,
         &ctx.accounts.market_quote_vault,
-        &ctx.accounts.token_quote_account,
+        &ctx.accounts.user_quote_account,
         &ctx.accounts.market_authority,
         seeds,
     )?;

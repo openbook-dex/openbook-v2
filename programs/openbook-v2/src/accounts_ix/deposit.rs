@@ -9,12 +9,12 @@ pub struct Deposit<'info> {
         mut,
         token::mint = market_base_vault.mint
     )]
-    pub token_base_account: Account<'info, TokenAccount>,
+    pub user_base_account: Account<'info, TokenAccount>,
     #[account(
         mut,
         token::mint = market_quote_vault.mint
     )]
-    pub token_quote_account: Account<'info, TokenAccount>,
+    pub user_quote_account: Account<'info, TokenAccount>,
     #[account(
         mut,
         has_one = market,

@@ -125,8 +125,8 @@ async fn test_take_ask_order() -> Result<(), TransportError> {
             open_orders_account: account_1,
             market_base_vault,
             market_quote_vault,
-            token_base_account: owner_token_0,
-            token_quote_account: owner_token_1,
+            user_base_account: owner_token_0,
+            user_quote_account: owner_token_1,
             referrer: None,
         },
     )
@@ -281,8 +281,8 @@ async fn test_take_bid_order() -> Result<(), TransportError> {
             open_orders_account: account_1,
             market_base_vault,
             market_quote_vault,
-            token_base_account: owner_token_0,
-            token_quote_account: owner_token_1,
+            user_base_account: owner_token_0,
+            user_quote_account: owner_token_1,
             referrer: None,
         },
     )

@@ -581,8 +581,8 @@ async fn test_locked_amounts() -> Result<(), TransportError> {
         open_orders_account: account_1,
         market_base_vault,
         market_quote_vault,
-        token_base_account: owner_base_ata,
-        token_quote_account: owner_quote_ata,
+        user_base_account: owner_base_ata,
+        user_quote_account: owner_quote_ata,
         referrer: None,
     };
 

@@ -330,8 +330,8 @@ impl FuzzContext {
 
         let accounts = openbook_v2::accounts::Deposit {
             owner: user.owner,
-            token_base_account: user.market_base_vault,
-            token_quote_account: user.market_quote_vault,
+            user_base_account: user.market_base_vault,
+            user_quote_account: user.market_quote_vault,
             open_orders_account: user.open_orders,
             market: self.market,
             market_base_vault: self.market_base_vault,
@@ -352,8 +352,8 @@ impl FuzzContext {
 
         let accounts = openbook_v2::accounts::Deposit {
             owner: user.owner,
-            token_base_account: user.market_base_vault,
-            token_quote_account: user.market_quote_vault,
+            user_base_account: user.market_base_vault,
+            user_quote_account: user.market_quote_vault,
             open_orders_account: user.open_orders,
             market: self.market,
             market_base_vault: self.market_base_vault,
@@ -636,8 +636,8 @@ impl FuzzContext {
         let accounts = openbook_v2::accounts::CancelAndPlaceOrders {
             open_orders_account: user.open_orders,
             signer: user.owner,
-            token_base_deposit_account: user.market_base_vault,
-            token_quote_deposit_account: user.market_quote_vault,
+            user_base_account: user.market_base_vault,
+            user_quote_account: user.market_quote_vault,
             open_orders_admin: None,
             market: self.market,
             bids: self.bids,
@@ -681,8 +681,8 @@ impl FuzzContext {
         let accounts = openbook_v2::accounts::SettleFunds {
             owner: user.owner,
             open_orders_account: user.open_orders,
-            token_base_account: user.market_base_vault,
-            token_quote_account: user.market_quote_vault,
+            user_base_account: user.market_base_vault,
+            user_quote_account: user.market_quote_vault,
             market: self.market,
             market_authority: self.market_authority,
             market_base_vault: self.market_base_vault,

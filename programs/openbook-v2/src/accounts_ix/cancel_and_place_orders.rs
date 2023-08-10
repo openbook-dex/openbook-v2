@@ -17,15 +17,15 @@ pub struct CancelAndPlaceOrders<'info> {
 
     #[account(
         mut,
-        constraint = token_quote_deposit_account.mint == market_quote_vault.mint
+        constraint = user_quote_account.mint == market_quote_vault.mint
     )]
-    pub token_quote_deposit_account: Account<'info, TokenAccount>,
+    pub user_quote_account: Account<'info, TokenAccount>,
 
     #[account(
         mut,
-        constraint = token_base_deposit_account.mint == market_base_vault.mint
+        constraint = user_base_account.mint == market_base_vault.mint
     )]
-    pub token_base_deposit_account: Account<'info, TokenAccount>,
+    pub user_base_account: Account<'info, TokenAccount>,
 
     #[account(
         mut,
