@@ -61,8 +61,8 @@ impl Amm for OpenBookMarket {
             market.bids,
             market.asks,
             market.event_queue,
-            market.base_vault,
-            market.quote_vault,
+            market.market_base_vault,
+            market.market_quote_vault,
             clock::ID,
         ];
 
@@ -203,8 +203,8 @@ impl Amm for OpenBookMarket {
             asks: self.market.asks,
             token_deposit_account: *user_source_token_account,
             token_receiver_account: *user_destination_token_account,
-            base_vault: self.market.base_vault,
-            quote_vault: self.market.quote_vault,
+            market_base_vault: self.market.market_base_vault,
+            market_quote_vault: self.market.market_quote_vault,
             event_queue: self.market.event_queue,
             oracle_a: Option::from(self.market.oracle_a),
             oracle_b: Option::from(self.market.oracle_b),

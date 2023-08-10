@@ -19,17 +19,17 @@ async fn test_skip_missing_accounts() -> Result<(), TransportError> {
 
     let market = TestKeypair::new();
     let market_authority = get_market_address(market);
-    let base_vault = solana
+    let market_base_vault = solana
         .create_associated_token_account(&market_authority, mints[0].pubkey)
         .await;
-    let quote_vault = solana
+    let market_quote_vault = solana
         .create_associated_token_account(&market_authority, mints[1].pubkey)
         .await;
 
     let openbook_v2::accounts::CreateMarket {
         market,
-        base_vault,
-        quote_vault,
+        market_base_vault,
+        market_quote_vault,
         event_queue,
         ..
     } = send_tx(
@@ -46,8 +46,8 @@ async fn test_skip_missing_accounts() -> Result<(), TransportError> {
             taker_fee: 400,
             base_mint: mints[0].pubkey,
             quote_mint: mints[1].pubkey,
-            base_vault,
-            quote_vault,
+            market_base_vault,
+            market_quote_vault,
             ..CreateMarketInstruction::with_new_book_and_queue(solana, Some(tokens[1].oracle), None)
                 .await
         },
@@ -78,7 +78,7 @@ async fn test_skip_missing_accounts() -> Result<(), TransportError> {
             market,
             signer: owner,
             token_deposit_account: owner_token_1,
-            market_vault: quote_vault,
+            market_vault: market_quote_vault,
             side: Side::Bid,
             price_lots,
             max_base_lots: 1,
@@ -101,7 +101,7 @@ async fn test_skip_missing_accounts() -> Result<(), TransportError> {
             market,
             signer: owner,
             token_deposit_account: owner_token_1,
-            market_vault: quote_vault,
+            market_vault: market_quote_vault,
             side: Side::Bid,
             price_lots,
             max_base_lots: 1,
@@ -124,7 +124,7 @@ async fn test_skip_missing_accounts() -> Result<(), TransportError> {
             market,
             signer: owner,
             token_deposit_account: owner_token_1,
-            market_vault: quote_vault,
+            market_vault: market_quote_vault,
             side: Side::Bid,
             price_lots,
             max_base_lots: 1,
@@ -147,7 +147,7 @@ async fn test_skip_missing_accounts() -> Result<(), TransportError> {
             market,
             signer: owner,
             token_deposit_account: owner_token_0,
-            market_vault: base_vault,
+            market_vault: market_base_vault,
             side: Side::Ask,
             price_lots,
             max_base_lots: 3,
@@ -212,17 +212,17 @@ async fn test_crank_given_events() -> Result<(), TransportError> {
         &openbook_v2::id(),
     )
     .0;
-    let base_vault = solana
+    let market_base_vault = solana
         .create_associated_token_account(&market_authority, mints[0].pubkey)
         .await;
-    let quote_vault = solana
+    let market_quote_vault = solana
         .create_associated_token_account(&market_authority, mints[1].pubkey)
         .await;
 
     let openbook_v2::accounts::CreateMarket {
         market,
-        base_vault,
-        quote_vault,
+        market_base_vault,
+        market_quote_vault,
         event_queue,
         ..
     } = send_tx(
@@ -239,8 +239,8 @@ async fn test_crank_given_events() -> Result<(), TransportError> {
             taker_fee: 400,
             base_mint: mints[0].pubkey,
             quote_mint: mints[1].pubkey,
-            base_vault,
-            quote_vault,
+            market_base_vault,
+            market_quote_vault,
             ..CreateMarketInstruction::with_new_book_and_queue(solana, Some(tokens[0].oracle), None)
                 .await
         },
@@ -271,7 +271,7 @@ async fn test_crank_given_events() -> Result<(), TransportError> {
             market,
             signer: owner,
             token_deposit_account: owner_token_1,
-            market_vault: quote_vault,
+            market_vault: market_quote_vault,
             side: Side::Bid,
             price_lots,
             max_base_lots: 1,
@@ -294,7 +294,7 @@ async fn test_crank_given_events() -> Result<(), TransportError> {
             market,
             signer: owner,
             token_deposit_account: owner_token_1,
-            market_vault: quote_vault,
+            market_vault: market_quote_vault,
             side: Side::Bid,
             price_lots,
             max_base_lots: 1,
@@ -317,7 +317,7 @@ async fn test_crank_given_events() -> Result<(), TransportError> {
             market,
             signer: owner,
             token_deposit_account: owner_token_1,
-            market_vault: quote_vault,
+            market_vault: market_quote_vault,
             side: Side::Bid,
             price_lots,
             max_base_lots: 1,
@@ -340,7 +340,7 @@ async fn test_crank_given_events() -> Result<(), TransportError> {
             market,
             signer: owner,
             token_deposit_account: owner_token_0,
-            market_vault: base_vault,
+            market_vault: market_base_vault,
             side: Side::Ask,
             price_lots,
             max_base_lots: 3,

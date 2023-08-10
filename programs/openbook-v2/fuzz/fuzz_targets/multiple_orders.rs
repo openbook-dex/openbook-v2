@@ -240,8 +240,8 @@ fn run_fuzz(fuzz_data: FuzzData) -> Corpus {
             })
             .sum();
 
-        let base_amount = ctx.state.get_balance(&ctx.base_vault);
-        let quote_amount = ctx.state.get_balance(&ctx.quote_vault);
+        let base_amount = ctx.state.get_balance(&ctx.market_base_vault);
+        let quote_amount = ctx.state.get_balance(&ctx.market_quote_vault);
 
         let market = ctx
             .state
@@ -357,7 +357,7 @@ fn run_fuzz(fuzz_data: FuzzData) -> Corpus {
     let referrers_balances: u64 = ctx
         .referrers
         .values()
-        .map(|quote_vault| ctx.state.get_balance(quote_vault))
+        .map(|market_quote_vault| ctx.state.get_balance(market_quote_vault))
         .sum();
 
     {
@@ -371,8 +371,8 @@ fn run_fuzz(fuzz_data: FuzzData) -> Corpus {
             .get_account::<openbook_v2::state::Market>(&ctx.market)
             .unwrap();
 
-        assert_eq!(ctx.state.get_balance(&ctx.base_vault), 0);
-        assert_eq!(ctx.state.get_balance(&ctx.quote_vault), 0);
+        assert_eq!(ctx.state.get_balance(&ctx.market_base_vault), 0);
+        assert_eq!(ctx.state.get_balance(&ctx.market_quote_vault), 0);
         assert_eq!(market.base_deposit_total, 0);
         assert_eq!(market.quote_deposit_total, 0);
         assert_eq!(market.fees_available, 0);
@@ -384,13 +384,13 @@ fn run_fuzz(fuzz_data: FuzzData) -> Corpus {
         let base_balances: u64 = ctx
             .users
             .values()
-            .map(|user| ctx.state.get_balance(&user.base_vault))
+            .map(|user| ctx.state.get_balance(&user.market_base_vault))
             .sum();
 
         let quote_balances: u64 = ctx
             .users
             .values()
-            .map(|user| ctx.state.get_balance(&user.quote_vault))
+            .map(|user| ctx.state.get_balance(&user.market_quote_vault))
             .sum();
 
         let n_users = ctx.users.len() as u64;
@@ -399,7 +399,7 @@ fn run_fuzz(fuzz_data: FuzzData) -> Corpus {
             INITIAL_BALANCE * n_users,
             quote_balances
                 + referrers_balances
-                + ctx.state.get_balance(&ctx.collect_fee_admin_quote_vault)
+                + ctx.state.get_balance(&ctx.collect_fee_admin_market_quote_vault)
         );
     }
 

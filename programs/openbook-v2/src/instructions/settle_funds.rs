@@ -38,7 +38,7 @@ pub fn settle_funds<'info>(ctx: Context<'_, '_, '_, 'info, SettleFunds<'info>>) 
         token_transfer_signed(
             referrer_rebate,
             &ctx.accounts.token_program,
-            &ctx.accounts.quote_vault,
+            &ctx.accounts.market_quote_vault,
             referrer,
             &ctx.accounts.market_authority,
             seeds,
@@ -48,7 +48,7 @@ pub fn settle_funds<'info>(ctx: Context<'_, '_, '_, 'info, SettleFunds<'info>>) 
     token_transfer_signed(
         pa.base_free_native,
         &ctx.accounts.token_program,
-        &ctx.accounts.base_vault,
+        &ctx.accounts.market_base_vault,
         &ctx.accounts.token_base_account,
         &ctx.accounts.market_authority,
         seeds,
@@ -57,7 +57,7 @@ pub fn settle_funds<'info>(ctx: Context<'_, '_, '_, 'info, SettleFunds<'info>>) 
     token_transfer_signed(
         pa.quote_free_native,
         &ctx.accounts.token_program,
-        &ctx.accounts.quote_vault,
+        &ctx.accounts.market_quote_vault,
         &ctx.accounts.token_quote_account,
         &ctx.accounts.market_authority,
         seeds,

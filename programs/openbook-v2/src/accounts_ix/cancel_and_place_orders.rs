@@ -46,12 +46,12 @@ pub struct CancelAndPlaceOrders<'info> {
 
     #[account(
         mut,
-        constraint = market.load()?.quote_vault == market_quote_vault.key()
+        constraint = market.load()?.market_quote_vault == market_quote_vault.key()
     )]
     pub market_quote_vault: Box<Account<'info, TokenAccount>>,
     #[account(
         mut,
-        constraint =  market.load()?.base_vault ==  market_base_vault.key()
+        constraint =  market.load()?.market_base_vault ==  market_base_vault.key()
     )]
     pub market_base_vault: Box<Account<'info, TokenAccount>>,
 

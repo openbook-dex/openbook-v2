@@ -16,7 +16,7 @@ pub fn deposit(ctx: Context<Deposit>, base_amount: u64, quote_amount: u64) -> Re
         base_amount,
         &ctx.accounts.token_program,
         &ctx.accounts.token_base_account,
-        &ctx.accounts.base_vault,
+        &ctx.accounts.market_base_vault,
         &ctx.accounts.owner,
     )?;
     open_orders_account.position.base_free_native += base_amount;
@@ -26,7 +26,7 @@ pub fn deposit(ctx: Context<Deposit>, base_amount: u64, quote_amount: u64) -> Re
         quote_amount,
         &ctx.accounts.token_program,
         &ctx.accounts.token_quote_account,
-        &ctx.accounts.quote_vault,
+        &ctx.accounts.market_quote_vault,
         &ctx.accounts.owner,
     )?;
     open_orders_account.position.quote_free_native += quote_amount;

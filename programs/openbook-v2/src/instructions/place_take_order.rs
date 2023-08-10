@@ -76,8 +76,8 @@ pub fn place_take_order<'info>(
             market.base_deposit_total -= total_base_taken_native;
             market.quote_deposit_total += total_quote_including_fees;
             (
-                &ctx.accounts.base_vault,
-                &ctx.accounts.quote_vault,
+                &ctx.accounts.market_base_vault,
+                &ctx.accounts.market_quote_vault,
                 total_quote_including_fees,
                 total_base_taken_native,
             )
@@ -87,8 +87,8 @@ pub fn place_take_order<'info>(
             market.base_deposit_total += total_base_taken_native;
             market.quote_deposit_total -= total_quote_discounting_fees;
             (
-                &ctx.accounts.quote_vault,
-                &ctx.accounts.base_vault,
+                &ctx.accounts.market_quote_vault,
+                &ctx.accounts.market_base_vault,
                 total_base_taken_native,
                 total_quote_discounting_fees,
             )
@@ -128,7 +128,7 @@ pub fn place_take_order<'info>(
         token_transfer_signed(
             referrer_amount,
             &ctx.accounts.token_program,
-            &ctx.accounts.quote_vault,
+            &ctx.accounts.market_quote_vault,
             referrer,
             &ctx.accounts.market_authority,
             seeds,

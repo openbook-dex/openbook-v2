@@ -429,8 +429,8 @@ impl OpenBookClient {
         quote_amount: u64,
         token_base_account: Pubkey,
         token_quote_account: Pubkey,
-        base_vault: Pubkey,
-        quote_vault: Pubkey,
+        market_base_vault: Pubkey,
+        market_quote_vault: Pubkey,
     ) -> anyhow::Result<Signature> {
         let ix = Instruction {
             program_id: openbook_v2::id(),
@@ -442,8 +442,8 @@ impl OpenBookClient {
                         market: market_address,
                         token_base_account,
                         token_quote_account,
-                        base_vault,
-                        quote_vault,
+                        market_base_vault,
+                        market_quote_vault,
                         system_program: System::id(),
                         token_program: Token::id(),
                     },
@@ -465,8 +465,8 @@ impl OpenBookClient {
         market_address: Pubkey,
         token_base_account: Pubkey,
         token_quote_account: Pubkey,
-        base_vault: Pubkey,
-        quote_vault: Pubkey,
+        market_base_vault: Pubkey,
+        market_quote_vault: Pubkey,
         referrer: Option<Pubkey>,
     ) -> anyhow::Result<Signature> {
         let ix = Instruction {
@@ -480,8 +480,8 @@ impl OpenBookClient {
                         market_authority: market.market_authority,
                         token_base_account,
                         token_quote_account,
-                        base_vault,
-                        quote_vault,
+                        market_base_vault,
+                        market_quote_vault,
                         referrer,
                         system_program: System::id(),
                         token_program: Token::id(),

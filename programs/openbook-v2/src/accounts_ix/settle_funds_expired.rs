@@ -14,8 +14,8 @@ pub struct SettleFundsExpired<'info> {
     pub open_orders_account: AccountLoader<'info, OpenOrdersAccount>,
     #[account(
         mut,
-        has_one = base_vault,
-        has_one = quote_vault,
+        has_one = market_base_vault,
+        has_one = market_quote_vault,
         has_one = market_authority,
         constraint = market.load()?.close_market_admin.is_some() @ OpenBookError::NoCloseMarketAdmin,
         constraint = market.load()?.close_market_admin == close_market_admin.key() @ OpenBookError::InvalidOpenOrdersAdmin
@@ -24,24 +24,24 @@ pub struct SettleFundsExpired<'info> {
     /// CHECK: checked on has_one in market
     pub market_authority: UncheckedAccount<'info>,
     #[account(mut)]
-    pub base_vault: Account<'info, TokenAccount>,
+    pub market_base_vault: Account<'info, TokenAccount>,
     #[account(mut)]
-    pub quote_vault: Account<'info, TokenAccount>,
+    pub market_quote_vault: Account<'info, TokenAccount>,
     #[account(
         mut,
-        token::mint = base_vault.mint,
+        token::mint = market_base_vault.mint,
         constraint = token_base_account.owner == open_orders_account.load()?.owner
     )]
     pub token_base_account: Account<'info, TokenAccount>,
     #[account(
         mut,
-        token::mint = quote_vault.mint,
+        token::mint = market_quote_vault.mint,
         constraint = token_base_account.owner == open_orders_account.load()?.owner
     )]
     pub token_quote_account: Account<'info, TokenAccount>,
     #[account(
         mut,
-        token::mint = quote_vault.mint
+        token::mint = market_quote_vault.mint
     )]
     pub referrer: Option<Box<Account<'info, TokenAccount>>>,
     pub token_program: Program<'info, Token>,
@@ -55,8 +55,8 @@ impl<'info> SettleFundsExpired<'info> {
             open_orders_account: self.open_orders_account.clone(),
             market: self.market.clone(),
             market_authority: self.market_authority.clone(),
-            base_vault: self.base_vault.clone(),
-            quote_vault: self.quote_vault.clone(),
+            market_base_vault: self.market_base_vault.clone(),
+            market_quote_vault: self.market_quote_vault.clone(),
             token_base_account: self.token_base_account.clone(),
             token_quote_account: self.token_quote_account.clone(),
             referrer: self.referrer.clone(),

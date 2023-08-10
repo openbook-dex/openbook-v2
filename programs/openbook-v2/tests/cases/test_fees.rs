@@ -11,8 +11,8 @@ async fn test_fees_accrued() -> Result<(), TransportError> {
         owner_token_1,
         market,
 
-        base_vault,
-        quote_vault,
+        market_base_vault,
+        market_quote_vault,
         price_lots,
         tokens,
         account_1,
@@ -37,7 +37,7 @@ async fn test_fees_accrued() -> Result<(), TransportError> {
             market,
             signer: owner,
             token_deposit_account: owner_token_1,
-            market_vault: quote_vault,
+            market_vault: market_quote_vault,
             side: Side::Bid,
             price_lots,
             max_base_lots: 1,
@@ -60,7 +60,7 @@ async fn test_fees_accrued() -> Result<(), TransportError> {
             market,
             signer: owner,
             token_deposit_account: owner_token_0,
-            market_vault: base_vault,
+            market_vault: market_base_vault,
             side: Side::Ask,
             price_lots,
             max_base_lots: 1,
@@ -124,8 +124,8 @@ async fn test_fees_accrued() -> Result<(), TransportError> {
             owner,
             market,
             open_orders_account: account_2,
-            base_vault,
-            quote_vault,
+            market_base_vault,
+            market_quote_vault,
             token_base_account: owner_token_0,
             token_quote_account: owner_token_1,
             referrer: None,
@@ -146,7 +146,7 @@ async fn test_fees_accrued() -> Result<(), TransportError> {
         SweepFeesInstruction {
             collect_fee_admin,
             market,
-            quote_vault,
+            market_quote_vault,
             token_receiver_account: admin_token_1,
         },
     )
@@ -174,8 +174,8 @@ async fn test_maker_fees() -> Result<(), TransportError> {
         owner_token_1,
         market,
 
-        base_vault,
-        quote_vault,
+        market_base_vault,
+        market_quote_vault,
         price_lots,
         tokens,
         account_1,
@@ -200,7 +200,7 @@ async fn test_maker_fees() -> Result<(), TransportError> {
             market,
             signer: owner,
             token_deposit_account: owner_token_1,
-            market_vault: quote_vault,
+            market_vault: market_quote_vault,
             side: Side::Bid,
             price_lots,
             max_base_lots: 1,
@@ -244,7 +244,7 @@ async fn test_maker_fees() -> Result<(), TransportError> {
             market,
             signer: owner,
             token_deposit_account: owner_token_1,
-            market_vault: quote_vault,
+            market_vault: market_quote_vault,
             side: Side::Bid,
             price_lots,
             max_base_lots: 1,
@@ -276,7 +276,7 @@ async fn test_maker_fees() -> Result<(), TransportError> {
             market,
             signer: owner,
             token_deposit_account: owner_token_0,
-            market_vault: base_vault,
+            market_vault: market_base_vault,
             side: Side::Ask,
             price_lots,
             max_base_lots: 1,
@@ -340,8 +340,8 @@ async fn test_maker_fees() -> Result<(), TransportError> {
             owner,
             market,
             open_orders_account: account_2,
-            base_vault,
-            quote_vault,
+            market_base_vault,
+            market_quote_vault,
             token_base_account: owner_token_0,
             token_quote_account: owner_token_1,
             referrer: None,
@@ -363,8 +363,8 @@ async fn test_maker_fees() -> Result<(), TransportError> {
             owner,
             market,
             open_orders_account: account_1,
-            base_vault,
-            quote_vault,
+            market_base_vault,
+            market_quote_vault,
             token_base_account: owner_token_0,
             token_quote_account: owner_token_1,
             referrer: Some(owner_token_1),
@@ -385,7 +385,7 @@ async fn test_maker_fees() -> Result<(), TransportError> {
         SweepFeesInstruction {
             collect_fee_admin,
             market,
-            quote_vault,
+            market_quote_vault,
             token_receiver_account: admin_token_1,
         },
     )
@@ -411,8 +411,8 @@ async fn test_no_maker_fees_ask() -> Result<(), TransportError> {
         owner_token_1,
         market,
 
-        base_vault,
-        quote_vault,
+        market_base_vault,
+        market_quote_vault,
         price_lots,
         tokens,
         account_1,
@@ -437,7 +437,7 @@ async fn test_no_maker_fees_ask() -> Result<(), TransportError> {
             market,
             signer: owner,
             token_deposit_account: owner_token_0,
-            market_vault: base_vault,
+            market_vault: market_base_vault,
             side: Side::Ask,
             price_lots,
             max_base_lots: 1,
@@ -469,7 +469,7 @@ async fn test_no_maker_fees_ask() -> Result<(), TransportError> {
             market,
             signer: owner,
             token_deposit_account: owner_token_1,
-            market_vault: quote_vault,
+            market_vault: market_quote_vault,
             side: Side::Bid,
             price_lots,
             max_base_lots: 1,
@@ -533,8 +533,8 @@ async fn test_no_maker_fees_ask() -> Result<(), TransportError> {
             owner,
             market,
             open_orders_account: account_2,
-            base_vault,
-            quote_vault,
+            market_base_vault,
+            market_quote_vault,
             token_base_account: owner_token_0,
             token_quote_account: owner_token_1,
             referrer: None,
@@ -556,8 +556,8 @@ async fn test_no_maker_fees_ask() -> Result<(), TransportError> {
             owner,
             market,
             open_orders_account: account_1,
-            base_vault,
-            quote_vault,
+            market_base_vault,
+            market_quote_vault,
             token_base_account: owner_token_0,
             token_quote_account: owner_token_1,
             referrer: Some(owner_token_1),
@@ -578,7 +578,7 @@ async fn test_no_maker_fees_ask() -> Result<(), TransportError> {
         SweepFeesInstruction {
             collect_fee_admin,
             market,
-            quote_vault,
+            market_quote_vault,
             token_receiver_account: admin_token_1,
         },
     )
@@ -604,8 +604,8 @@ async fn test_maker_fees_ask() -> Result<(), TransportError> {
         owner_token_1,
         market,
 
-        base_vault,
-        quote_vault,
+        market_base_vault,
+        market_quote_vault,
         price_lots,
         tokens,
         account_1,
@@ -630,7 +630,7 @@ async fn test_maker_fees_ask() -> Result<(), TransportError> {
             market,
             signer: owner,
             token_deposit_account: owner_token_0,
-            market_vault: base_vault,
+            market_vault: market_base_vault,
             side: Side::Ask,
             price_lots,
             max_base_lots: 1,
@@ -662,7 +662,7 @@ async fn test_maker_fees_ask() -> Result<(), TransportError> {
             market,
             signer: owner,
             token_deposit_account: owner_token_1,
-            market_vault: quote_vault,
+            market_vault: market_quote_vault,
             side: Side::Bid,
             price_lots,
             max_base_lots: 1,
@@ -726,8 +726,8 @@ async fn test_maker_fees_ask() -> Result<(), TransportError> {
             owner,
             market,
             open_orders_account: account_2,
-            base_vault,
-            quote_vault,
+            market_base_vault,
+            market_quote_vault,
             token_base_account: owner_token_0,
             token_quote_account: owner_token_1,
             referrer: None,
@@ -749,8 +749,8 @@ async fn test_maker_fees_ask() -> Result<(), TransportError> {
             owner,
             market,
             open_orders_account: account_1,
-            base_vault,
-            quote_vault,
+            market_base_vault,
+            market_quote_vault,
             token_base_account: owner_token_0,
             token_quote_account: owner_token_1,
             referrer: Some(owner_token_1),
@@ -771,7 +771,7 @@ async fn test_maker_fees_ask() -> Result<(), TransportError> {
         SweepFeesInstruction {
             collect_fee_admin,
             market,
-            quote_vault,
+            market_quote_vault,
             token_receiver_account: admin_token_1,
         },
     )
@@ -797,8 +797,8 @@ async fn test_fees_half() -> Result<(), TransportError> {
         owner_token_1,
         market,
 
-        base_vault,
-        quote_vault,
+        market_base_vault,
+        market_quote_vault,
         price_lots,
         tokens,
         account_1,
@@ -824,7 +824,7 @@ async fn test_fees_half() -> Result<(), TransportError> {
             market,
             signer: owner,
             token_deposit_account: owner_token_1,
-            market_vault: quote_vault,
+            market_vault: market_quote_vault,
             side: Side::Bid,
             price_lots,
             max_base_lots: 1,
@@ -847,7 +847,7 @@ async fn test_fees_half() -> Result<(), TransportError> {
             market,
             signer: owner,
             token_deposit_account: owner_token_0,
-            market_vault: base_vault,
+            market_vault: market_base_vault,
             side: Side::Ask,
             price_lots,
             max_base_lots: 1,
@@ -900,8 +900,8 @@ async fn test_fees_half() -> Result<(), TransportError> {
             owner,
             market,
             open_orders_account: account_2,
-            base_vault,
-            quote_vault,
+            market_base_vault,
+            market_quote_vault,
             token_base_account: owner_token_0,
             token_quote_account: owner_token_1,
             referrer: None,
@@ -916,8 +916,8 @@ async fn test_fees_half() -> Result<(), TransportError> {
             owner,
             market,
             open_orders_account: account_1,
-            base_vault,
-            quote_vault,
+            market_base_vault,
+            market_quote_vault,
             token_base_account: owner_token_0,
             token_quote_account: owner_token_1,
             referrer: None,
@@ -927,7 +927,7 @@ async fn test_fees_half() -> Result<(), TransportError> {
     .unwrap();
 
     {
-        let balance_quote = solana.token_account_balance(quote_vault).await;
+        let balance_quote = solana.token_account_balance(market_quote_vault).await;
         assert_eq!(balance_quote, 370);
     }
 
@@ -936,7 +936,7 @@ async fn test_fees_half() -> Result<(), TransportError> {
         SweepFeesInstruction {
             collect_fee_admin,
             market,
-            quote_vault,
+            market_quote_vault,
             token_receiver_account: admin_token_1,
         },
     )
@@ -944,7 +944,7 @@ async fn test_fees_half() -> Result<(), TransportError> {
     .unwrap();
 
     {
-        let balance_quote = solana.token_account_balance(quote_vault).await;
+        let balance_quote = solana.token_account_balance(market_quote_vault).await;
         assert_eq!(balance_quote, 0);
     }
 
@@ -959,8 +959,8 @@ async fn test_fees_half() -> Result<(), TransportError> {
         owner_token_1,
         market,
 
-        base_vault,
-        quote_vault,
+        market_base_vault,
+        market_quote_vault,
         price_lots,
         tokens,
         account_1,
@@ -986,7 +986,7 @@ async fn test_fees_half() -> Result<(), TransportError> {
             market,
             signer: owner,
             token_deposit_account: owner_token_1,
-            market_vault: quote_vault,
+            market_vault: market_quote_vault,
             side: Side::Bid,
             price_lots,
             max_base_lots: 1,
@@ -1009,7 +1009,7 @@ async fn test_fees_half() -> Result<(), TransportError> {
             market,
             signer: owner,
             token_deposit_account: owner_token_0,
-            market_vault: base_vault,
+            market_vault: market_base_vault,
             side: Side::Ask,
             price_lots,
             max_base_lots: 1,
@@ -1062,8 +1062,8 @@ async fn test_fees_half() -> Result<(), TransportError> {
             owner,
             market,
             open_orders_account: account_2,
-            base_vault,
-            quote_vault,
+            market_base_vault,
+            market_quote_vault,
             token_base_account: owner_token_0,
             token_quote_account: owner_token_1,
             referrer: None,
@@ -1078,8 +1078,8 @@ async fn test_fees_half() -> Result<(), TransportError> {
             owner,
             market,
             open_orders_account: account_1,
-            base_vault,
-            quote_vault,
+            market_base_vault,
+            market_quote_vault,
             token_base_account: owner_token_0,
             token_quote_account: owner_token_1,
             referrer: None,
@@ -1089,7 +1089,7 @@ async fn test_fees_half() -> Result<(), TransportError> {
     .unwrap();
 
     {
-        let balance_quote = solana.token_account_balance(quote_vault).await;
+        let balance_quote = solana.token_account_balance(market_quote_vault).await;
         assert_eq!(balance_quote, 320);
     }
 
@@ -1098,7 +1098,7 @@ async fn test_fees_half() -> Result<(), TransportError> {
         SweepFeesInstruction {
             collect_fee_admin,
             market,
-            quote_vault,
+            market_quote_vault,
             token_receiver_account: admin_token_1,
         },
     )
@@ -1106,7 +1106,7 @@ async fn test_fees_half() -> Result<(), TransportError> {
     .unwrap();
 
     {
-        let balance_quote = solana.token_account_balance(quote_vault).await;
+        let balance_quote = solana.token_account_balance(market_quote_vault).await;
         assert_eq!(balance_quote, 0);
     }
 
@@ -1125,8 +1125,8 @@ async fn test_locked_maker_fees() -> Result<(), TransportError> {
         owner_token_1: owner_quote_ata,
         market,
 
-        base_vault,
-        quote_vault,
+        market_base_vault,
+        market_quote_vault,
         account_1: maker,
         account_2: taker,
         ..
@@ -1144,7 +1144,7 @@ async fn test_locked_maker_fees() -> Result<(), TransportError> {
         market,
         signer: owner,
         token_deposit_account: owner_quote_ata,
-        market_vault: quote_vault,
+        market_vault: market_quote_vault,
         side: Side::Bid,
         price_lots: 1_000,
         max_base_lots: 5,
@@ -1158,7 +1158,7 @@ async fn test_locked_maker_fees() -> Result<(), TransportError> {
 
     let place_taker_ask = PlaceOrderInstruction {
         side: Side::Ask,
-        market_vault: base_vault,
+        market_vault: market_base_vault,
         open_orders_account: taker,
         token_deposit_account: owner_base_ata,
         max_base_lots: 3,
@@ -1175,8 +1175,8 @@ async fn test_locked_maker_fees() -> Result<(), TransportError> {
         owner,
         market,
         open_orders_account: maker,
-        base_vault,
-        quote_vault,
+        market_base_vault,
+        market_quote_vault,
         token_base_account: owner_base_ata,
         token_quote_account: owner_quote_ata,
         referrer: None,
