@@ -13,8 +13,8 @@ use std::collections::HashMap;
 
 pub struct UserAccounts {
     pub owner: Pubkey,
-    pub market_base_vault: Pubkey,
-    pub market_quote_vault: Pubkey,
+    pub base_vault: Pubkey,
+    pub quote_vault: Pubkey,
     pub open_orders: Pubkey,
 }
 

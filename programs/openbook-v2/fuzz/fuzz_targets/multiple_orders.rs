@@ -357,7 +357,7 @@ fn run_fuzz(fuzz_data: FuzzData) -> Corpus {
     let referrers_balances: u64 = ctx
         .referrers
         .values()
-        .map(|market_quote_vault| ctx.state.get_balance(market_quote_vault))
+        .map(|quote_vault| ctx.state.get_balance(quote_vault))
         .sum();
 
     {
@@ -384,13 +384,13 @@ fn run_fuzz(fuzz_data: FuzzData) -> Corpus {
         let base_balances: u64 = ctx
             .users
             .values()
-            .map(|user| ctx.state.get_balance(&user.market_base_vault))
+            .map(|user| ctx.state.get_balance(&user.base_vault))
             .sum();
 
         let quote_balances: u64 = ctx
             .users
             .values()
-            .map(|user| ctx.state.get_balance(&user.market_quote_vault))
+            .map(|user| ctx.state.get_balance(&user.quote_vault))
             .sum();
 
         let n_users = ctx.users.len() as u64;
@@ -399,7 +399,7 @@ fn run_fuzz(fuzz_data: FuzzData) -> Corpus {
             INITIAL_BALANCE * n_users,
             quote_balances
                 + referrers_balances
-                + ctx.state.get_balance(&ctx.collect_fee_admin_market_quote_vault)
+                + ctx.state.get_balance(&ctx.collect_fee_admin_quote_vault)
         );
     }
 
