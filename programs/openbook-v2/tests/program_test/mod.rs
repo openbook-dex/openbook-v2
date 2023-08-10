@@ -37,8 +37,8 @@ pub struct TestInitialize {
     pub owner_token_0: Pubkey,
     pub owner_token_1: Pubkey,
     pub market: Pubkey,
-    pub base_vault: Pubkey,
-    pub quote_vault: Pubkey,
+    pub market_base_vault: Pubkey,
+    pub market_quote_vault: Pubkey,
     pub price_lots: i64,
     pub tokens: Vec<Token>,
     pub account_1: Pubkey,
@@ -343,10 +343,10 @@ impl TestContext {
 
         let market = TestKeypair::new();
         let market_authority = get_market_address(market);
-        let base_vault = solana
+        let market_base_vault = solana
             .create_associated_token_account(&market_authority, mints[0].pubkey)
             .await;
-        let quote_vault = solana
+        let market_quote_vault = solana
             .create_associated_token_account(&market_authority, mints[1].pubkey)
             .await;
 
@@ -359,8 +359,8 @@ impl TestContext {
         let openbook_v2::accounts::CreateMarket {
             market,
 
-            base_vault,
-            quote_vault,
+            market_base_vault,
+            market_quote_vault,
             bids,
             ..
         } = send_tx(
@@ -378,8 +378,8 @@ impl TestContext {
                 taker_fee: args.taker_fee,
                 base_mint: mints[0].pubkey,
                 quote_mint: mints[1].pubkey,
-                base_vault,
-                quote_vault,
+                market_base_vault,
+                market_quote_vault,
                 fee_penalty: args.fee_penalty,
                 time_expiry: args.time_expiry,
                 ..CreateMarketInstruction::with_new_book_and_queue(solana, oracle, None).await
@@ -415,8 +415,8 @@ impl TestContext {
             owner_token_1,
             market,
 
-            base_vault,
-            quote_vault,
+            market_base_vault,
+            market_quote_vault,
             price_lots,
             tokens,
             account_1,

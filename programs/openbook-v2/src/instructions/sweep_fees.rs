@@ -18,7 +18,7 @@ pub fn sweep_fees(ctx: Context<SweepFees>) -> Result<()> {
     token_transfer_signed(
         amount,
         &ctx.accounts.token_program,
-        &ctx.accounts.quote_vault,
+        &ctx.accounts.market_quote_vault,
         &ctx.accounts.token_receiver_account,
         &ctx.accounts.market_authority,
         seeds,

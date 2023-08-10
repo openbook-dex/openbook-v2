@@ -61,8 +61,8 @@ impl Amm for OpenBookMarket {
             market.bids,
             market.asks,
             market.event_queue,
-            market.base_vault,
-            market.quote_vault,
+            market.market_base_vault,
+            market.market_quote_vault,
             clock::ID,
         ];
 
@@ -189,10 +189,18 @@ impl Amm for OpenBookMarket {
             ..
         } = swap_params;
 
-        let side = if source_mint == &self.market.quote_mint {
+        let source_is_quote = source_mint == &self.market.quote_mint;
+
+        let side = if source_is_quote {
             JupiterSide::Bid
         } else {
             JupiterSide::Ask
+        };
+
+        let (user_quote_account, user_base_account) = if source_is_quote {
+            (*user_source_token_account, *user_destination_token_account)
+        } else {
+            (*user_destination_token_account, *user_source_token_account)
         };
 
         let accounts = PlaceTakeOrder {
@@ -201,17 +209,17 @@ impl Amm for OpenBookMarket {
             market_authority: self.market.market_authority,
             bids: self.market.bids,
             asks: self.market.asks,
-            token_deposit_account: *user_source_token_account,
-            token_receiver_account: *user_destination_token_account,
-            base_vault: self.market.base_vault,
-            quote_vault: self.market.quote_vault,
+            user_base_account,
+            user_quote_account,
+            market_base_vault: self.market.market_base_vault,
+            market_quote_vault: self.market.market_quote_vault,
             event_queue: self.market.event_queue,
             oracle_a: Option::from(self.market.oracle_a),
             oracle_b: Option::from(self.market.oracle_b),
             token_program: Token::id(),
             system_program: System::id(),
             open_orders_admin: None,
-            referrer: None,
+            referrer_account: None,
         };
 
         let account_metas = accounts.to_account_metas(None);
