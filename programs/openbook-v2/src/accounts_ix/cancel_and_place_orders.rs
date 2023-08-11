@@ -17,13 +17,13 @@ pub struct CancelAndPlaceOrders<'info> {
 
     #[account(
         mut,
-        constraint = user_quote_account.mint == market_quote_vault.mint
+        token::mint = market_quote_vault.mint
     )]
     pub user_quote_account: Account<'info, TokenAccount>,
 
     #[account(
         mut,
-        constraint = user_base_account.mint == market_base_vault.mint
+        token::mint = market_base_vault.mint
     )]
     pub user_base_account: Account<'info, TokenAccount>,
 
