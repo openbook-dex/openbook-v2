@@ -193,8 +193,8 @@ export class OpenBookV2Client {
         asks,
         eventQueue,
         payer: payer.publicKey,
-        baseVault: baseVault.address,
-        quoteVault: quoteVault.address,
+        marketBaseVault: baseVault.address,
+        marketQuoteVault: quoteVault.address,
         baseMint,
         quoteMint,
         systemProgram: SystemProgram.programId,
@@ -208,8 +208,8 @@ export class OpenBookV2Client {
 
   public async deposit(
     openOrdersAccount: OpenOrdersAccount,
-    tokenBaseAccount: PublicKey,
-    tokenQuoteAccount: PublicKey,
+    userBaseAccount: PublicKey,
+    userQuoteAccount: PublicKey,
     baseAmount: BN,
     quoteAmount: BN,
   ): Promise<TransactionSignature> {
@@ -219,10 +219,10 @@ export class OpenBookV2Client {
         owner: openOrdersAccount.owner,
         market: openOrdersAccount.market.publicKey,
         openOrdersAccount: openOrdersAccount.publicKey,
-        tokenBaseAccount,
-        tokenQuoteAccount,
-        baseVault: openOrdersAccount.market.baseVault,
-        quoteVault: openOrdersAccount.market.quoteVault,
+        userBaseAccount,
+        userQuoteAccount,
+        marketBaseVault: openOrdersAccount.market.baseVault,
+        marketQuoteVault: openOrdersAccount.market.quoteVault,
         tokenProgram: TOKEN_PROGRAM_ID,
         systemProgram: SystemProgram.programId,
       })
@@ -233,8 +233,8 @@ export class OpenBookV2Client {
 
   public async depositNative(
     openOrdersAccount: OpenOrdersAccount,
-    tokenBaseAccount: PublicKey,
-    tokenQuoteAccount: PublicKey,
+    userBaseAccount: PublicKey,
+    userQuoteAccount: PublicKey,
     baseAmount: BN,
     quoteAmount: BN,
   ): Promise<TransactionSignature> {
@@ -274,10 +274,10 @@ export class OpenBookV2Client {
         owner: openOrdersAccount.owner,
         market: openOrdersAccount.market.publicKey,
         openOrdersAccount: openOrdersAccount.publicKey,
-        tokenBaseAccount,
-        tokenQuoteAccount,
-        baseVault: openOrdersAccount.market.baseVault,
-        quoteVault: openOrdersAccount.market.quoteVault,
+        userBaseAccount,
+        userQuoteAccount,
+        marketBaseVault: openOrdersAccount.market.baseVault,
+        marketQuoteVault: openOrdersAccount.market.quoteVault,
         tokenProgram: TOKEN_PROGRAM_ID,
         systemProgram: SystemProgram.programId,
       })
@@ -295,7 +295,7 @@ export class OpenBookV2Client {
 
   public async placeOrder(
     openOrdersAccount: OpenOrdersAccount,
-    userDepositAccount: PublicKey,
+    userTokenAccount: PublicKey,
     openOrdersAdmin: PublicKey | null,
     bid: boolean,
     priceLots: BN,
@@ -339,7 +339,7 @@ export class OpenBookV2Client {
         openOrdersAccount: openOrdersAccount.publicKey,
         oracleA: openOrdersAccount.market.oracleA,
         oracleB: openOrdersAccount.market.oracleB,
-        tokenDepositAccount: userDepositAccount,
+        userTokenAccount,
         systemProgram: SystemProgram.programId,
         tokenProgram: TOKEN_PROGRAM_ID,
         openOrdersAdmin,
@@ -373,8 +373,8 @@ export class OpenBookV2Client {
         openOrdersAccount: openOrdersAccount.publicKey,
         oracleA: openOrdersAccount.market.oracleA,
         oracleB: openOrdersAccount.market.oracleB,
-        tokenBaseDepositAccount: userBaseAccount,
-        tokenQuoteDepositAccount: userQuoteAccount,
+        userBaseAccount,
+        userQuoteAccount,
         systemProgram: SystemProgram.programId,
         tokenProgram: TOKEN_PROGRAM_ID,
         openOrdersAdmin,
