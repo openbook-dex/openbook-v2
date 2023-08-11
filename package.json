@@ -20,11 +20,10 @@
     "build:node": " tsc -p tsconfig.cjs.json --noEmit false",
     "build:browser": "tsc -p tsconfig.esm.json --noEmit false",
     "build:types": "tsc -p tsconfig.types.json --noEmit false",
-    "format": "prettier --check ./ts",
+    "format": "yarn prettier --write ./ts/",
     "lint": "eslint ./ts/client/src --ext ts --ext tsx --ext js --quiet",
     "prepublishOnly": "yarn validate && yarn build",
-    "validate": "yarn lint && yarn format",
-    "prettier": "yarn prettier --write ."
+    "validate": "yarn lint && yarn format"
   },
   "prettier": {
     "singleQuote": true,
