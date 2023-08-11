@@ -29,9 +29,11 @@ import { type OpenbookV2 } from './openbook_v2';
 import { sendTransaction } from './utils/rpc';
 import { type OpenOrdersAccount } from './accounts/openOrdersAccount';
 import { type Market } from './accounts/market';
+import { Side } from './utils/utils';
 
 export type IdsSource = 'api' | 'static' | 'get-program-accounts';
 export type PlaceOrderArgs = IdlTypes<OpenbookV2>['PlaceOrderArgs'];
+export type OracleConfigParams = IdlTypes<OpenbookV2>['OracleConfigParams'];
 
 export interface OpenBookClientOptions {
   idsSource?: IdsSource;
@@ -102,6 +104,10 @@ export class OpenBookV2Client {
     timeExpiry: BN,
     oracleA: PublicKey,
     oracleB: PublicKey,
+    oracleConfigParams = {
+      confFilter: 0.1,
+      maxStalenessSlots: 100,
+    } as OracleConfigParams,
   ): Promise<TransactionSignature> {
     const bids = Keypair.generate().publicKey;
     const booksideSpace = 123720;
@@ -173,10 +179,7 @@ export class OpenBookV2Client {
     const ix = await this.program.methods
       .createMarket(
         name,
-        {
-          confFilter: 0.1,
-          maxStalenessSlots: 100,
-        },
+        oracleConfigParams,
         quoteLoteSize,
         baseLoteSize,
         makerFee,
@@ -296,36 +299,12 @@ export class OpenBookV2Client {
     openOrdersAccount: OpenOrdersAccount,
     userTokenAccount: PublicKey,
     openOrdersAdmin: PublicKey | null,
-    bid: boolean,
-    priceLots: BN,
-    maxBaseLots: BN,
-    maxQuoteLotsIncludingFees: BN,
-    clientOrderId: BN,
-    orderType: any,
-    expiryTimestamp: BN,
-    selfTradeBehavior: any,
-    limit: number,
+    args: PlaceOrderArgs,
   ): Promise<TransactionSignature> {
-    let side;
-    let marketVault: PublicKey;
-    if (bid) {
-      side = { bid: {} };
-      marketVault = openOrdersAccount.market.quoteVault;
-    } else {
-      side = { ask: {} };
-      marketVault = openOrdersAccount.market.baseVault;
-    }
-    const args = {
-      side,
-      priceLots,
-      maxBaseLots,
-      maxQuoteLotsIncludingFees,
-      clientOrderId,
-      orderType,
-      expiryTimestamp,
-      selfTradeBehavior,
-      limit,
-    };
+    const marketVault =
+      args.side == Side.Bid
+        ? openOrdersAccount.market.quoteVault
+        : openOrdersAccount.market.baseVault;
     const ix = await this.program.methods
       .placeOrder(args)
       .accounts({
