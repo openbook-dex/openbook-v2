@@ -98,6 +98,9 @@ pub struct Market {
     // Fees generated and available to withdraw via sweep_fees
     pub fees_available: u64,
 
+    /// Cumulative maker volume (same as taker volume) in quote native units
+    pub maker_volume: u64,
+
     /// Cumulative taker volume in quote native units due to place take orders
     pub taker_volume_wo_oo: u64,
 
@@ -110,7 +113,7 @@ pub struct Market {
     pub market_quote_vault: Pubkey,
     pub quote_deposit_total: u64,
 
-    pub reserved: [u8; 1768],
+    pub reserved: [u8; 128],
 }
 
 const_assert_eq!(
@@ -138,15 +141,16 @@ const_assert_eq!(
     8 +                         // taker_fee
     8 +                         // fees_accrued
     8 +                         // fees_to_referrers
+    8 +                         // maker_volume
     8 +                         // taker_volume_wo_oo
     4 * 32 +                    // base_mint, quote_mint, market_base_vault, and market_quote_vault
     8 +                         // base_deposit_total
     8 +                         // quote_deposit_total
     8 +                         // base_fees_accrued
     8 +                         // referrer_rebates_accrued
-    1768 // reserved
+    128 // reserved
 );
-const_assert_eq!(size_of::<Market>(), 2448);
+const_assert_eq!(size_of::<Market>(), 816);
 const_assert_eq!(size_of::<Market>() % 8, 0);
 
 impl Market {
