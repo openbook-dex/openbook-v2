@@ -30,9 +30,9 @@ pub struct CreateMarket<'info> {
     #[account(mut)]
     pub payer: Signer<'info>,
 
-    #[account(mut, token::mint = base_mint, token::authority = market_authority)]
+    #[account(token::mint = base_mint, token::authority = market_authority)]
     pub market_base_vault: Account<'info, TokenAccount>,
-    #[account(mut, token::mint = quote_mint, token::authority = market_authority)]
+    #[account(token::mint = quote_mint, token::authority = market_authority)]
     pub market_quote_vault: Account<'info, TokenAccount>,
 
     pub base_mint: Box<Account<'info, Mint>>,

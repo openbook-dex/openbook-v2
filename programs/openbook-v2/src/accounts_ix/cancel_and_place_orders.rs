@@ -17,13 +17,13 @@ pub struct CancelAndPlaceOrders<'info> {
 
     #[account(
         mut,
-        constraint = user_quote_account.mint == market_quote_vault.mint
+        token::mint = market_quote_vault.mint
     )]
     pub user_quote_account: Account<'info, TokenAccount>,
 
     #[account(
         mut,
-        constraint = user_base_account.mint == market_base_vault.mint
+        token::mint = market_base_vault.mint
     )]
     pub user_base_account: Account<'info, TokenAccount>,
 
@@ -32,6 +32,8 @@ pub struct CancelAndPlaceOrders<'info> {
         has_one = bids,
         has_one = asks,
         has_one = event_queue,
+        has_one = market_base_vault,
+        has_one = market_quote_vault,
         constraint = market.load()?.oracle_a == oracle_a.non_zero_key(),
         constraint = market.load()?.oracle_b == oracle_b.non_zero_key(),
         constraint = market.load()?.open_orders_admin == open_orders_admin.non_zero_key() @ OpenBookError::InvalidOpenOrdersAdmin
@@ -44,15 +46,9 @@ pub struct CancelAndPlaceOrders<'info> {
     #[account(mut)]
     pub event_queue: AccountLoader<'info, EventQueue>,
 
-    #[account(
-        mut,
-        constraint = market.load()?.market_quote_vault == market_quote_vault.key()
-    )]
+    #[account(mut)]
     pub market_quote_vault: Box<Account<'info, TokenAccount>>,
-    #[account(
-        mut,
-        constraint =  market.load()?.market_base_vault ==  market_base_vault.key()
-    )]
+    #[account(mut)]
     pub market_base_vault: Box<Account<'info, TokenAccount>>,
 
     /// CHECK: The oracle can be one of several different account types and the pubkey is checked above
