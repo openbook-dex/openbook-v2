@@ -190,7 +190,7 @@ impl<'a> Orderbook<'a> {
                             best_opposing.node.owner_slot as usize,
                             best_opposing.node.quantity,
                             *market,
-                        )?;
+                        );
                         matched_order_deletes
                             .push((best_opposing.handle.order_tree, best_opposing.node.key));
 
@@ -320,19 +320,29 @@ impl<'a> Orderbook<'a> {
 
         // To calculate max quantity to post, for oracle peg orders & bids take the peg_limit as
         // it's the upper price limitation
-        let price = if order.peg_limit() != -1 && order.side == Side::Bid {
+        let is_oracle_peg = order.peg_limit() != -1;
+        let price = if is_oracle_peg && order.side == Side::Bid {
             order.peg_limit()
         } else {
             price_lots
         };
+
         // If there are still quantity unmatched, place on the book
         let book_base_quantity_lots = {
-            // Subtract maker fees (if any)
             remaining_quote_lots -= market.maker_fees_ceil(remaining_quote_lots);
             remaining_base_lots.min(remaining_quote_lots / price)
         };
 
         if book_base_quantity_lots <= 0 {
+            post_target = None;
+        }
+
+        if is_oracle_peg && side.is_price_better(price_lots, order.peg_limit()) {
+            msg!(
+                "Posting on book disallowed due to peg_limit, order price {:?}, limit {:?}",
+                price_lots,
+                order.peg_limit(),
+            );
             post_target = None;
         }
 
@@ -430,7 +440,7 @@ impl<'a> Orderbook<'a> {
                 &new_order,
                 order.client_order_id,
                 price,
-            )?;
+            );
         }
 
         let placed_order_id = if post_target.is_some() {
@@ -525,11 +535,7 @@ impl<'a> Orderbook<'a> {
         if let Some(owner) = expected_owner {
             require_keys_eq!(leaf_node.owner, owner);
         }
-        open_orders_account.cancel_order(
-            leaf_node.owner_slot as usize,
-            leaf_node.quantity,
-            market,
-        )?;
+        open_orders_account.cancel_order(leaf_node.owner_slot as usize, leaf_node.quantity, market);
 
         Ok(leaf_node)
     }
@@ -545,7 +551,7 @@ pub fn process_out_event(
 ) -> Result<()> {
     if let Some(acc) = open_orders_account {
         if owner == &event.owner {
-            acc.cancel_order(event.owner_slot as usize, event.quantity, *market)?;
+            acc.cancel_order(event.owner_slot as usize, event.quantity, *market);
             // Already canceled, return
             return Ok(());
         }
@@ -554,7 +560,7 @@ pub fn process_out_event(
     if let Some(acc) = remaining_accs.iter().find(|ai| ai.key == &event.owner) {
         let ooa: AccountLoader<OpenOrdersAccount> = AccountLoader::try_from(acc)?;
         let mut acc = ooa.load_mut()?;
-        acc.cancel_order(event.owner_slot as usize, event.quantity, *market)?;
+        acc.cancel_order(event.owner_slot as usize, event.quantity, *market);
     } else {
         event_queue.push_back(cast(event));
     }
@@ -571,8 +577,7 @@ pub fn process_fill_event(
     if let Some(acc) = loader {
         let ooa: AccountLoader<OpenOrdersAccount> = AccountLoader::try_from(acc)?;
         let mut maker = ooa.load_mut()?;
-
-        maker.execute_maker(market, &event)?;
+        maker.execute_maker(market, &event);
     } else {
         event_queue.push_back(cast(event));
     }

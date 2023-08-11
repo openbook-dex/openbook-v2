@@ -13,8 +13,8 @@ pub struct PlaceTakeOrder<'info> {
         has_one = bids,
         has_one = asks,
         has_one = event_queue,
-        has_one = base_vault,
-        has_one = quote_vault,
+        has_one = market_base_vault,
+        has_one = market_quote_vault,
         has_one = market_authority,
         constraint = market.load()?.oracle_a == oracle_a.non_zero_key(),
         constraint = market.load()?.oracle_b == oracle_b.non_zero_key(),
@@ -28,29 +28,28 @@ pub struct PlaceTakeOrder<'info> {
     #[account(mut)]
     pub asks: AccountLoader<'info, BookSide>,
     #[account(mut)]
-    pub base_vault: Account<'info, TokenAccount>,
+    pub market_base_vault: Account<'info, TokenAccount>,
     #[account(mut)]
-    pub quote_vault: Account<'info, TokenAccount>,
+    pub market_quote_vault: Account<'info, TokenAccount>,
     #[account(mut)]
     pub event_queue: AccountLoader<'info, EventQueue>,
 
     #[account(
         mut,
-        token::authority = signer.key(),
-        constraint = token_deposit_account.mint == base_vault.mint || token_deposit_account.mint == quote_vault.mint
+        constraint = user_base_account.mint == market_base_vault.mint
     )]
-    pub token_deposit_account: Box<Account<'info, TokenAccount>>,
+    pub user_base_account: Box<Account<'info, TokenAccount>>,
     #[account(
         mut,
-        constraint = token_deposit_account.mint == base_vault.mint || token_deposit_account.mint == quote_vault.mint
+        constraint = user_quote_account.mint == market_quote_vault.mint
     )]
-    pub token_receiver_account: Box<Account<'info, TokenAccount>>,
+    pub user_quote_account: Box<Account<'info, TokenAccount>>,
 
     #[account(
         mut,
-        token::mint = quote_vault.mint
+        token::mint = market_quote_vault.mint
     )]
-    pub referrer: Option<Box<Account<'info, TokenAccount>>>,
+    pub referrer_account: Option<Box<Account<'info, TokenAccount>>>,
 
     /// CHECK: The oracle can be one of several different account types and the pubkey is checked above
     pub oracle_a: Option<UncheckedAccount<'info>>,

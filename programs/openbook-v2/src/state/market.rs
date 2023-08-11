@@ -104,10 +104,10 @@ pub struct Market {
     pub base_mint: Pubkey,
     pub quote_mint: Pubkey,
 
-    pub base_vault: Pubkey,
+    pub market_base_vault: Pubkey,
     pub base_deposit_total: u64,
 
-    pub quote_vault: Pubkey,
+    pub market_quote_vault: Pubkey,
     pub quote_deposit_total: u64,
 
     pub reserved: [u8; 1768],
@@ -139,7 +139,7 @@ const_assert_eq!(
     8 +                         // fees_accrued
     8 +                         // fees_to_referrers
     8 +                         // taker_volume_wo_oo
-    4 * 32 +                    // base_mint, quote_mint, base_vault, and quote_vault
+    4 * 32 +                    // base_mint, quote_mint, market_base_vault, and market_quote_vault
     8 +                         // base_deposit_total
     8 +                         // quote_deposit_total
     8 +                         // base_fees_accrued
@@ -168,7 +168,7 @@ impl Market {
     }
 
     pub fn is_market_vault(&self, pubkey: Pubkey) -> bool {
-        pubkey == self.quote_vault || pubkey == self.base_vault
+        pubkey == self.market_quote_vault || pubkey == self.market_base_vault
     }
 
     pub fn gen_order_id(&mut self, side: Side, price_data: u64) -> u128 {

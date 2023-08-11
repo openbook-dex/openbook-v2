@@ -24,6 +24,7 @@ impl FuzzData {
                 FuzzInstruction::PlaceOrder { .. }
                     | FuzzInstruction::PlaceOrderPegged { .. }
                     | FuzzInstruction::PlaceTakeOrder { .. }
+                    | FuzzInstruction::CancelAndPlaceOrders { .. }
             )
         })
     }
@@ -53,6 +54,11 @@ enum FuzzInstruction {
         user_id: UserId,
         data: openbook_v2::instruction::PlaceTakeOrder,
         referrer_id: Option<ReferrerId>,
+        makers: Option<HashSet<UserId>>,
+    },
+    CancelAndPlaceOrders {
+        user_id: UserId,
+        data: openbook_v2::instruction::CancelAndPlaceOrders,
         makers: Option<HashSet<UserId>>,
     },
     ConsumeEvents {
@@ -131,6 +137,14 @@ impl FuzzRunner for FuzzContext {
             } => self
                 .place_take_order(user_id, data, referrer_id.as_ref(), makers.as_ref())
                 .map_or_else(error_parser::place_take_order, keep),
+
+            FuzzInstruction::CancelAndPlaceOrders {
+                user_id,
+                data,
+                makers,
+            } => self
+                .cancel_and_place_orders(user_id, data, makers.as_ref())
+                .map_or_else(error_parser::cancel_and_place_orders, keep),
 
             FuzzInstruction::ConsumeEvents { user_ids, data } => self
                 .consume_events(user_ids, data)
@@ -226,8 +240,8 @@ fn run_fuzz(fuzz_data: FuzzData) -> Corpus {
             })
             .sum();
 
-        let base_amount = ctx.state.get_balance(&ctx.base_vault);
-        let quote_amount = ctx.state.get_balance(&ctx.quote_vault);
+        let base_amount = ctx.state.get_balance(&ctx.market_base_vault);
+        let quote_amount = ctx.state.get_balance(&ctx.market_quote_vault);
 
         let market = ctx
             .state
@@ -357,8 +371,8 @@ fn run_fuzz(fuzz_data: FuzzData) -> Corpus {
             .get_account::<openbook_v2::state::Market>(&ctx.market)
             .unwrap();
 
-        assert_eq!(ctx.state.get_balance(&ctx.base_vault), 0);
-        assert_eq!(ctx.state.get_balance(&ctx.quote_vault), 0);
+        assert_eq!(ctx.state.get_balance(&ctx.market_base_vault), 0);
+        assert_eq!(ctx.state.get_balance(&ctx.market_quote_vault), 0);
         assert_eq!(market.base_deposit_total, 0);
         assert_eq!(market.quote_deposit_total, 0);
         assert_eq!(market.fees_available, 0);
@@ -462,6 +476,21 @@ mod error_parser {
             e if e == OpenBookError::InvalidInputOrderType.into() => Corpus::Reject,
             e if e == OpenBookError::InvalidInputPriceLots.into() => Corpus::Reject,
             e if e == OpenBookError::InvalidOraclePrice.into() => Corpus::Keep,
+            e if e == TokenError::InsufficientFunds.into() => Corpus::Keep,
+            _ => panic!("{}", err),
+        }
+    }
+
+    pub fn cancel_and_place_orders(err: ProgramError) -> Corpus {
+        match err {
+            e if e == OpenBookError::InvalidInputLots.into() => Corpus::Reject,
+            e if e == OpenBookError::InvalidInputLotsSize.into() => Corpus::Reject,
+            e if e == OpenBookError::InvalidInputPriceLots.into() => Corpus::Reject,
+            e if e == OpenBookError::InvalidOraclePrice.into() => Corpus::Keep,
+            e if e == OpenBookError::InvalidPostAmount.into() => Corpus::Keep,
+            e if e == OpenBookError::InvalidPriceLots.into() => Corpus::Keep,
+            e if e == OpenBookError::OpenOrdersFull.into() => Corpus::Keep,
+            e if e == OpenBookError::WouldSelfTrade.into() => Corpus::Keep,
             e if e == TokenError::InsufficientFunds.into() => Corpus::Keep,
             _ => panic!("{}", err),
         }

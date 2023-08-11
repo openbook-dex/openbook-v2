@@ -19,7 +19,7 @@ pub fn settle_funds<'info>(ctx: Context<'_, '_, '_, 'info, SettleFunds<'info>>) 
     let pa = &mut open_orders_account.position;
     let referrer_rebate = pa.referrer_rebates_available + roundoff_maker_fees;
 
-    if ctx.accounts.referrer.is_some() {
+    if ctx.accounts.referrer_account.is_some() {
         market.fees_to_referrers += referrer_rebate;
         market.quote_deposit_total -= referrer_rebate;
     } else {
@@ -34,12 +34,12 @@ pub fn settle_funds<'info>(ctx: Context<'_, '_, '_, 'info, SettleFunds<'info>>) 
 
     drop(market);
 
-    if let Some(referrer) = &ctx.accounts.referrer {
+    if let Some(referrer_account) = &ctx.accounts.referrer_account {
         token_transfer_signed(
             referrer_rebate,
             &ctx.accounts.token_program,
-            &ctx.accounts.quote_vault,
-            referrer,
+            &ctx.accounts.market_quote_vault,
+            referrer_account,
             &ctx.accounts.market_authority,
             seeds,
         )?;
@@ -48,8 +48,8 @@ pub fn settle_funds<'info>(ctx: Context<'_, '_, '_, 'info, SettleFunds<'info>>) 
     token_transfer_signed(
         pa.base_free_native,
         &ctx.accounts.token_program,
-        &ctx.accounts.base_vault,
-        &ctx.accounts.token_base_account,
+        &ctx.accounts.market_base_vault,
+        &ctx.accounts.user_base_account,
         &ctx.accounts.market_authority,
         seeds,
     )?;
@@ -57,8 +57,8 @@ pub fn settle_funds<'info>(ctx: Context<'_, '_, '_, 'info, SettleFunds<'info>>) 
     token_transfer_signed(
         pa.quote_free_native,
         &ctx.accounts.token_program,
-        &ctx.accounts.quote_vault,
-        &ctx.accounts.token_quote_account,
+        &ctx.accounts.market_quote_vault,
+        &ctx.accounts.user_quote_account,
         &ctx.accounts.market_authority,
         seeds,
     )?;
@@ -68,7 +68,7 @@ pub fn settle_funds<'info>(ctx: Context<'_, '_, '_, 'info, SettleFunds<'info>>) 
         base_native: pa.base_free_native,
         quote_native: pa.quote_free_native,
         referrer_rebate,
-        referrer: ctx.accounts.referrer.as_ref().map(|acc| acc.key())
+        referrer: ctx.accounts.referrer_account.as_ref().map(|acc| acc.key())
     });
 
     pa.base_free_native = 0;
