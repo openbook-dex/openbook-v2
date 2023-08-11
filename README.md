@@ -25,13 +25,11 @@ available under GPL.
 
 ## Deployed versions
 
-8qkavBpvoHVYkmPhu6QRpXRX39Kcop9uMXvZorBAz43o
-
-| tag       | network |
-| --------- | ------- |
-| test-v0.6 | devnet  |
-| test-v0.6 | testnet |
-| test-v0.6 | mainnet |
+| tag       | network | program ID                                   |
+| --------- | ------- | -------------------------------------------- |
+| test-v0.6 | devnet  | 8qkavBpvoHVYkmPhu6QRpXRX39Kcop9uMXvZorBAz43o |
+| test-v0.6 | testnet | 8qkavBpvoHVYkmPhu6QRpXRX39Kcop9uMXvZorBAz43o |
+| test-v0.6 | mainnet | 8qkavBpvoHVYkmPhu6QRpXRX39Kcop9uMXvZorBAz43o |
 
 ## Building & testing
 
