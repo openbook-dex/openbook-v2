@@ -1,4 +1,4 @@
-export interface OpenbookV2 {
+export type OpenbookV2 = {
   "version": "0.1.0",
   "name": "openbook_v2",
   "instructions": [
@@ -44,12 +44,12 @@ export interface OpenbookV2 {
         },
         {
           "name": "marketBaseVault",
-          "isMut": true,
+          "isMut": false,
           "isSigner": false
         },
         {
           "name": "marketQuoteVault",
-          "isMut": true,
+          "isMut": false,
           "isSigner": false
         },
         {
@@ -1611,6 +1611,13 @@ export interface OpenbookV2 {
             "type": "u64"
           },
           {
+            "name": "makerVolume",
+            "docs": [
+              "Cumulative maker volume (same as taker volume) in quote native units"
+            ],
+            "type": "u64"
+          },
+          {
             "name": "takerVolumeWoOo",
             "docs": [
               "Cumulative taker volume in quote native units due to place take orders"
@@ -1646,7 +1653,7 @@ export interface OpenbookV2 {
             "type": {
               "array": [
                 "u8",
-                1768
+                128
               ]
             }
           }
@@ -1999,15 +2006,6 @@ export interface OpenbookV2 {
                 6
               ]
             }
-          },
-          {
-            "name": "reserved",
-            "type": {
-              "array": [
-                "u8",
-                32
-              ]
-            }
           }
         ]
       }
@@ -2129,7 +2127,7 @@ export interface OpenbookV2 {
             "type": {
               "array": [
                 "u8",
-                72
+                40
               ]
             }
           }
@@ -2219,15 +2217,6 @@ export interface OpenbookV2 {
               "User defined id for this order, used in FillEvents"
             ],
             "type": "u64"
-          },
-          {
-            "name": "reserved",
-            "type": {
-              "array": [
-                "u8",
-                32
-              ]
-            }
           }
         ]
       }
@@ -2246,7 +2235,7 @@ export interface OpenbookV2 {
             "type": {
               "array": [
                 "u8",
-                119
+                87
               ]
             }
           }
@@ -3490,7 +3479,7 @@ export interface OpenbookV2 {
       "msg": "Cannot close a non-empty open orders account"
     }
   ]
-}
+};
 
 export const IDL: OpenbookV2 = {
   "version": "0.1.0",
@@ -3538,12 +3527,12 @@ export const IDL: OpenbookV2 = {
         },
         {
           "name": "marketBaseVault",
-          "isMut": true,
+          "isMut": false,
           "isSigner": false
         },
         {
           "name": "marketQuoteVault",
-          "isMut": true,
+          "isMut": false,
           "isSigner": false
         },
         {
@@ -5105,6 +5094,13 @@ export const IDL: OpenbookV2 = {
             "type": "u64"
           },
           {
+            "name": "makerVolume",
+            "docs": [
+              "Cumulative maker volume (same as taker volume) in quote native units"
+            ],
+            "type": "u64"
+          },
+          {
             "name": "takerVolumeWoOo",
             "docs": [
               "Cumulative taker volume in quote native units due to place take orders"
@@ -5140,7 +5136,7 @@ export const IDL: OpenbookV2 = {
             "type": {
               "array": [
                 "u8",
-                1768
+                128
               ]
             }
           }
@@ -5493,15 +5489,6 @@ export const IDL: OpenbookV2 = {
                 6
               ]
             }
-          },
-          {
-            "name": "reserved",
-            "type": {
-              "array": [
-                "u8",
-                32
-              ]
-            }
           }
         ]
       }
@@ -5623,7 +5610,7 @@ export const IDL: OpenbookV2 = {
             "type": {
               "array": [
                 "u8",
-                72
+                40
               ]
             }
           }
@@ -5713,15 +5700,6 @@ export const IDL: OpenbookV2 = {
               "User defined id for this order, used in FillEvents"
             ],
             "type": "u64"
-          },
-          {
-            "name": "reserved",
-            "type": {
-              "array": [
-                "u8",
-                32
-              ]
-            }
           }
         ]
       }
@@ -5740,7 +5718,7 @@ export const IDL: OpenbookV2 = {
             "type": {
               "array": [
                 "u8",
-                119
+                87
               ]
             }
           }
