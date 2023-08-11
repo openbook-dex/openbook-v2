@@ -54,14 +54,18 @@ pub fn cancel_and_place_orders(
         if let Some(oo) = oo {
             let order_id = oo.id;
             let order_side_and_tree = oo.side_and_tree();
-            let leaf_node = book.cancel_order(
+
+            let cancel_result = book.cancel_order(
                 &mut open_orders_account,
                 order_id,
                 order_side_and_tree,
                 *market,
                 Some(ctx.accounts.open_orders_account.key()),
-            )?;
-            canceled_quantity += leaf_node.quantity;
+            );
+
+            if !cancel_result.is_anchor_error_with_code(OpenBookError::OrderIdNotFound.into()) {
+                canceled_quantity += cancel_result?.quantity;
+            }
         };
     }
     if canceled_quantity > 0 {
@@ -140,14 +144,14 @@ pub fn cancel_and_place_orders(
     token_transfer(
         deposit_quote_amount,
         &ctx.accounts.token_program,
-        &ctx.accounts.token_quote_deposit_account,
+        &ctx.accounts.user_quote_account,
         &ctx.accounts.market_quote_vault,
         &ctx.accounts.signer,
     )?;
     token_transfer(
         deposit_base_amount,
         &ctx.accounts.token_program,
-        &ctx.accounts.token_base_deposit_account,
+        &ctx.accounts.user_base_account,
         &ctx.accounts.market_base_vault,
         &ctx.accounts.signer,
     )?;

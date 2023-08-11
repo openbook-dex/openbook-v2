@@ -90,9 +90,9 @@ pub fn create_market(
         taker_volume_wo_oo: 0,
         base_mint: ctx.accounts.base_mint.key(),
         quote_mint: ctx.accounts.quote_mint.key(),
-        base_vault: ctx.accounts.base_vault.key(),
+        market_base_vault: ctx.accounts.market_base_vault.key(),
         base_deposit_total: 0,
-        quote_vault: ctx.accounts.quote_vault.key(),
+        market_quote_vault: ctx.accounts.market_quote_vault.key(),
         quote_deposit_total: 0,
         fees_available: 0,
         referrer_rebates_accrued: 0,
@@ -111,12 +111,13 @@ pub fn create_market(
 
     emit_cpi!(MarketMetaDataLog {
         market: ctx.accounts.market.key(),
+        name,
+        base_mint: ctx.accounts.base_mint.key(),
+        quote_mint: ctx.accounts.quote_mint.key(),
         base_decimals: ctx.accounts.base_mint.decimals,
         quote_decimals: ctx.accounts.quote_mint.decimals,
         base_lot_size,
         quote_lot_size,
-        oracle_a: oracle_a.into(),
-        oracle_b: oracle_b.into(),
     });
 
     Ok(())

@@ -63,8 +63,8 @@ pub struct FuzzContext {
     pub bids: Pubkey,
     pub asks: Pubkey,
     pub event_queue: Pubkey,
-    pub base_vault: Pubkey,
-    pub quote_vault: Pubkey,
+    pub market_base_vault: Pubkey,
+    pub market_quote_vault: Pubkey,
     pub oracle_a: Option<Pubkey>,
     pub oracle_b: Option<Pubkey>,
     pub collect_fee_admin: Pubkey,
@@ -109,8 +109,8 @@ impl FuzzContext {
         let asks = Pubkey::new_unique();
         let event_queue = Pubkey::new_unique();
 
-        let base_vault = get_associated_token_address(&market_authority, &base_mint);
-        let quote_vault = get_associated_token_address(&market_authority, &quote_mint);
+        let market_base_vault = get_associated_token_address(&market_authority, &base_mint);
+        let market_quote_vault = get_associated_token_address(&market_authority, &quote_mint);
 
         let collect_fee_admin = Pubkey::new_unique();
         let collect_fee_admin_quote_vault =
@@ -127,8 +127,8 @@ impl FuzzContext {
             bids,
             asks,
             event_queue,
-            base_vault,
-            quote_vault,
+            market_base_vault,
+            market_quote_vault,
             oracle_a,
             oracle_b,
             collect_fee_admin,
@@ -156,13 +156,13 @@ impl FuzzContext {
             .add_program(spl_token::ID)
             .add_program(system_program::ID)
             .add_token_account_with_lamports(
-                self.base_vault,
+                self.market_base_vault,
                 self.market_authority,
                 self.base_mint,
                 0,
             )
             .add_token_account_with_lamports(
-                self.quote_vault,
+                self.market_quote_vault,
                 self.market_authority,
                 self.quote_mint,
                 0,
@@ -304,8 +304,8 @@ impl FuzzContext {
             asks: self.asks,
             event_queue: self.event_queue,
             payer: self.payer,
-            base_vault: self.base_vault,
-            quote_vault: self.quote_vault,
+            market_base_vault: self.market_base_vault,
+            market_quote_vault: self.market_quote_vault,
             base_mint: self.base_mint,
             quote_mint: self.quote_mint,
             oracle_a: self.oracle_a,
@@ -330,12 +330,12 @@ impl FuzzContext {
 
         let accounts = openbook_v2::accounts::Deposit {
             owner: user.owner,
-            token_base_account: user.base_vault,
-            token_quote_account: user.quote_vault,
+            user_base_account: user.base_vault,
+            user_quote_account: user.quote_vault,
             open_orders_account: user.open_orders,
             market: self.market,
-            base_vault: self.base_vault,
-            quote_vault: self.quote_vault,
+            market_base_vault: self.market_base_vault,
+            market_quote_vault: self.market_quote_vault,
             token_program: spl_token::ID,
             system_program: system_program::ID,
         };
@@ -352,12 +352,12 @@ impl FuzzContext {
 
         let accounts = openbook_v2::accounts::Deposit {
             owner: user.owner,
-            token_base_account: user.base_vault,
-            token_quote_account: user.quote_vault,
+            user_base_account: user.base_vault,
+            user_quote_account: user.quote_vault,
             open_orders_account: user.open_orders,
             market: self.market,
-            base_vault: self.base_vault,
-            quote_vault: self.quote_vault,
+            market_base_vault: self.market_base_vault,
+            market_quote_vault: self.market_quote_vault,
             token_program: spl_token::ID,
             system_program: system_program::ID,
         };
@@ -372,12 +372,12 @@ impl FuzzContext {
         makers: Option<&HashSet<UserId>>,
     ) -> ProgramResult {
         let market_vault = match data.args.side {
-            Side::Ask => self.base_vault,
-            Side::Bid => self.quote_vault,
+            Side::Ask => self.market_base_vault,
+            Side::Bid => self.market_quote_vault,
         };
 
         let user = self.get_or_create_new_user(user_id);
-        let token_deposit_account = match data.args.side {
+        let user_token_account = match data.args.side {
             Side::Ask => user.base_vault,
             Side::Bid => user.quote_vault,
         };
@@ -385,7 +385,7 @@ impl FuzzContext {
         let accounts = openbook_v2::accounts::PlaceOrder {
             open_orders_account: user.open_orders,
             signer: user.owner,
-            token_deposit_account,
+            user_token_account,
             open_orders_admin: None,
             market: self.market,
             bids: self.bids,
@@ -425,12 +425,12 @@ impl FuzzContext {
         }
 
         let market_vault = match data.args.side {
-            Side::Ask => self.base_vault,
-            Side::Bid => self.quote_vault,
+            Side::Ask => self.market_base_vault,
+            Side::Bid => self.market_quote_vault,
         };
 
         let user = self.get_or_create_new_user(user_id);
-        let token_deposit_account = match data.args.side {
+        let user_token_account = match data.args.side {
             Side::Ask => user.base_vault,
             Side::Bid => user.quote_vault,
         };
@@ -438,7 +438,7 @@ impl FuzzContext {
         let accounts = openbook_v2::accounts::PlaceOrder {
             open_orders_account: user.open_orders,
             signer: user.owner,
-            token_deposit_account,
+            user_token_account,
             open_orders_admin: None,
             market: self.market,
             bids: self.bids,
@@ -474,31 +474,26 @@ impl FuzzContext {
         referrer_id: Option<&ReferrerId>,
         makers: Option<&HashSet<UserId>>,
     ) -> ProgramResult {
-        let referrer = referrer_id.map(|id| *self.get_or_create_new_referrer(id));
+        let referrer_account = referrer_id.map(|id| *self.get_or_create_new_referrer(id));
         let user = self.get_or_create_new_user(user_id);
-
-        let (token_deposit_account, token_receiver_account) = match data.args.side {
-            Side::Ask => (user.base_vault, user.quote_vault),
-            Side::Bid => (user.quote_vault, user.base_vault),
-        };
 
         let accounts = openbook_v2::accounts::PlaceTakeOrder {
             signer: user.owner,
+            user_base_account: user.base_vault,
+            user_quote_account: user.quote_vault,
             market: self.market,
             market_authority: self.market_authority,
             bids: self.bids,
             asks: self.asks,
-            token_deposit_account,
-            token_receiver_account,
-            base_vault: self.base_vault,
-            quote_vault: self.quote_vault,
+            market_base_vault: self.market_base_vault,
+            market_quote_vault: self.market_quote_vault,
             event_queue: self.event_queue,
             oracle_a: self.oracle_a,
             oracle_b: self.oracle_b,
             token_program: spl_token::ID,
             system_program: system_program::ID,
             open_orders_admin: None,
-            referrer,
+            referrer_account,
         };
 
         let remaining = makers.map_or_else(Vec::new, |makers| {
@@ -625,13 +620,55 @@ impl FuzzContext {
         process_instruction(&mut self.state, data, &accounts, &[])
     }
 
+    pub fn cancel_and_place_orders(
+        &mut self,
+        user_id: &UserId,
+        data: &openbook_v2::instruction::CancelAndPlaceOrders,
+        makers: Option<&HashSet<UserId>>,
+    ) -> ProgramResult {
+        let user = self.get_or_create_new_user(user_id);
+
+        let accounts = openbook_v2::accounts::CancelAndPlaceOrders {
+            open_orders_account: user.open_orders,
+            signer: user.owner,
+            user_base_account: user.base_vault,
+            user_quote_account: user.quote_vault,
+            open_orders_admin: None,
+            market: self.market,
+            bids: self.bids,
+            asks: self.asks,
+            event_queue: self.event_queue,
+            market_base_vault: self.market_base_vault,
+            market_quote_vault: self.market_quote_vault,
+            oracle_a: self.oracle_a,
+            oracle_b: self.oracle_b,
+            token_program: spl_token::ID,
+            system_program: system_program::ID,
+        };
+
+        let remaining = makers.map_or_else(Vec::new, |makers| {
+            makers
+                .iter()
+                .filter(|id| id != &user_id)
+                .filter_map(|id| self.users.get(id))
+                .map(|user| AccountMeta {
+                    pubkey: user.open_orders,
+                    is_signer: false,
+                    is_writable: true,
+                })
+                .collect::<Vec<_>>()
+        });
+
+        process_instruction(&mut self.state, data, &accounts, &remaining)
+    }
+
     pub fn settle_funds(
         &mut self,
         user_id: &UserId,
         data: &openbook_v2::instruction::SettleFunds,
         referrer_id: Option<&ReferrerId>,
     ) -> ProgramResult {
-        let referrer = referrer_id.map(|id| *self.get_or_create_new_referrer(id));
+        let referrer_account = referrer_id.map(|id| *self.get_or_create_new_referrer(id));
         let Some(user) = self.users.get(user_id) else {
             return Ok(());
         };
@@ -639,15 +676,15 @@ impl FuzzContext {
         let accounts = openbook_v2::accounts::SettleFunds {
             owner: user.owner,
             open_orders_account: user.open_orders,
-            token_base_account: user.base_vault,
-            token_quote_account: user.quote_vault,
+            user_base_account: user.base_vault,
+            user_quote_account: user.quote_vault,
             market: self.market,
             market_authority: self.market_authority,
-            base_vault: self.base_vault,
-            quote_vault: self.quote_vault,
+            market_base_vault: self.market_base_vault,
+            market_quote_vault: self.market_quote_vault,
             token_program: spl_token::ID,
             system_program: system_program::ID,
-            referrer,
+            referrer_account,
         };
 
         process_instruction(&mut self.state, data, &accounts, &[])
@@ -659,7 +696,7 @@ impl FuzzContext {
             token_receiver_account: self.collect_fee_admin_quote_vault,
             market: self.market,
             market_authority: self.market_authority,
-            quote_vault: self.quote_vault,
+            market_quote_vault: self.market_quote_vault,
             token_program: spl_token::ID,
             system_program: system_program::ID,
         };

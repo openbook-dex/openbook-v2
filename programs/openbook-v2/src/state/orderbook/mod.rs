@@ -347,7 +347,7 @@ mod tests {
         assert_eq!(fill.taker, taker_pk);
 
         // simulate event queue processing
-        maker.execute_maker(&mut market, fill).unwrap();
+        maker.execute_maker(&mut market, fill);
         taker.execute_taker(&mut market, Side::Ask, 0, 0, 0, 0);
 
         assert_eq!(maker.position.bids_base_lots, bid_quantity - match_quantity);
