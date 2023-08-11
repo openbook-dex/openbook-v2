@@ -27,8 +27,7 @@ import {
 } from '@solana/web3.js';
 import { type OpenbookV2 } from './openbook_v2';
 import { sendTransaction } from './utils/rpc';
-import { type OpenOrdersAccount } from './accounts/openOrdersAccount';
-import { type Market } from './accounts/market';
+import { type OpenOrdersAccount, Market } from './accounts';
 import { Side } from './utils/utils';
 
 export type IdsSource = 'api' | 'static' | 'get-program-accounts';
@@ -92,6 +91,26 @@ export class OpenBookV2Client {
     );
   }
 
+  public async getMarketFromPublicKey(
+    publicKey: PublicKey,
+  ): Promise<Market | null> {
+    const account = await this.connection.getAccountInfo(publicKey);
+    if (account != null) {
+      const market = this.program.coder.accounts.decode('Market', account.data);
+      return new Market(
+        publicKey,
+        market.asks,
+        market.bids,
+        market.eventQueue,
+        market.baseVault,
+        market.quoteVault,
+        market.oracleA,
+        market.oracleB,
+      );
+    }
+    return null;
+  }
+
   public async createMarket(
     payer: Keypair,
     name: string,
@@ -104,10 +123,10 @@ export class OpenBookV2Client {
     timeExpiry: BN,
     oracleA: PublicKey,
     oracleB: PublicKey,
-    oracleConfigParams = {
+    oracleConfigParams: OracleConfigParams = {
       confFilter: 0.1,
       maxStalenessSlots: 100,
-    } as OracleConfigParams,
+    },
   ): Promise<TransactionSignature> {
     const bids = Keypair.generate().publicKey;
     const booksideSpace = 123720;
@@ -302,7 +321,7 @@ export class OpenBookV2Client {
     args: PlaceOrderArgs,
   ): Promise<TransactionSignature> {
     const marketVault =
-      args.side == Side.Bid
+      args.side === Side.Bid
         ? openOrdersAccount.market.quoteVault
         : openOrdersAccount.market.baseVault;
     const ix = await this.program.methods
