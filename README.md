@@ -27,6 +27,8 @@ available under GPL.
 
 | tag       | network | program ID                                   |
 | --------- | ------- | -------------------------------------------- |
+| v0.1      | devnet  | opnbkNkqux64GppQhwbyEVc3axhssFhVYuwar8rDHCuA |
+| v0.1      | testnet | opnbkNkqux64GppQhwbyEVc3axhssFhVYuwar8rDHCuA |
 | test-v0.6 | devnet  | 8qkavBpvoHVYkmPhu6QRpXRX39Kcop9uMXvZorBAz43o |
 | test-v0.6 | testnet | 8qkavBpvoHVYkmPhu6QRpXRX39Kcop9uMXvZorBAz43o |
 | test-v0.6 | mainnet | 8qkavBpvoHVYkmPhu6QRpXRX39Kcop9uMXvZorBAz43o |
