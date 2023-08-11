@@ -17,7 +17,7 @@ pub struct PlaceOrder<'info> {
 
     #[account(
         mut,
-        constraint = user_token_account.mint == market_vault.mint
+        token::mint = market_vault.mint
     )]
     pub user_token_account: Account<'info, TokenAccount>,
 

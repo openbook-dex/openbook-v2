@@ -38,7 +38,7 @@ const_assert_eq!(
     std::mem::size_of::<BookSide>(),
     std::mem::size_of::<OrderTreeNodes>() + 6 * std::mem::size_of::<OrderTreeRoot>() + 256
 );
-const_assert_eq!(std::mem::size_of::<BookSide>(), 123712);
+const_assert_eq!(std::mem::size_of::<BookSide>(), 90944);
 const_assert_eq!(std::mem::size_of::<BookSide>() % 8, 0);
 
 impl BookSide {

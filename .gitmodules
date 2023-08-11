@@ -3,5 +3,5 @@
 	url = https://gitlab.com/ckamm/fixed.git
 [submodule "3rdparty/anchor"]
 	path = 3rdparty/anchor
-	url = git@github.com:openbook-dex/anchor.git
+	url = https://github.com/openbook-dex/anchor.git
 	branch = v0.28.0_abfdc4e-arbitrary

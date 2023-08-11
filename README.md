@@ -1,6 +1,6 @@
 # OpenBook V2
 
-⚠️ Disclaimer: This code is currently under active development and should not be used in production environments.
+⚠️ Disclaimer: The current code is being audited. Use it at your own risk!
 
 A central-limit order-book program based on [Mango V4](https://github.com/blockworks-foundation/mango-v4) and the [previous OpenBook program](https://github.com/openbook-dex/program) (which was a fork of [Serum](https://github.com/project-serum/serum-dex)).
 
@@ -25,13 +25,11 @@ available under GPL.
 
 ## Deployed versions
 
-8qkavBpvoHVYkmPhu6QRpXRX39Kcop9uMXvZorBAz43o
-
-| tag       | network |
-| --------- | ------- |
-| test-v0.5 | devnet  |
-| test-v0.5 | testnet |
-| test-v0.5 | mainnet |
+| tag       | network | program ID                                   |
+| --------- | ------- | -------------------------------------------- |
+| test-v0.6 | devnet  | 8qkavBpvoHVYkmPhu6QRpXRX39Kcop9uMXvZorBAz43o |
+| test-v0.6 | testnet | 8qkavBpvoHVYkmPhu6QRpXRX39Kcop9uMXvZorBAz43o |
+| test-v0.6 | mainnet | 8qkavBpvoHVYkmPhu6QRpXRX39Kcop9uMXvZorBAz43o |
 
 ## Building & testing
 

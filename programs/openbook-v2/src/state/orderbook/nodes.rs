@@ -8,7 +8,7 @@ use static_assertions::const_assert_eq;
 use super::order_type::Side;
 
 pub type NodeHandle = u32;
-const NODE_SIZE: usize = 120;
+const NODE_SIZE: usize = 88;
 
 #[derive(IntoPrimitive, TryFromPrimitive)]
 #[repr(u8)]
@@ -96,9 +96,9 @@ pub struct InnerNode {
     /// iterate through the whole bookside.
     pub child_earliest_expiry: [u64; 2],
 
-    pub reserved: [u8; 72],
+    pub reserved: [u8; 40],
 }
-const_assert_eq!(size_of::<InnerNode>(), 4 + 4 + 16 + 4 * 2 + 8 * 2 + 72);
+const_assert_eq!(size_of::<InnerNode>(), 4 + 4 + 16 + 4 * 2 + 8 * 2 + 40);
 const_assert_eq!(size_of::<InnerNode>(), NODE_SIZE);
 const_assert_eq!(size_of::<InnerNode>() % 8, 0);
 
@@ -176,12 +176,10 @@ pub struct LeafNode {
 
     /// User defined id for this order, used in FillEvents
     pub client_order_id: u64,
-
-    pub reserved: [u8; 32],
 }
 const_assert_eq!(
     size_of::<LeafNode>(),
-    4 + 1 + 1 + 1 + 1 + 16 + 32 + 8 + 8 + 8 + 8 + 32
+    4 + 1 + 1 + 1 + 1 + 16 + 32 + 8 + 8 + 8 + 8
 );
 const_assert_eq!(size_of::<LeafNode>(), NODE_SIZE);
 const_assert_eq!(size_of::<LeafNode>() % 8, 0);
@@ -209,7 +207,6 @@ impl LeafNode {
             timestamp,
             peg_limit,
             client_order_id,
-            reserved: [0; 32],
         }
     }
 
@@ -253,7 +250,7 @@ const_assert_eq!(size_of::<FreeNode>() % 8, 0);
 #[derive(bytemuck::Pod, bytemuck::Zeroable)]
 pub struct AnyNode {
     pub tag: u8,
-    pub data: [u8; 119],
+    pub data: [u8; 87],
 }
 const_assert_eq!(size_of::<AnyNode>(), NODE_SIZE);
 const_assert_eq!(size_of::<AnyNode>() % 8, 0);

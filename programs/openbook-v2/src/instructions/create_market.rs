@@ -87,6 +87,7 @@ pub fn create_market(
         taker_fee,
         fees_accrued: 0,
         fees_to_referrers: 0,
+        maker_volume: 0,
         taker_volume_wo_oo: 0,
         base_mint: ctx.accounts.base_mint.key(),
         quote_mint: ctx.accounts.quote_mint.key(),
@@ -97,7 +98,7 @@ pub fn create_market(
         fees_available: 0,
         referrer_rebates_accrued: 0,
 
-        reserved: [0; 1768],
+        reserved: [0; 128],
     };
 
     let mut orderbook = Orderbook {
