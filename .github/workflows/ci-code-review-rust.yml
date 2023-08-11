@@ -2,12 +2,17 @@ name: Code Review - Rust
 on:
   push:
     paths:
-      ["programs/**", "lib/client/**", "Cargo.lock", ".github/workflows/ci-code-review-rust.yml"]
+      [
+        'programs/**',
+        'lib/client/**',
+        'Cargo.lock',
+        '.github/workflows/ci-code-review-rust.yml',
+      ]
   workflow_dispatch: # Pick branch manually
 
 env:
   CARGO_TERM_COLOR: always
-  SOLANA_VERSION: "1.14.17"
+  SOLANA_VERSION: '1.14.17'
 
 jobs:
   format:
@@ -52,7 +57,7 @@ jobs:
       - name: Cache dependencies
         uses: Swatinem/rust-cache@v2
         with:
-          env-vars: "SOLANA_VERSION"
+          env-vars: 'SOLANA_VERSION'
 
       - name: Install Solana
         uses: metadaoproject/setup-solana@v1.0

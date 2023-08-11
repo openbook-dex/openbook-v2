@@ -1,6 +1,3 @@
 {
-    "rust-analyzer.cargo.features": [
-        "enable-gpl",
-        "test-bpf"
-    ],
+  "rust-analyzer.cargo.features": ["enable-gpl", "test-bpf"]
 }
