@@ -1,3 +1,4 @@
+use crate::error::OpenBookError;
 use crate::state::*;
 use anchor_lang::prelude::*;
 
