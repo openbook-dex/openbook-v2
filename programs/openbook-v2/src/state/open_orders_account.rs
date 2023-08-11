@@ -45,7 +45,7 @@ const_assert_eq!(
         + size_of::<Position>()
         + MAX_OPEN_ORDERS * size_of::<OpenOrder>()
 );
-const_assert_eq!(size_of::<OpenOrdersAccount>(), 9504);
+const_assert_eq!(size_of::<OpenOrdersAccount>(), 5408);
 const_assert_eq!(size_of::<OpenOrdersAccount>() % 8, 0);
 
 impl OpenOrdersAccount {
@@ -350,10 +350,9 @@ pub struct OpenOrder {
     pub is_free: u8,
     pub side_and_tree: u8, // SideAndOrderTree -- enums aren't POD
     pub padding: [u8; 6],
-    pub reserved: [u8; 32],
 }
-const_assert_eq!(size_of::<OpenOrder>(), 16 + 8 + 8 + 1 + 1 + 6 + 32);
-const_assert_eq!(size_of::<OpenOrder>(), 72);
+const_assert_eq!(size_of::<OpenOrder>(), 16 + 8 + 8 + 1 + 1 + 6);
+const_assert_eq!(size_of::<OpenOrder>(), 40);
 const_assert_eq!(size_of::<OpenOrder>() % 8, 0);
 
 impl Default for OpenOrder {
@@ -365,7 +364,6 @@ impl Default for OpenOrder {
             locked_price: 0,
             id: 0,
             padding: [0; 6],
-            reserved: [0u8; 32],
         }
     }
 }
