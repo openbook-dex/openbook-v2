@@ -70,9 +70,9 @@ pub struct OrderTreeNodes {
 }
 const_assert_eq!(
     std::mem::size_of::<OrderTreeNodes>(),
-    1 + 3 + 4 * 2 + 4 + 512 + 120 * 1024
+    1 + 3 + 4 * 2 + 4 + 512 + 88 * 1024
 );
-const_assert_eq!(std::mem::size_of::<OrderTreeNodes>(), 123408);
+const_assert_eq!(std::mem::size_of::<OrderTreeNodes>(), 90640);
 const_assert_eq!(std::mem::size_of::<OrderTreeNodes>() % 8, 0);
 
 impl OrderTreeNodes {
@@ -264,7 +264,7 @@ impl OrderTreeNodes {
             },
             padding: Default::default(),
             next: self.free_list_head,
-            reserved: [0; 112],
+            reserved: [0; 80],
         });
 
         self.free_list_len += 1;
