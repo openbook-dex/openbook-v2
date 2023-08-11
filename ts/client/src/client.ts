@@ -2,8 +2,7 @@ import {
   type AnchorProvider,
   BN,
   type Program,
-  IdlTypes,
-  Idl,
+  type IdlTypes,
 } from '@coral-xyz/anchor';
 import {
   MintLayout,
