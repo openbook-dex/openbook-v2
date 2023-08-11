@@ -7,8 +7,6 @@ export class OpenOrdersAccount {
   name: string;
   market: Market;
   delegate: PublicKey;
-  baseVault: PublicKey;
-  quoteVault: PublicKey;
   ownerOrDelegateKeypair?: Keypair;
 
   constructor(
