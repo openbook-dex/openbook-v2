@@ -298,6 +298,7 @@ fn run_fuzz(fuzz_data: FuzzData) -> Corpus {
             .get_account::<openbook_v2::state::Market>(&ctx.market)
             .unwrap();
 
+        assert_eq!(maker_volume_in_oo, market.maker_volume);
         assert_eq!(
             maker_volume_in_oo,
             taker_volume_in_oo + market.taker_volume_wo_oo

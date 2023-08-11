@@ -169,6 +169,7 @@ impl OpenOrdersAccount {
         pa.maker_volume += quote_native;
         pa.referrer_rebates_available += maker_fees;
         market.referrer_rebates_accrued += maker_fees;
+        market.maker_volume += quote_native;
         market.fees_accrued += maker_fees;
 
         if fill.maker_out() {
