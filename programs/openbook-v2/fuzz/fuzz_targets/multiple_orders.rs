@@ -485,6 +485,7 @@ mod error_parser {
         match err {
             e if e == OpenBookError::InvalidInputLots.into() => Corpus::Reject,
             e if e == OpenBookError::InvalidInputLotsSize.into() => Corpus::Reject,
+            e if e == OpenBookError::InvalidInputOrdersAmounts.into() => Corpus::Reject,
             e if e == OpenBookError::InvalidInputPriceLots.into() => Corpus::Reject,
             e if e == OpenBookError::InvalidOraclePrice.into() => Corpus::Keep,
             e if e == OpenBookError::InvalidPostAmount.into() => Corpus::Keep,

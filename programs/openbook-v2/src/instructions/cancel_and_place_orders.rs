@@ -75,8 +75,8 @@ pub fn cancel_and_place_orders(
         });
     }
 
-    let mut deposit_quote_amount = 0;
-    let mut deposit_base_amount = 0;
+    let mut base_amount = 0_u64;
+    let mut quote_amount = 0_u64;
     let mut order_ids = Vec::new();
     for (order, limit) in orders.iter().zip(limits) {
         require_gte!(order.max_base_lots, 0, OpenBookError::InvalidInputLots);
@@ -107,39 +107,37 @@ pub fn cancel_and_place_orders(
             ctx.remaining_accounts,
         )?;
 
-        let position = &mut open_orders_account.position;
         match order.side {
             Side::Bid => {
-                let free_quote = position.quote_free_native;
-                let max_quote_including_fees =
-                    total_quote_taken_native + posted_quote_native + taker_fees + maker_fees;
-
-                let free_qty_to_lock = cmp::min(max_quote_including_fees, free_quote);
-                let deposit_amount = max_quote_including_fees - free_qty_to_lock;
-
-                // Update market deposit total
-                position.quote_free_native -= free_qty_to_lock;
-                market.quote_deposit_total += deposit_amount;
-
-                deposit_quote_amount += deposit_amount;
+                quote_amount = quote_amount
+                    .checked_add(
+                        total_quote_taken_native + posted_quote_native + taker_fees + maker_fees,
+                    )
+                    .ok_or(OpenBookError::InvalidInputOrdersAmounts)?;
             }
-
             Side::Ask => {
-                let free_assets_native = position.base_free_native;
-                let max_base_native = total_base_taken_native + posted_base_native;
-
-                let free_qty_to_lock = cmp::min(max_base_native, free_assets_native);
-                let deposit_amount = max_base_native - free_qty_to_lock;
-
-                // Update market deposit total
-                position.base_free_native -= free_qty_to_lock;
-                market.base_deposit_total += deposit_amount;
-
-                deposit_base_amount += deposit_amount;
+                base_amount = base_amount
+                    .checked_add(total_base_taken_native + posted_base_native)
+                    .ok_or(OpenBookError::InvalidInputOrdersAmounts)?;
             }
         };
+
         order_ids.push(order_id);
     }
+
+    let position = &mut open_orders_account.position;
+
+    let free_base_to_lock = cmp::min(base_amount, position.base_free_native);
+    let free_quote_to_lock = cmp::min(quote_amount, position.quote_free_native);
+
+    let deposit_base_amount = base_amount - free_base_to_lock;
+    let deposit_quote_amount = quote_amount - free_quote_to_lock;
+
+    position.base_free_native -= free_base_to_lock;
+    position.quote_free_native -= free_quote_to_lock;
+
+    market.base_deposit_total += deposit_base_amount;
+    market.quote_deposit_total += deposit_quote_amount;
 
     token_transfer(
         deposit_quote_amount,
