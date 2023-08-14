@@ -1,8 +1,6 @@
 use anchor_lang::prelude::*;
 use core::fmt::Display;
 
-// todo: group error blocks by kind
-// todo: add comments which indicate decimal code for an error
 #[error_code]
 pub enum OpenBookError {
     #[msg("")]
@@ -26,8 +24,6 @@ pub enum OpenBookError {
     InvalidInputOrderType,
     #[msg("Order id cannot be zero")]
     InvalidInputOrderId,
-    #[msg("Oracle staleness limit is currently unimplemented")]
-    InvalidInputStaleness,
     #[msg("Slot above queue limit")]
     InvalidInputQueueSlots,
     #[msg("Cannot combine two oracles of different providers")]
@@ -197,31 +193,5 @@ macro_rules! error_msg_typed {
     };
 }
 
-/// Like anchor's require!(), but with a customizable message
-///
-/// Example: require_msg!(condition, "the condition on account {} was violated", account_key);
-#[macro_export]
-macro_rules! require_msg {
-    ($invariant:expr, $($arg:tt)*) => {
-        if !($invariant) {
-            return Err(error_msg!($($arg)*));
-        }
-    };
-}
-
-/// Like anchor's require!(), but with a customizable message and type
-///
-/// Example: require_msg_typed!(condition, "the condition on account {} was violated", account_key);
-#[macro_export]
-macro_rules! require_msg_typed {
-    ($invariant:expr, $code:expr, $($arg:tt)*) => {
-        if !($invariant) {
-            return Err(error_msg_typed!($code, $($arg)*));
-        }
-    };
-}
-
 pub use error_msg;
 pub use error_msg_typed;
-pub use require_msg;
-pub use require_msg_typed;
