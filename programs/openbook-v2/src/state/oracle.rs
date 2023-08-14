@@ -350,7 +350,7 @@ mod tests {
             0,
         )?;
 
-        let price_from_raydium_sdk = I80F48::from_num(24.470087964273850117);
+        let price_from_raydium_sdk = I80F48::from_num(24.470_087_964_273_85);
         let tolerance = I80F48::from_num(1e-10);
         assert!((price - price_from_raydium_sdk).abs() < tolerance);
 
