@@ -1,16 +1,15 @@
-use std::mem::size_of;
-
 use anchor_lang::prelude::*;
 use anchor_lang::Discriminator;
 use fixed::types::I80F48;
-
+use raydium_amm_v3::states::PoolState;
 use static_assertions::const_assert_eq;
+use std::mem::size_of;
 use switchboard_program::FastRoundResultAccountData;
 use switchboard_v2::AggregatorAccountData;
 
 use crate::accounts_zerocopy::*;
-
 use crate::error::*;
+use crate::i80f48::Power;
 
 const DECIMAL_CONSTANT_ZERO_INDEX: i8 = 12;
 const DECIMAL_CONSTANTS: [I80F48; 25] = [
@@ -89,6 +88,7 @@ pub enum OracleType {
     Stub,
     SwitchboardV1,
     SwitchboardV2,
+    RaydiumCLMM,
 }
 
 #[account(zero_copy)]
@@ -121,6 +121,8 @@ pub fn determine_oracle_type(acc_info: &impl KeyedAccountReader) -> Result<Oracl
         || acc_info.owner() == &switchboard_v2_mainnet_oracle::ID
     {
         return Ok(OracleType::SwitchboardV1);
+    } else if acc_info.owner() == &raydium_amm_v3::ID {
+        return Ok(OracleType::RaydiumCLMM);
     }
 
     Err(OpenBookError::UnknownOracleType.into())
@@ -258,6 +260,18 @@ pub fn oracle_price_data(
 
             (price, max_response - min_response)
         }
+
+        OracleType::RaydiumCLMM => {
+            let pool = bytemuck::from_bytes::<PoolState>(&data[8..]);
+
+            let sqrt_price = I80F48::checked_from_num(pool.sqrt_price_x64).unwrap()
+                >> raydium_amm_v3::libraries::RESOLUTION;
+
+            let decimals = (pool.mint_decimals_0 as i8) - (pool.mint_decimals_1 as i8);
+            let price = sqrt_price.square() * power_of_ten(decimals);
+
+            (price, fixed::FixedI128::ZERO)
+        }
     })
 }
 
@@ -289,12 +303,17 @@ mod tests {
                 OracleType::SwitchboardV2,
                 Pubkey::default(),
             ),
+            (
+                "2QdhepnKRTLjjSqPL1PtKNwqrUkoLee5Gqs8bvZhRdMv",
+                OracleType::RaydiumCLMM,
+                raydium_amm_v3::ID,
+            ),
         ];
 
         for fixture in fixtures {
             let filename = format!("resources/test/{}.bin", fixture.0);
-            let mut pyth_price_data = read_file(find_file(&filename).unwrap());
-            let data = RefCell::new(&mut pyth_price_data[..]);
+            let mut file_data = read_file(find_file(&filename).unwrap());
+            let data = RefCell::new(&mut file_data[..]);
             let ai = &AccountInfoRef {
                 key: &Pubkey::from_str(fixture.0).unwrap(),
                 owner: &fixture.2,
@@ -302,6 +321,38 @@ mod tests {
             };
             assert!(determine_oracle_type(ai).unwrap() == fixture.1);
         }
+
+        Ok(())
+    }
+
+    #[test]
+    pub fn test_raydium_price() -> Result<()> {
+        let filename = format!(
+            "resources/test/{}.bin",
+            "2QdhepnKRTLjjSqPL1PtKNwqrUkoLee5Gqs8bvZhRdMv"
+        );
+
+        let mut file_data = read_file(find_file(&filename).unwrap());
+        let data = RefCell::new(&mut file_data[..]);
+        let ai = &AccountInfoRef {
+            key: &Pubkey::default(),
+            owner: &raydium_amm_v3::ID,
+            data: data.borrow(),
+        };
+
+        let (price, _err) = oracle_price_data(
+            ai,
+            &OracleConfig {
+                conf_filter: fixed::FixedI128::ZERO,
+                max_staleness_slots: 0,
+                reserved: [0; 72],
+            },
+            0,
+        )?;
+
+        let price_from_raydium_sdk = I80F48::from_num(24.470087964273850117);
+        let tolerance = I80F48::from_num(1e-10);
+        assert!((price - price_from_raydium_sdk).abs() < tolerance);
 
         Ok(())
     }
