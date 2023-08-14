@@ -458,7 +458,6 @@ mod error_parser {
             e if e == OpenBookError::InvalidInputLotsSize.into() => Corpus::Reject,
             e if e == OpenBookError::InvalidInputPegLimit.into() => Corpus::Reject,
             e if e == OpenBookError::InvalidInputPriceLots.into() => Corpus::Reject,
-            e if e == OpenBookError::InvalidInputStaleness.into() => Corpus::Reject,
             e if e == OpenBookError::InvalidOraclePrice.into() => Corpus::Keep,
             e if e == OpenBookError::InvalidOrderPostIOC.into() => Corpus::Keep,
             e if e == OpenBookError::InvalidOrderPostMarket.into() => Corpus::Keep,
