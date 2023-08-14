@@ -5,6 +5,7 @@ import {
   type IdlTypes,
   type IdlAccounts,
 } from '@coral-xyz/anchor';
+import { utf8 } from '@coral-xyz/anchor/dist/cjs/utils/bytes';
 import {
   MintLayout,
   NATIVE_MINT,
@@ -28,7 +29,6 @@ import {
 } from '@solana/web3.js';
 import { type OpenbookV2 } from './openbook_v2';
 import { sendTransaction } from './utils/rpc';
-import { type OpenOrders, Market } from './accounts';
 import { Side } from './utils/utils';
 
 export type IdsSource = 'api' | 'static' | 'get-program-accounts';
@@ -37,12 +37,18 @@ export type OracleConfigParams = IdlTypes<OpenbookV2>['OracleConfigParams'];
 export type OracleConfig = IdlTypes<OpenbookV2>['OracleConfig'];
 export type MarketAccount = IdlAccounts<OpenbookV2>['market'];
 export type OpenOrdersAccount = IdlAccounts<OpenbookV2>['openOrdersAccount'];
+export type EventQueueAccount = IdlAccounts<OpenbookV2>['eventQueue'];
+export type BookSideAccount = IdlAccounts<OpenbookV2>['bookSide'];
 
 export interface OpenBookClientOptions {
   idsSource?: IdsSource;
   postSendTxCallback?: ({ txid }: { txid: string }) => void;
   prioritizationFee?: number;
   txConfirmationCommitment?: Commitment;
+}
+
+export function nameToString(name: number[]): string {
+  return utf8.decode(new Uint8Array(name)).split('\x00')[0];
 }
 
 export class OpenBookV2Client {
@@ -95,12 +101,42 @@ export class OpenBookV2Client {
     );
   }
 
-  public async getMarket(publicKey: PublicKey): Promise<MarketAccount> {
-    return await this.program.account.market.fetch(publicKey);
+  public async getMarket(publicKey: PublicKey): Promise<MarketAccount | null> {
+    try {
+      return await this.program.account.market.fetch(publicKey);
+    } catch {
+      return null;
+    }
   }
 
-  public async getOpenOrders(publicKey: PublicKey): Promise<OpenOrdersAccount> {
-    return await this.program.account.openOrdersAccount.fetch(publicKey);
+  public async getOpenOrders(
+    publicKey: PublicKey,
+  ): Promise<OpenOrdersAccount | null> {
+    try {
+      return await this.program.account.openOrdersAccount.fetch(publicKey);
+    } catch {
+      return null;
+    }
+  }
+
+  public async getEventQueue(
+    publicKey: PublicKey,
+  ): Promise<EventQueueAccount | null> {
+    try {
+      return await this.program.account.eventQueue.fetch(publicKey);
+    } catch {
+      return null;
+    }
+  }
+
+  public async getBookSide(
+    publicKey: PublicKey,
+  ): Promise<BookSideAccount | null> {
+    try {
+      return await this.program.account.bookSide.fetch(publicKey);
+    } catch {
+      return null;
+    }
   }
 
   // public async getOpenOrdersAccountFromPublicKey(

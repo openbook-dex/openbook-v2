@@ -1,5 +1,5 @@
 {
-  "name": "openbook-v2",
+  "name": "@openbook-dex/openbook-v2",
   "version": "0.0.1",
   "description": "Typescript Client for openbook-v2 program.",
   "repository": "https://github.com/openbook-dex/openbook-v2/",

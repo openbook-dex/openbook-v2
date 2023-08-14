@@ -1,7 +1,7 @@
-import { OpenBookV2Client } from './client';
-import { IDL, OpenbookV2 } from './openbook_v2';
+import { IDL, type OpenbookV2 } from './openbook_v2';
 
+export * from './client';
 export * from './market';
 export * from './utils/utils';
 
-export { OpenBookV2Client, IDL, OpenbookV2 };
+export { IDL, type OpenbookV2 };
