@@ -25,11 +25,11 @@ available under GPL.
 
 ## Deployed versions
 
-| tag  | network | program ID                                   |
-| ---- | ------- | -------------------------------------------- |
-| v0.1 | mainnet | opnbkNkqux64GppQhwbyEVc3axhssFhVYuwar8rDHCuA |
-| v0.1 | devnet  | opnbkNkqux64GppQhwbyEVc3axhssFhVYuwar8rDHCuA |
-| v0.1 | testnet | opnbkNkqux64GppQhwbyEVc3axhssFhVYuwar8rDHCuA |
+| tag  | network | program ID                                  |
+| ---- | ------- | ------------------------------------------- |
+| v0.1 | mainnet | opnbkNkqux64GppQhwbyEVc3axhssFhVYuwar8rDHCu |
+| v0.1 | devnet  | opnbkNkqux64GppQhwbyEVc3axhssFhVYuwar8rDHCu |
+| v0.1 | testnet | opnbkNkqux64GppQhwbyEVc3axhssFhVYuwar8rDHCu |
 
 ## Building & testing
 
@@ -39,7 +39,7 @@ Before you can build the program, you will first need to install the following:
 
 - [Rust](https://www.rust-lang.org/tools/install)
 - [Solana](https://docs.solana.com/cli/install-solana-cli-tools)
-- [Anchor](https://www.anchor-lang.com/docs/installation) (v0.27.0)
+- [Anchor](https://www.anchor-lang.com/docs/installation) (v0.28.0)
 - [Just](https://github.com/casey/just#installation)
 
 ### Installing
