@@ -263,7 +263,7 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
     .unwrap();
     send_tx(
         solana,
-        CancelOrderByClientOrderIdInstruction {
+        CancelOrdersByClientOrderIdInstruction {
             open_orders_account: account_2,
             market,
             signer: owner,
@@ -360,7 +360,7 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
     .unwrap();
     assert!(send_tx(
         solana,
-        CancelOrderByClientOrderIdInstruction {
+        CancelOrdersByClientOrderIdInstruction {
             open_orders_account: account_2,
             market,
             signer: owner,
@@ -397,7 +397,7 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
     .unwrap();
     send_tx(
         solana,
-        CancelOrderByClientOrderIdInstruction {
+        CancelOrdersByClientOrderIdInstruction {
             open_orders_account: account_2,
             market,
             signer: owner,

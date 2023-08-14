@@ -217,7 +217,7 @@ async fn test_maker_fees() -> Result<(), TransportError> {
 
     send_tx(
         solana,
-        CancelOrderByClientOrderIdInstruction {
+        CancelOrdersByClientOrderIdInstruction {
             open_orders_account: account_1,
             market,
             signer: owner,

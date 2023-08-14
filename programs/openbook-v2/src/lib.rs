@@ -318,16 +318,16 @@ pub mod openbook_v2 {
         Ok(())
     }
 
-    /// Cancel an order by its `client_order_id`.
+    /// Cancel all orders having `client_order_id`.
     ///
     /// Note that this doesn't emit an [`OutEvent`](crate::state::OutEvent) because a
     /// maker knows that they will be passing in their own [`OpenOrdersAccount`](crate::state::OpenOrdersAccount).
-    pub fn cancel_order_by_client_order_id(
+    pub fn cancel_orders_by_client_order_id(
         ctx: Context<CancelOrder>,
         client_order_id: u64,
     ) -> Result<()> {
         #[cfg(feature = "enable-gpl")]
-        instructions::cancel_order_by_client_order_id(ctx, client_order_id)?;
+        instructions::cancel_orders_by_client_order_id(ctx, client_order_id)?;
         Ok(())
     }
 

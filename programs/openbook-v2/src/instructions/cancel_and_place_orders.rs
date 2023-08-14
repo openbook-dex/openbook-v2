@@ -50,10 +50,12 @@ pub fn cancel_and_place_orders(
 
     let mut canceled_quantity = 0;
     for client_order_id in cancel_client_orders_ids {
-        let oo = open_orders_account.find_order_with_client_order_id(client_order_id);
-        if let Some(oo) = oo {
+        let open_orders_vec = open_orders_account.find_orders_with_client_order_id(client_order_id);
+
+        for oo in open_orders_vec.iter() {
             let order_id = oo.id;
             let order_side_and_tree = oo.side_and_tree();
+            let mut open_orders_account = ctx.accounts.open_orders_account.load_mut()?;
 
             let cancel_result = book.cancel_order(
                 &mut open_orders_account,
@@ -66,7 +68,7 @@ pub fn cancel_and_place_orders(
             if !cancel_result.is_anchor_error_with_code(OpenBookError::OrderIdNotFound.into()) {
                 canceled_quantity += cancel_result?.quantity;
             }
-        };
+        }
     }
     if canceled_quantity > 0 {
         emit!(CancelOrdersLog {

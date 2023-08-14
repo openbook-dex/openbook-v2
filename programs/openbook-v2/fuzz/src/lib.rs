@@ -580,10 +580,10 @@ impl FuzzContext {
         process_instruction(&mut self.state, data, &accounts, &[])
     }
 
-    pub fn cancel_order_by_client_order_id(
+    pub fn cancel_orders_by_client_order_id(
         &mut self,
         user_id: &UserId,
-        data: &openbook_v2::instruction::CancelOrderByClientOrderId,
+        data: &openbook_v2::instruction::CancelOrdersByClientOrderId,
     ) -> ProgramResult {
         let Some(user) = self.users.get(user_id) else {
             return Ok(());

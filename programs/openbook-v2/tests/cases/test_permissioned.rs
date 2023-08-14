@@ -557,7 +557,7 @@ async fn test_delegate() -> Result<(), TransportError> {
 
     send_tx(
         solana,
-        CancelOrderByClientOrderIdInstruction {
+        CancelOrdersByClientOrderIdInstruction {
             signer: account_3_delegate,
             market,
             open_orders_account: account_3,

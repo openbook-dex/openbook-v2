@@ -100,9 +100,10 @@ impl OpenOrdersAccount {
             .ok_or_else(|| error!(OpenBookError::OpenOrdersFull))
     }
 
-    pub fn find_order_with_client_order_id(&self, client_order_id: u64) -> Option<&OpenOrder> {
+    pub fn find_orders_with_client_order_id(&self, client_order_id: u64) -> Vec<&OpenOrder> {
         self.all_orders_in_use()
-            .find(|&oo| oo.client_id == client_order_id)
+            .filter(|&oo| oo.client_id == client_order_id)
+            .collect()
     }
 
     pub fn find_order_with_order_id(&self, order_id: u128) -> Option<&OpenOrder> {

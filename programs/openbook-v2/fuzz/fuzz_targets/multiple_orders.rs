@@ -73,9 +73,9 @@ enum FuzzInstruction {
         user_id: UserId,
         data: openbook_v2::instruction::CancelOrder,
     },
-    CancelOrderByClientOrderId {
+    CancelOrdersByClientOrderId {
         user_id: UserId,
-        data: openbook_v2::instruction::CancelOrderByClientOrderId,
+        data: openbook_v2::instruction::CancelOrdersByClientOrderId,
     },
     CancelAllOrders {
         user_id: UserId,
@@ -158,9 +158,9 @@ impl FuzzRunner for FuzzContext {
                 .cancel_order(user_id, data)
                 .map_or_else(error_parser::cancel_order, keep),
 
-            FuzzInstruction::CancelOrderByClientOrderId { user_id, data } => self
-                .cancel_order_by_client_order_id(user_id, data)
-                .map_or_else(error_parser::cancel_order_by_client_order_id, keep),
+            FuzzInstruction::CancelOrdersByClientOrderId { user_id, data } => self
+                .cancel_orders_by_client_order_id(user_id, data)
+                .map_or_else(error_parser::cancel_orders_by_client_order_id, keep),
 
             FuzzInstruction::CancelAllOrders { user_id, data } => self
                 .cancel_all_orders(user_id, data)
@@ -516,7 +516,7 @@ mod error_parser {
         }
     }
 
-    pub fn cancel_order_by_client_order_id(err: ProgramError) -> Corpus {
+    pub fn cancel_orders_by_client_order_id(err: ProgramError) -> Corpus {
         match err {
             e if e == OpenBookError::OpenOrdersOrderNotFound.into() => Corpus::Keep,
             e if e == OpenBookError::OrderIdNotFound.into() => Corpus::Keep,
