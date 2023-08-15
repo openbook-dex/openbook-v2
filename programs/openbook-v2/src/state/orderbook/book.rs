@@ -15,6 +15,9 @@ use super::*;
 /// This exists as a guard against excessive compute use.
 const DROP_EXPIRED_ORDER_LIMIT: usize = 5;
 
+/// Process up to this remaining accounts in the fill event
+const FILL_EVENT_REMAINING_LIMIT: usize = 15;
+
 pub struct Orderbook<'a> {
     pub bids: RefMut<'a, BookSide>,
     pub asks: RefMut<'a, BookSide>,
@@ -118,6 +121,7 @@ impl<'a> Orderbook<'a> {
         let mut matched_order_changes: Vec<(BookSideOrderHandle, i64)> = vec![];
         let mut matched_order_deletes: Vec<(BookSideOrderTree, u128)> = vec![];
         let mut number_of_dropped_expired_orders = 0;
+        let mut number_of_processed_fill_events = 0;
 
         let opposing_bookside = self.bookside_mut(other_side);
         for best_opposing in opposing_bookside.iter_all_including_invalid(now_ts, oracle_price_lots)
@@ -236,7 +240,13 @@ impl<'a> Orderbook<'a> {
                 match_base_lots,
             );
 
-            process_fill_event(fill, market, event_queue, remaining_accs)?;
+            process_fill_event(
+                fill,
+                market,
+                event_queue,
+                remaining_accs,
+                &mut number_of_processed_fill_events,
+            )?;
 
             limit -= 1;
         }
@@ -552,11 +562,10 @@ pub fn process_out_event(
     if let Some(acc) = open_orders_account {
         if owner == &event.owner {
             acc.cancel_order(event.owner_slot as usize, event.quantity, *market);
-            // Already canceled, return
             return Ok(());
         }
     }
-    // Check if remaining is available so no event is pushed to event_queue
+
     if let Some(acc) = remaining_accs.iter().find(|ai| ai.key == &event.owner) {
         let ooa: AccountLoader<OpenOrdersAccount> = AccountLoader::try_from(acc)?;
         let mut acc = ooa.load_mut()?;
@@ -564,6 +573,7 @@ pub fn process_out_event(
     } else {
         event_queue.push_back(cast(event));
     }
+
     Ok(())
 }
 
@@ -572,14 +582,22 @@ pub fn process_fill_event(
     market: &mut Market,
     event_queue: &mut EventQueue,
     remaining_accs: &[AccountInfo],
+    number_of_processed_fill_events: &mut usize,
 ) -> Result<()> {
-    let loader = remaining_accs.iter().find(|ai| ai.key == &event.maker);
-    if let Some(acc) = loader {
-        let ooa: AccountLoader<OpenOrdersAccount> = AccountLoader::try_from(acc)?;
-        let mut maker = ooa.load_mut()?;
-        maker.execute_maker(market, &event);
-    } else {
+    let mut is_processed = false;
+    if *number_of_processed_fill_events < FILL_EVENT_REMAINING_LIMIT {
+        if let Some(acc) = remaining_accs.iter().find(|ai| ai.key == &event.maker) {
+            let ooa: AccountLoader<OpenOrdersAccount> = AccountLoader::try_from(acc)?;
+            let mut maker = ooa.load_mut()?;
+            maker.execute_maker(market, &event);
+            is_processed = true;
+            *number_of_processed_fill_events += 1;
+        }
+    }
+
+    if !is_processed {
         event_queue.push_back(cast(event));
     }
+
     Ok(())
 }
