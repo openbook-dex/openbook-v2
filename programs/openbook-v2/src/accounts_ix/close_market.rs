@@ -13,7 +13,7 @@ pub struct CloseMarket<'info> {
         has_one = event_queue,
         close = sol_destination,
         constraint = market.load()?.close_market_admin.is_some() @ OpenBookError::NoCloseMarketAdmin,
-        constraint = market.load()?.close_market_admin == close_market_admin.key() @ OpenBookError::InvalidOpenOrdersAdmin
+        constraint = market.load()?.close_market_admin == close_market_admin.key() @ OpenBookError::InvalidCloseMarketAdmin
     )]
     pub market: AccountLoader<'info, Market>,
 
