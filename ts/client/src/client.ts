@@ -1,7 +1,7 @@
 import {
   type AnchorProvider,
   BN,
-  type Program,
+  Program,
   type IdlTypes,
   type IdlAccounts,
 } from '@coral-xyz/anchor';
@@ -13,11 +13,9 @@ import {
   TOKEN_PROGRAM_ID,
   createCloseAccountInstruction,
   createInitializeAccount3Instruction,
-  getOrCreateAssociatedTokenAccount,
 } from '@solana/spl-token';
 import {
   type AccountInfo,
-  type Cluster,
   type Commitment,
   type Connection,
   Keypair,
@@ -27,7 +25,8 @@ import {
   type TransactionInstruction,
   type TransactionSignature,
 } from '@solana/web3.js';
-import { type OpenbookV2 } from './openbook_v2';
+import * as splToken from '@solana/spl-token';
+import { IDL, type OpenbookV2 } from './openbook_v2';
 import { sendTransaction } from './utils/rpc';
 import { Side } from './utils/utils';
 
@@ -39,6 +38,8 @@ export type MarketAccount = IdlAccounts<OpenbookV2>['market'];
 export type OpenOrdersAccount = IdlAccounts<OpenbookV2>['openOrdersAccount'];
 export type EventQueueAccount = IdlAccounts<OpenbookV2>['eventQueue'];
 export type BookSideAccount = IdlAccounts<OpenbookV2>['bookSide'];
+export type LeafNode = IdlTypes<OpenbookV2>['LeafNode'];
+export type AnyNode = IdlTypes<OpenbookV2>['AnyNode'];
 
 export interface OpenBookClientOptions {
   idsSource?: IdsSource;
@@ -52,23 +53,25 @@ export function nameToString(name: number[]): string {
 }
 
 export class OpenBookV2Client {
+  public program: Program<OpenbookV2>;
+
   private readonly idsSource: IdsSource;
   private readonly postSendTxCallback?: ({ txid }) => void;
   private readonly prioritizationFee: number;
   private readonly txConfirmationCommitment: Commitment;
 
   constructor(
-    public program: Program<OpenbookV2>,
     public programId: PublicKey,
-    public cluster: Cluster,
+    public provider: AnchorProvider,
     public opts: OpenBookClientOptions = {},
   ) {
+    this.program = new Program<OpenbookV2>(IDL, programId, provider);
     this.idsSource = opts.idsSource ?? 'get-program-accounts';
     this.prioritizationFee = opts?.prioritizationFee ?? 0;
     this.postSendTxCallback = opts?.postSendTxCallback;
     this.txConfirmationCommitment =
       opts?.txConfirmationCommitment ??
-      (program.provider as AnchorProvider).opts.commitment ??
+      (this.program.provider as AnchorProvider).opts.commitment ??
       'processed';
     // TODO: evil side effect, but limited backtraces are a nightmare
     Error.stackTraceLimit = 1000;
@@ -139,16 +142,6 @@ export class OpenBookV2Client {
     }
   }
 
-  // public async getOpenOrdersAccountFromPublicKey(
-  //   publicKey: PublicKey,
-  // ): Promise<Market | null> {
-  //   const account = await this.connection.getAccountInfo(publicKey);
-  //   if (account != null) {
-
-  //   }
-  //   return null;
-  // }
-
   public async createMarket(
     payer: Keypair,
     name: string,
@@ -159,12 +152,16 @@ export class OpenBookV2Client {
     makerFee: BN,
     takerFee: BN,
     timeExpiry: BN,
-    oracleA: PublicKey,
-    oracleB: PublicKey,
+    oracleA: PublicKey | null,
+    oracleB: PublicKey | null,
+    openOrdersAdmin: PublicKey | null,
+    consumeEventsAdmin: PublicKey | null,
+    closeMarketAdmin: PublicKey | null,
     oracleConfigParams: OracleConfigParams = {
       confFilter: 0.1,
       maxStalenessSlots: 100,
     },
+    collectFeeAdmin?: PublicKey,
   ): Promise<TransactionSignature> {
     const bids = Keypair.generate().publicKey;
     const booksideSpace = 123720;
@@ -205,29 +202,22 @@ export class OpenBookV2Client {
       [Buffer.from('Market'), market.publicKey.toBuffer()],
       this.program.programId,
     );
-    // Usage
-    const baseVault = await getOrCreateAssociatedTokenAccount(
+
+    const baseVault = await splToken.createAccount(
       this.connection,
       payer,
       baseMint,
-      this.programId,
-      true,
-      undefined,
-      undefined,
-      TOKEN_PROGRAM_ID,
       marketAuthority,
+      Keypair.generate(),
     );
-    const quoteVault = await getOrCreateAssociatedTokenAccount(
+    const quoteVault = await splToken.createAccount(
       this.connection,
       payer,
       quoteMint,
-      this.programId,
-      true,
-      undefined,
-      undefined,
-      TOKEN_PROGRAM_ID,
       marketAuthority,
+      Keypair.generate(),
     );
+
     const [eventAuthority] = PublicKey.findProgramAddressSync(
       [Buffer.from('__event_authority')],
       this.program.programId,
@@ -252,17 +242,100 @@ export class OpenBookV2Client {
         asks,
         eventQueue,
         payer: payer.publicKey,
-        marketBaseVault: baseVault.address,
-        marketQuoteVault: quoteVault.address,
+        marketBaseVault: baseVault,
+        marketQuoteVault: quoteVault,
         baseMint,
         quoteMint,
         systemProgram: SystemProgram.programId,
         eventAuthority,
         program: this.programId,
+        collectFeeAdmin:
+          collectFeeAdmin != null ? collectFeeAdmin : payer.publicKey,
+        openOrdersAdmin,
+        consumeEventsAdmin,
+        closeMarketAdmin,
       })
       .instruction();
 
     return await this.sendAndConfirmTransaction([ix0, ix1, ix2, ix]);
+  }
+
+  public findOpenOrdersIndexer(market: PublicKey): PublicKey {
+    const [openOrdersIndexer] = PublicKey.findProgramAddressSync(
+      [
+        Buffer.from('OpenOrdersIndexer'),
+        this.walletPk.toBuffer(),
+        market.toBuffer(),
+      ],
+      this.programId,
+    );
+    return openOrdersIndexer;
+  }
+
+  public async createOpenOrdersIndexer(
+    market: PublicKey,
+    openOrdersIndexer: PublicKey,
+  ): Promise<TransactionSignature> {
+    const ix = await this.program.methods
+      .createOpenOrdersIndexer()
+      .accounts({
+        openOrdersIndexer,
+        market,
+        owner: this.walletPk,
+        payer: this.walletPk,
+        systemProgram: SystemProgram.programId,
+      })
+      .instruction();
+
+    return await this.sendAndConfirmTransaction([ix]);
+  }
+
+  public findOpenOrders(market: PublicKey, accountIndex: BN): PublicKey {
+    const [openOrders] = PublicKey.findProgramAddressSync(
+      [
+        Buffer.from('OpenOrders'),
+        this.walletPk.toBuffer(),
+        market.toBuffer(),
+        accountIndex.toBuffer('le', 4),
+      ],
+      this.programId,
+    );
+    return openOrders;
+  }
+
+  public async createOpenOrders(
+    market: PublicKey,
+    accountIndex: BN,
+    openOrdersIndexer?: PublicKey,
+  ): Promise<TransactionSignature> {
+    if (openOrdersIndexer == null) {
+      openOrdersIndexer = this.findOpenOrdersIndexer(market);
+      const acc = await this.connection.getAccountInfo(openOrdersIndexer);
+
+      if (acc == null) {
+        const tx = await this.createOpenOrdersIndexer(
+          market,
+          openOrdersIndexer,
+        );
+        console.log('Created open orders indexer', tx);
+      }
+    }
+    const openOrders = this.findOpenOrders(market, accountIndex);
+
+    const ix = await this.program.methods
+      .createOpenOrdersAccount()
+      .accounts({
+        openOrdersIndexer,
+        openOrdersAccount: openOrders,
+        market,
+        owner: this.walletPk,
+        delegateAccount: null,
+        payer: this.walletPk,
+        systemProgram: SystemProgram.programId,
+      })
+      .instruction();
+
+    return await this.sendAndConfirmTransaction([ix]);
   }
 
   public async deposit(
@@ -358,7 +431,7 @@ export class OpenBookV2Client {
 
   public async placeOrder(
     openOrdersPublicKey: PublicKey,
-    openOrdersAccount: OpenOrdersAccount,
+    marketPublicKey: PublicKey,
     market: MarketAccount,
     userTokenAccount: PublicKey,
     openOrdersAdmin: PublicKey | null,
@@ -370,12 +443,15 @@ export class OpenBookV2Client {
     const ix = await this.program.methods
       .placeOrder(args)
       .accounts({
-        signer: openOrdersAccount.owner,
+        signer:
+          openOrdersDelegate != null
+            ? openOrdersDelegate.publicKey
+            : this.walletPk,
         asks: market.asks,
         bids: market.bids,
         marketVault,
         eventQueue: market.eventQueue,
-        market: openOrdersAccount.market,
+        market: marketPublicKey,
         openOrdersAccount: openOrdersPublicKey,
         oracleA: market.oracleA.key,
         oracleB: market.oracleB.key,
@@ -394,7 +470,7 @@ export class OpenBookV2Client {
 
   public async cancelAndPlaceOrders(
     openOrdersPublicKey: PublicKey,
-    openOrdersAccount: OpenOrdersAccount,
+    marketPublicKey: PublicKey,
     market: MarketAccount,
     userBaseAccount: PublicKey,
     userQuoteAccount: PublicKey,
@@ -406,13 +482,16 @@ export class OpenBookV2Client {
     const ix = await this.program.methods
       .cancelAndPlaceOrders(cancelClientOrdersIds, placeOrders)
       .accounts({
-        signer: openOrdersAccount.owner,
+        signer:
+          openOrdersDelegate != null
+            ? openOrdersDelegate.publicKey
+            : this.walletPk,
         asks: market.asks,
         bids: market.bids,
         marketQuoteVault: market.marketQuoteVault,
         marketBaseVault: market.marketQuoteVault,
         eventQueue: market.eventQueue,
-        market: openOrdersAccount.market,
+        market: marketPublicKey,
         openOrdersAccount: openOrdersPublicKey,
         oracleA: market.oracleA.key,
         oracleB: market.oracleB.key,
