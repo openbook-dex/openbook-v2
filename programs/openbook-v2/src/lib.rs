@@ -59,31 +59,36 @@ pub mod openbook_v2 {
         Ok(())
     }
 
-    /// Close a [`Market`](crate::state::Market).
+    /// Close a [`Market`](crate::state::Market) (only
+    /// [`close_market_admin`](crate::state::Market::close_market_admin)).
     pub fn close_market(ctx: Context<CloseMarket>) -> Result<()> {
         #[cfg(feature = "enable-gpl")]
         instructions::close_market(ctx)?;
         Ok(())
     }
 
+    /// Create an [`OpenOrdersIndexer`](crate::state::OpenOrdersIndexer) account.
     pub fn create_open_orders_indexer(ctx: Context<CreateOpenOrdersIndexer>) -> Result<()> {
         #[cfg(feature = "enable-gpl")]
         instructions::create_open_orders_indexer(ctx)?;
         Ok(())
     }
 
+    /// Close an [`OpenOrdersIndexer`](crate::state::OpenOrdersIndexer) account.
     pub fn close_open_orders_indexer(ctx: Context<CloseOpenOrdersIndexer>) -> Result<()> {
         #[cfg(feature = "enable-gpl")]
         instructions::close_open_orders_indexer(ctx)?;
         Ok(())
     }
 
+    /// Create an [`OpenOrdersAccount`](crate::state::OpenOrdersAccount).
     pub fn create_open_orders_account(ctx: Context<CreateOpenOrdersAccount>) -> Result<()> {
         #[cfg(feature = "enable-gpl")]
         instructions::create_open_orders_account(ctx)?;
         Ok(())
     }
 
+    /// Close an [`OpenOrdersAccount`](crate::state::OpenOrdersAccount).
     pub fn close_open_orders_account(ctx: Context<CloseOpenOrdersAccount>) -> Result<()> {
         #[cfg(feature = "enable-gpl")]
         instructions::close_open_orders_account(ctx)?;
@@ -142,7 +147,6 @@ pub mod openbook_v2 {
     }
 
     /// Cancel orders and place multiple orders.
-    ///
     pub fn cancel_and_place_orders(
         ctx: Context<CancelAndPlaceOrders>,
         cancel_client_orders_ids: Vec<u64>,
@@ -196,6 +200,7 @@ pub mod openbook_v2 {
         Ok(vec![])
     }
 
+    /// Place an oracle-peg order.
     pub fn place_order_pegged(
         ctx: Context<PlaceOrder>,
         args: PlaceOrderPeggedArgs,
@@ -379,7 +384,8 @@ pub mod openbook_v2 {
         Ok(())
     }
 
-    /// Withdraw any available tokens when the market is expired (only `close_market_admin`)
+    /// Withdraw any available tokens when the market is expired (only
+    /// [`close_market_admin`](crate::state::Market::close_market_admin)).
     pub fn settle_funds_expired<'info>(
         ctx: Context<'_, '_, '_, 'info, SettleFundsExpired<'info>>,
     ) -> Result<()> {
@@ -395,19 +401,23 @@ pub mod openbook_v2 {
         Ok(())
     }
 
+    /// Update the [`delegate`](crate::state::OpenOrdersAccount::delegate) of an open orders account.
     pub fn set_delegate(ctx: Context<SetDelegate>) -> Result<()> {
         #[cfg(feature = "enable-gpl")]
         instructions::set_delegate(ctx)?;
         Ok(())
     }
 
-    /// Set market to expired before pruning orders and closing the market
+    /// Set market to expired before pruning orders and closing the market (only
+    /// [`close_market_admin`](crate::state::Market::close_market_admin)).
     pub fn set_market_expired(ctx: Context<SetMarketExpired>) -> Result<()> {
         #[cfg(feature = "enable-gpl")]
         instructions::set_market_expired(ctx)?;
         Ok(())
     }
 
+    /// Remove orders from the book when the market is expired (only
+    /// [`close_market_admin`](crate::state::Market::close_market_admin)).
     pub fn prune_orders(ctx: Context<PruneOrders>, limit: u8) -> Result<()> {
         #[cfg(feature = "enable-gpl")]
         instructions::prune_orders(ctx, limit)?;

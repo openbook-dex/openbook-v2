@@ -1,3 +1,4 @@
+use crate::error::OpenBookError;
 use crate::state::*;
 use anchor_lang::prelude::*;
 
@@ -12,6 +13,8 @@ pub struct PruneOrders<'info> {
     #[account(
         has_one = bids,
         has_one = asks,
+        constraint = market.load()?.close_market_admin.is_some() @ OpenBookError::NoCloseMarketAdmin,
+        constraint = market.load()?.close_market_admin == close_market_admin.key() @ OpenBookError::InvalidCloseMarketAdmin
     )]
     pub market: AccountLoader<'info, Market>,
     #[account(mut)]

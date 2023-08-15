@@ -18,7 +18,7 @@ pub struct SettleFundsExpired<'info> {
         has_one = market_quote_vault,
         has_one = market_authority,
         constraint = market.load()?.close_market_admin.is_some() @ OpenBookError::NoCloseMarketAdmin,
-        constraint = market.load()?.close_market_admin == close_market_admin.key() @ OpenBookError::InvalidOpenOrdersAdmin
+        constraint = market.load()?.close_market_admin == close_market_admin.key() @ OpenBookError::InvalidCloseMarketAdmin
     )]
     pub market: AccountLoader<'info, Market>,
     /// CHECK: checked on has_one in market
