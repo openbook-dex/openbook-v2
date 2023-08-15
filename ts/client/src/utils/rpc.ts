@@ -37,7 +37,11 @@ export async function sendTransaction(
     addressLookupTableAccounts: alts,
   });
   let vtx = new VersionedTransaction(message);
-  if (opts?.additionalSigners?.length !== 0) {
+
+  if (
+    opts?.additionalSigners !== 'undefined' &&
+    opts?.additionalSigners.length !== 0
+  ) {
     vtx.sign([...opts?.additionalSigners]);
   }
 
@@ -96,10 +100,9 @@ export async function sendTransaction(
       await connection.confirmTransaction(signature, txConfirmationCommitment)
     ).value;
   }
-
-  if (status.err !== '') {
+  if (status.err !== '' && status.err !== null) {
     console.warn('Tx status: ', status);
-    throw new MangoError({
+    throw new OpenBookError({
       txid: signature,
       message: `${JSON.stringify(status)}`,
     });
@@ -117,7 +120,7 @@ export const createComputeBudgetIx = (
   return computeBudgetIx;
 };
 
-class MangoError extends Error {
+class OpenBookError extends Error {
   message: string;
   txid: string;
 
