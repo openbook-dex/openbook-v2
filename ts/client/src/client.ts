@@ -142,6 +142,26 @@ export class OpenBookV2Client {
     }
   }
 
+  public priceData(key: BN): number {
+    const shiftedValue = key.shrn(64); // Shift right by 64 bits
+    return shiftedValue.toNumber(); // Convert BN to a regular number
+  }
+
+  public getLeafNodes(bookside: BookSideAccount): LeafNode[] {
+    const leafNodesData = bookside.nodes.nodes.filter(
+      (x: AnyNode) => x.tag === 2,
+    );
+    const leafNodes: LeafNode[] = [];
+    for (const x of leafNodesData) {
+      const leafNode: LeafNode = this.program.coder.types.decode(
+        'LeafNode',
+        Buffer.from([0, ...x.data]),
+      );
+      leafNodes.push(leafNode);
+    }
+    return leafNodes;
+  }
+
   public async createMarket(
     payer: Keypair,
     name: string,

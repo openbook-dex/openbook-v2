@@ -17,16 +17,16 @@ export async function sendTransaction(
 ): Promise<string> {
   const connection = provider.connection;
   const latestBlockhash =
-    opts.latestBlockhash ??
+    opts?.latestBlockhash ??
     (await connection.getLatestBlockhash(
-      opts.preflightCommitment ??
+      opts?.preflightCommitment ??
         provider.opts.preflightCommitment ??
         'finalized',
     ));
 
   const payer = provider.wallet;
 
-  if (opts.prioritizationFee !== null && opts.prioritizationFee !== 0) {
+  if (opts?.prioritizationFee !== null && opts.prioritizationFee !== 0) {
     ixs = [createComputeBudgetIx(opts.prioritizationFee), ...ixs];
   }
 
@@ -39,7 +39,7 @@ export async function sendTransaction(
   let vtx = new VersionedTransaction(message);
 
   if (
-    opts?.additionalSigners !== 'undefined' &&
+    opts?.additionalSigners !== undefined &&
     opts?.additionalSigners.length !== 0
   ) {
     vtx.sign([...opts?.additionalSigners]);
@@ -69,8 +69,8 @@ export async function sendTransaction(
   // );
 
   if (
-    opts.postSendTxCallback !== null &&
-    opts.postSendTxCallback !== undefined
+    opts?.postSendTxCallback !== undefined &&
+    opts?.postSendTxCallback !== null
   ) {
     try {
       opts.postSendTxCallback({ txid: signature });
@@ -79,7 +79,8 @@ export async function sendTransaction(
     }
   }
 
-  const txConfirmationCommitment = opts.txConfirmationCommitment ?? 'processed';
+  const txConfirmationCommitment =
+    opts?.txConfirmationCommitment ?? 'processed';
   let status: any;
   if (
     latestBlockhash.blockhash != null &&
