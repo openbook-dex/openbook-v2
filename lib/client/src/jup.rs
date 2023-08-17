@@ -11,7 +11,7 @@ use openbook_v2::{
     state::{BookSide, EventQueue, Market, Orderbook, Side},
 };
 
-use crate::book::{iterate_book, Amounts};
+use crate::book::{amounts_from_book, Amounts};
 use jupiter_amm_interface::{
     AccountMap, Amm, KeyedAccount, Quote, QuoteParams, Side as JupiterSide, Swap,
     SwapAndAccountMetas, SwapParams,
@@ -152,7 +152,7 @@ impl Amm for OpenBookMarket {
             asks: asks_ref.borrow_mut(),
         };
 
-        let order_amounts: Amounts = iterate_book(
+        let order_amounts: Amounts = amounts_from_book(
             book,
             side,
             max_base_lots,

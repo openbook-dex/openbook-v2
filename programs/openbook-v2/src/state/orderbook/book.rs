@@ -13,10 +13,10 @@ use super::*;
 
 /// Drop at most this many expired orders from a BookSide when trying to match orders.
 /// This exists as a guard against excessive compute use.
-const DROP_EXPIRED_ORDER_LIMIT: usize = 5;
+pub const DROP_EXPIRED_ORDER_LIMIT: usize = 5;
 
 /// Process up to this remaining accounts in the fill event
-const FILL_EVENT_REMAINING_LIMIT: usize = 15;
+pub const FILL_EVENT_REMAINING_LIMIT: usize = 15;
 
 pub struct Orderbook<'a> {
     pub bids: RefMut<'a, BookSide>,
