@@ -184,7 +184,7 @@ export class OpenBookV2Client {
     collectFeeAdmin?: PublicKey,
   ): Promise<TransactionSignature> {
     const bids = Keypair.generate().publicKey;
-    const booksideSpace = 123720;
+    const booksideSpace = 90944 + 8;
     const ix0 = SystemProgram.createAccount({
       fromPubkey: payer.publicKey,
       newAccountPubkey: bids,
@@ -222,7 +222,7 @@ export class OpenBookV2Client {
       [Buffer.from('Market'), market.publicKey.toBuffer()],
       this.program.programId,
     );
-
+    
     const baseVault = await splToken.createAccount(
       this.connection,
       payer,

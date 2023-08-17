@@ -148,7 +148,10 @@ export interface OpenbookV2 {
     },
     {
       name: 'closeMarket';
-      docs: ['Close a [`Market`](crate::state::Market).'];
+      docs: [
+        'Close a [`Market`](crate::state::Market) (only',
+        '[`close_market_admin`](crate::state::Market::close_market_admin)).',
+      ];
       accounts: [
         {
           name: 'closeMarketAdmin';
@@ -190,6 +193,9 @@ export interface OpenbookV2 {
     },
     {
       name: 'createOpenOrdersIndexer';
+      docs: [
+        'Create an [`OpenOrdersIndexer`](crate::state::OpenOrdersIndexer) account.',
+      ];
       accounts: [
         {
           name: 'payer';
@@ -221,6 +227,9 @@ export interface OpenbookV2 {
     },
     {
       name: 'closeOpenOrdersIndexer';
+      docs: [
+        'Close an [`OpenOrdersIndexer`](crate::state::OpenOrdersIndexer) account.',
+      ];
       accounts: [
         {
           name: 'owner';
@@ -247,6 +256,9 @@ export interface OpenbookV2 {
     },
     {
       name: 'createOpenOrdersAccount';
+      docs: [
+        'Create an [`OpenOrdersAccount`](crate::state::OpenOrdersAccount).',
+      ];
       accounts: [
         {
           name: 'payer';
@@ -289,6 +301,9 @@ export interface OpenbookV2 {
     },
     {
       name: 'closeOpenOrdersAccount';
+      docs: [
+        'Close an [`OpenOrdersAccount`](crate::state::OpenOrdersAccount).',
+      ];
       accounts: [
         {
           name: 'owner';
@@ -417,7 +432,7 @@ export interface OpenbookV2 {
     },
     {
       name: 'cancelAndPlaceOrders';
-      docs: ['Cancel orders and place multiple orders.', ''];
+      docs: ['Cancel orders and place multiple orders.'];
       accounts: [
         {
           name: 'signer';
@@ -522,6 +537,7 @@ export interface OpenbookV2 {
     },
     {
       name: 'placeOrderPegged';
+      docs: ['Place an oracle-peg order.'];
       accounts: [
         {
           name: 'signer';
@@ -1120,7 +1136,8 @@ export interface OpenbookV2 {
     {
       name: 'settleFundsExpired';
       docs: [
-        'Withdraw any available tokens when the market is expired (only `close_market_admin`)',
+        'Withdraw any available tokens when the market is expired (only',
+        '[`close_market_admin`](crate::state::Market::close_market_admin)).',
       ];
       accounts: [
         {
@@ -1226,6 +1243,9 @@ export interface OpenbookV2 {
     },
     {
       name: 'setDelegate';
+      docs: [
+        'Update the [`delegate`](crate::state::OpenOrdersAccount::delegate) of an open orders account.',
+      ];
       accounts: [
         {
           name: 'owner';
@@ -1249,7 +1269,8 @@ export interface OpenbookV2 {
     {
       name: 'setMarketExpired';
       docs: [
-        'Set market to expired before pruning orders and closing the market',
+        'Set market to expired before pruning orders and closing the market (only',
+        '[`close_market_admin`](crate::state::Market::close_market_admin)).',
       ];
       accounts: [
         {
@@ -1267,6 +1288,10 @@ export interface OpenbookV2 {
     },
     {
       name: 'pruneOrders';
+      docs: [
+        'Remove orders from the book when the market is expired (only',
+        '[`close_market_admin`](crate::state::Market::close_market_admin)).',
+      ];
       accounts: [
         {
           name: 'closeMarketAdmin';
@@ -2557,6 +2582,9 @@ export interface OpenbookV2 {
           {
             name: 'SwitchboardV2';
           },
+          {
+            name: 'RaydiumCLMM';
+          },
         ];
       };
     },
@@ -3162,166 +3190,171 @@ export interface OpenbookV2 {
     },
     {
       code: 6006;
+      name: 'InvalidInputOrdersAmounts';
+      msg: 'Input amounts above limits';
+    },
+    {
+      code: 6007;
       name: 'InvalidInputPriceLots';
       msg: 'Price lots should be greater than zero';
     },
     {
-      code: 6007;
+      code: 6008;
       name: 'InvalidInputPegLimit';
       msg: 'Peg limit should be greater than zero';
     },
     {
-      code: 6008;
+      code: 6009;
       name: 'InvalidInputOrderType';
       msg: 'The order type is invalid. A taker order must be Market or ImmediateOrCancel';
     },
     {
-      code: 6009;
+      code: 6010;
       name: 'InvalidInputOrderId';
       msg: 'Order id cannot be zero';
     },
     {
-      code: 6010;
+      code: 6011;
       name: 'InvalidInputQueueSlots';
       msg: 'Slot above queue limit';
     },
     {
-      code: 6011;
+      code: 6012;
       name: 'InvalidOracleTypes';
       msg: 'Cannot combine two oracles of different providers';
     },
     {
-      code: 6012;
+      code: 6013;
       name: 'InvalidSecondOracle';
       msg: 'Cannot configure secondary oracle without primary';
     },
     {
-      code: 6013;
+      code: 6014;
       name: 'NoCloseMarketAdmin';
       msg: 'This market does not have a `close_market_admin` and thus cannot be closed.';
     },
     {
-      code: 6014;
+      code: 6015;
       name: 'InvalidCloseMarketAdmin';
       msg: "The signer of this transaction is not this market's `close_market_admin`.";
     },
     {
-      code: 6015;
+      code: 6016;
       name: 'InvalidOpenOrdersAdmin';
       msg: 'The `open_orders_admin` required by this market to sign all instructions that creates orders is missing or is not valid';
     },
     {
-      code: 6016;
+      code: 6017;
       name: 'InvalidConsumeEventsAdmin';
       msg: 'The `consume_events_admin` required by this market to sign all instructions that consume events is missing or is not valid';
     },
     {
-      code: 6017;
+      code: 6018;
       name: 'IndexerActiveOO';
       msg: 'Cannot be closed due to the existence of open orders accounts';
     },
     {
-      code: 6018;
+      code: 6019;
       name: 'UnknownOracleType';
       msg: 'oracle type cannot be determined';
     },
     {
-      code: 6019;
+      code: 6020;
       name: 'OracleConfidence';
       msg: 'an oracle does not reach the confidence threshold';
     },
     {
-      code: 6020;
+      code: 6021;
       name: 'OracleStale';
       msg: 'an oracle is stale';
     },
     {
-      code: 6021;
+      code: 6022;
       name: 'OrderIdNotFound';
       msg: 'Order id not found on the orderbook';
     },
     {
-      code: 6022;
+      code: 6023;
       name: 'EventQueueContainsElements';
       msg: "Event queue contains elements and market can't be closed";
     },
     {
-      code: 6023;
+      code: 6024;
       name: 'InvalidOrderPostIOC';
       msg: 'ImmediateOrCancel is not a PostOrderType';
     },
     {
-      code: 6024;
+      code: 6025;
       name: 'InvalidOrderPostMarket';
       msg: 'Market is not a PostOrderType';
     },
     {
-      code: 6025;
+      code: 6026;
       name: 'WouldSelfTrade';
       msg: 'would self trade';
     },
     {
-      code: 6026;
+      code: 6027;
       name: 'MarketHasExpired';
       msg: 'The Market has already expired.';
     },
     {
-      code: 6027;
+      code: 6028;
       name: 'InvalidPriceLots';
       msg: 'Price lots should be greater than zero';
     },
     {
-      code: 6028;
+      code: 6029;
       name: 'InvalidOraclePrice';
       msg: 'Oracle price above market limits';
     },
     {
-      code: 6029;
+      code: 6030;
       name: 'MarketHasNotExpired';
       msg: 'The Market has not expired yet.';
     },
     {
-      code: 6030;
+      code: 6031;
       name: 'NoOwnerOrDelegate';
       msg: 'No correct owner or delegate.';
     },
     {
-      code: 6031;
+      code: 6032;
       name: 'NoOwner';
       msg: 'No correct owner';
     },
     {
-      code: 6032;
+      code: 6033;
       name: 'OpenOrdersFull';
       msg: 'No free order index in open orders account';
     },
     {
-      code: 6033;
+      code: 6034;
       name: 'BookContainsElements';
       msg: 'Book contains elements';
     },
     {
-      code: 6034;
+      code: 6035;
       name: 'OpenOrdersOrderNotFound';
       msg: 'Could not find order in user account';
     },
     {
-      code: 6035;
+      code: 6036;
       name: 'InvalidPostAmount';
       msg: 'Amount to post above book limits';
     },
     {
-      code: 6036;
+      code: 6037;
       name: 'DisabledOraclePeg';
       msg: 'Oracle peg orders are not enabled for this market';
     },
     {
-      code: 6037;
+      code: 6038;
       name: 'NonEmptyMarket';
       msg: 'Cannot close a non-empty market';
     },
     {
-      code: 6038;
+      code: 6039;
       name: 'NonEmptyOpenOrdersPosition';
       msg: 'Cannot close a non-empty open orders account';
     },
@@ -3478,7 +3511,10 @@ export const IDL: OpenbookV2 = {
     },
     {
       name: 'closeMarket',
-      docs: ['Close a [`Market`](crate::state::Market).'],
+      docs: [
+        'Close a [`Market`](crate::state::Market) (only',
+        '[`close_market_admin`](crate::state::Market::close_market_admin)).',
+      ],
       accounts: [
         {
           name: 'closeMarketAdmin',
@@ -3520,6 +3556,9 @@ export const IDL: OpenbookV2 = {
     },
     {
       name: 'createOpenOrdersIndexer',
+      docs: [
+        'Create an [`OpenOrdersIndexer`](crate::state::OpenOrdersIndexer) account.',
+      ],
       accounts: [
         {
           name: 'payer',
@@ -3551,6 +3590,9 @@ export const IDL: OpenbookV2 = {
     },
     {
       name: 'closeOpenOrdersIndexer',
+      docs: [
+        'Close an [`OpenOrdersIndexer`](crate::state::OpenOrdersIndexer) account.',
+      ],
       accounts: [
         {
           name: 'owner',
@@ -3577,6 +3619,9 @@ export const IDL: OpenbookV2 = {
     },
     {
       name: 'createOpenOrdersAccount',
+      docs: [
+        'Create an [`OpenOrdersAccount`](crate::state::OpenOrdersAccount).',
+      ],
       accounts: [
         {
           name: 'payer',
@@ -3619,6 +3664,9 @@ export const IDL: OpenbookV2 = {
     },
     {
       name: 'closeOpenOrdersAccount',
+      docs: [
+        'Close an [`OpenOrdersAccount`](crate::state::OpenOrdersAccount).',
+      ],
       accounts: [
         {
           name: 'owner',
@@ -3747,7 +3795,7 @@ export const IDL: OpenbookV2 = {
     },
     {
       name: 'cancelAndPlaceOrders',
-      docs: ['Cancel orders and place multiple orders.', ''],
+      docs: ['Cancel orders and place multiple orders.'],
       accounts: [
         {
           name: 'signer',
@@ -3852,6 +3900,7 @@ export const IDL: OpenbookV2 = {
     },
     {
       name: 'placeOrderPegged',
+      docs: ['Place an oracle-peg order.'],
       accounts: [
         {
           name: 'signer',
@@ -4450,7 +4499,8 @@ export const IDL: OpenbookV2 = {
     {
       name: 'settleFundsExpired',
       docs: [
-        'Withdraw any available tokens when the market is expired (only `close_market_admin`)',
+        'Withdraw any available tokens when the market is expired (only',
+        '[`close_market_admin`](crate::state::Market::close_market_admin)).',
       ],
       accounts: [
         {
@@ -4556,6 +4606,9 @@ export const IDL: OpenbookV2 = {
     },
     {
       name: 'setDelegate',
+      docs: [
+        'Update the [`delegate`](crate::state::OpenOrdersAccount::delegate) of an open orders account.',
+      ],
       accounts: [
         {
           name: 'owner',
@@ -4579,7 +4632,8 @@ export const IDL: OpenbookV2 = {
     {
       name: 'setMarketExpired',
       docs: [
-        'Set market to expired before pruning orders and closing the market',
+        'Set market to expired before pruning orders and closing the market (only',
+        '[`close_market_admin`](crate::state::Market::close_market_admin)).',
       ],
       accounts: [
         {
@@ -4597,6 +4651,10 @@ export const IDL: OpenbookV2 = {
     },
     {
       name: 'pruneOrders',
+      docs: [
+        'Remove orders from the book when the market is expired (only',
+        '[`close_market_admin`](crate::state::Market::close_market_admin)).',
+      ],
       accounts: [
         {
           name: 'closeMarketAdmin',
@@ -5887,6 +5945,9 @@ export const IDL: OpenbookV2 = {
           {
             name: 'SwitchboardV2',
           },
+          {
+            name: 'RaydiumCLMM',
+          },
         ],
       },
     },
@@ -6492,166 +6553,171 @@ export const IDL: OpenbookV2 = {
     },
     {
       code: 6006,
+      name: 'InvalidInputOrdersAmounts',
+      msg: 'Input amounts above limits',
+    },
+    {
+      code: 6007,
       name: 'InvalidInputPriceLots',
       msg: 'Price lots should be greater than zero',
     },
     {
-      code: 6007,
+      code: 6008,
       name: 'InvalidInputPegLimit',
       msg: 'Peg limit should be greater than zero',
     },
     {
-      code: 6008,
+      code: 6009,
       name: 'InvalidInputOrderType',
       msg: 'The order type is invalid. A taker order must be Market or ImmediateOrCancel',
     },
     {
-      code: 6009,
+      code: 6010,
       name: 'InvalidInputOrderId',
       msg: 'Order id cannot be zero',
     },
     {
-      code: 6010,
+      code: 6011,
       name: 'InvalidInputQueueSlots',
       msg: 'Slot above queue limit',
     },
     {
-      code: 6011,
+      code: 6012,
       name: 'InvalidOracleTypes',
       msg: 'Cannot combine two oracles of different providers',
     },
     {
-      code: 6012,
+      code: 6013,
       name: 'InvalidSecondOracle',
       msg: 'Cannot configure secondary oracle without primary',
     },
     {
-      code: 6013,
+      code: 6014,
       name: 'NoCloseMarketAdmin',
       msg: 'This market does not have a `close_market_admin` and thus cannot be closed.',
     },
     {
-      code: 6014,
+      code: 6015,
       name: 'InvalidCloseMarketAdmin',
       msg: "The signer of this transaction is not this market's `close_market_admin`.",
     },
     {
-      code: 6015,
+      code: 6016,
       name: 'InvalidOpenOrdersAdmin',
       msg: 'The `open_orders_admin` required by this market to sign all instructions that creates orders is missing or is not valid',
     },
     {
-      code: 6016,
+      code: 6017,
       name: 'InvalidConsumeEventsAdmin',
       msg: 'The `consume_events_admin` required by this market to sign all instructions that consume events is missing or is not valid',
     },
     {
-      code: 6017,
+      code: 6018,
       name: 'IndexerActiveOO',
       msg: 'Cannot be closed due to the existence of open orders accounts',
     },
     {
-      code: 6018,
+      code: 6019,
       name: 'UnknownOracleType',
       msg: 'oracle type cannot be determined',
     },
     {
-      code: 6019,
+      code: 6020,
       name: 'OracleConfidence',
       msg: 'an oracle does not reach the confidence threshold',
     },
     {
-      code: 6020,
+      code: 6021,
       name: 'OracleStale',
       msg: 'an oracle is stale',
     },
     {
-      code: 6021,
+      code: 6022,
       name: 'OrderIdNotFound',
       msg: 'Order id not found on the orderbook',
     },
     {
-      code: 6022,
+      code: 6023,
       name: 'EventQueueContainsElements',
       msg: "Event queue contains elements and market can't be closed",
     },
     {
-      code: 6023,
+      code: 6024,
       name: 'InvalidOrderPostIOC',
       msg: 'ImmediateOrCancel is not a PostOrderType',
     },
     {
-      code: 6024,
+      code: 6025,
       name: 'InvalidOrderPostMarket',
       msg: 'Market is not a PostOrderType',
     },
     {
-      code: 6025,
+      code: 6026,
       name: 'WouldSelfTrade',
       msg: 'would self trade',
     },
     {
-      code: 6026,
+      code: 6027,
       name: 'MarketHasExpired',
       msg: 'The Market has already expired.',
     },
     {
-      code: 6027,
+      code: 6028,
       name: 'InvalidPriceLots',
       msg: 'Price lots should be greater than zero',
     },
     {
-      code: 6028,
+      code: 6029,
       name: 'InvalidOraclePrice',
       msg: 'Oracle price above market limits',
     },
     {
-      code: 6029,
+      code: 6030,
       name: 'MarketHasNotExpired',
       msg: 'The Market has not expired yet.',
     },
     {
-      code: 6030,
+      code: 6031,
       name: 'NoOwnerOrDelegate',
       msg: 'No correct owner or delegate.',
     },
     {
-      code: 6031,
+      code: 6032,
       name: 'NoOwner',
       msg: 'No correct owner',
     },
     {
-      code: 6032,
+      code: 6033,
       name: 'OpenOrdersFull',
       msg: 'No free order index in open orders account',
     },
     {
-      code: 6033,
+      code: 6034,
       name: 'BookContainsElements',
       msg: 'Book contains elements',
     },
     {
-      code: 6034,
+      code: 6035,
       name: 'OpenOrdersOrderNotFound',
       msg: 'Could not find order in user account',
     },
     {
-      code: 6035,
+      code: 6036,
       name: 'InvalidPostAmount',
       msg: 'Amount to post above book limits',
     },
     {
-      code: 6036,
+      code: 6037,
       name: 'DisabledOraclePeg',
       msg: 'Oracle peg orders are not enabled for this market',
     },
     {
-      code: 6037,
+      code: 6038,
       name: 'NonEmptyMarket',
       msg: 'Cannot close a non-empty market',
     },
     {
-      code: 6038,
+      code: 6039,
       name: 'NonEmptyOpenOrdersPosition',
       msg: 'Cannot close a non-empty open orders account',
     },
