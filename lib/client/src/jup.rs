@@ -11,7 +11,10 @@ use openbook_v2::{
     state::{BookSide, EventQueue, Market, Orderbook, Side},
 };
 
-use crate::book::{amounts_from_book, Amounts};
+use crate::{
+    book::{amounts_from_book, Amounts},
+    remaining_accounts_to_crank,
+};
 use jupiter_amm_interface::{
     AccountMap, Amm, KeyedAccount, Quote, QuoteParams, Side as JupiterSide, Swap,
     SwapAndAccountMetas, SwapParams,
@@ -185,6 +188,7 @@ impl Amm for OpenBookMarket {
 
     fn get_swap_and_account_metas(&self, swap_params: &SwapParams) -> Result<SwapAndAccountMetas> {
         let SwapParams {
+            in_amount,
             source_mint,
             user_destination_token_account,
             user_source_token_account,
@@ -195,9 +199,9 @@ impl Amm for OpenBookMarket {
         let source_is_quote = source_mint == &self.market.quote_mint;
 
         let side = if source_is_quote {
-            JupiterSide::Bid
+            Side::Bid
         } else {
-            JupiterSide::Ask
+            Side::Ask
         };
 
         let (user_quote_account, user_base_account) = if source_is_quote {
@@ -225,7 +229,50 @@ impl Amm for OpenBookMarket {
             referrer_account: None,
         };
 
-        let account_metas = accounts.to_account_metas(None);
+        let mut account_metas = accounts.to_account_metas(None);
+
+        let input_amount = i64::try_from(*in_amount)?;
+
+        let (max_base_lots, max_quote_lots_including_fees) = match side {
+            Side::Bid => (
+                self.market.max_base_lots(),
+                input_amount / self.market.quote_lot_size
+                    + input_amount % self.market.quote_lot_size,
+            ),
+            Side::Ask => (
+                input_amount / self.market.base_lot_size,
+                self.market.max_quote_lots(),
+            ),
+        };
+
+        let bids_ref = RefCell::new(self.bids);
+        let asks_ref = RefCell::new(self.asks);
+        let book = Orderbook {
+            bids: bids_ref.borrow_mut(),
+            asks: asks_ref.borrow_mut(),
+        };
+
+        let remainigs = remaining_accounts_to_crank(
+            book,
+            side,
+            max_base_lots,
+            max_quote_lots_including_fees,
+            &self.market,
+            self.oracle_price,
+            self.timestamp,
+        )?;
+
+        let remainigs_accounts: Vec<AccountMeta> = remainigs
+            .iter()
+            .map(|&pubkey| AccountMeta::new(pubkey, false))
+            .collect();
+        account_metas.extend(remainigs_accounts);
+
+        let side = if source_is_quote {
+            JupiterSide::Bid
+        } else {
+            JupiterSide::Ask
+        };
 
         Ok(SwapAndAccountMetas {
             swap: Swap::Openbook { side: { side } },
