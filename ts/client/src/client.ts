@@ -24,6 +24,7 @@ import {
   SystemProgram,
   type TransactionInstruction,
   type TransactionSignature,
+  Transaction,
 } from '@solana/web3.js';
 import * as splToken from '@solana/spl-token';
 import { IDL, type OpenbookV2 } from './openbook_v2';
@@ -51,6 +52,9 @@ export interface OpenBookClientOptions {
 export function nameToString(name: number[]): string {
   return utf8.decode(new Uint8Array(name)).split('\x00')[0];
 }
+
+const booksideSpace = 90944 + 8;
+const eventQueueSpace = 91280 + 8;
 
 export class OpenBookV2Client {
   public program: Program<OpenbookV2>;
@@ -102,6 +106,31 @@ export class OpenBookV2Client {
         ...opts,
       },
     );
+  }
+
+  public async createProgramAccount(
+    authority: Keypair,
+    size: number,
+  ): Promise<PublicKey> {
+    const lamports = await this.connection.getMinimumBalanceForRentExemption(
+      size,
+    );
+    const address = Keypair.generate();
+
+    const tx = new Transaction().add(
+      SystemProgram.createAccount({
+        fromPubkey: authority.publicKey,
+        newAccountPubkey: address.publicKey,
+        lamports,
+        space: size,
+        programId: this.programId,
+      }),
+    ).instructions;
+
+    await this.sendAndConfirmTransaction(tx, {
+      additionalSigners: [authority, address],
+    });
+    return address.publicKey;
   }
 
   public async getMarket(publicKey: PublicKey): Promise<MarketAccount | null> {
@@ -182,47 +211,17 @@ export class OpenBookV2Client {
       maxStalenessSlots: 100,
     },
     collectFeeAdmin?: PublicKey,
-  ): Promise<TransactionSignature> {
-    const bids = Keypair.generate().publicKey;
-    const booksideSpace = 90944 + 8;
-    const ix0 = SystemProgram.createAccount({
-      fromPubkey: payer.publicKey,
-      newAccountPubkey: bids,
-      lamports: await this.connection.getMinimumBalanceForRentExemption(
-        booksideSpace,
-      ),
-      space: booksideSpace,
-      programId: SystemProgram.programId,
-    });
-    const asks = Keypair.generate().publicKey;
-    const ix1 = SystemProgram.createAccount({
-      fromPubkey: payer.publicKey,
-      newAccountPubkey: asks,
-      lamports: await this.connection.getMinimumBalanceForRentExemption(
-        booksideSpace,
-      ),
-      space: booksideSpace,
-      programId: SystemProgram.programId,
-    });
-    const eventQueue = Keypair.generate().publicKey;
-    const eventQueueSpace = 91288;
-    const ix2 = SystemProgram.createAccount({
-      fromPubkey: payer.publicKey,
-      newAccountPubkey: eventQueue,
-      lamports: await this.connection.getMinimumBalanceForRentExemption(
-        eventQueueSpace,
-      ),
-      space: eventQueueSpace,
-      programId: SystemProgram.programId,
-    });
+  ): Promise<string> {
+    const bids = await this.createProgramAccount(payer, booksideSpace);
+    const asks = await this.createProgramAccount(payer, booksideSpace);
+    const eventQueue = await this.createProgramAccount(payer, eventQueueSpace);
 
     const market = Keypair.generate();
-
     const [marketAuthority] = PublicKey.findProgramAddressSync(
       [Buffer.from('Market'), market.publicKey.toBuffer()],
       this.program.programId,
     );
-    
+
     const baseVault = await splToken.createAccount(
       this.connection,
       payer,
@@ -230,6 +229,7 @@ export class OpenBookV2Client {
       marketAuthority,
       Keypair.generate(),
     );
+
     const quoteVault = await splToken.createAccount(
       this.connection,
       payer,
@@ -277,7 +277,9 @@ export class OpenBookV2Client {
       })
       .instruction();
 
-    return await this.sendAndConfirmTransaction([ix0, ix1, ix2, ix]);
+    return await this.sendAndConfirmTransaction([ix], {
+      additionalSigners: [payer, market],
+    });
   }
 
   public findOpenOrdersIndexer(market: PublicKey): PublicKey {
