@@ -129,6 +129,10 @@ pub fn cancel_and_place_orders(
     market.base_deposit_total += deposit_base_amount;
     market.quote_deposit_total += deposit_quote_amount;
 
+    if event_heap.len() > event_heap_size_before {
+        position.penalty_events += 1;
+    }
+
     token_transfer(
         deposit_quote_amount,
         &ctx.accounts.token_program,
@@ -143,15 +147,6 @@ pub fn cancel_and_place_orders(
         &ctx.accounts.market_base_vault,
         &ctx.accounts.signer,
     )?;
-
-    if event_heap.len() > event_heap_size_before {
-        system_program_transfer(
-            PENALTY_EVENT_HEAP,
-            &ctx.accounts.system_program,
-            &ctx.accounts.signer,
-            &ctx.accounts.market,
-        )?;
-    }
 
     Ok(order_ids)
 }

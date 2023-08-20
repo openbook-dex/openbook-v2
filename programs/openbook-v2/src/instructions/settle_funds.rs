@@ -32,6 +32,16 @@ pub fn settle_funds<'info>(ctx: Context<'_, '_, '_, 'info, SettleFunds<'info>>) 
 
     let seeds = market_seeds!(market, ctx.accounts.market.key());
 
+    if pa.penalty_events > 0 {
+        system_program_transfer(
+            pa.penalty_events * PENALTY_EVENT_HEAP,
+            &ctx.accounts.system_program,
+            &ctx.accounts.owner,
+            &ctx.accounts.market,
+        )?;
+        pa.penalty_events = 0;
+    }
+
     drop(market);
 
     if let Some(referrer_account) = &ctx.accounts.referrer_account {
