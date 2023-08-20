@@ -5,10 +5,13 @@ use anchor_lang::prelude::*;
 
 pub fn create_open_orders_account(ctx: Context<CreateOpenOrdersAccount>) -> Result<()> {
     let mut account = ctx.accounts.open_orders_account.load_init()?;
-    let mut indexer = ctx.accounts.open_orders_indexer.load_mut()?;
-    indexer.created_counter += 1;
+    let indexer = &mut ctx.accounts.open_orders_indexer;
+    indexer
+        .addresses
+        .push(ctx.accounts.open_orders_account.key());
+    indexer.total_accounts += 1;
 
-    account.account_num = indexer.created_counter;
+    account.account_num = indexer.total_accounts;
     account.market = ctx.accounts.market.key();
     account.bump = *ctx.bumps.get("open_orders_account").unwrap();
     account.owner = ctx.accounts.owner.key();

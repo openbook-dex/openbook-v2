@@ -6,10 +6,10 @@ pub struct CloseOpenOrdersAccount<'info> {
     pub owner: Signer<'info>,
     #[account(
         mut,
-        has_one = owner,
-        constraint = open_orders_indexer.load()?.market == open_orders_account.load()?.market
+        seeds = [b"OpenOrdersIndexer".as_ref(), owner.key().as_ref()],
+        bump = open_orders_indexer.bump,
     )]
-    pub open_orders_indexer: AccountLoader<'info, OpenOrdersIndexer>,
+    pub open_orders_indexer: Account<'info, OpenOrdersIndexer>,
 
     #[account(
         mut,
