@@ -78,7 +78,7 @@ pub struct Market {
     pub seq_num: u64,
 
     /// Timestamp in seconds that the market was registered at.
-    pub registration_time: u64,
+    pub registration_time: i64,
 
     /// Fees
     ///

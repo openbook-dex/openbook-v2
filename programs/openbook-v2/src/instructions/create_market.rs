@@ -19,7 +19,7 @@ pub fn create_market(
     taker_fee: i64,
     time_expiry: i64,
 ) -> Result<()> {
-    let now_ts: u64 = Clock::get()?.unix_timestamp.try_into().unwrap();
+    let registration_time = Clock::get()?.unix_timestamp;
 
     require!(
         maker_fee.unsigned_abs() as i128 <= FEES_SCALE_FACTOR,
@@ -82,7 +82,7 @@ pub fn create_market(
         quote_lot_size,
         base_lot_size,
         seq_num: 0,
-        registration_time: now_ts,
+        registration_time,
         maker_fee,
         taker_fee,
         fees_accrued: 0,
