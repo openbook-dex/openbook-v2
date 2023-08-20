@@ -1,5 +1,6 @@
 use anchor_lang::prelude::*;
 use bytemuck::cast_ref;
+use itertools::Itertools;
 
 use crate::error::OpenBookError;
 use crate::state::*;
@@ -57,18 +58,14 @@ pub fn consume_events(
     let mut event_queue = ctx.accounts.event_queue.load_mut()?;
     let remaining_accs = &ctx.remaining_accounts;
 
-    let slots_to_consume: Vec<usize> = match slots {
-        Some(slots) => slots
-            .into_iter()
-            .filter(|slot| !event_queue.nodes[*slot].is_free())
-            .take(limit)
-            .collect(),
-        None => event_queue
-            .iter()
-            .map(|(_event, slot)| slot)
-            .take(limit)
-            .collect(),
-    };
+    let slots_to_consume = slots
+        .unwrap_or_default()
+        .into_iter()
+        .filter(|slot| !event_queue.nodes[*slot].is_free())
+        .chain(event_queue.iter().map(|(_event, slot)| slot))
+        .unique()
+        .take(limit)
+        .collect_vec();
 
     for slot in slots_to_consume {
         let event = match event_queue.at_slot(slot) {
