@@ -25,11 +25,11 @@ pub struct BookSideIter<'a> {
     fixed_iter: OrderTreeIter<'a>,
     oracle_pegged_iter: OrderTreeIter<'a>,
     now_ts: u64,
-    oracle_price_lots: i64,
+    oracle_price_lots: Option<i64>,
 }
 
 impl<'a> BookSideIter<'a> {
-    pub fn new(book_side: &'a BookSide, now_ts: u64, oracle_price_lots: i64) -> Self {
+    pub fn new(book_side: &'a BookSide, now_ts: u64, oracle_price_lots: Option<i64>) -> Self {
         Self {
             fixed_iter: book_side
                 .nodes
@@ -128,13 +128,17 @@ pub fn rank_orders<'a>(
     oracle_pegged: Option<(NodeHandle, &'a LeafNode)>,
     return_worse: bool,
     now_ts: u64,
-    oracle_price_lots: i64,
+    oracle_price_lots: Option<i64>,
 ) -> Option<BookSideIterItem<'a>> {
     // Enrich with data that'll always be needed
-    let oracle_pegged = oracle_pegged.map(|(handle, node)| {
-        let (state, price_lots) = oracle_pegged_price(oracle_price_lots, node, side);
-        (handle, node, price_lots, state)
-    });
+    let oracle_pegged = if let Some(oracle_price_lots) = oracle_price_lots {
+        oracle_pegged.map(|(handle, node)| {
+            let (state, price_lots) = oracle_pegged_price(oracle_price_lots, node, side);
+            (handle, node, price_lots, state)
+        })
+    } else {
+        None
+    };
 
     match (fixed, oracle_pegged) {
         (Some(f), Some(o)) => {
@@ -165,13 +169,18 @@ impl<'a> Iterator for BookSideIter<'a> {
         // Skip all the oracle pegged orders that aren't representable with the current oracle
         // price. Example: iterating asks, but the best ask is at offset -100 with the oracle at 50.
         // We need to skip asks until we find the first that has a price >= 1.
-        let mut o_peek = self.oracle_pegged_iter.peek();
-        while let Some((_, o_node)) = o_peek {
-            if oracle_pegged_price(self.oracle_price_lots, o_node, side).0 != OrderState::Skipped {
-                break;
+        let o_peek = if let Some(oracle_price_lots) = self.oracle_price_lots {
+            let mut o_peek = self.oracle_pegged_iter.peek();
+            while let Some((_, o_node)) = o_peek {
+                if oracle_pegged_price(oracle_price_lots, o_node, side).0 != OrderState::Skipped {
+                    break;
+                }
+                o_peek = self.oracle_pegged_iter.next()
             }
-            o_peek = self.oracle_pegged_iter.next()
-        }
+            o_peek
+        } else {
+            None
+        };
 
         let f_peek = self.fixed_iter.peek();
 

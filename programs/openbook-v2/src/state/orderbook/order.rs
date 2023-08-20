@@ -84,7 +84,7 @@ impl Order {
     fn price_for_order_type(
         &self,
         now_ts: u64,
-        oracle_price_lots: i64,
+        oracle_price_lots: Option<i64>,
         price_lots: i64,
         order_type: PostOrderType,
         order_book: &Orderbook,
@@ -105,10 +105,11 @@ impl Order {
 
     /// Compute the price_lots this order is currently at, as well as the price_data that
     /// would be stored in its OrderTree node if the order is posted to the orderbook.
+    /// Will fail for oracle peg if there is no oracle price passed.
     pub fn price(
         &self,
         now_ts: u64,
-        oracle_price_lots: i64,
+        oracle_price_lots: Option<i64>,
         order_book: &Orderbook,
     ) -> Result<(i64, u64)> {
         let price_lots = match self.params {
@@ -130,6 +131,7 @@ impl Order {
                 ..
             } => {
                 let price_lots = oracle_price_lots
+                    .unwrap() // unwrap fails if oracle has currently no price
                     .checked_add(price_offset_lots)
                     .ok_or(OpenBookError::InvalidPriceLots)?;
 
@@ -145,7 +147,8 @@ impl Order {
         require_gte!(price_lots, 1, OpenBookError::InvalidPriceLots);
         let price_data = match self.params {
             OrderParams::OraclePegged { .. } => {
-                oracle_pegged_price_data(price_lots - oracle_price_lots)
+                // unwrap fails oracle has currently no price
+                oracle_pegged_price_data(price_lots - oracle_price_lots.unwrap())
             }
             _ => fixed_price_data(price_lots)?,
         };

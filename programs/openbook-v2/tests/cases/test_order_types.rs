@@ -312,3 +312,5 @@ async fn test_inmediate_order() -> Result<(), TransportError> {
 
     Ok(())
 }
+
+// TODO: should test how this behaves with outdated oracles

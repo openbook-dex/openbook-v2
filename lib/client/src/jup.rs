@@ -34,7 +34,7 @@ pub struct OpenBookMarket {
     label: String,
     related_accounts: Vec<Pubkey>,
     reserve_mints: [Pubkey; 2],
-    oracle_price: I80F48,
+    oracle_price: Option<I80F48>,
 }
 
 impl Amm for OpenBookMarket {
@@ -84,7 +84,7 @@ impl Amm for OpenBookMarket {
             event_heap: EventHeap::zeroed(),
             bids: BookSide::zeroed(),
             asks: BookSide::zeroed(),
-            oracle_price: I80F48::ZERO,
+            oracle_price: None,
             timestamp: 0,
         })
     }
@@ -114,11 +114,11 @@ impl Amm for OpenBookMarket {
                 &oracle_acc(self.market.oracle_a),
                 &oracle_acc(self.market.oracle_b),
                 self.timestamp,
-            )?;
+            ).ok();
         } else if self.market.oracle_a.is_some() {
             self.oracle_price = self
                 .market
-                .oracle_price_from_a(&oracle_acc(self.market.oracle_a), self.timestamp)?;
+                .oracle_price_from_a(&oracle_acc(self.market.oracle_a), self.timestamp).ok();
         };
 
         Ok(())
