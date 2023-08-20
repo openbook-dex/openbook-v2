@@ -5,7 +5,7 @@ use crate::accounts_ix::*;
 use crate::accounts_zerocopy::*;
 use crate::error::*;
 use crate::state::*;
-use crate::token_utils::token_transfer;
+use crate::token_utils::*;
 
 #[allow(clippy::too_many_arguments)]
 pub fn cancel_and_place_orders(
@@ -30,6 +30,7 @@ pub fn cancel_and_place_orders(
         asks: ctx.accounts.asks.load_mut()?,
     };
     let mut event_heap = ctx.accounts.event_heap.load_mut()?;
+    let event_heap_size_before = event_heap.len();
 
     let now_ts: u64 = clock.unix_timestamp.try_into().unwrap();
     let oracle_price = if market.oracle_a.is_some() && market.oracle_b.is_some() {
@@ -142,6 +143,15 @@ pub fn cancel_and_place_orders(
         &ctx.accounts.market_base_vault,
         &ctx.accounts.signer,
     )?;
+
+    if event_heap.len() > event_heap_size_before {
+        system_program_transfer(
+            PENALTY_EVENT_HEAP,
+            &ctx.accounts.system_program,
+            &ctx.accounts.signer,
+            &ctx.accounts.market,
+        )?;
+    }
 
     Ok(order_ids)
 }

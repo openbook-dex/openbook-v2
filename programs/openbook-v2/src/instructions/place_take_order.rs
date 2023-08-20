@@ -33,6 +33,7 @@ pub fn place_take_order<'info>(
     };
 
     let mut event_heap = ctx.accounts.event_heap.load_mut()?;
+    let event_heap_size_before = event_heap.len();
 
     let now_ts: u64 = clock.unix_timestamp.try_into().unwrap();
     let oracle_price = if market.oracle_a.is_some() && market.oracle_b.is_some() {
@@ -136,6 +137,15 @@ pub fn place_take_order<'info>(
             referrer_account,
             &ctx.accounts.market_authority,
             seeds,
+        )?;
+    }
+
+    if event_heap.len() > event_heap_size_before {
+        system_program_transfer(
+            PENALTY_EVENT_HEAP,
+            &ctx.accounts.system_program,
+            &ctx.accounts.signer,
+            &ctx.accounts.market,
         )?;
     }
 

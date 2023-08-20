@@ -32,6 +32,7 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<
         asks: ctx.accounts.asks.load_mut()?,
     };
     let mut event_heap = ctx.accounts.event_heap.load_mut()?;
+    let event_heap_size_before = event_heap.len();
 
     let now_ts: u64 = clock.unix_timestamp.try_into().unwrap();
     let oracle_price = if market.oracle_a.is_some() && market.oracle_b.is_some() {
@@ -109,6 +110,15 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<
         &ctx.accounts.market_vault,
         &ctx.accounts.signer,
     )?;
+
+    if event_heap.len() > event_heap_size_before {
+        system_program_transfer(
+            PENALTY_EVENT_HEAP,
+            &ctx.accounts.system_program,
+            &ctx.accounts.signer,
+            &ctx.accounts.market,
+        )?;
+    }
 
     Ok(order_id)
 }
