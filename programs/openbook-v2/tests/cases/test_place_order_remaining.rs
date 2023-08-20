@@ -52,7 +52,7 @@ async fn test_place_cancel_order_remaining() -> Result<(), TransportError> {
         assert_eq!(bids_data.roots[0].leaf_count, 1);
     }
 
-    // Add remainings, no event on event_queue
+    // Add remainings, no event on event_heap
     send_tx(
         solana,
         PlaceOrderInstruction {
@@ -96,14 +96,12 @@ async fn test_place_cancel_order_remaining() -> Result<(), TransportError> {
         assert_eq!(open_orders_account_2.position.quote_free_native, 99960);
     }
 
-    // No events on event_queue
+    // No events on event_heap
     {
         let market_acc = solana.get_account::<Market>(market).await;
-        let event_queue = solana
-            .get_account::<EventQueue>(market_acc.event_queue)
-            .await;
+        let event_heap = solana.get_account::<EventHeap>(market_acc.event_heap).await;
 
-        assert_eq!(event_queue.header.count(), 0);
+        assert_eq!(event_heap.header.count(), 0);
     }
 
     // Order with expiry time of 10s
@@ -144,7 +142,7 @@ async fn test_place_cancel_order_remaining() -> Result<(), TransportError> {
         assert_eq!(open_orders_account_1.position.bids_base_lots, 1);
     }
 
-    // Add remainings, no event on event_queue. previous order is canceled
+    // Add remainings, no event on event_heap. previous order is canceled
     send_tx(
         solana,
         PlaceOrderInstruction {
@@ -176,14 +174,14 @@ async fn test_place_cancel_order_remaining() -> Result<(), TransportError> {
         assert_eq!(open_orders_account_1.position.bids_base_lots, 0);
     }
 
-    // No events on event_queue
+    // No events on event_heap
     {
         let market_acc = solana.get_account_boxed::<Market>(market).await;
-        let event_queue = solana
-            .get_account_boxed::<EventQueue>(market_acc.event_queue)
+        let event_heap = solana
+            .get_account_boxed::<EventHeap>(market_acc.event_heap)
             .await;
 
-        assert_eq!(event_queue.header.count(), 0);
+        assert_eq!(event_heap.header.count(), 0);
     }
 
     Ok(())

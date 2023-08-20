@@ -50,8 +50,8 @@ pub struct Market {
     pub bids: Pubkey,
     /// Address of the BookSide account for asks
     pub asks: Pubkey,
-    /// Address of the EventQueue account
-    pub event_queue: Pubkey,
+    /// Address of the EventHeap account
+    pub event_heap: Pubkey,
 
     /// Oracles account address
     pub oracle_a: NonZeroPubkeyOption,
@@ -129,7 +129,7 @@ const_assert_eq!(
     5 +                         // padding1
     8 +                         // time_expiry
     16 +                        // name
-    3 * 32 +                    // bids, asks, and event_queue
+    3 * 32 +                    // bids, asks, and event_heap
     32 +                        // oracle_a
     32 +                        // oracle_b
     size_of::<OracleConfig>() + // oracle_config

@@ -75,7 +75,7 @@ pub fn create_market(
         name: fill_from_str(&name)?,
         bids: ctx.accounts.bids.key(),
         asks: ctx.accounts.asks.key(),
-        event_queue: ctx.accounts.event_queue.key(),
+        event_heap: ctx.accounts.event_heap.key(),
         oracle_a,
         oracle_b,
         oracle_config: oracle_config.to_oracle_config(),
@@ -107,8 +107,8 @@ pub fn create_market(
     };
     orderbook.init();
 
-    let mut event_queue = ctx.accounts.event_queue.load_init()?;
-    event_queue.init();
+    let mut event_heap = ctx.accounts.event_heap.load_init()?;
+    event_heap.init();
 
     emit_cpi!(MarketMetaDataLog {
         market: ctx.accounts.market.key(),

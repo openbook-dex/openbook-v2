@@ -32,7 +32,7 @@ pub fn place_take_order<'info>(
         asks: ctx.accounts.asks.load_mut()?,
     };
 
-    let mut event_queue = ctx.accounts.event_queue.load_mut()?;
+    let mut event_heap = ctx.accounts.event_heap.load_mut()?;
 
     let now_ts: u64 = clock.unix_timestamp.try_into().unwrap();
     let oracle_price = if market.oracle_a.is_some() && market.oracle_b.is_some() {
@@ -61,7 +61,7 @@ pub fn place_take_order<'info>(
     } = book.new_order(
         &order,
         &mut market,
-        &mut event_queue,
+        &mut event_heap,
         oracle_price,
         None,
         &ctx.accounts.signer.key(),

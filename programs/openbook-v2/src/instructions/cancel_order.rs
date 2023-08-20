@@ -2,7 +2,6 @@ use anchor_lang::prelude::*;
 
 use crate::accounts_ix::*;
 use crate::error::*;
-use crate::logs::CancelOrderLog;
 use crate::state::*;
 
 pub fn cancel_order(ctx: Context<CancelOrder>, order_id: u128) -> Result<()> {
@@ -24,20 +23,13 @@ pub fn cancel_order(ctx: Context<CancelOrder>, order_id: u128) -> Result<()> {
         asks: ctx.accounts.asks.load_mut()?,
     };
 
-    let leaf_node = book.cancel_order(
+    book.cancel_order(
         &mut open_orders_account,
         order_id,
         order_side_and_tree,
         *market,
         Some(ctx.accounts.open_orders_account.key()),
     )?;
-
-    emit!(CancelOrderLog {
-        open_orders_account: ctx.accounts.open_orders_account.key(),
-        slot: leaf_node.owner_slot,
-        side: order_side_and_tree.side().into(),
-        quantity: leaf_node.quantity,
-    });
 
     Ok(())
 }

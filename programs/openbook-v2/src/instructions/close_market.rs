@@ -17,10 +17,10 @@ pub fn close_market(ctx: Context<CloseMarket>) -> Result<()> {
     };
     require!(book.is_empty(), OpenBookError::BookContainsElements);
 
-    let event_queue = ctx.accounts.event_queue.load()?;
+    let event_heap = ctx.accounts.event_heap.load()?;
     require!(
-        event_queue.is_empty(),
-        OpenBookError::EventQueueContainsElements
+        event_heap.is_empty(),
+        OpenBookError::EventHeapContainsElements
     );
 
     Ok(())

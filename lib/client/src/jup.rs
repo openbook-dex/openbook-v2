@@ -8,7 +8,7 @@ use openbook_v2::{
     accounts::PlaceTakeOrder,
     accounts_zerocopy,
     pubkey_option::NonZeroPubkeyOption,
-    state::{BookSide, EventQueue, Market, Orderbook, Side},
+    state::{BookSide, EventHeap, Market, Orderbook, Side},
 };
 
 use crate::{
@@ -26,7 +26,7 @@ use std::cell::RefCell;
 #[derive(Clone)]
 pub struct OpenBookMarket {
     market: Market,
-    event_queue: EventQueue,
+    event_heap: EventHeap,
     bids: BookSide,
     asks: BookSide,
     timestamp: u64,
@@ -63,7 +63,7 @@ impl Amm for OpenBookMarket {
         let mut related_accounts = vec![
             market.bids,
             market.asks,
-            market.event_queue,
+            market.event_heap,
             market.market_base_vault,
             market.market_quote_vault,
             clock::ID,
@@ -81,7 +81,7 @@ impl Amm for OpenBookMarket {
             label: market.name().to_string(),
             related_accounts,
             reserve_mints: [market.base_mint, market.quote_mint],
-            event_queue: EventQueue::zeroed(),
+            event_heap: EventHeap::zeroed(),
             bids: BookSide::zeroed(),
             asks: BookSide::zeroed(),
             oracle_price: I80F48::ZERO,
@@ -96,9 +96,8 @@ impl Amm for OpenBookMarket {
         let asks_data = account_map.get(&self.market.asks).unwrap();
         self.asks = BookSide::try_deserialize(&mut asks_data.data.as_slice()).unwrap();
 
-        let event_queue_data = account_map.get(&self.market.event_queue).unwrap();
-        self.event_queue =
-            EventQueue::try_deserialize(&mut event_queue_data.data.as_slice()).unwrap();
+        let event_heap_data = account_map.get(&self.market.event_heap).unwrap();
+        self.event_heap = EventHeap::try_deserialize(&mut event_heap_data.data.as_slice()).unwrap();
 
         let clock_data = account_map.get(&clock::ID).unwrap();
         let clock: Clock = bincode::deserialize(clock_data.data.as_slice())?;
@@ -220,7 +219,7 @@ impl Amm for OpenBookMarket {
             user_quote_account,
             market_base_vault: self.market.market_base_vault,
             market_quote_vault: self.market.market_quote_vault,
-            event_queue: self.market.event_queue,
+            event_heap: self.market.event_heap,
             oracle_a: Option::from(self.market.oracle_a),
             oracle_b: Option::from(self.market.oracle_b),
             token_program: Token::id(),

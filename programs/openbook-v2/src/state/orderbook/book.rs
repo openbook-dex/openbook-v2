@@ -2,7 +2,7 @@ use crate::logs::TotalOrderFillEvent;
 use crate::state::MAX_OPEN_ORDERS;
 use crate::{
     error::*,
-    state::{orderbook::bookside::*, EventQueue, Market, OpenOrdersAccount},
+    state::{orderbook::bookside::*, EventHeap, Market, OpenOrdersAccount},
 };
 use anchor_lang::prelude::*;
 use bytemuck::cast;
@@ -63,7 +63,7 @@ impl<'a> Orderbook<'a> {
         &mut self,
         order: &Order,
         open_book_market: &mut Market,
-        event_queue: &mut EventQueue,
+        event_heap: &mut EventHeap,
         oracle_price: Option<I80F48>,
         mut open_orders_account: Option<&mut OpenOrdersAccount>,
         owner: &Pubkey,
@@ -138,7 +138,7 @@ impl<'a> Orderbook<'a> {
                         other_side,
                         best_opposing.node.owner_slot,
                         now_ts,
-                        event_queue.header.seq_num,
+                        event_heap.header.seq_num,
                         best_opposing.node.owner,
                         best_opposing.node.quantity,
                     );
@@ -146,7 +146,7 @@ impl<'a> Orderbook<'a> {
                     process_out_event(
                         event,
                         market,
-                        event_queue,
+                        event_heap,
                         open_orders_account.as_deref_mut(),
                         owner,
                         remaining_accs,
@@ -189,7 +189,7 @@ impl<'a> Orderbook<'a> {
                         decremented_quote_lots += match_quote_lots;
                     }
                     SelfTradeBehavior::CancelProvide => {
-                        // The open orders acc is always present in this case, no need event_queue
+                        // The open orders acc is always present in this case, no need event_heap
                         open_orders_account.as_mut().unwrap().cancel_order(
                             best_opposing.node.owner_slot as usize,
                             best_opposing.node.quantity,
@@ -229,7 +229,7 @@ impl<'a> Orderbook<'a> {
                 maker_out,
                 best_opposing.node.owner_slot,
                 now_ts,
-                event_queue.header.seq_num,
+                event_heap.header.seq_num,
                 best_opposing.node.owner,
                 best_opposing.node.client_order_id,
                 best_opposing.node.timestamp,
@@ -243,7 +243,7 @@ impl<'a> Orderbook<'a> {
             process_fill_event(
                 fill,
                 market,
-                event_queue,
+                event_heap,
                 remaining_accs,
                 &mut number_of_processed_fill_events,
             )?;
@@ -390,14 +390,14 @@ impl<'a> Orderbook<'a> {
                     side,
                     expired_order.owner_slot,
                     now_ts,
-                    event_queue.header.seq_num,
+                    event_heap.header.seq_num,
                     expired_order.owner,
                     expired_order.quantity,
                 );
                 process_out_event(
                     event,
                     market,
-                    event_queue,
+                    event_heap,
                     Some(open_orders),
                     owner,
                     remaining_accs,
@@ -417,14 +417,14 @@ impl<'a> Orderbook<'a> {
                     side,
                     worst_order.owner_slot,
                     now_ts,
-                    event_queue.header.seq_num,
+                    event_heap.header.seq_num,
                     worst_order.owner,
                     worst_order.quantity,
                 );
                 process_out_event(
                     event,
                     market,
-                    event_queue,
+                    event_heap,
                     Some(open_orders),
                     owner,
                     remaining_accs,
@@ -511,7 +511,7 @@ impl<'a> Orderbook<'a> {
             );
             if cancel_result.is_anchor_error_with_code(OpenBookError::OrderIdNotFound.into()) {
                 // It's possible for the order to be filled or expired already.
-                // There will be an event on the queue, the perp order slot is freed once
+                // There will be an event on the heap, the perp order slot is freed once
                 // it is processed.
                 msg!(
                     "order {} was not found on orderbook, expired or filled already",
@@ -554,7 +554,7 @@ impl<'a> Orderbook<'a> {
 pub fn process_out_event(
     event: OutEvent,
     market: &Market,
-    event_queue: &mut EventQueue,
+    event_heap: &mut EventHeap,
     open_orders_account: Option<&mut OpenOrdersAccount>,
     owner: &Pubkey,
     remaining_accs: &[AccountInfo],
@@ -571,7 +571,7 @@ pub fn process_out_event(
         let mut acc = ooa.load_mut()?;
         acc.cancel_order(event.owner_slot as usize, event.quantity, *market);
     } else {
-        event_queue.push_back(cast(event));
+        event_heap.push_back(cast(event));
     }
 
     Ok(())
@@ -580,7 +580,7 @@ pub fn process_out_event(
 pub fn process_fill_event(
     event: FillEvent,
     market: &mut Market,
-    event_queue: &mut EventQueue,
+    event_heap: &mut EventHeap,
     remaining_accs: &[AccountInfo],
     number_of_processed_fill_events: &mut usize,
 ) -> Result<()> {
@@ -596,7 +596,7 @@ pub fn process_fill_event(
     }
 
     if !is_processed {
-        event_queue.push_back(cast(event));
+        event_heap.push_back(cast(event));
     }
 
     Ok(())

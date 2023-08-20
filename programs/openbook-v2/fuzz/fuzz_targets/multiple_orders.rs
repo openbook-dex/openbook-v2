@@ -254,7 +254,7 @@ fn run_fuzz(fuzz_data: FuzzData) -> Corpus {
     }
 
     {
-        info!("cleaning event_queue");
+        info!("cleaning event_heap");
         let consume_events_fuzz = FuzzInstruction::ConsumeEvents {
             user_ids: HashSet::from_iter(ctx.users.keys().cloned()),
             data: openbook_v2::instruction::ConsumeEvents {
@@ -262,19 +262,19 @@ fn run_fuzz(fuzz_data: FuzzData) -> Corpus {
             },
         };
 
-        let event_queue_len = |ctx: &FuzzContext| -> usize {
-            let event_queue = ctx
+        let event_heap_len = |ctx: &FuzzContext| -> usize {
+            let event_heap = ctx
                 .state
-                .get_account::<openbook_v2::state::EventQueue>(&ctx.event_queue)
+                .get_account::<openbook_v2::state::EventHeap>(&ctx.event_heap)
                 .unwrap();
-            event_queue.len()
+            event_heap.len()
         };
 
-        for _ in (0..event_queue_len(&ctx)).step_by(MAX_EVENTS_CONSUME) {
+        for _ in (0..event_heap_len(&ctx)).step_by(MAX_EVENTS_CONSUME) {
             ctx.run(&consume_events_fuzz);
         }
 
-        assert_eq!(event_queue_len(&ctx), 0);
+        assert_eq!(event_heap_len(&ctx), 0);
     }
 
     {
@@ -503,7 +503,7 @@ mod error_parser {
 
     pub fn consume_given_events(err: ProgramError) -> Corpus {
         match err {
-            e if e == OpenBookError::InvalidInputQueueSlots.into() => Corpus::Reject,
+            e if e == OpenBookError::InvalidInputHeapSlots.into() => Corpus::Reject,
             _ => panic!("{}", err),
         }
     }

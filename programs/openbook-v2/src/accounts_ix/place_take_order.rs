@@ -12,7 +12,7 @@ pub struct PlaceTakeOrder<'info> {
         mut,
         has_one = bids,
         has_one = asks,
-        has_one = event_queue,
+        has_one = event_heap,
         has_one = market_base_vault,
         has_one = market_quote_vault,
         has_one = market_authority,
@@ -32,7 +32,7 @@ pub struct PlaceTakeOrder<'info> {
     #[account(mut)]
     pub market_quote_vault: Account<'info, TokenAccount>,
     #[account(mut)]
-    pub event_queue: AccountLoader<'info, EventQueue>,
+    pub event_heap: AccountLoader<'info, EventHeap>,
 
     #[account(
         mut,

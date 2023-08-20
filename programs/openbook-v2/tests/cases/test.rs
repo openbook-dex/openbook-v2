@@ -55,7 +55,7 @@ async fn test_simple_settle() -> Result<(), TransportError> {
             quote_mint: mints[1].pubkey,
             market_base_vault: market_base_vault_2,
             market_quote_vault: market_quote_vault_2,
-            ..CreateMarketInstruction::with_new_book_and_queue(solana, None, None).await
+            ..CreateMarketInstruction::with_new_book_and_heap(solana, None, None).await
         },
     )
     .await
@@ -549,7 +549,7 @@ async fn test_expired_orders() -> Result<(), TransportError> {
 
     // Advance clock
     solana.advance_clock(2).await;
-    // Bid isn't available anymore, shouldn't be matched. Introduces event on the event_queue
+    // Bid isn't available anymore, shouldn't be matched. Introduces event on the event_heap
     send_tx(
         solana,
         PlaceOrderInstruction {
@@ -575,10 +575,10 @@ async fn test_expired_orders() -> Result<(), TransportError> {
     .unwrap();
     {
         let market_acc = solana.get_account_boxed::<Market>(market).await;
-        let event_queue = solana
-            .get_account_boxed::<EventQueue>(market_acc.event_queue)
+        let event_heap = solana
+            .get_account_boxed::<EventHeap>(market_acc.event_heap)
             .await;
-        assert_eq!(event_queue.header.count(), 1);
+        assert_eq!(event_heap.header.count(), 1);
     }
     {
         let open_orders_account_1 = solana.get_account::<OpenOrdersAccount>(account_1).await;
@@ -618,14 +618,12 @@ async fn test_expired_orders() -> Result<(), TransportError> {
         assert_eq!(open_orders_account_2.position.base_free_native, 0);
         assert_eq!(open_orders_account_2.position.quote_free_native, 0);
     }
-    // No more events on event_queue
+    // No more events on event_heap
     {
         let market_acc = solana.get_account::<Market>(market).await;
-        let event_queue = solana
-            .get_account::<EventQueue>(market_acc.event_queue)
-            .await;
+        let event_heap = solana.get_account::<EventHeap>(market_acc.event_heap).await;
 
-        assert_eq!(event_queue.header.count(), 0);
+        assert_eq!(event_heap.header.count(), 0);
     }
 
     Ok(())

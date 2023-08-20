@@ -62,7 +62,7 @@ pub struct FuzzContext {
     pub event_authority: Pubkey,
     pub bids: Pubkey,
     pub asks: Pubkey,
-    pub event_queue: Pubkey,
+    pub event_heap: Pubkey,
     pub market_base_vault: Pubkey,
     pub market_quote_vault: Pubkey,
     pub oracle_a: Option<Pubkey>,
@@ -107,7 +107,7 @@ impl FuzzContext {
 
         let bids = Pubkey::new_unique();
         let asks = Pubkey::new_unique();
-        let event_queue = Pubkey::new_unique();
+        let event_heap = Pubkey::new_unique();
 
         let market_base_vault = get_associated_token_address(&market_authority, &base_mint);
         let market_quote_vault = get_associated_token_address(&market_authority, &quote_mint);
@@ -126,7 +126,7 @@ impl FuzzContext {
             event_authority,
             bids,
             asks,
-            event_queue,
+            event_heap,
             market_base_vault,
             market_quote_vault,
             oracle_a,
@@ -148,7 +148,7 @@ impl FuzzContext {
             .add_mint(self.quote_mint)
             .add_openbook_account::<BookSide>(self.asks)
             .add_openbook_account::<BookSide>(self.bids)
-            .add_openbook_account::<EventQueue>(self.event_queue)
+            .add_openbook_account::<EventHeap>(self.event_heap)
             .add_openbook_account::<Market>(self.market)
             .add_empty_system_account(self.market_authority)
             .add_empty_system_account(self.event_authority)
@@ -302,7 +302,7 @@ impl FuzzContext {
             market_authority: self.market_authority,
             bids: self.bids,
             asks: self.asks,
-            event_queue: self.event_queue,
+            event_heap: self.event_heap,
             payer: self.payer,
             market_base_vault: self.market_base_vault,
             market_quote_vault: self.market_quote_vault,
@@ -390,7 +390,7 @@ impl FuzzContext {
             market: self.market,
             bids: self.bids,
             asks: self.asks,
-            event_queue: self.event_queue,
+            event_heap: self.event_heap,
             market_vault,
             oracle_a: self.oracle_a,
             oracle_b: self.oracle_b,
@@ -443,7 +443,7 @@ impl FuzzContext {
             market: self.market,
             bids: self.bids,
             asks: self.asks,
-            event_queue: self.event_queue,
+            event_heap: self.event_heap,
             market_vault,
             oracle_a: self.oracle_a,
             oracle_b: self.oracle_b,
@@ -487,7 +487,7 @@ impl FuzzContext {
             asks: self.asks,
             market_base_vault: self.market_base_vault,
             market_quote_vault: self.market_quote_vault,
-            event_queue: self.event_queue,
+            event_heap: self.event_heap,
             oracle_a: self.oracle_a,
             oracle_b: self.oracle_b,
             token_program: spl_token::ID,
@@ -520,7 +520,7 @@ impl FuzzContext {
         let accounts = openbook_v2::accounts::ConsumeEvents {
             consume_events_admin: None,
             market: self.market,
-            event_queue: self.event_queue,
+            event_heap: self.event_heap,
         };
 
         let remaining = user_ids
@@ -544,7 +544,7 @@ impl FuzzContext {
         let accounts = openbook_v2::accounts::ConsumeEvents {
             consume_events_admin: None,
             market: self.market,
-            event_queue: self.event_queue,
+            event_heap: self.event_heap,
         };
 
         let remaining = user_ids
@@ -637,7 +637,7 @@ impl FuzzContext {
             market: self.market,
             bids: self.bids,
             asks: self.asks,
-            event_queue: self.event_queue,
+            event_heap: self.event_heap,
             market_base_vault: self.market_base_vault,
             market_quote_vault: self.market_quote_vault,
             oracle_a: self.oracle_a,

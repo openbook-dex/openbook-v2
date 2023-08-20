@@ -247,7 +247,7 @@ pub struct CreateMarketInstruction {
     pub name: String,
     pub bids: Pubkey,
     pub asks: Pubkey,
-    pub event_queue: Pubkey,
+    pub event_heap: Pubkey,
     pub market: TestKeypair,
     pub payer: TestKeypair,
     pub quote_lot_size: i64,
@@ -260,7 +260,7 @@ pub struct CreateMarketInstruction {
     pub time_expiry: i64,
 }
 impl CreateMarketInstruction {
-    pub async fn with_new_book_and_queue(
+    pub async fn with_new_book_and_heap(
         solana: &SolanaCookie,
         oracle_a: Option<Pubkey>,
         oracle_b: Option<Pubkey>,
@@ -272,8 +272,8 @@ impl CreateMarketInstruction {
             asks: solana
                 .create_account_for_type::<BookSide>(&openbook_v2::id())
                 .await,
-            event_queue: solana
-                .create_account_for_type::<EventQueue>(&openbook_v2::id())
+            event_heap: solana
+                .create_account_for_type::<EventHeap>(&openbook_v2::id())
                 .await,
             oracle_a,
             oracle_b,
@@ -327,7 +327,7 @@ impl ClientInstruction for CreateMarketInstruction {
             market_authority,
             bids: self.bids,
             asks: self.asks,
-            event_queue: self.event_queue,
+            event_heap: self.event_heap,
             payer: self.payer.pubkey(),
             market_base_vault,
             market_quote_vault,
@@ -403,7 +403,7 @@ impl ClientInstruction for PlaceOrderInstruction {
             market: self.market,
             bids: market.bids,
             asks: market.asks,
-            event_queue: market.event_queue,
+            event_heap: market.event_heap,
             oracle_a: market.oracle_a.into(),
             oracle_b: market.oracle_b.into(),
             signer: self.signer.pubkey(),
@@ -481,7 +481,7 @@ impl ClientInstruction for PlaceOrderPeggedInstruction {
             market: self.market,
             bids: market.bids,
             asks: market.asks,
-            event_queue: market.event_queue,
+            event_heap: market.event_heap,
             oracle_a: market.oracle_a.into(),
             oracle_b: market.oracle_b.into(),
             signer: self.signer.pubkey(),
@@ -542,7 +542,7 @@ impl ClientInstruction for PlaceTakeOrderInstruction {
             market_authority: market.market_authority,
             bids: market.bids,
             asks: market.asks,
-            event_queue: market.event_queue,
+            event_heap: market.event_heap,
             oracle_a: market.oracle_a.into(),
             oracle_b: market.oracle_b.into(),
             signer: self.signer.pubkey(),
@@ -699,7 +699,7 @@ impl ClientInstruction for ConsumeEventsInstruction {
         let accounts = Self::Accounts {
             consume_events_admin: self.consume_events_admin.map(|kp| kp.pubkey()),
             market: self.market,
-            event_queue: market.event_queue,
+            event_heap: market.event_heap,
         };
 
         let mut instruction = make_instruction(program_id, &accounts, instruction);
@@ -744,7 +744,7 @@ impl ClientInstruction for ConsumeGivenEventsInstruction {
         let accounts = Self::Accounts {
             consume_events_admin: self.consume_events_admin.map(|kp| kp.pubkey()),
             market: self.market,
-            event_queue: market.event_queue,
+            event_heap: market.event_heap,
         };
 
         let mut instruction = make_instruction(program_id, &accounts, instruction);
@@ -1094,7 +1094,7 @@ impl ClientInstruction for CloseMarketInstruction {
             market: self.market,
             bids: market.bids,
             asks: market.asks,
-            event_queue: market.event_queue,
+            event_heap: market.event_heap,
             token_program: Token::id(),
             sol_destination: self.sol_destination,
         };

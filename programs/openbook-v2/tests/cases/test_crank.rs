@@ -30,7 +30,7 @@ async fn test_skip_missing_accounts() -> Result<(), TransportError> {
         market,
         market_base_vault,
         market_quote_vault,
-        event_queue,
+        event_heap,
         ..
     } = send_tx(
         solana,
@@ -48,7 +48,7 @@ async fn test_skip_missing_accounts() -> Result<(), TransportError> {
             quote_mint: mints[1].pubkey,
             market_base_vault,
             market_quote_vault,
-            ..CreateMarketInstruction::with_new_book_and_queue(solana, Some(tokens[1].oracle), None)
+            ..CreateMarketInstruction::with_new_book_and_heap(solana, Some(tokens[1].oracle), None)
                 .await
         },
     )
@@ -163,11 +163,11 @@ async fn test_skip_missing_accounts() -> Result<(), TransportError> {
     .unwrap();
 
     {
-        let event_queue = solana.get_account_boxed::<EventQueue>(event_queue).await;
-        assert_eq!(event_queue.header.count(), 3);
-        assert_eq!(fill_maker(event_queue.at_slot(0).unwrap()), maker_1);
-        assert_eq!(fill_maker(event_queue.at_slot(1).unwrap()), maker_2);
-        assert_eq!(fill_maker(event_queue.at_slot(2).unwrap()), maker_3);
+        let event_heap = solana.get_account_boxed::<EventHeap>(event_heap).await;
+        assert_eq!(event_heap.header.count(), 3);
+        assert_eq!(fill_maker(event_heap.at_slot(0).unwrap()), maker_1);
+        assert_eq!(fill_maker(event_heap.at_slot(1).unwrap()), maker_2);
+        assert_eq!(fill_maker(event_heap.at_slot(2).unwrap()), maker_3);
     }
 
     send_tx(
@@ -182,9 +182,9 @@ async fn test_skip_missing_accounts() -> Result<(), TransportError> {
     .unwrap();
 
     {
-        let event_queue = solana.get_account_boxed::<EventQueue>(event_queue).await;
-        assert_eq!(event_queue.header.count(), 1);
-        assert_eq!(fill_maker(event_queue.front().unwrap()), maker_1);
+        let event_heap = solana.get_account_boxed::<EventHeap>(event_heap).await;
+        assert_eq!(event_heap.header.count(), 1);
+        assert_eq!(fill_maker(event_heap.front().unwrap()), maker_1);
     }
 
     Ok(())
@@ -223,7 +223,7 @@ async fn test_crank_given_events() -> Result<(), TransportError> {
         market,
         market_base_vault,
         market_quote_vault,
-        event_queue,
+        event_heap,
         ..
     } = send_tx(
         solana,
@@ -241,7 +241,7 @@ async fn test_crank_given_events() -> Result<(), TransportError> {
             quote_mint: mints[1].pubkey,
             market_base_vault,
             market_quote_vault,
-            ..CreateMarketInstruction::with_new_book_and_queue(solana, Some(tokens[0].oracle), None)
+            ..CreateMarketInstruction::with_new_book_and_heap(solana, Some(tokens[0].oracle), None)
                 .await
         },
     )
@@ -356,11 +356,11 @@ async fn test_crank_given_events() -> Result<(), TransportError> {
     .unwrap();
 
     {
-        let event_queue = solana.get_account_boxed::<EventQueue>(event_queue).await;
-        assert_eq!(event_queue.header.count(), 3);
-        assert_eq!(fill_maker(event_queue.at_slot(0).unwrap()), maker_1);
-        assert_eq!(fill_maker(event_queue.at_slot(1).unwrap()), maker_2);
-        assert_eq!(fill_maker(event_queue.at_slot(2).unwrap()), maker_3);
+        let event_heap = solana.get_account_boxed::<EventHeap>(event_heap).await;
+        assert_eq!(event_heap.header.count(), 3);
+        assert_eq!(fill_maker(event_heap.at_slot(0).unwrap()), maker_1);
+        assert_eq!(fill_maker(event_heap.at_slot(1).unwrap()), maker_2);
+        assert_eq!(fill_maker(event_heap.at_slot(2).unwrap()), maker_3);
     }
 
     send_tx(
@@ -376,9 +376,9 @@ async fn test_crank_given_events() -> Result<(), TransportError> {
     .unwrap();
 
     {
-        let event_queue = solana.get_account_boxed::<EventQueue>(event_queue).await;
-        assert_eq!(event_queue.header.count(), 1);
-        assert_eq!(fill_maker(event_queue.front().unwrap()), maker_2);
+        let event_heap = solana.get_account_boxed::<EventHeap>(event_heap).await;
+        assert_eq!(event_heap.header.count(), 1);
+        assert_eq!(fill_maker(event_heap.front().unwrap()), maker_2);
     }
 
     Ok(())

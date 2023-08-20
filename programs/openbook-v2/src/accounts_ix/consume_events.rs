@@ -8,10 +8,10 @@ pub struct ConsumeEvents<'info> {
     pub consume_events_admin: Option<Signer<'info>>,
     #[account(
         mut,
-        has_one = event_queue,
+        has_one = event_heap,
         constraint = market.load()?.consume_events_admin == consume_events_admin.non_zero_key() @ OpenBookError::InvalidConsumeEventsAdmin
     )]
     pub market: AccountLoader<'info, Market>,
     #[account(mut)]
-    pub event_queue: AccountLoader<'info, EventQueue>,
+    pub event_heap: AccountLoader<'info, EventHeap>,
 }
