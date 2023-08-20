@@ -9,7 +9,7 @@ use crate::pubkey_option::NonZeroPubkeyOption;
 
 use super::{BookSideOrderTree, FillEvent, LeafNode, Market, Side, SideAndOrderTree};
 
-pub const MAX_OPEN_ORDERS: usize = 128;
+pub const MAX_OPEN_ORDERS: usize = 24;
 
 #[account(zero_copy)]
 #[derive(Debug)]
@@ -45,7 +45,7 @@ const_assert_eq!(
         + size_of::<Position>()
         + MAX_OPEN_ORDERS * size_of::<OpenOrder>()
 );
-const_assert_eq!(size_of::<OpenOrdersAccount>(), 5408);
+const_assert_eq!(size_of::<OpenOrdersAccount>(), 1248);
 const_assert_eq!(size_of::<OpenOrdersAccount>() % 8, 0);
 
 impl OpenOrdersAccount {
