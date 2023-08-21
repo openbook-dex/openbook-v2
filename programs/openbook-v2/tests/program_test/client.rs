@@ -859,6 +859,7 @@ impl ClientInstruction for SettleFundsInstruction {
 #[derive(Clone)]
 pub struct SettleFundsExpiredInstruction {
     pub close_market_admin: TestKeypair,
+    pub payer: TestKeypair,
     pub open_orders_account: Pubkey,
     pub market: Pubkey,
     pub market_base_vault: Pubkey,
@@ -880,6 +881,7 @@ impl ClientInstruction for SettleFundsExpiredInstruction {
         let market: Market = account_loader.load(&self.market).await.unwrap();
         let accounts = Self::Accounts {
             close_market_admin: self.close_market_admin.pubkey(),
+            payer: self.payer.pubkey(),
             open_orders_account: self.open_orders_account,
             market: self.market,
             market_authority: market.market_authority,
@@ -897,7 +899,7 @@ impl ClientInstruction for SettleFundsExpiredInstruction {
     }
 
     fn signers(&self) -> Vec<TestKeypair> {
-        vec![self.close_market_admin]
+        vec![self.close_market_admin, self.payer]
     }
 }
 

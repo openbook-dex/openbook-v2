@@ -8,6 +8,8 @@ use anchor_spl::token::{Token, TokenAccount};
 pub struct SettleFundsExpired<'info> {
     #[account(mut)]
     pub close_market_admin: Signer<'info>,
+    #[account(mut)]
+    pub payer: Signer<'info>,
     #[account(
         mut,
         has_one = market,
@@ -52,7 +54,7 @@ pub struct SettleFundsExpired<'info> {
 impl<'info> SettleFundsExpired<'info> {
     pub fn to_settle_funds_accounts(&self) -> SettleFunds<'info> {
         SettleFunds {
-            owner: self.close_market_admin.clone(),
+            owner: self.payer.clone(),
             open_orders_account: self.open_orders_account.clone(),
             market: self.market.clone(),
             market_authority: self.market_authority.clone(),

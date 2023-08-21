@@ -273,6 +273,7 @@ async fn test_close_market_admin() -> Result<(), TransportError> {
         price_lots,
         account_1,
         account_2,
+        payer,
         ..
     } = TestContext::new_with_market(TestNewMarketInitialize {
         close_market_admin_bool: true,
@@ -365,6 +366,7 @@ async fn test_close_market_admin() -> Result<(), TransportError> {
     let settle_funds_expired_ix = SettleFundsExpiredInstruction {
         close_market_admin,
         market,
+        payer,
         open_orders_account: account_2,
         market_base_vault,
         market_quote_vault,
