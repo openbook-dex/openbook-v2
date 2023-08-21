@@ -54,14 +54,17 @@ pub fn cancel_and_place_orders(
             let order_id = oo.id;
             let order_side_and_tree = oo.side_and_tree();
 
-            book.cancel_order(
+            let cancel_result = book.cancel_order(
                 &mut open_orders_account,
                 order_id,
                 order_side_and_tree,
                 *market,
                 Some(ctx.accounts.open_orders_account.key()),
-            )
-            .ok();
+            );
+            // Allow cancel fails due order ID not found. Otherwise propagates error
+            if !cancel_result.is_anchor_error_with_code(OpenBookError::OrderIdNotFound.into()) {
+                cancel_result?;
+            }
         };
     }
 
