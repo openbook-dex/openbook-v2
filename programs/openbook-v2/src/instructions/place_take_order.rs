@@ -32,7 +32,8 @@ pub fn place_take_order<'info>(
         asks: ctx.accounts.asks.load_mut()?,
     };
 
-    let mut event_queue = ctx.accounts.event_queue.load_mut()?;
+    let mut event_heap = ctx.accounts.event_heap.load_mut()?;
+    let event_heap_size_before = event_heap.len();
 
     let now_ts: u64 = clock.unix_timestamp.try_into().unwrap();
     let oracle_price = if market.oracle_a.is_some() && market.oracle_b.is_some() {
@@ -61,7 +62,7 @@ pub fn place_take_order<'info>(
     } = book.new_order(
         &order,
         &mut market,
-        &mut event_queue,
+        &mut event_heap,
         oracle_price,
         None,
         &ctx.accounts.signer.key(),
@@ -93,7 +94,17 @@ pub fn place_take_order<'info>(
     }
 
     let seeds = market_seeds!(market, ctx.accounts.market.key());
+
     drop(market);
+
+    if event_heap.len() > event_heap_size_before {
+        system_program_transfer(
+            PENALTY_EVENT_HEAP,
+            &ctx.accounts.system_program,
+            &ctx.accounts.signer,
+            &ctx.accounts.market,
+        )?;
+    }
 
     let (user_deposit_acc, user_withdraw_acc, market_deposit_acc, market_withdraw_acc) = match side
     {

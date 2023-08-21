@@ -13,6 +13,7 @@ use crate::{accounts_zerocopy::KeyedAccountReader, state::orderbook::Side};
 use super::{orderbook, OracleConfig};
 
 pub const FEES_SCALE_FACTOR: i128 = 1_000_000;
+pub const PENALTY_EVENT_HEAP: u64 = 5_000;
 
 #[account(zero_copy)]
 #[derive(Debug)]
@@ -50,8 +51,8 @@ pub struct Market {
     pub bids: Pubkey,
     /// Address of the BookSide account for asks
     pub asks: Pubkey,
-    /// Address of the EventQueue account
-    pub event_queue: Pubkey,
+    /// Address of the EventHeap account
+    pub event_heap: Pubkey,
 
     /// Oracles account address
     pub oracle_a: NonZeroPubkeyOption,
@@ -77,7 +78,7 @@ pub struct Market {
     pub seq_num: u64,
 
     /// Timestamp in seconds that the market was registered at.
-    pub registration_time: u64,
+    pub registration_time: i64,
 
     /// Fees
     ///
@@ -129,7 +130,7 @@ const_assert_eq!(
     5 +                         // padding1
     8 +                         // time_expiry
     16 +                        // name
-    3 * 32 +                    // bids, asks, and event_queue
+    3 * 32 +                    // bids, asks, and event_heap
     32 +                        // oracle_a
     32 +                        // oracle_b
     size_of::<OracleConfig>() + // oracle_config

@@ -31,7 +31,7 @@ pub struct CancelAndPlaceOrders<'info> {
         mut,
         has_one = bids,
         has_one = asks,
-        has_one = event_queue,
+        has_one = event_heap,
         has_one = market_base_vault,
         has_one = market_quote_vault,
         constraint = market.load()?.oracle_a == oracle_a.non_zero_key(),
@@ -44,7 +44,7 @@ pub struct CancelAndPlaceOrders<'info> {
     #[account(mut)]
     pub asks: AccountLoader<'info, BookSide>,
     #[account(mut)]
-    pub event_queue: AccountLoader<'info, EventQueue>,
+    pub event_heap: AccountLoader<'info, EventHeap>,
 
     #[account(mut)]
     pub market_quote_vault: Box<Account<'info, TokenAccount>>,
@@ -57,5 +57,4 @@ pub struct CancelAndPlaceOrders<'info> {
     pub oracle_b: Option<UncheckedAccount<'info>>,
 
     pub token_program: Program<'info, Token>,
-    pub system_program: Program<'info, System>,
 }

@@ -15,21 +15,22 @@ pub const NO_NODE: u16 = u16::MAX;
 /// starting at free_head while used nodes form a circular doubly-linked list starting at
 /// used_head.
 #[account(zero_copy)]
-pub struct EventQueue {
-    pub header: EventQueueHeader,
+pub struct EventHeap {
+    pub header: EventHeapHeader,
     pub nodes: [EventNode; MAX_NUM_EVENTS as usize],
     pub reserved: [u8; 64],
 }
 const_assert_eq!(
-    std::mem::size_of::<EventQueue>(),
+    std::mem::size_of::<EventHeap>(),
     16 + MAX_NUM_EVENTS as usize * (EVENT_SIZE + 8) + 64
 );
-const_assert_eq!(std::mem::size_of::<EventQueue>(), 91280);
-const_assert_eq!(std::mem::size_of::<EventQueue>() % 8, 0);
+// Costs 0.636 SOL to create this account
+const_assert_eq!(std::mem::size_of::<EventHeap>(), 91280);
+const_assert_eq!(std::mem::size_of::<EventHeap>() % 8, 0);
 
-impl EventQueue {
+impl EventHeap {
     pub fn init(&mut self) {
-        self.header = EventQueueHeader {
+        self.header = EventHeapHeader {
             free_head: 0,
             used_head: NO_NODE,
             count: 0,
@@ -132,46 +133,46 @@ impl EventQueue {
     }
 
     pub fn iter(&self) -> impl Iterator<Item = (&AnyEvent, usize)> {
-        EventQueueIterator {
-            queue: self,
+        EventHeapIterator {
+            heap: self,
             index: 0,
             slot: self.header.used_head(),
         }
     }
 }
 
-struct EventQueueIterator<'a> {
-    queue: &'a EventQueue,
+struct EventHeapIterator<'a> {
+    heap: &'a EventHeap,
     index: usize,
     slot: usize,
 }
 
-impl<'a> Iterator for EventQueueIterator<'a> {
+impl<'a> Iterator for EventHeapIterator<'a> {
     type Item = (&'a AnyEvent, usize);
     fn next(&mut self) -> Option<Self::Item> {
-        if self.index == self.queue.len() {
+        if self.index == self.heap.len() {
             None
         } else {
             let current_slot = self.slot;
-            self.slot = self.queue.nodes[current_slot].next as usize;
+            self.slot = self.heap.nodes[current_slot].next as usize;
             self.index += 1;
-            Some((&self.queue.nodes[current_slot].event, current_slot))
+            Some((&self.heap.nodes[current_slot].event, current_slot))
         }
     }
 }
 
 #[zero_copy]
-pub struct EventQueueHeader {
+pub struct EventHeapHeader {
     free_head: u16,
     used_head: u16,
     count: u16,
     _padd: u16,
     pub seq_num: u64,
 }
-const_assert_eq!(std::mem::size_of::<EventQueueHeader>(), 16);
-const_assert_eq!(std::mem::size_of::<EventQueueHeader>() % 8, 0);
+const_assert_eq!(std::mem::size_of::<EventHeapHeader>(), 16);
+const_assert_eq!(std::mem::size_of::<EventHeapHeader>() % 8, 0);
 
-impl EventQueueHeader {
+impl EventHeapHeader {
     pub fn count(&self) -> usize {
         self.count as usize
     }
@@ -358,8 +359,8 @@ mod tests {
 
     const LAST_SLOT: u16 = MAX_NUM_EVENTS - 1;
 
-    fn count_free_nodes(event_queue: &EventQueue) -> usize {
-        event_queue.nodes.iter().filter(|n| n.is_free()).count()
+    fn count_free_nodes(event_heap: &EventHeap) -> usize {
+        event_heap.nodes.iter().filter(|n| n.is_free()).count()
     }
 
     fn dummy_event_with_number(number: u8) -> AnyEvent {
@@ -370,7 +371,7 @@ mod tests {
 
     #[test]
     fn init() {
-        let mut eq = EventQueue::zeroed();
+        let mut eq = EventHeap::zeroed();
         eq.init();
 
         assert_eq!(eq.header.count(), 0);
@@ -382,7 +383,7 @@ mod tests {
     #[test]
     #[should_panic]
     fn cannot_insert_if_full() {
-        let mut eq = EventQueue::zeroed();
+        let mut eq = EventHeap::zeroed();
         eq.init();
         for _ in 0..MAX_NUM_EVENTS + 1 {
             eq.push_back(AnyEvent::zeroed());
@@ -392,14 +393,14 @@ mod tests {
     #[test]
     #[should_panic]
     fn cannot_delete_if_empty() {
-        let mut eq = EventQueue::zeroed();
+        let mut eq = EventHeap::zeroed();
         eq.init();
         eq.pop_front().unwrap();
     }
 
     #[test]
     fn insert_until_full() {
-        let mut eq = EventQueue::zeroed();
+        let mut eq = EventHeap::zeroed();
         eq.init();
 
         // insert one event in the first slot; the single used node should point to himself
@@ -437,7 +438,7 @@ mod tests {
 
     #[test]
     fn delete_full() {
-        let mut eq = EventQueue::zeroed();
+        let mut eq = EventHeap::zeroed();
         eq.init();
         for _ in 0..MAX_NUM_EVENTS {
             eq.push_back(AnyEvent::zeroed());
@@ -477,7 +478,7 @@ mod tests {
 
     #[test]
     fn delete_at_given_position() {
-        let mut eq = EventQueue::zeroed();
+        let mut eq = EventHeap::zeroed();
         eq.init();
         for _ in 0..5 {
             eq.push_back(AnyEvent::zeroed());
@@ -490,7 +491,7 @@ mod tests {
     #[test]
     #[should_panic]
     fn cannot_delete_twice_same() {
-        let mut eq = EventQueue::zeroed();
+        let mut eq = EventHeap::zeroed();
         eq.init();
         for _ in 0..5 {
             eq.push_back(AnyEvent::zeroed());
@@ -501,7 +502,7 @@ mod tests {
 
     #[test]
     fn read_front() {
-        let mut eq = EventQueue::zeroed();
+        let mut eq = EventHeap::zeroed();
         eq.init();
         eq.push_back(dummy_event_with_number(1));
         eq.push_back(AnyEvent::zeroed());
@@ -510,7 +511,7 @@ mod tests {
 
     #[test]
     fn read_at_slot() {
-        let mut eq = EventQueue::zeroed();
+        let mut eq = EventHeap::zeroed();
         eq.init();
         eq.push_back(AnyEvent::zeroed());
         eq.push_back(AnyEvent::zeroed());
@@ -527,7 +528,7 @@ mod tests {
         // [3|2| | | ] push_back
         // [3| | | | ] pop_front
 
-        let mut eq = EventQueue::zeroed();
+        let mut eq = EventHeap::zeroed();
         eq.init();
         assert!(eq.nodes[0].is_free());
         assert!(eq.nodes[1].is_free());
@@ -569,7 +570,7 @@ mod tests {
         // [0| |1|2|3] push_back
         // [ | |0|1|2] push_back
 
-        let mut eq = EventQueue::zeroed();
+        let mut eq = EventHeap::zeroed();
         eq.init();
         assert_eq!(eq.header.free_head(), 0);
         assert_eq!(eq.nodes[0].next, 1);

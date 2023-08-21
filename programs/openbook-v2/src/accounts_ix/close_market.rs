@@ -10,7 +10,7 @@ pub struct CloseMarket<'info> {
         mut,
         has_one = bids,
         has_one = asks,
-        has_one = event_queue,
+        has_one = event_heap,
         close = sol_destination,
         constraint = market.load()?.close_market_admin.is_some() @ OpenBookError::NoCloseMarketAdmin,
         constraint = market.load()?.close_market_admin == close_market_admin.key() @ OpenBookError::InvalidCloseMarketAdmin
@@ -33,7 +33,7 @@ pub struct CloseMarket<'info> {
         mut,
         close = sol_destination
     )]
-    pub event_queue: AccountLoader<'info, EventQueue>,
+    pub event_heap: AccountLoader<'info, EventHeap>,
 
     #[account(mut)]
     /// CHECK: target for account rent needs no checks

@@ -55,7 +55,7 @@ async fn test_simple_settle() -> Result<(), TransportError> {
             quote_mint: mints[1].pubkey,
             market_base_vault: market_base_vault_2,
             market_quote_vault: market_quote_vault_2,
-            ..CreateMarketInstruction::with_new_book_and_queue(solana, None, None).await
+            ..CreateMarketInstruction::with_new_book_and_heap(solana, None, None).await
         },
     )
     .await
@@ -549,7 +549,7 @@ async fn test_expired_orders() -> Result<(), TransportError> {
 
     // Advance clock
     solana.advance_clock(2).await;
-    // Bid isn't available anymore, shouldn't be matched. Introduces event on the event_queue
+    // Bid isn't available anymore, shouldn't be matched. Introduces event on the event_heap
     send_tx(
         solana,
         PlaceOrderInstruction {
@@ -575,10 +575,10 @@ async fn test_expired_orders() -> Result<(), TransportError> {
     .unwrap();
     {
         let market_acc = solana.get_account_boxed::<Market>(market).await;
-        let event_queue = solana
-            .get_account_boxed::<EventQueue>(market_acc.event_queue)
+        let event_heap = solana
+            .get_account_boxed::<EventHeap>(market_acc.event_heap)
             .await;
-        assert_eq!(event_queue.header.count(), 1);
+        assert_eq!(event_heap.header.count(), 1);
     }
     {
         let open_orders_account_1 = solana.get_account::<OpenOrdersAccount>(account_1).await;
@@ -618,14 +618,121 @@ async fn test_expired_orders() -> Result<(), TransportError> {
         assert_eq!(open_orders_account_2.position.base_free_native, 0);
         assert_eq!(open_orders_account_2.position.quote_free_native, 0);
     }
-    // No more events on event_queue
+    // No more events on event_heap
     {
         let market_acc = solana.get_account::<Market>(market).await;
-        let event_queue = solana
-            .get_account::<EventQueue>(market_acc.event_queue)
-            .await;
+        let event_heap = solana.get_account::<EventHeap>(market_acc.event_heap).await;
 
-        assert_eq!(event_queue.header.count(), 0);
+        assert_eq!(event_heap.header.count(), 0);
+    }
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_indexer() -> Result<(), TransportError> {
+    let context = TestContext::new().await;
+    let solana = &context.solana.clone();
+
+    let collect_fee_admin = TestKeypair::new();
+    let close_market_admin = TestKeypair::new();
+    let owner = context.users[0].key;
+    let payer = context.users[1].key;
+    let mints = &context.mints[0..=2];
+
+    let tokens = Token::create(mints.to_vec(), solana, collect_fee_admin, payer).await;
+
+    let market = TestKeypair::new();
+    let market_authority = get_market_address(market);
+    let market_base_vault = solana
+        .create_associated_token_account(&market_authority, mints[0].pubkey)
+        .await;
+    let market_quote_vault = solana
+        .create_associated_token_account(&market_authority, mints[1].pubkey)
+        .await;
+
+    let openbook_v2::accounts::CreateMarket { market, .. } = send_tx(
+        solana,
+        CreateMarketInstruction {
+            collect_fee_admin: collect_fee_admin.pubkey(),
+            open_orders_admin: None,
+            close_market_admin: Some(close_market_admin.pubkey()),
+            payer,
+            market,
+            quote_lot_size: 10,
+            base_lot_size: 100,
+            maker_fee: -200,
+            taker_fee: 400,
+            base_mint: mints[0].pubkey,
+            quote_mint: mints[1].pubkey,
+            market_base_vault,
+            market_quote_vault,
+            ..CreateMarketInstruction::with_new_book_and_heap(solana, Some(tokens[1].oracle), None)
+                .await
+        },
+    )
+    .await
+    .unwrap();
+
+    let indexer = create_open_orders_indexer(solana, &context.users[1], owner, market).await;
+    let maker_1 =
+        create_open_orders_account(solana, owner, market, 1, &context.users[1], None).await;
+
+    {
+        let indexer = solana.get_account::<OpenOrdersIndexer>(indexer).await;
+        assert_eq!(indexer.created_counter, 1);
+        assert!(indexer.addresses.contains(&maker_1));
+    }
+
+    let (maker_2, maker_3) = {
+        (
+            create_open_orders_account(solana, owner, market, 2, &context.users[1], None).await,
+            create_open_orders_account(solana, owner, market, 3, &context.users[1], None).await,
+        )
+    };
+
+    {
+        let indexer = solana.get_account::<OpenOrdersIndexer>(indexer).await;
+
+        assert_eq!(indexer.created_counter, 3);
+        assert_eq!(indexer.addresses.len(), 3);
+        assert!(indexer.addresses.contains(&maker_1));
+        assert!(indexer.addresses.contains(&maker_2));
+        assert!(indexer.addresses.contains(&maker_3));
+    }
+
+    send_tx(
+        solana,
+        CloseOpenOrdersAccountInstruction {
+            account_num: 2,
+            market,
+            owner,
+            payer,
+            sol_destination: owner.pubkey(),
+        },
+    )
+    .await
+    .unwrap();
+
+    {
+        let indexer = solana.get_account::<OpenOrdersIndexer>(indexer).await;
+
+        assert_eq!(indexer.created_counter, 3);
+        assert_eq!(indexer.addresses.len(), 2);
+        assert!(indexer.addresses.contains(&maker_1));
+        assert!(indexer.addresses.contains(&maker_3));
+    }
+
+    let maker_4 =
+        create_open_orders_account(solana, owner, market, 4, &context.users[1], None).await;
+
+    {
+        let indexer = solana.get_account::<OpenOrdersIndexer>(indexer).await;
+        assert_eq!(indexer.created_counter, 4);
+        assert_eq!(indexer.addresses.len(), 3);
+        assert!(indexer.addresses.contains(&maker_1));
+        assert!(indexer.addresses.contains(&maker_3));
+        assert!(indexer.addresses.contains(&maker_4));
     }
 
     Ok(())

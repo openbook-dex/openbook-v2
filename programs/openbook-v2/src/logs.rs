@@ -54,35 +54,6 @@ pub struct TotalOrderFillEvent {
 }
 
 #[event]
-pub struct CancelOrderLog {
-    pub open_orders_account: Pubkey,
-    pub slot: u8,
-    pub side: u8,
-    pub quantity: i64,
-}
-
-#[event]
-pub struct CancelOrdersLog {
-    pub open_orders_account: Pubkey,
-    pub total_quantity: i64,
-}
-
-#[event]
-pub struct CancelAllOrdersLog {
-    pub open_orders_account: Pubkey,
-    pub side: Option<u8>,
-    pub quantity: i64,
-    pub limit: u8,
-}
-
-#[event]
-pub struct PruneOrdersLog {
-    pub open_orders_account: Pubkey,
-    pub quantity: i64,
-    pub limit: u8,
-}
-
-#[event]
 pub struct SetDelegateLog {
     pub open_orders_account: Pubkey,
     pub delegate: Option<Pubkey>,

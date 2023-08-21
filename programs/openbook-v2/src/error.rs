@@ -26,8 +26,8 @@ pub enum OpenBookError {
     InvalidInputOrderType,
     #[msg("Order id cannot be zero")]
     InvalidInputOrderId,
-    #[msg("Slot above queue limit")]
-    InvalidInputQueueSlots,
+    #[msg("Slot above heap limit")]
+    InvalidInputHeapSlots,
     #[msg("Cannot combine two oracles of different providers")]
     InvalidOracleTypes,
     #[msg("Cannot configure secondary oracle without primary")]
@@ -53,8 +53,8 @@ pub enum OpenBookError {
     OracleStale,
     #[msg("Order id not found on the orderbook")]
     OrderIdNotFound,
-    #[msg("Event queue contains elements and market can't be closed")]
-    EventQueueContainsElements,
+    #[msg("Event heap contains elements and market can't be closed")]
+    EventHeapContainsElements,
     #[msg("ImmediateOrCancel is not a PostOrderType")]
     InvalidOrderPostIOC,
     #[msg("Market is not a PostOrderType")]

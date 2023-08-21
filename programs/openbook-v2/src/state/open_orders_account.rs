@@ -9,7 +9,7 @@ use crate::pubkey_option::NonZeroPubkeyOption;
 
 use super::{BookSideOrderTree, FillEvent, LeafNode, Market, Side, SideAndOrderTree};
 
-pub const MAX_OPEN_ORDERS: usize = 128;
+pub const MAX_OPEN_ORDERS: usize = 24;
 
 #[account(zero_copy)]
 #[derive(Debug)]
@@ -45,7 +45,7 @@ const_assert_eq!(
         + size_of::<Position>()
         + MAX_OPEN_ORDERS * size_of::<OpenOrder>()
 );
-const_assert_eq!(size_of::<OpenOrdersAccount>(), 5408);
+const_assert_eq!(size_of::<OpenOrdersAccount>(), 1256);
 const_assert_eq!(size_of::<OpenOrdersAccount>() % 8, 0);
 
 impl OpenOrdersAccount {
@@ -291,6 +291,9 @@ pub struct Position {
 
     pub locked_maker_fees: u64,
     pub referrer_rebates_available: u64,
+    /// Count of ixs when events are added to the heap
+    /// To avoid this, send remaining accounts in order to process the events
+    pub penalty_heap_count: u64,
 
     /// Cumulative maker volume in quote native units (display only)
     pub maker_volume: u64,
@@ -301,8 +304,11 @@ pub struct Position {
     pub reserved: [u8; 88],
 }
 
-const_assert_eq!(size_of::<Position>(), 8 + 8 + 8 + 8 + 8 + 8 + 8 + 8 + 88);
-const_assert_eq!(size_of::<Position>(), 152);
+const_assert_eq!(
+    size_of::<Position>(),
+    8 + 8 + 8 + 8 + 8 + 8 + 8 + 8 + 8 + 88
+);
+const_assert_eq!(size_of::<Position>(), 160);
 const_assert_eq!(size_of::<Position>() % 8, 0);
 
 impl Default for Position {
@@ -314,6 +320,7 @@ impl Default for Position {
             quote_free_native: 0,
             locked_maker_fees: 0,
             referrer_rebates_available: 0,
+            penalty_heap_count: 0,
             maker_volume: 0,
             taker_volume: 0,
             reserved: [0; 88],

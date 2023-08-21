@@ -7,10 +7,11 @@ pub struct CloseOpenOrdersIndexer<'info> {
     pub owner: Signer<'info>,
     #[account(
         mut,
-        has_one = owner,
+        seeds = [b"OpenOrdersIndexer".as_ref(), owner.key().as_ref()],
+        bump = open_orders_indexer.bump,
         close = sol_destination
     )]
-    pub open_orders_indexer: AccountLoader<'info, OpenOrdersIndexer>,
+    pub open_orders_indexer: Account<'info, OpenOrdersIndexer>,
 
     #[account(mut)]
     /// CHECK: target for account rent needs no checks

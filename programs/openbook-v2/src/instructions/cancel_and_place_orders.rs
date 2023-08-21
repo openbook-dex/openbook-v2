@@ -4,9 +4,8 @@ use std::cmp;
 use crate::accounts_ix::*;
 use crate::accounts_zerocopy::*;
 use crate::error::*;
-use crate::logs::CancelOrdersLog;
 use crate::state::*;
-use crate::token_utils::token_transfer;
+use crate::token_utils::*;
 
 #[allow(clippy::too_many_arguments)]
 pub fn cancel_and_place_orders(
@@ -30,7 +29,8 @@ pub fn cancel_and_place_orders(
         bids: ctx.accounts.bids.load_mut()?,
         asks: ctx.accounts.asks.load_mut()?,
     };
-    let mut event_queue = ctx.accounts.event_queue.load_mut()?;
+    let mut event_heap = ctx.accounts.event_heap.load_mut()?;
+    let event_heap_size_before = event_heap.len();
 
     let now_ts: u64 = clock.unix_timestamp.try_into().unwrap();
     let oracle_price = if market.oracle_a.is_some() && market.oracle_b.is_some() {
@@ -48,7 +48,6 @@ pub fn cancel_and_place_orders(
         None
     };
 
-    let mut canceled_quantity = 0;
     for client_order_id in cancel_client_orders_ids {
         let oo = open_orders_account.find_order_with_client_order_id(client_order_id);
         if let Some(oo) = oo {
@@ -62,17 +61,11 @@ pub fn cancel_and_place_orders(
                 *market,
                 Some(ctx.accounts.open_orders_account.key()),
             );
-
+            // Allow cancel fails due order ID not found. Otherwise propagates error
             if !cancel_result.is_anchor_error_with_code(OpenBookError::OrderIdNotFound.into()) {
-                canceled_quantity += cancel_result?.quantity;
+                cancel_result?;
             }
         };
-    }
-    if canceled_quantity > 0 {
-        emit!(CancelOrdersLog {
-            open_orders_account: ctx.accounts.open_orders_account.key(),
-            total_quantity: canceled_quantity,
-        });
     }
 
     let mut base_amount = 0_u64;
@@ -98,7 +91,7 @@ pub fn cancel_and_place_orders(
         } = book.new_order(
             order,
             &mut market,
-            &mut event_queue,
+            &mut event_heap,
             oracle_price,
             Some(&mut open_orders_account),
             &open_orders_account_pk,
@@ -138,6 +131,10 @@ pub fn cancel_and_place_orders(
 
     market.base_deposit_total += deposit_base_amount;
     market.quote_deposit_total += deposit_quote_amount;
+
+    if event_heap.len() > event_heap_size_before {
+        position.penalty_heap_count += 1;
+    }
 
     token_transfer(
         deposit_quote_amount,

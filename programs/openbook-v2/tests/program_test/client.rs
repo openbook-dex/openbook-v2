@@ -148,11 +148,7 @@ impl ClientInstruction for CreateOpenOrdersIndexerInstruction {
         let instruction = openbook_v2::instruction::CreateOpenOrdersIndexer {};
 
         let open_orders_indexer = Pubkey::find_program_address(
-            &[
-                b"OpenOrdersIndexer".as_ref(),
-                self.owner.pubkey().as_ref(),
-                self.market.as_ref(),
-            ],
+            &[b"OpenOrdersIndexer".as_ref(), self.owner.pubkey().as_ref()],
             &program_id,
         )
         .0;
@@ -193,11 +189,7 @@ impl ClientInstruction for CreateOpenOrdersAccountInstruction {
         let instruction = openbook_v2::instruction::CreateOpenOrdersAccount {};
 
         let open_orders_indexer = Pubkey::find_program_address(
-            &[
-                b"OpenOrdersIndexer".as_ref(),
-                self.owner.pubkey().as_ref(),
-                self.market.as_ref(),
-            ],
+            &[b"OpenOrdersIndexer".as_ref(), self.owner.pubkey().as_ref()],
             &program_id,
         )
         .0;
@@ -232,6 +224,59 @@ impl ClientInstruction for CreateOpenOrdersAccountInstruction {
     }
 }
 
+pub struct CloseOpenOrdersAccountInstruction {
+    pub account_num: u32,
+    pub market: Pubkey,
+    pub owner: TestKeypair,
+    pub payer: TestKeypair,
+    pub sol_destination: Pubkey,
+}
+#[async_trait::async_trait(?Send)]
+impl ClientInstruction for CloseOpenOrdersAccountInstruction {
+    type Accounts = openbook_v2::accounts::CloseOpenOrdersAccount;
+    type Instruction = openbook_v2::instruction::CloseOpenOrdersAccount;
+    async fn to_instruction(
+        &self,
+        _account_loader: impl ClientAccountLoader + 'async_trait,
+    ) -> (Self::Accounts, instruction::Instruction) {
+        let program_id = openbook_v2::id();
+        let instruction = openbook_v2::instruction::CloseOpenOrdersAccount {};
+
+        let open_orders_indexer = Pubkey::find_program_address(
+            &[b"OpenOrdersIndexer".as_ref(), self.owner.pubkey().as_ref()],
+            &program_id,
+        )
+        .0;
+
+        let open_orders_account = Pubkey::find_program_address(
+            &[
+                b"OpenOrders".as_ref(),
+                self.owner.pubkey().as_ref(),
+                self.market.as_ref(),
+                &self.account_num.to_le_bytes(),
+            ],
+            &program_id,
+        )
+        .0;
+
+        let accounts = openbook_v2::accounts::CloseOpenOrdersAccount {
+            owner: self.owner.pubkey(),
+            payer: self.payer.pubkey(),
+            open_orders_indexer,
+            open_orders_account,
+            sol_destination: self.sol_destination,
+            system_program: System::id(),
+        };
+
+        let instruction = make_instruction(program_id, &accounts, instruction);
+        (accounts, instruction)
+    }
+
+    fn signers(&self) -> Vec<TestKeypair> {
+        vec![self.owner, self.payer]
+    }
+}
+
 #[derive(Default)]
 pub struct CreateMarketInstruction {
     pub collect_fee_admin: Pubkey,
@@ -247,7 +292,7 @@ pub struct CreateMarketInstruction {
     pub name: String,
     pub bids: Pubkey,
     pub asks: Pubkey,
-    pub event_queue: Pubkey,
+    pub event_heap: Pubkey,
     pub market: TestKeypair,
     pub payer: TestKeypair,
     pub quote_lot_size: i64,
@@ -260,7 +305,7 @@ pub struct CreateMarketInstruction {
     pub time_expiry: i64,
 }
 impl CreateMarketInstruction {
-    pub async fn with_new_book_and_queue(
+    pub async fn with_new_book_and_heap(
         solana: &SolanaCookie,
         oracle_a: Option<Pubkey>,
         oracle_b: Option<Pubkey>,
@@ -272,8 +317,8 @@ impl CreateMarketInstruction {
             asks: solana
                 .create_account_for_type::<BookSide>(&openbook_v2::id())
                 .await,
-            event_queue: solana
-                .create_account_for_type::<EventQueue>(&openbook_v2::id())
+            event_heap: solana
+                .create_account_for_type::<EventHeap>(&openbook_v2::id())
                 .await,
             oracle_a,
             oracle_b,
@@ -327,7 +372,7 @@ impl ClientInstruction for CreateMarketInstruction {
             market_authority,
             bids: self.bids,
             asks: self.asks,
-            event_queue: self.event_queue,
+            event_heap: self.event_heap,
             payer: self.payer.pubkey(),
             market_base_vault,
             market_quote_vault,
@@ -403,14 +448,13 @@ impl ClientInstruction for PlaceOrderInstruction {
             market: self.market,
             bids: market.bids,
             asks: market.asks,
-            event_queue: market.event_queue,
+            event_heap: market.event_heap,
             oracle_a: market.oracle_a.into(),
             oracle_b: market.oracle_b.into(),
             signer: self.signer.pubkey(),
             user_token_account: self.user_token_account,
             market_vault: self.market_vault,
             token_program: Token::id(),
-            system_program: System::id(),
         };
         let mut instruction = make_instruction(program_id, &accounts, instruction);
         let mut vec_remainings: Vec<AccountMeta> = Vec::new();
@@ -481,14 +525,13 @@ impl ClientInstruction for PlaceOrderPeggedInstruction {
             market: self.market,
             bids: market.bids,
             asks: market.asks,
-            event_queue: market.event_queue,
+            event_heap: market.event_heap,
             oracle_a: market.oracle_a.into(),
             oracle_b: market.oracle_b.into(),
             signer: self.signer.pubkey(),
             user_token_account: self.user_token_account,
             market_vault: self.market_vault,
             token_program: Token::id(),
-            system_program: System::id(),
         };
         let instruction = make_instruction(program_id, &accounts, instruction);
 
@@ -542,7 +585,7 @@ impl ClientInstruction for PlaceTakeOrderInstruction {
             market_authority: market.market_authority,
             bids: market.bids,
             asks: market.asks,
-            event_queue: market.event_queue,
+            event_heap: market.event_heap,
             oracle_a: market.oracle_a.into(),
             oracle_b: market.oracle_b.into(),
             signer: self.signer.pubkey(),
@@ -699,7 +742,7 @@ impl ClientInstruction for ConsumeEventsInstruction {
         let accounts = Self::Accounts {
             consume_events_admin: self.consume_events_admin.map(|kp| kp.pubkey()),
             market: self.market,
-            event_queue: market.event_queue,
+            event_heap: market.event_heap,
         };
 
         let mut instruction = make_instruction(program_id, &accounts, instruction);
@@ -744,7 +787,7 @@ impl ClientInstruction for ConsumeGivenEventsInstruction {
         let accounts = Self::Accounts {
             consume_events_admin: self.consume_events_admin.map(|kp| kp.pubkey()),
             market: self.market,
-            event_queue: market.event_queue,
+            event_heap: market.event_heap,
         };
 
         let mut instruction = make_instruction(program_id, &accounts, instruction);
@@ -814,6 +857,7 @@ impl ClientInstruction for SettleFundsInstruction {
 #[derive(Clone)]
 pub struct SettleFundsExpiredInstruction {
     pub close_market_admin: TestKeypair,
+    pub payer: TestKeypair,
     pub open_orders_account: Pubkey,
     pub market: Pubkey,
     pub market_base_vault: Pubkey,
@@ -835,6 +879,7 @@ impl ClientInstruction for SettleFundsExpiredInstruction {
         let market: Market = account_loader.load(&self.market).await.unwrap();
         let accounts = Self::Accounts {
             close_market_admin: self.close_market_admin.pubkey(),
+            payer: self.payer.pubkey(),
             open_orders_account: self.open_orders_account,
             market: self.market,
             market_authority: market.market_authority,
@@ -852,7 +897,7 @@ impl ClientInstruction for SettleFundsExpiredInstruction {
     }
 
     fn signers(&self) -> Vec<TestKeypair> {
-        vec![self.close_market_admin]
+        vec![self.close_market_admin, self.payer]
     }
 }
 
@@ -881,7 +926,6 @@ impl ClientInstruction for SweepFeesInstruction {
             market_quote_vault: self.market_quote_vault,
             token_receiver_account: self.token_receiver_account,
             token_program: Token::id(),
-            system_program: System::id(),
         };
         let instruction = make_instruction(program_id, &accounts, instruction);
 
@@ -927,7 +971,6 @@ impl ClientInstruction for DepositInstruction {
             user_base_account: self.user_base_account,
             user_quote_account: self.user_quote_account,
             token_program: Token::id(),
-            system_program: System::id(),
         };
         let instruction = make_instruction(program_id, &accounts, instruction);
 
@@ -1094,7 +1137,7 @@ impl ClientInstruction for CloseMarketInstruction {
             market: self.market,
             bids: market.bids,
             asks: market.asks,
-            event_queue: market.event_queue,
+            event_heap: market.event_heap,
             token_program: Token::id(),
             sol_destination: self.sol_destination,
         };

@@ -25,7 +25,7 @@ pub struct CreateMarket<'info> {
     #[account(zero)]
     pub asks: AccountLoader<'info, BookSide>,
     #[account(zero)]
-    pub event_queue: AccountLoader<'info, EventQueue>,
+    pub event_heap: AccountLoader<'info, EventHeap>,
 
     #[account(mut)]
     pub payer: Signer<'info>,

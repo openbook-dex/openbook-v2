@@ -1,22 +1,22 @@
 pub use book::*;
 pub use bookside::*;
 pub use bookside_iterator::*;
+pub use heap::*;
 pub use nodes::*;
 pub use order::*;
 pub use order_type::*;
 pub use ordertree::*;
 pub use ordertree_iterator::*;
-pub use queue::*;
 
 mod book;
 mod bookside;
 mod bookside_iterator;
+mod heap;
 mod nodes;
 mod order;
 mod order_type;
 mod ordertree;
 mod ordertree_iterator;
-mod queue;
 
 #[cfg(test)]
 mod tests {
@@ -77,10 +77,10 @@ mod tests {
         }
     }
 
-    fn test_setup(price: f64) -> (Market, Option<I80F48>, EventQueue, OrderbookAccounts) {
+    fn test_setup(price: f64) -> (Market, Option<I80F48>, EventHeap, OrderbookAccounts) {
         let book = OrderbookAccounts::new();
 
-        let event_queue = EventQueue::zeroed();
+        let event_heap = EventHeap::zeroed();
 
         let oracle_price = Some(I80F48::from_num(price));
 
@@ -88,57 +88,53 @@ mod tests {
         openbook_market.quote_lot_size = 1;
         openbook_market.base_lot_size = 1;
 
-        (openbook_market, oracle_price, event_queue, book)
+        (openbook_market, oracle_price, event_heap, book)
     }
 
     // Check what happens when one side of the book fills up
     #[test]
     fn book_bids_full() {
-        let (mut openbook_market, oracle_price, mut event_queue, book_accs) = test_setup(5000.0);
+        let (mut openbook_market, oracle_price, mut event_heap, book_accs) = test_setup(5000.0);
         let mut book = book_accs.orderbook();
 
-        let mut new_order = |book: &mut Orderbook,
-                             event_queue: &mut EventQueue,
-                             side,
-                             price_lots,
-                             now_ts|
-         -> u128 {
-            let mut account = OpenOrdersAccount::default_for_tests();
+        let mut new_order =
+            |book: &mut Orderbook, event_heap: &mut EventHeap, side, price_lots, now_ts| -> u128 {
+                let mut account = OpenOrdersAccount::default_for_tests();
 
-            let max_base_lots = 1;
-            let time_in_force = 100;
+                let max_base_lots = 1;
+                let time_in_force = 100;
 
-            book.new_order(
-                &Order {
-                    side,
-                    max_base_lots,
-                    max_quote_lots_including_fees: i64::MAX / openbook_market.quote_lot_size,
-                    client_order_id: 0,
-                    time_in_force,
-                    params: OrderParams::Fixed {
-                        price_lots,
-                        order_type: PostOrderType::Limit,
+                book.new_order(
+                    &Order {
+                        side,
+                        max_base_lots,
+                        max_quote_lots_including_fees: i64::MAX / openbook_market.quote_lot_size,
+                        client_order_id: 0,
+                        time_in_force,
+                        params: OrderParams::Fixed {
+                            price_lots,
+                            order_type: PostOrderType::Limit,
+                        },
+                        self_trade_behavior: SelfTradeBehavior::DecrementTake,
                     },
-                    self_trade_behavior: SelfTradeBehavior::DecrementTake,
-                },
-                &mut openbook_market,
-                event_queue,
-                oracle_price,
-                Some(&mut account),
-                &Pubkey::new_unique(),
-                now_ts,
-                u8::MAX,
-                &[],
-            )
-            .unwrap();
-            account.open_order_by_raw_index(0).id
-        };
+                    &mut openbook_market,
+                    event_heap,
+                    oracle_price,
+                    Some(&mut account),
+                    &Pubkey::new_unique(),
+                    now_ts,
+                    u8::MAX,
+                    &[],
+                )
+                .unwrap();
+                account.open_order_by_raw_index(0).id
+            };
 
         // insert bids until book side is full
         for i in 1..10 {
             new_order(
                 &mut book,
-                &mut event_queue,
+                &mut event_heap,
                 Side::Bid,
                 1000 + i as i64,
                 1000000 + i as u64,
@@ -147,7 +143,7 @@ mod tests {
         for i in 10..1000 {
             new_order(
                 &mut book,
-                &mut event_queue,
+                &mut event_heap,
                 Side::Bid,
                 1000 + i as i64,
                 1000011_u64,
@@ -179,7 +175,7 @@ mod tests {
         );
 
         // add another bid at a higher price before expiry, replacing the lowest-price one (1001)
-        new_order(&mut book, &mut event_queue, Side::Bid, 1005, 1000000 - 1);
+        new_order(&mut book, &mut event_heap, Side::Bid, 1005, 1000000 - 1);
         assert_eq!(
             book.bids
                 .nodes
@@ -189,10 +185,10 @@ mod tests {
                 .price_data(),
             1002
         );
-        assert_eq!(event_queue.len(), 1);
+        assert_eq!(event_heap.len(), 1);
 
         // adding another bid after expiry removes the soonest-expiring order (1005)
-        new_order(&mut book, &mut event_queue, Side::Bid, 999, 2000000);
+        new_order(&mut book, &mut event_heap, Side::Bid, 999, 2000000);
         assert_eq!(
             book.bids
                 .nodes
@@ -203,7 +199,7 @@ mod tests {
             999
         );
         assert!(!order_tree_contains_key(&book.bids, 1005));
-        assert_eq!(event_queue.len(), 2);
+        assert_eq!(event_heap.len(), 2);
 
         // adding an ask will wipe up to three expired bids at the top of the book
         let bids_max = book
@@ -214,10 +210,10 @@ mod tests {
             .1
             .price_data();
         let bids_count = book.bids.roots[0].leaf_count;
-        new_order(&mut book, &mut event_queue, Side::Ask, 6000, 1500000);
+        new_order(&mut book, &mut event_heap, Side::Ask, 6000, 1500000);
         assert_eq!(book.bids.roots[0].leaf_count, bids_count - 5);
         assert_eq!(book.asks.roots[0].leaf_count, 1);
-        assert_eq!(event_queue.len(), 2 + 5);
+        assert_eq!(event_heap.len(), 2 + 5);
         assert!(!order_tree_contains_price(&book.bids, bids_max));
         assert!(!order_tree_contains_price(&book.bids, bids_max - 1));
         assert!(!order_tree_contains_price(&book.bids, bids_max - 2));
@@ -228,7 +224,7 @@ mod tests {
 
     #[test]
     fn book_new_order() {
-        let (mut market, oracle_price, mut event_queue, book_accs) = test_setup(1000.0);
+        let (mut market, oracle_price, mut event_heap, book_accs) = test_setup(1000.0);
         let mut book = book_accs.orderbook();
 
         // Add lots and fees to make sure to exercise unit conversion
@@ -263,7 +259,7 @@ mod tests {
                 self_trade_behavior: SelfTradeBehavior::DecrementTake,
             },
             &mut market,
-            &mut event_queue,
+            &mut event_heap,
             oracle_price,
             Some(&mut maker),
             &maker_pk,
@@ -290,7 +286,7 @@ mod tests {
         assert!(order_tree_contains_price(&book.bids, price_lots as u64));
         assert_eq!(maker.position.bids_base_lots, bid_quantity);
         assert_eq!(maker.position.asks_base_lots, 0);
-        assert_eq!(event_queue.len(), 0);
+        assert_eq!(event_heap.len(), 0);
 
         // Take the order partially
         let match_quantity = 5;
@@ -308,7 +304,7 @@ mod tests {
                 self_trade_behavior: SelfTradeBehavior::DecrementTake,
             },
             &mut market,
-            &mut event_queue,
+            &mut event_heap,
             oracle_price,
             Some(&mut taker),
             &taker_pk,
@@ -335,9 +331,9 @@ mod tests {
         assert!(taker.open_order_by_raw_index(1).is_free());
         assert_eq!(taker.position.bids_base_lots, 0);
         assert_eq!(taker.position.asks_base_lots, 0);
-        // the fill gets added to the event queue
-        assert_eq!(event_queue.len(), 1);
-        let event = event_queue.front().unwrap();
+        // the fill gets added to the event heap
+        assert_eq!(event_heap.len(), 1);
+        let event = event_heap.front().unwrap();
         assert_eq!(event.event_type, EventType::Fill as u8);
         let fill: &FillEvent = bytemuck::cast_ref(event);
         assert_eq!(fill.quantity, match_quantity);
@@ -346,7 +342,7 @@ mod tests {
         assert_eq!(fill.maker, maker_pk);
         assert_eq!(fill.taker, taker_pk);
 
-        // simulate event queue processing
+        // simulate event heap processing
         maker.execute_maker(&mut market, fill);
         taker.execute_taker(&mut market, Side::Ask, 0, 0, 0, 0);
 
@@ -366,12 +362,12 @@ mod tests {
     // enough for a single lot
     #[test]
     fn book_max_quote_lots() {
-        let (mut market, oracle_price, mut event_queue, book_accs) = test_setup(5000.0);
+        let (mut market, oracle_price, mut event_heap, book_accs) = test_setup(5000.0);
         let quote_lot_size = market.quote_lot_size;
         let mut book = book_accs.orderbook();
 
         let mut new_order = |book: &mut Orderbook,
-                             event_queue: &mut EventQueue,
+                             event_heap: &mut EventHeap,
                              side,
                              price_lots,
                              max_base_lots: i64,
@@ -393,7 +389,7 @@ mod tests {
                     self_trade_behavior: SelfTradeBehavior::DecrementTake,
                 },
                 &mut market,
-                event_queue,
+                event_heap,
                 oracle_price,
                 Some(&mut account),
                 &Pubkey::default(),
@@ -408,7 +404,7 @@ mod tests {
         // Setup
         new_order(
             &mut book,
-            &mut event_queue,
+            &mut event_heap,
             Side::Ask,
             5000,
             5,
@@ -416,7 +412,7 @@ mod tests {
         );
         new_order(
             &mut book,
-            &mut event_queue,
+            &mut event_heap,
             Side::Ask,
             5001,
             5,
@@ -424,7 +420,7 @@ mod tests {
         );
         new_order(
             &mut book,
-            &mut event_queue,
+            &mut event_heap,
             Side::Ask,
             5002,
             5,
@@ -432,13 +428,13 @@ mod tests {
         );
 
         // Try taking: the quote limit allows only one base lot to be taken.
-        new_order(&mut book, &mut event_queue, Side::Bid, 5005, 30, 6000);
+        new_order(&mut book, &mut event_heap, Side::Bid, 5005, 30, 6000);
         // Only one fill event is generated, the matching aborts even though neither the base nor quote limit
         // is exhausted.
-        assert_eq!(event_queue.len(), 1);
+        assert_eq!(event_heap.len(), 1);
 
         // Try taking: the quote limit allows no fills
-        new_order(&mut book, &mut event_queue, Side::Bid, 5005, 30, 1);
-        assert_eq!(event_queue.len(), 1);
+        new_order(&mut book, &mut event_heap, Side::Bid, 5005, 30, 1);
+        assert_eq!(event_heap.len(), 1);
     }
 }

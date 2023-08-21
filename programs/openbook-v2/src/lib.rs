@@ -306,7 +306,7 @@ pub mod openbook_v2 {
             slots
                 .iter()
                 .all(|slot| *slot < crate::state::MAX_NUM_EVENTS as usize),
-            OpenBookError::InvalidInputQueueSlots
+            OpenBookError::InvalidInputHeapSlots
         );
         #[cfg(feature = "enable-gpl")]
         instructions::consume_events(ctx, slots.len(), Some(slots))?;

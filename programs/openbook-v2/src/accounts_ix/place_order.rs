@@ -25,7 +25,7 @@ pub struct PlaceOrder<'info> {
         mut,
         has_one = bids,
         has_one = asks,
-        has_one = event_queue,
+        has_one = event_heap,
         constraint = market.load()?.oracle_a == oracle_a.non_zero_key(),
         constraint = market.load()?.oracle_b == oracle_b.non_zero_key(),
         constraint = market.load()?.open_orders_admin == open_orders_admin.non_zero_key() @ OpenBookError::InvalidOpenOrdersAdmin
@@ -36,7 +36,7 @@ pub struct PlaceOrder<'info> {
     #[account(mut)]
     pub asks: AccountLoader<'info, BookSide>,
     #[account(mut)]
-    pub event_queue: AccountLoader<'info, EventQueue>,
+    pub event_heap: AccountLoader<'info, EventHeap>,
     #[account(
         mut,
         constraint = market.load()?.is_market_vault(market_vault.key())
@@ -49,5 +49,4 @@ pub struct PlaceOrder<'info> {
     pub oracle_b: Option<UncheckedAccount<'info>>,
 
     pub token_program: Program<'info, Token>,
-    pub system_program: Program<'info, System>,
 }

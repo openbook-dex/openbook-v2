@@ -19,7 +19,7 @@ pub fn create_market(
     taker_fee: i64,
     time_expiry: i64,
 ) -> Result<()> {
-    let now_ts: u64 = Clock::get()?.unix_timestamp.try_into().unwrap();
+    let registration_time = Clock::get()?.unix_timestamp;
 
     require!(
         maker_fee.unsigned_abs() as i128 <= FEES_SCALE_FACTOR,
@@ -75,14 +75,14 @@ pub fn create_market(
         name: fill_from_str(&name)?,
         bids: ctx.accounts.bids.key(),
         asks: ctx.accounts.asks.key(),
-        event_queue: ctx.accounts.event_queue.key(),
+        event_heap: ctx.accounts.event_heap.key(),
         oracle_a,
         oracle_b,
         oracle_config: oracle_config.to_oracle_config(),
         quote_lot_size,
         base_lot_size,
         seq_num: 0,
-        registration_time: now_ts,
+        registration_time,
         maker_fee,
         taker_fee,
         fees_accrued: 0,
@@ -107,8 +107,8 @@ pub fn create_market(
     };
     orderbook.init();
 
-    let mut event_queue = ctx.accounts.event_queue.load_init()?;
-    event_queue.init();
+    let mut event_heap = ctx.accounts.event_heap.load_init()?;
+    event_heap.init();
 
     emit_cpi!(MarketMetaDataLog {
         market: ctx.accounts.market.key(),
