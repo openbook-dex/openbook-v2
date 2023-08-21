@@ -177,6 +177,7 @@ impl OpenOrdersAccount {
         }
 
         emit!(FillLog {
+            market: self.market,
             taker_side: fill.taker_side,
             maker_slot: fill.maker_slot,
             maker_out: fill.maker_out(),

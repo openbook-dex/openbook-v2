@@ -11,6 +11,7 @@ pub struct DepositLog {
 
 #[event]
 pub struct FillLog {
+    pub market: Pubkey,
     pub taker_side: u8, // side from the taker's POV
     pub maker_slot: u8,
     pub maker_out: bool, // true if maker order quantity == 0
