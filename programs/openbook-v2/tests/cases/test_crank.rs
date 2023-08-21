@@ -382,7 +382,7 @@ async fn test_crank_given_events() -> Result<(), TransportError> {
     }
 
     // is not possible to process slots > limit
-    send_tx(
+    assert!(send_tx(
         solana,
         ConsumeGivenEventsInstruction {
             consume_events_admin: None,
@@ -392,7 +392,7 @@ async fn test_crank_given_events() -> Result<(), TransportError> {
         },
     )
     .await
-    .is_err();
+    .is_err());
 
     // but if non-valid free slots are sent, the crank is performed from the front
     send_tx(
