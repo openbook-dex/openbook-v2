@@ -130,7 +130,7 @@ pub fn cancel_and_place_orders(
     market.quote_deposit_total += deposit_quote_amount;
 
     if event_heap.len() > event_heap_size_before {
-        position.penalty_events += 1;
+        position.penalty_heap_count += 1;
     }
 
     token_transfer(
