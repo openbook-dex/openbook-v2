@@ -95,6 +95,8 @@ pub fn place_take_order<'info>(
 
     let seeds = market_seeds!(market, ctx.accounts.market.key());
 
+    drop(market);
+
     if event_heap.len() > event_heap_size_before {
         system_program_transfer(
             PENALTY_EVENT_HEAP,
@@ -103,7 +105,6 @@ pub fn place_take_order<'info>(
             &ctx.accounts.market,
         )?;
     }
-    drop(market);
 
     let (user_deposit_acc, user_withdraw_acc, market_deposit_acc, market_withdraw_acc) = match side
     {
