@@ -57,5 +57,4 @@ pub struct CancelAndPlaceOrders<'info> {
     pub oracle_b: Option<UncheckedAccount<'info>>,
 
     pub token_program: Program<'info, Token>,
-    pub system_program: Program<'info, System>,
 }

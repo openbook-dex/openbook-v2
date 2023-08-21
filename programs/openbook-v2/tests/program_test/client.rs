@@ -455,7 +455,6 @@ impl ClientInstruction for PlaceOrderInstruction {
             user_token_account: self.user_token_account,
             market_vault: self.market_vault,
             token_program: Token::id(),
-            system_program: System::id(),
         };
         let mut instruction = make_instruction(program_id, &accounts, instruction);
         let mut vec_remainings: Vec<AccountMeta> = Vec::new();
@@ -533,7 +532,6 @@ impl ClientInstruction for PlaceOrderPeggedInstruction {
             user_token_account: self.user_token_account,
             market_vault: self.market_vault,
             token_program: Token::id(),
-            system_program: System::id(),
         };
         let instruction = make_instruction(program_id, &accounts, instruction);
 
@@ -928,7 +926,6 @@ impl ClientInstruction for SweepFeesInstruction {
             market_quote_vault: self.market_quote_vault,
             token_receiver_account: self.token_receiver_account,
             token_program: Token::id(),
-            system_program: System::id(),
         };
         let instruction = make_instruction(program_id, &accounts, instruction);
 
@@ -974,7 +971,6 @@ impl ClientInstruction for DepositInstruction {
             user_base_account: self.user_base_account,
             user_quote_account: self.user_quote_account,
             token_program: Token::id(),
-            system_program: System::id(),
         };
         let instruction = make_instruction(program_id, &accounts, instruction);
 

@@ -33,5 +33,4 @@ pub struct Deposit<'info> {
     pub market_quote_vault: Account<'info, TokenAccount>,
 
     pub token_program: Program<'info, Token>,
-    pub system_program: Program<'info, System>,
 }

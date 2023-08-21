@@ -23,5 +23,4 @@ pub struct SweepFees<'info> {
     )]
     pub token_receiver_account: Account<'info, TokenAccount>,
     pub token_program: Program<'info, Token>,
-    pub system_program: Program<'info, System>,
 }
