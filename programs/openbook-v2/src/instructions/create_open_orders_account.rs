@@ -9,9 +9,9 @@ pub fn create_open_orders_account(ctx: Context<CreateOpenOrdersAccount>) -> Resu
     indexer
         .addresses
         .push(ctx.accounts.open_orders_account.key());
-    indexer.total_accounts += 1;
+    indexer.created_counter += 1;
 
-    account.account_num = indexer.total_accounts;
+    account.account_num = indexer.created_counter;
     account.market = ctx.accounts.market.key();
     account.bump = *ctx.bumps.get("open_orders_account").unwrap();
     account.owner = ctx.accounts.owner.key();
