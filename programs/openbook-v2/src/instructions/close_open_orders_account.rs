@@ -10,8 +10,13 @@ pub fn close_open_orders_account(ctx: Context<CloseOpenOrdersAccount>) -> Result
         OpenBookError::NonEmptyOpenOrdersPosition
     );
 
-    let mut indexer = ctx.accounts.open_orders_indexer.load_mut()?;
-    indexer.closed_counter += 1;
+    let indexer = &mut ctx.accounts.open_orders_indexer;
+    let index = indexer
+        .addresses
+        .iter()
+        .position(|x| *x == ctx.accounts.open_orders_account.key())
+        .unwrap();
+    indexer.addresses.remove(index);
 
     Ok(())
 }

@@ -10,13 +10,16 @@ pub struct CreateOpenOrdersAccount<'info> {
     pub delegate_account: Option<UncheckedAccount<'info>>,
     #[account(
         mut,
-        has_one = owner,
-        has_one = market
+        seeds = [b"OpenOrdersIndexer".as_ref(), owner.key().as_ref()],
+        bump = open_orders_indexer.bump,
+        realloc = OpenOrdersIndexer::space(open_orders_indexer.addresses.len()+1),
+        realloc::payer = payer,
+        realloc::zero = false,
     )]
-    pub open_orders_indexer: AccountLoader<'info, OpenOrdersIndexer>,
+    pub open_orders_indexer: Account<'info, OpenOrdersIndexer>,
     #[account(
         init,
-        seeds = [b"OpenOrders".as_ref(), owner.key().as_ref(), market.key().as_ref(), &(open_orders_indexer.load()?.created_counter + 1).to_le_bytes()],
+        seeds = [b"OpenOrders".as_ref(), owner.key().as_ref(), market.key().as_ref(), &(open_orders_indexer.created_counter + 1).to_le_bytes()],
         bump,
         payer = payer,
         space = OpenOrdersAccount::space(),

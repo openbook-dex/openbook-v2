@@ -148,11 +148,7 @@ impl ClientInstruction for CreateOpenOrdersIndexerInstruction {
         let instruction = openbook_v2::instruction::CreateOpenOrdersIndexer {};
 
         let open_orders_indexer = Pubkey::find_program_address(
-            &[
-                b"OpenOrdersIndexer".as_ref(),
-                self.owner.pubkey().as_ref(),
-                self.market.as_ref(),
-            ],
+            &[b"OpenOrdersIndexer".as_ref(), self.owner.pubkey().as_ref()],
             &program_id,
         )
         .0;
@@ -193,11 +189,7 @@ impl ClientInstruction for CreateOpenOrdersAccountInstruction {
         let instruction = openbook_v2::instruction::CreateOpenOrdersAccount {};
 
         let open_orders_indexer = Pubkey::find_program_address(
-            &[
-                b"OpenOrdersIndexer".as_ref(),
-                self.owner.pubkey().as_ref(),
-                self.market.as_ref(),
-            ],
+            &[b"OpenOrdersIndexer".as_ref(), self.owner.pubkey().as_ref()],
             &program_id,
         )
         .0;
@@ -220,6 +212,59 @@ impl ClientInstruction for CreateOpenOrdersAccountInstruction {
             market: self.market,
             payer: self.payer.pubkey(),
             delegate_account: self.delegate,
+            system_program: System::id(),
+        };
+
+        let instruction = make_instruction(program_id, &accounts, instruction);
+        (accounts, instruction)
+    }
+
+    fn signers(&self) -> Vec<TestKeypair> {
+        vec![self.owner, self.payer]
+    }
+}
+
+pub struct CloseOpenOrdersAccountInstruction {
+    pub account_num: u32,
+    pub market: Pubkey,
+    pub owner: TestKeypair,
+    pub payer: TestKeypair,
+    pub sol_destination: Pubkey,
+}
+#[async_trait::async_trait(?Send)]
+impl ClientInstruction for CloseOpenOrdersAccountInstruction {
+    type Accounts = openbook_v2::accounts::CloseOpenOrdersAccount;
+    type Instruction = openbook_v2::instruction::CloseOpenOrdersAccount;
+    async fn to_instruction(
+        &self,
+        _account_loader: impl ClientAccountLoader + 'async_trait,
+    ) -> (Self::Accounts, instruction::Instruction) {
+        let program_id = openbook_v2::id();
+        let instruction = openbook_v2::instruction::CloseOpenOrdersAccount {};
+
+        let open_orders_indexer = Pubkey::find_program_address(
+            &[b"OpenOrdersIndexer".as_ref(), self.owner.pubkey().as_ref()],
+            &program_id,
+        )
+        .0;
+
+        let open_orders_account = Pubkey::find_program_address(
+            &[
+                b"OpenOrders".as_ref(),
+                self.owner.pubkey().as_ref(),
+                self.market.as_ref(),
+                &self.account_num.to_le_bytes(),
+            ],
+            &program_id,
+        )
+        .0;
+
+        let accounts = openbook_v2::accounts::CloseOpenOrdersAccount {
+            owner: self.owner.pubkey(),
+            payer: self.payer.pubkey(),
+            open_orders_indexer,
+            open_orders_account,
+            sol_destination: self.sol_destination,
             system_program: System::id(),
         };
 
