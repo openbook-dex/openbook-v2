@@ -291,7 +291,9 @@ pub struct Position {
 
     pub locked_maker_fees: u64,
     pub referrer_rebates_available: u64,
-    pub penalty_events: u64,
+    /// Count of ixs when events are added to the heap
+    /// To avoid this, send remaining accounts in order to process the events
+    pub penalty_heap_count: u64,
 
     /// Cumulative maker volume in quote native units (display only)
     pub maker_volume: u64,
@@ -318,7 +320,7 @@ impl Default for Position {
             quote_free_native: 0,
             locked_maker_fees: 0,
             referrer_rebates_available: 0,
-            penalty_events: 0,
+            penalty_heap_count: 0,
             maker_volume: 0,
             taker_volume: 0,
             reserved: [0; 88],

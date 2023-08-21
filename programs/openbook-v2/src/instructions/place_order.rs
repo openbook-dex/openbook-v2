@@ -104,7 +104,7 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<
     };
 
     if event_heap.len() > event_heap_size_before {
-        position.penalty_events += 1;
+        position.penalty_heap_count += 1;
     }
 
     token_transfer(

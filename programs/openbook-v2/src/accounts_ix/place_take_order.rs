@@ -6,6 +6,7 @@ use anchor_spl::token::{Token, TokenAccount};
 
 #[derive(Accounts)]
 pub struct PlaceTakeOrder<'info> {
+    #[account(mut)]
     pub signer: Signer<'info>,
 
     #[account(
