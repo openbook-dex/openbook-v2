@@ -13,7 +13,7 @@ const_assert_eq!(size_of::<OpenOrdersIndexer>(), 32);
 
 impl OpenOrdersIndexer {
     pub fn space(len: usize) -> usize {
-        8 + 1 + 4 + (4 + ((len + 1) * 32))
+        8 + 1 + 4 + (4 + (len * 32))
     }
 
     pub fn has_active_open_orders_accounts(&self) -> bool {

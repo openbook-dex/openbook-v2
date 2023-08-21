@@ -12,7 +12,7 @@ pub struct CreateOpenOrdersAccount<'info> {
         mut,
         seeds = [b"OpenOrdersIndexer".as_ref(), owner.key().as_ref()],
         bump = open_orders_indexer.bump,
-        realloc = OpenOrdersIndexer::space(open_orders_indexer.addresses.len()),
+        realloc = OpenOrdersIndexer::space(open_orders_indexer.addresses.len()+1),
         realloc::payer = payer,
         realloc::zero = false,
     )]
