@@ -168,6 +168,12 @@ impl AccountsState {
         self.insert(pubkey, zero_account(len));
         self
     }
+
+    pub fn add_open_orders_indexer<T>(&mut self, pubkey: Pubkey) -> &mut Self {
+        let len = openbook_v2::state::OpenOrdersIndexer::space(1);
+        self.insert(pubkey, zero_account(len));
+        self
+    }
 }
 
 fn zero_account(len: usize) -> Account {
