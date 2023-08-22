@@ -8,7 +8,7 @@ pub fn stub_oracle_create(ctx: Context<StubOracleCreate>, price: I80F48) -> Resu
     oracle.owner = ctx.accounts.owner.key();
     oracle.mint = ctx.accounts.mint.key();
     oracle.price = price;
-    oracle.last_updated = Clock::get()?.unix_timestamp;
+    oracle.last_update_ts = Clock::get()?.unix_timestamp;
 
     Ok(())
 }
