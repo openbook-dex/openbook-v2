@@ -5,7 +5,10 @@ use anchor_lang::prelude::*;
 
 pub fn create_open_orders_account(ctx: Context<CreateOpenOrdersAccount>) -> Result<()> {
     let mut account = ctx.accounts.open_orders_account.load_init()?;
-    let mut indexer = ctx.accounts.open_orders_indexer.load_mut()?;
+    let indexer = &mut ctx.accounts.open_orders_indexer;
+    indexer
+        .addresses
+        .push(ctx.accounts.open_orders_account.key());
     indexer.created_counter += 1;
 
     account.account_num = indexer.created_counter;

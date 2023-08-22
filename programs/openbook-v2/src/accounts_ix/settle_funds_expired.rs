@@ -6,7 +6,6 @@ use anchor_spl::token::{Token, TokenAccount};
 
 #[derive(Accounts)]
 pub struct SettleFundsExpired<'info> {
-    #[account(mut)]
     pub close_market_admin: Signer<'info>,
     #[account(mut)]
     pub payer: Signer<'info>,

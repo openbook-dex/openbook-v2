@@ -3,13 +3,18 @@ use anchor_lang::prelude::*;
 
 #[derive(Accounts)]
 pub struct CloseOpenOrdersAccount<'info> {
+    #[account(mut)]
+    pub payer: Signer<'info>,
     pub owner: Signer<'info>,
     #[account(
         mut,
-        has_one = owner,
-        constraint = open_orders_indexer.load()?.market == open_orders_account.load()?.market
+        seeds = [b"OpenOrdersIndexer".as_ref(), owner.key().as_ref()],
+        bump = open_orders_indexer.bump,
+        realloc = OpenOrdersIndexer::space(open_orders_indexer.addresses.len()-1),
+        realloc::payer = payer,
+        realloc::zero = false,
     )]
-    pub open_orders_indexer: AccountLoader<'info, OpenOrdersIndexer>,
+    pub open_orders_indexer: Account<'info, OpenOrdersIndexer>,
 
     #[account(
         mut,
@@ -20,4 +25,5 @@ pub struct CloseOpenOrdersAccount<'info> {
     #[account(mut)]
     /// CHECK: target for account rent needs no checks
     pub sol_destination: UncheckedAccount<'info>,
+    pub system_program: Program<'info, System>,
 }

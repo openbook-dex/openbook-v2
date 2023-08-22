@@ -194,11 +194,7 @@ impl FuzzContext {
             let quote_vault = Pubkey::new_unique();
 
             let indexer = Pubkey::find_program_address(
-                &[
-                    b"OpenOrdersIndexer".as_ref(),
-                    owner.as_ref(),
-                    self.market.as_ref(),
-                ],
+                &[b"OpenOrdersIndexer".as_ref(), owner.as_ref()],
                 &openbook_v2::ID,
             )
             .0;
@@ -224,7 +220,7 @@ impl FuzzContext {
                     self.quote_mint,
                     INITIAL_BALANCE,
                 )
-                .add_openbook_account::<OpenOrdersIndexer>(indexer)
+                .add_open_orders_indexer::<OpenOrdersIndexer>(indexer)
                 .add_openbook_account::<OpenOrdersAccount>(open_orders);
 
             let accounts = openbook_v2::accounts::CreateOpenOrdersIndexer {
@@ -337,7 +333,6 @@ impl FuzzContext {
             market_base_vault: self.market_base_vault,
             market_quote_vault: self.market_quote_vault,
             token_program: spl_token::ID,
-            system_program: system_program::ID,
         };
 
         process_instruction(&mut self.state, data, &accounts, &[])
@@ -359,7 +354,6 @@ impl FuzzContext {
             market_base_vault: self.market_base_vault,
             market_quote_vault: self.market_quote_vault,
             token_program: spl_token::ID,
-            system_program: system_program::ID,
         };
 
         process_instruction(&mut self.state, data, &accounts, &[])
@@ -395,7 +389,6 @@ impl FuzzContext {
             oracle_a: self.oracle_a,
             oracle_b: self.oracle_b,
             token_program: spl_token::ID,
-            system_program: system_program::ID,
         };
 
         let remaining = makers.map_or_else(Vec::new, |makers| {
@@ -448,7 +441,6 @@ impl FuzzContext {
             oracle_a: self.oracle_a,
             oracle_b: self.oracle_b,
             token_program: spl_token::ID,
-            system_program: system_program::ID,
         };
 
         let remaining = makers.map_or_else(Vec::new, |makers| {
@@ -643,7 +635,6 @@ impl FuzzContext {
             oracle_a: self.oracle_a,
             oracle_b: self.oracle_b,
             token_program: spl_token::ID,
-            system_program: system_program::ID,
         };
 
         let remaining = makers.map_or_else(Vec::new, |makers| {
@@ -698,7 +689,6 @@ impl FuzzContext {
             market_authority: self.market_authority,
             market_quote_vault: self.market_quote_vault,
             token_program: spl_token::ID,
-            system_program: system_program::ID,
         };
 
         process_instruction(&mut self.state, data, &accounts, &[])
