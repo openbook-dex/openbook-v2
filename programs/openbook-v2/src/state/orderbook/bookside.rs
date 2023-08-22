@@ -186,6 +186,35 @@ impl BookSide {
         }
         None
     }
+
+    pub fn get(&self, key: NodeHandle) -> Option<&AnyNode> {
+        let node = &self.nodes.nodes[key as usize];
+        let tag = NodeTag::try_from(node.tag);
+        match tag {
+            Ok(NodeTag::InnerNode) | Ok(NodeTag::LeafNode) => Some(node),
+            _ => None,
+        }
+    }
+
+    pub fn get_by_key(&self, search_key: u128, component: BookSideOrderTree) -> Option<LeafNode> {
+        let mut handle = self.root(component).root()?;
+        // walk down the tree until finding the key
+        loop {
+            match self.get(handle).unwrap().case().unwrap() {
+                NodeRef::Inner(inner) => {
+                    let (new_handle, _new_crit_bit) = inner.walk_down(search_key);
+                    handle = new_handle;
+                }
+                NodeRef::Leaf(leaf) => {
+                    if leaf.key == search_key {
+                        return Some(*leaf);
+                    }
+                    break;
+                }
+            }
+        }
+        None
+    }
 }
 
 #[cfg(test)]

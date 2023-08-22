@@ -1,3 +1,5 @@
+use crate::accounts_ix::CancelOrder;
+use crate::accounts_ix::PlaceOrder;
 use crate::error::OpenBookError;
 use crate::pubkey_option::NonZeroKey;
 use crate::state::*;
@@ -58,4 +60,43 @@ pub struct CancelAndPlaceOrders<'info> {
 
     pub token_program: Program<'info, Token>,
     pub system_program: Program<'info, System>,
+}
+
+impl<'info> CancelAndPlaceOrders<'info> {
+    pub fn to_cancel_order(&self) -> CancelOrder<'info> {
+        CancelOrder {
+            signer: self.signer.clone(),
+            bids: self.bids.clone(),
+            asks: self.asks.clone(),
+            open_orders_account: self.open_orders_account.clone(),
+            market: self.market.clone(),
+        }
+    }
+    pub fn to_place_order(&self, side: Side) -> PlaceOrder<'info> {
+        let (user_token_account, market_vault) = match side {
+            Side::Bid => (
+                self.user_quote_account.clone(),
+                *self.market_quote_vault.clone(),
+            ),
+            Side::Ask => (
+                self.user_base_account.clone(),
+                *self.market_base_vault.clone(),
+            ),
+        };
+        PlaceOrder {
+            signer: self.signer.clone(),
+            open_orders_account: self.open_orders_account.clone(),
+            market: self.market.clone(),
+            bids: self.bids.clone(),
+            asks: self.asks.clone(),
+            token_program: self.token_program.clone(),
+            system_program: self.system_program.clone(),
+            open_orders_admin: self.open_orders_admin.clone(),
+            user_token_account,
+            market_vault,
+            event_heap: self.event_heap.clone(),
+            oracle_a: self.oracle_a.clone(),
+            oracle_b: self.oracle_b.clone(),
+        }
+    }
 }
