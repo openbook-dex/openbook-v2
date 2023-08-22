@@ -148,7 +148,7 @@ pub mod openbook_v2 {
 
     /// Edit an order.
     pub fn edit_order<'info>(
-        ctx: Context<'_, '_, '_, 'info, CancelAndPlaceOrders<'info>>,
+        ctx: Context<'_, '_, '_, 'info, PlaceOrder<'info>>,
         client_order_id: u64,
         expected_cancel_size: i64,
         place_order: PlaceOrderArgs,

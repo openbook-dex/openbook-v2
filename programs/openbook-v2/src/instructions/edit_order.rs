@@ -4,14 +4,14 @@ use crate::state::{Order, Orderbook};
 use anchor_lang::prelude::*;
 
 pub fn edit_order<'info>(
-    ctx: Context<'_, '_, '_, 'info, CancelAndPlaceOrders<'info>>,
+    ctx: Context<'_, '_, '_, 'info, PlaceOrder<'info>>,
     cancel_client_order_id: u64,
     expected_cancel_size: i64,
     mut order: Order,
     price: i64,
     limit: u8,
 ) -> Result<Option<u128>> {
-    let account = ctx.accounts.open_orders_account.load_mut()?;
+    let account = ctx.accounts.open_orders_account.load()?;
     let market = ctx.accounts.market.load()?;
 
     let book = Orderbook {
@@ -36,6 +36,9 @@ pub fn edit_order<'info>(
         order.max_quote_lots_including_fees =
             market.subtract_taker_fees(new_max_quote_lots_before_fees)
     }
+    drop(account);
+    drop(market);
+    drop(book);
 
     crate::instructions::cancel_order_by_client_order_id(
         Context::new(
@@ -47,14 +50,5 @@ pub fn edit_order<'info>(
         cancel_client_order_id,
     )?;
 
-    return crate::instructions::place_order(
-        Context::new(
-            ctx.program_id,
-            &mut ctx.accounts.to_place_order(order.side),
-            ctx.remaining_accounts,
-            ctx.bumps,
-        ),
-        order,
-        limit,
-    );
+    return crate::instructions::place_order(ctx, order, limit);
 }

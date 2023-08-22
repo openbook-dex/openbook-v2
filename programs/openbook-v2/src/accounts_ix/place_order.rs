@@ -1,3 +1,4 @@
+use crate::accounts_ix::CancelOrder;
 use crate::error::OpenBookError;
 use crate::pubkey_option::NonZeroKey;
 use crate::state::*;
@@ -49,4 +50,16 @@ pub struct PlaceOrder<'info> {
     pub oracle_b: Option<UncheckedAccount<'info>>,
 
     pub token_program: Program<'info, Token>,
+}
+
+impl<'info> PlaceOrder<'info> {
+    pub fn to_cancel_order(&self) -> CancelOrder<'info> {
+        CancelOrder {
+            signer: self.signer.clone(),
+            bids: self.bids.clone(),
+            asks: self.asks.clone(),
+            open_orders_account: self.open_orders_account.clone(),
+            market: self.market.clone(),
+        }
+    }
 }
