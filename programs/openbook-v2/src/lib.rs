@@ -382,10 +382,12 @@ pub mod openbook_v2 {
     pub fn cancel_order_by_client_order_id(
         ctx: Context<CancelOrder>,
         client_order_id: u64,
-    ) -> Result<()> {
+    ) -> Result<i64> {
         #[cfg(feature = "enable-gpl")]
-        instructions::cancel_order_by_client_order_id(ctx, client_order_id)?;
-        Ok(())
+        return instructions::cancel_order_by_client_order_id(ctx, client_order_id);
+
+        #[cfg(not(feature = "enable-gpl"))]
+        Ok(0)
     }
 
     /// Cancel up to `limit` orders, optionally filtering by side

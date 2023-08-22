@@ -52,14 +52,6 @@ impl OrderTreeRoot {
             Some(self.maybe_node)
         }
     }
-
-    pub fn root(&self) -> Option<NodeHandle> {
-        if self.leaf_count == 0 {
-            None
-        } else {
-            Some(self.maybe_node)
-        }
-    }
 }
 
 /// A binary tree on AnyNode::key()

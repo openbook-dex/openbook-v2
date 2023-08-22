@@ -549,29 +549,6 @@ impl<'a> Orderbook<'a> {
 
         Ok(leaf_node)
     }
-
-    pub fn get_order(&self, order_id: u128, side_and_tree: SideAndOrderTree) -> Result<LeafNode> {
-        match side_and_tree.side() {
-            Side::Bid => self
-                .bids
-                .get_by_key(order_id, side_and_tree.order_tree())
-                .ok_or_else(||
-                    // possibly already filled or expired?
-                    error_msg_typed!(
-                        OpenBookError::OrderIdNotFound,
-                        "no order with id {order_id} found on the orderbook"
-                    )),
-            Side::Ask => self
-                .asks
-                .get_by_key(order_id, side_and_tree.order_tree())
-                .ok_or_else(||
-                    // possibly already filled or expired?
-                    error_msg_typed!(
-                        OpenBookError::OrderIdNotFound,
-                        "no order with id {order_id} found on the orderbook"
-                    )),
-        }
-    }
 }
 
 pub fn process_out_event(

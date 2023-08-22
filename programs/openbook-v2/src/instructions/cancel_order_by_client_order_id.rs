@@ -7,7 +7,7 @@ use crate::state::*;
 pub fn cancel_order_by_client_order_id(
     ctx: Context<CancelOrder>,
     client_order_id: u64,
-) -> Result<()> {
+) -> Result<i64> {
     let mut account = ctx.accounts.open_orders_account.load_mut()?;
     let oo = account
         .find_order_with_client_order_id(client_order_id)
@@ -27,13 +27,15 @@ pub fn cancel_order_by_client_order_id(
         asks: ctx.accounts.asks.load_mut()?,
     };
 
-    book.cancel_order(
-        &mut account,
-        order_id,
-        order_side_and_tree,
-        *market,
-        Some(ctx.accounts.open_orders_account.key()),
-    )?;
+    let leaf_node_quantity = book
+        .cancel_order(
+            &mut account,
+            order_id,
+            order_side_and_tree,
+            *market,
+            Some(ctx.accounts.open_orders_account.key()),
+        )?
+        .quantity;
 
-    Ok(())
+    Ok(leaf_node_quantity)
 }
