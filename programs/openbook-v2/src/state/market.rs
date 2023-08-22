@@ -151,7 +151,7 @@ const_assert_eq!(
     8 +                         // referrer_rebates_accrued
     128 // reserved
 );
-const_assert_eq!(size_of::<Market>(), 816);
+const_assert_eq!(size_of::<Market>(), 808);
 const_assert_eq!(size_of::<Market>() % 8, 0);
 
 impl Market {
@@ -209,15 +209,14 @@ impl Market {
         now_slot: u64,
     ) -> Result<I80F48> {
         assert_eq!(self.oracle_a, *oracle_acc.key());
-        let oracle =
-            oracle::oracle_state_unchecked(oracle_acc)?;
+        let oracle = oracle::oracle_state_unchecked(oracle_acc)?;
 
         oracle.check_staleness(oracle_acc.key(), &self.oracle_config, now_slot)?;
         oracle.check_confidence(oracle_acc.key(), &self.oracle_config)?;
 
         let decimals = (self.quote_decimals as i8) - (self.base_decimals as i8);
-        let decimal_adj = oracle::power_of_ten(decimals);
-        Ok(oracle.price * decimal_adj)
+        let decimal_adj = oracle::power_of_ten_float(decimals);
+        Ok(I80F48::from_num(oracle.price * decimal_adj))
     }
 
     pub fn oracle_price_from_a_and_b(
@@ -229,34 +228,25 @@ impl Market {
         assert_eq!(self.oracle_a, *oracle_a_acc.key());
         assert_eq!(self.oracle_b, *oracle_b_acc.key());
 
-        let oracle_a =
-            oracle::oracle_state_unchecked(oracle_a_acc)?;
+        let oracle_a = oracle::oracle_state_unchecked(oracle_a_acc)?;
 
         oracle_a.check_staleness(oracle_a_acc.key(), &self.oracle_config, now_slot)?;
 
-        let oracle_b =
-            oracle::oracle_state_unchecked(oracle_b_acc)?;
+        let oracle_b = oracle::oracle_state_unchecked(oracle_b_acc)?;
 
         oracle_b.check_staleness(oracle_b_acc.key(), &self.oracle_config, now_slot)?;
 
-        let price = oracle_a.price
-            .checked_div(oracle_b.price)
-            .ok_or_else(|| error!(OpenBookError::InvalidOraclePrice))?;
+        let price = oracle_a.price / oracle_b.price;
 
         // target uncertainty reads
         //   $ \sigma \approx \frac{A}{B} * \sqrt{\frac{\sigma_A}{A}^2 + \frac{\sigma_B}{B}^2} $
         // but alternatively, to avoid costly operations, everything can be scaled by $B^2$, i.e.
         //   $ \sigma^2 * B^4 \approx (\sigma_A * B)^2 + (\sigma_B * A)^2 $
-        let scaled_target_var = self
-            .oracle_config
-            .conf_filter
-            .checked_mul(oracle_b.price)
-            .and_then(|sigma_b| sigma_b.checked_square())
-            .and_then(|sigma2_b2| sigma2_b2.checked_mul(oracle_b.price))
-            .and_then(|sigma2_b3| sigma2_b3.checked_mul(oracle_b.price))
-            .unwrap_or(I80F48::MAX);
-
-        let scaled_var = (oracle_a.deviation * oracle_b.price).square() + (oracle_b.deviation * oracle_a.price).square();
+        let sigma_b = self.oracle_config.conf_filter * oracle_b.price;
+        let scaled_target_var = sigma_b * sigma_b * oracle_b.price * oracle_b.price;
+        let scaled_var =
+            (oracle_a.deviation * oracle_a.deviation * oracle_b.price * oracle_b.price)
+                + (oracle_b.deviation * oracle_b.deviation * oracle_a.price * oracle_a.price);
         if scaled_var > scaled_target_var {
             msg!(
                 "Combined variance too high; scaled value {}, target {}",
@@ -267,8 +257,8 @@ impl Market {
         }
 
         let decimals = (self.quote_decimals as i8) - (self.base_decimals as i8);
-        let decimal_adj = oracle::power_of_ten(decimals);
-        Ok(price * decimal_adj)
+        let decimal_adj = oracle::power_of_ten_float(decimals);
+        Ok(I80F48::from_num(price * decimal_adj))
     }
 
     pub fn subtract_taker_fees(&self, quote: i64) -> i64 {

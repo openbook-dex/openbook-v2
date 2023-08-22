@@ -4,6 +4,7 @@ use anchor_lang::prelude::*;
 use anchor_lang::Discriminator;
 use fixed::types::I80F48;
 
+use fixed::types::U64F64;
 use raydium_amm_v3::states::PoolState;
 use static_assertions::const_assert_eq;
 use switchboard_program::FastRoundResultAccountData;
@@ -11,10 +12,9 @@ use switchboard_v2::AggregatorAccountData;
 
 use crate::accounts_zerocopy::*;
 use crate::error::*;
-use crate::i80f48::Power;
 
 const DECIMAL_CONSTANT_ZERO_INDEX: i8 = 12;
-const DECIMAL_CONSTANTS: [I80F48; 25] = [
+const DECIMAL_CONSTANTS_I80F48: [I80F48; 25] = [
     I80F48::from_bits((1 << 48) / 10i128.pow(12u32)),
     I80F48::from_bits((1 << 48) / 10i128.pow(11u32) + 1),
     I80F48::from_bits((1 << 48) / 10i128.pow(10u32)),
@@ -41,8 +41,40 @@ const DECIMAL_CONSTANTS: [I80F48; 25] = [
     I80F48::from_bits((1 << 48) * 10i128.pow(11u32)),
     I80F48::from_bits((1 << 48) * 10i128.pow(12u32)),
 ];
-pub const fn power_of_ten(decimals: i8) -> I80F48 {
-    DECIMAL_CONSTANTS[(decimals + DECIMAL_CONSTANT_ZERO_INDEX) as usize]
+
+pub const fn power_of_ten_fixed(decimals: i8) -> I80F48 {
+    DECIMAL_CONSTANTS_I80F48[(decimals + DECIMAL_CONSTANT_ZERO_INDEX) as usize]
+}
+const DECIMAL_CONSTANTS_F64: [f64; 25] = [
+    10e-12,
+    10e-11,
+    10e-10,
+    10e-9,
+    10e-8,
+    10e-7,
+    10e-6,
+    10e-5,
+    10e-4,
+    10e-3,
+    10e-2,
+    10e-1,
+    10e0,
+    10e1,
+    10e2,
+    10e3,
+    10e4,
+    10e5,
+    10e6,
+    10e7,
+    10e8,
+    10e9,
+    10e10,
+    10e11,
+    10e12,
+];
+
+pub const fn power_of_ten_float(decimals: i8) -> f64 {
+    DECIMAL_CONSTANTS_F64[(decimals + DECIMAL_CONSTANT_ZERO_INDEX) as usize]
 }
 
 pub mod switchboard_v1_devnet_oracle {
@@ -57,12 +89,12 @@ pub mod switchboard_v2_mainnet_oracle {
 #[zero_copy]
 #[derive(AnchorDeserialize, AnchorSerialize, Debug)]
 pub struct OracleConfig {
-    pub conf_filter: I80F48,
+    pub conf_filter: f64,
     pub max_staleness_slots: i64,
     pub reserved: [u8; 72],
 }
-const_assert_eq!(size_of::<OracleConfig>(), 16 + 8 + 72);
-const_assert_eq!(size_of::<OracleConfig>(), 96);
+const_assert_eq!(size_of::<OracleConfig>(), 8 + 8 + 72);
+const_assert_eq!(size_of::<OracleConfig>(), 88);
 const_assert_eq!(size_of::<OracleConfig>() % 8, 0);
 
 #[derive(AnchorDeserialize, AnchorSerialize, Debug, Clone)]
@@ -77,7 +109,7 @@ pub struct OracleConfigParams {
 impl OracleConfigParams {
     pub fn to_oracle_config(&self) -> OracleConfig {
         OracleConfig {
-            conf_filter: I80F48::checked_from_num(self.conf_filter).unwrap_or(I80F48::MAX),
+            conf_filter: self.conf_filter as f64,
             max_staleness_slots: self.max_staleness_slots.map(|v| v as i64).unwrap_or(-1),
             reserved: [0; 72],
         }
@@ -94,8 +126,8 @@ pub enum OracleType {
 }
 
 pub struct OracleState {
-    pub price: I80F48,
-    pub deviation: I80F48,
+    pub price: f64,
+    pub deviation: f64,
     pub last_update_slot: u64,
     pub oracle_type: OracleType,
 }
@@ -129,7 +161,7 @@ impl OracleState {
             msg!(
                 "Oracle is stale; pubkey {}, price: {}, last_update_slot: {}, now_slot: {}",
                 oracle_pk,
-                self.price.to_num::<f64>(),
+                self.price,
                 self.last_update_slot,
                 now_slot,
             );
@@ -143,9 +175,9 @@ impl OracleState {
             msg!(
                 "Oracle confidence not good enough: pubkey {}, price: {}, deviation: {}, conf_filter: {}",
                 oracle_pk,
-                self.price.to_num::<f64>(),
-                self.deviation.to_num::<f64>(),
-                config.conf_filter.to_num::<f32>(),
+                self.price,
+                self.deviation,
+                config.conf_filter,
             );
             return Err(OpenBookError::OracleConfidence.into());
         }
@@ -157,14 +189,14 @@ impl OracleState {
 pub struct StubOracle {
     pub owner: Pubkey,
     pub mint: Pubkey,
-    pub price: I80F48,
+    pub price: f64,
     pub last_update_ts: i64,
     pub last_update_slot: u64,
-    pub deviation: I80F48,
+    pub deviation: f64,
     pub reserved: [u8; 104],
 }
-const_assert_eq!(size_of::<StubOracle>(), 32 + 32 + 16 + 8 + 8 + 16 + 104);
-const_assert_eq!(size_of::<StubOracle>(), 216);
+const_assert_eq!(size_of::<StubOracle>(), 32 + 32 + 8 + 8 + 8 + 8 + 104);
+const_assert_eq!(size_of::<StubOracle>(), 200);
 const_assert_eq!(size_of::<StubOracle>() % 8, 0);
 
 pub fn determine_oracle_type(acc_info: &impl KeyedAccountReader) -> Result<OracleType> {
@@ -235,9 +267,9 @@ pub fn oracle_state_unchecked(acc_info: &impl KeyedAccountReader) -> Result<Orac
     Ok(match oracle_type {
         OracleType::Stub => {
             let stub = acc_info.load::<StubOracle>()?;
-            let deviation = if stub.deviation == 0 {
+            let deviation = if stub.deviation == 0f64 {
                 // allows the confidence check to pass even for negative prices
-                I80F48::MIN
+                f64::MIN
             } else {
                 stub.deviation
             };
@@ -259,10 +291,10 @@ pub fn oracle_state_unchecked(acc_info: &impl KeyedAccountReader) -> Result<Orac
             let (price_data, last_update_slot) = pyth_get_price(price_account);
 
             let decimals = price_account.expo as i8;
-            let decimal_adj = power_of_ten(decimals);
-            let price = I80F48::from_num(price_data.price) * decimal_adj;
-            let deviation = I80F48::from_num(price_data.conf) * decimal_adj;
-            require_gte!(price, 0);
+            let decimal_adj = power_of_ten_float(decimals);
+            let price = price_data.price as f64 * decimal_adj;
+            let deviation = price_data.conf as f64 * decimal_adj;
+            require_gte!(price, 0f64);
             OracleState {
                 price,
                 last_update_slot,
@@ -277,8 +309,8 @@ pub fn oracle_state_unchecked(acc_info: &impl KeyedAccountReader) -> Result<Orac
 
             let feed = bytemuck::from_bytes::<AggregatorAccountData>(&data[8..]);
             let feed_result = feed.get_result().map_err(from_foreign_error)?;
-            let ui_price: f64 = feed_result.try_into().map_err(from_foreign_error)?;
-            let ui_deviation: f64 = feed
+            let price: f64 = feed_result.try_into().map_err(from_foreign_error)?;
+            let deviation: f64 = feed
                 .latest_confirmed_round
                 .std_deviation
                 .try_into()
@@ -288,9 +320,7 @@ pub fn oracle_state_unchecked(acc_info: &impl KeyedAccountReader) -> Result<Orac
             // the round opening and only then start executing the price tasks.
             let last_update_slot = feed.latest_confirmed_round.round_open_slot;
 
-            let price = I80F48::from_num(ui_price);
-            let deviation = I80F48::from_num(ui_deviation);
-            require_gte!(price, 0);
+            require_gte!(price, 0f64);
             OracleState {
                 price,
                 last_update_slot,
@@ -300,14 +330,11 @@ pub fn oracle_state_unchecked(acc_info: &impl KeyedAccountReader) -> Result<Orac
         }
         OracleType::SwitchboardV1 => {
             let result = FastRoundResultAccountData::deserialize(data).unwrap();
-            let ui_price = result.result.result;
+            let price = result.result.result;
 
-            let ui_deviation = result.result.max_response - result.result.min_response;
+            let deviation = result.result.max_response - result.result.min_response;
             let last_update_slot = result.result.round_open_slot;
-
-            let price = I80F48::from_num(ui_price);
-            let deviation = I80F48::from_num(ui_deviation);
-            require_gte!(price, 0);
+            require_gte!(price, 0f64);
             OracleState {
                 price,
                 last_update_slot,
@@ -318,17 +345,16 @@ pub fn oracle_state_unchecked(acc_info: &impl KeyedAccountReader) -> Result<Orac
         OracleType::RaydiumCLMM => {
             let pool = bytemuck::from_bytes::<PoolState>(&data[8..]);
 
-            let sqrt_price = I80F48::checked_from_num(pool.sqrt_price_x64).unwrap()
-                >> raydium_amm_v3::libraries::RESOLUTION;
+            let sqrt_price = U64F64::from_bits(pool.sqrt_price_x64);
 
-            let decimals = (pool.mint_decimals_0 as i8) - (pool.mint_decimals_1 as i8);
-            let price = sqrt_price.square() * power_of_ten(decimals);
+            let decimals: i8 = (pool.mint_decimals_0 as i8) - (pool.mint_decimals_1 as i8);
+            let price: f64 = (sqrt_price * sqrt_price).to_num::<f64>() * power_of_ten_float(decimals);
 
-            require_gte!(price, 0);
+            require_gte!(price, 0f64);
             OracleState {
                 price,
                 last_update_slot: u64::MAX, // ensure staleness slot will never fail
-                deviation: I80F48::MIN,
+                deviation: 0f64,
                 oracle_type: OracleType::RaydiumCLMM,
             }
         }
@@ -402,8 +428,9 @@ mod tests {
 
         let oracle = oracle_state_unchecked(ai)?;
 
-        let price_from_raydium_sdk = I80F48::from_num(24.470_087_964_273_85);
-        let tolerance = I80F48::from_num(1e-10);
+        let price_from_raydium_sdk = 24.470_087_964_273_85f64;
+        let tolerance = 1e-10f64;
+        msg!("{} - {}", oracle.price, price_from_raydium_sdk)
         assert!((oracle.price - price_from_raydium_sdk).abs() < tolerance);
 
         Ok(())
@@ -413,7 +440,7 @@ mod tests {
     pub fn lookup_test() {
         for idx in -12..0 {
             assert_eq!(
-                power_of_ten(idx),
+                power_of_ten_fixed(idx),
                 I80F48::from_str(&format!(
                     "0.{}1",
                     str::repeat("0", (idx.abs() as usize) - 1)
@@ -422,11 +449,11 @@ mod tests {
             )
         }
 
-        assert_eq!(power_of_ten(0), I80F48::ONE);
+        assert_eq!(power_of_ten_fixed(0), I80F48::ONE);
 
         for idx in 1..=12 {
             assert_eq!(
-                power_of_ten(idx),
+                power_of_ten_fixed(idx),
                 I80F48::from_str(&format!("1{}", str::repeat("0", idx.abs() as usize))).unwrap()
             )
         }
