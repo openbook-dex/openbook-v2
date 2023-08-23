@@ -12,6 +12,7 @@ async fn test_edit_order() -> Result<(), TransportError> {
         price_lots,
         tokens,
         account_1,
+        account_2,
         ..
     } = TestContext::new_with_market(TestNewMarketInitialize {
         maker_fee: -100,
@@ -36,7 +37,7 @@ async fn test_edit_order() -> Result<(), TransportError> {
             side: Side::Bid,
             price_lots,
             max_base_lots: 2,
-            max_quote_lots_including_fees: 20020,
+            max_quote_lots_including_fees: 20004,
             client_order_id: 12,
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
@@ -66,7 +67,7 @@ async fn test_edit_order() -> Result<(), TransportError> {
             side: Side::Bid,
             price_lots,
             max_base_lots: 1,
-            max_quote_lots_including_fees: 10000,
+            max_quote_lots_including_fees: 10002,
             client_order_id: 11,
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
@@ -78,8 +79,31 @@ async fn test_edit_order() -> Result<(), TransportError> {
     .await
     .is_err());
 
-    let price_lots = price_lots - 1;
+    // take 1. send remaining to crank and remove 1 bids_base_lots
+    send_tx(
+        solana,
+        PlaceOrderInstruction {
+            open_orders_account: account_2,
+            open_orders_admin: None,
+            market,
+            signer: owner,
+            user_token_account: owner_token_1,
+            market_vault: market_quote_vault,
+            side: Side::Ask,
+            price_lots,
+            max_base_lots: 1,
+            max_quote_lots_including_fees: 10000,
+            client_order_id: 12,
+            expiry_timestamp: 0,
+            order_type: PlaceOrderType::Limit,
+            self_trade_behavior: SelfTradeBehavior::default(),
+            remainings: vec![account_1],
+        },
+    )
+    .await
+    .unwrap();
 
+    // 1 base_lot has been taken, post only 1
     send_tx(
         solana,
         EditOrderInstruction {
@@ -91,14 +115,14 @@ async fn test_edit_order() -> Result<(), TransportError> {
             market_vault: market_quote_vault,
             side: Side::Bid,
             price_lots,
-            max_base_lots: 1,
-            max_quote_lots_including_fees: 10010,
+            max_base_lots: 2,
+            max_quote_lots_including_fees: 20004,
             client_order_id: 12,
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
             remainings: vec![],
-            expected_cancel_size: 1,
+            expected_cancel_size: 2,
         },
     )
     .await

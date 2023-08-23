@@ -270,12 +270,6 @@ impl Market {
             .unwrap()
     }
 
-    pub fn taker_fees_floor(self, amount: u64) -> u64 {
-        (i128::from(amount) * i128::from(self.taker_fee) / FEES_SCALE_FACTOR)
-            .try_into()
-            .unwrap()
-    }
-
     pub fn maker_fees_floor(self, amount: u64) -> u64 {
         if self.maker_fee.is_positive() {
             self.unsigned_maker_fees_floor(amount)

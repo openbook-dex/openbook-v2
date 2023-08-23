@@ -190,7 +190,6 @@ pub mod openbook_v2 {
             client_order_id,
             expected_cancel_size,
             order,
-            place_order.price_lots,
             place_order.limit,
         );
 
