@@ -1,4 +1,4 @@
-export type OpenbookV2 = {
+export interface OpenbookV2 {
   "version": "0.1.0",
   "name": "openbook_v2",
   "instructions": [
@@ -518,6 +518,96 @@ export type OpenbookV2 = {
           "name": "placeOrder",
           "type": {
             "defined": "PlaceOrderArgs"
+          }
+        }
+      ],
+      "returns": {
+        "option": "u128"
+      }
+    },
+    {
+      "name": "editOrderPegged",
+      "docs": [
+        "Edit an order."
+      ],
+      "accounts": [
+        {
+          "name": "signer",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "openOrdersAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "openOrdersAdmin",
+          "isMut": false,
+          "isSigner": true,
+          "isOptional": true
+        },
+        {
+          "name": "userTokenAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "market",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "bids",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "asks",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "eventHeap",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "marketVault",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "oracleA",
+          "isMut": false,
+          "isSigner": false,
+          "isOptional": true
+        },
+        {
+          "name": "oracleB",
+          "isMut": false,
+          "isSigner": false,
+          "isOptional": true
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "clientOrderId",
+          "type": "u64"
+        },
+        {
+          "name": "expectedCancelSize",
+          "type": "i64"
+        },
+        {
+          "name": "placeOrder",
+          "type": {
+            "defined": "PlaceOrderPeggedArgs"
           }
         }
       ],
@@ -3479,7 +3569,7 @@ export type OpenbookV2 = {
       "msg": "Cannot close a non-empty open orders account"
     }
   ]
-};
+}
 
 export const IDL: OpenbookV2 = {
   "version": "0.1.0",
@@ -4001,6 +4091,96 @@ export const IDL: OpenbookV2 = {
           "name": "placeOrder",
           "type": {
             "defined": "PlaceOrderArgs"
+          }
+        }
+      ],
+      "returns": {
+        "option": "u128"
+      }
+    },
+    {
+      "name": "editOrderPegged",
+      "docs": [
+        "Edit an order."
+      ],
+      "accounts": [
+        {
+          "name": "signer",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "openOrdersAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "openOrdersAdmin",
+          "isMut": false,
+          "isSigner": true,
+          "isOptional": true
+        },
+        {
+          "name": "userTokenAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "market",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "bids",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "asks",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "eventHeap",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "marketVault",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "oracleA",
+          "isMut": false,
+          "isSigner": false,
+          "isOptional": true
+        },
+        {
+          "name": "oracleB",
+          "isMut": false,
+          "isSigner": false,
+          "isOptional": true
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "clientOrderId",
+          "type": "u64"
+        },
+        {
+          "name": "expectedCancelSize",
+          "type": "i64"
+        },
+        {
+          "name": "placeOrder",
+          "type": {
+            "defined": "PlaceOrderPeggedArgs"
           }
         }
       ],

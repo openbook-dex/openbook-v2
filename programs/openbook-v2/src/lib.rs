@@ -197,6 +197,58 @@ pub mod openbook_v2 {
         Ok(None)
     }
 
+    /// Edit an order pegged.
+    pub fn edit_order_pegged<'info>(
+        ctx: Context<'_, '_, '_, 'info, PlaceOrder<'info>>,
+        client_order_id: u64,
+        expected_cancel_size: i64,
+        place_order: PlaceOrderPeggedArgs,
+    ) -> Result<Option<u128>> {
+        require!(
+            ctx.accounts.oracle_a.is_some(),
+            OpenBookError::DisabledOraclePeg
+        );
+
+        require_gt!(
+            place_order.peg_limit,
+            0,
+            OpenBookError::InvalidInputPegLimit
+        );
+
+        let time_in_force = match Order::tif_from_expiry(place_order.expiry_timestamp) {
+            Some(t) => t,
+            None => {
+                msg!("Order is already expired");
+                return Ok(None);
+            }
+        };
+
+        let order = Order {
+            side: place_order.side,
+            max_base_lots: place_order.max_base_lots,
+            max_quote_lots_including_fees: place_order.max_quote_lots_including_fees,
+            client_order_id: place_order.client_order_id,
+            time_in_force,
+            self_trade_behavior: place_order.self_trade_behavior,
+            params: OrderParams::OraclePegged {
+                price_offset_lots: place_order.price_offset_lots,
+                order_type: place_order.order_type.to_post_order_type()?,
+                peg_limit: place_order.peg_limit,
+            },
+        };
+        #[cfg(feature = "enable-gpl")]
+        return instructions::edit_order(
+            ctx,
+            client_order_id,
+            expected_cancel_size,
+            order,
+            place_order.limit,
+        );
+
+        #[cfg(not(feature = "enable-gpl"))]
+        Ok(None)
+    }
+
     /// Cancel orders and place multiple orders.
     pub fn cancel_and_place_orders(
         ctx: Context<CancelAndPlaceOrders>,
