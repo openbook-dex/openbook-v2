@@ -504,50 +504,143 @@ impl FuzzContext {
         process_instruction(&mut self.state, data, &accounts, &remaining)
     }
 
-    pub fn consume_events(
+    pub fn edit_order(
         &mut self,
-        user_ids: &HashSet<UserId>,
-        data: &openbook_v2::instruction::ConsumeEvents,
+        user_id: &UserId,
+        data: &openbook_v2::instruction::EditOrder,
+        makers: Option<&HashSet<UserId>>,
     ) -> ProgramResult {
-        let accounts = openbook_v2::accounts::ConsumeEvents {
-            consume_events_admin: None,
-            market: self.market,
-            event_heap: self.event_heap,
+        let market_vault = match data.place_order.side {
+            Side::Ask => self.market_base_vault,
+            Side::Bid => self.market_quote_vault,
         };
 
-        let remaining = user_ids
-            .iter()
-            .filter_map(|user_id| self.users.get(user_id))
-            .map(|user| AccountMeta {
-                pubkey: user.open_orders,
-                is_signer: false,
-                is_writable: true,
-            })
-            .collect::<Vec<_>>();
+        let user = self.get_or_create_new_user(user_id);
+        let user_token_account = match data.place_order.side {
+            Side::Ask => user.base_vault,
+            Side::Bid => user.quote_vault,
+        };
+
+        let accounts = openbook_v2::accounts::PlaceOrder {
+            open_orders_account: user.open_orders,
+            signer: user.owner,
+            user_token_account,
+            open_orders_admin: None,
+            market: self.market,
+            bids: self.bids,
+            asks: self.asks,
+            event_heap: self.event_heap,
+            market_vault,
+            oracle_a: self.oracle_a,
+            oracle_b: self.oracle_b,
+            token_program: spl_token::ID,
+        };
+
+        let remaining = makers.map_or_else(Vec::new, |makers| {
+            makers
+                .iter()
+                .filter(|id| id != &user_id)
+                .filter_map(|id| self.users.get(id))
+                .map(|user| AccountMeta {
+                    pubkey: user.open_orders,
+                    is_signer: false,
+                    is_writable: true,
+                })
+                .collect::<Vec<_>>()
+        });
 
         process_instruction(&mut self.state, data, &accounts, &remaining)
     }
 
-    pub fn consume_given_events(
+    pub fn edit_order_pegged(
         &mut self,
-        user_ids: &HashSet<UserId>,
-        data: &openbook_v2::instruction::ConsumeGivenEvents,
+        user_id: &UserId,
+        data: &openbook_v2::instruction::EditOrderPegged,
+        makers: Option<&HashSet<UserId>>,
     ) -> ProgramResult {
-        let accounts = openbook_v2::accounts::ConsumeEvents {
-            consume_events_admin: None,
-            market: self.market,
-            event_heap: self.event_heap,
+        if self.oracle_a.is_none() {
+            return Ok(());
+        }
+
+        let market_vault = match data.place_order.side {
+            Side::Ask => self.market_base_vault,
+            Side::Bid => self.market_quote_vault,
         };
 
-        let remaining = user_ids
-            .iter()
-            .filter_map(|user_id| self.users.get(user_id))
-            .map(|user| AccountMeta {
-                pubkey: user.open_orders,
-                is_signer: false,
-                is_writable: true,
-            })
-            .collect::<Vec<_>>();
+        let user = self.get_or_create_new_user(user_id);
+        let user_token_account = match data.place_order.side {
+            Side::Ask => user.base_vault,
+            Side::Bid => user.quote_vault,
+        };
+
+        let accounts = openbook_v2::accounts::PlaceOrder {
+            open_orders_account: user.open_orders,
+            signer: user.owner,
+            user_token_account,
+            open_orders_admin: None,
+            market: self.market,
+            bids: self.bids,
+            asks: self.asks,
+            event_heap: self.event_heap,
+            market_vault,
+            oracle_a: self.oracle_a,
+            oracle_b: self.oracle_b,
+            token_program: spl_token::ID,
+        };
+
+        let remaining = makers.map_or_else(Vec::new, |makers| {
+            makers
+                .iter()
+                .filter(|id| id != &user_id)
+                .filter_map(|id| self.users.get(id))
+                .map(|user| AccountMeta {
+                    pubkey: user.open_orders,
+                    is_signer: false,
+                    is_writable: true,
+                })
+                .collect::<Vec<_>>()
+        });
+
+        process_instruction(&mut self.state, data, &accounts, &remaining)
+    }
+
+    pub fn cancel_and_place_orders(
+        &mut self,
+        user_id: &UserId,
+        data: &openbook_v2::instruction::CancelAndPlaceOrders,
+        makers: Option<&HashSet<UserId>>,
+    ) -> ProgramResult {
+        let user = self.get_or_create_new_user(user_id);
+
+        let accounts = openbook_v2::accounts::CancelAndPlaceOrders {
+            open_orders_account: user.open_orders,
+            signer: user.owner,
+            user_base_account: user.base_vault,
+            user_quote_account: user.quote_vault,
+            open_orders_admin: None,
+            market: self.market,
+            bids: self.bids,
+            asks: self.asks,
+            event_heap: self.event_heap,
+            market_base_vault: self.market_base_vault,
+            market_quote_vault: self.market_quote_vault,
+            oracle_a: self.oracle_a,
+            oracle_b: self.oracle_b,
+            token_program: spl_token::ID,
+        };
+
+        let remaining = makers.map_or_else(Vec::new, |makers| {
+            makers
+                .iter()
+                .filter(|id| id != &user_id)
+                .filter_map(|id| self.users.get(id))
+                .map(|user| AccountMeta {
+                    pubkey: user.open_orders,
+                    is_signer: false,
+                    is_writable: true,
+                })
+                .collect::<Vec<_>>()
+        });
 
         process_instruction(&mut self.state, data, &accounts, &remaining)
     }
@@ -612,43 +705,50 @@ impl FuzzContext {
         process_instruction(&mut self.state, data, &accounts, &[])
     }
 
-    pub fn cancel_and_place_orders(
+    pub fn consume_events(
         &mut self,
-        user_id: &UserId,
-        data: &openbook_v2::instruction::CancelAndPlaceOrders,
-        makers: Option<&HashSet<UserId>>,
+        user_ids: &HashSet<UserId>,
+        data: &openbook_v2::instruction::ConsumeEvents,
     ) -> ProgramResult {
-        let user = self.get_or_create_new_user(user_id);
-
-        let accounts = openbook_v2::accounts::CancelAndPlaceOrders {
-            open_orders_account: user.open_orders,
-            signer: user.owner,
-            user_base_account: user.base_vault,
-            user_quote_account: user.quote_vault,
-            open_orders_admin: None,
+        let accounts = openbook_v2::accounts::ConsumeEvents {
+            consume_events_admin: None,
             market: self.market,
-            bids: self.bids,
-            asks: self.asks,
             event_heap: self.event_heap,
-            market_base_vault: self.market_base_vault,
-            market_quote_vault: self.market_quote_vault,
-            oracle_a: self.oracle_a,
-            oracle_b: self.oracle_b,
-            token_program: spl_token::ID,
         };
 
-        let remaining = makers.map_or_else(Vec::new, |makers| {
-            makers
-                .iter()
-                .filter(|id| id != &user_id)
-                .filter_map(|id| self.users.get(id))
-                .map(|user| AccountMeta {
-                    pubkey: user.open_orders,
-                    is_signer: false,
-                    is_writable: true,
-                })
-                .collect::<Vec<_>>()
-        });
+        let remaining = user_ids
+            .iter()
+            .filter_map(|user_id| self.users.get(user_id))
+            .map(|user| AccountMeta {
+                pubkey: user.open_orders,
+                is_signer: false,
+                is_writable: true,
+            })
+            .collect::<Vec<_>>();
+
+        process_instruction(&mut self.state, data, &accounts, &remaining)
+    }
+
+    pub fn consume_given_events(
+        &mut self,
+        user_ids: &HashSet<UserId>,
+        data: &openbook_v2::instruction::ConsumeGivenEvents,
+    ) -> ProgramResult {
+        let accounts = openbook_v2::accounts::ConsumeEvents {
+            consume_events_admin: None,
+            market: self.market,
+            event_heap: self.event_heap,
+        };
+
+        let remaining = user_ids
+            .iter()
+            .filter_map(|user_id| self.users.get(user_id))
+            .map(|user| AccountMeta {
+                pubkey: user.open_orders,
+                is_signer: false,
+                is_writable: true,
+            })
+            .collect::<Vec<_>>();
 
         process_instruction(&mut self.state, data, &accounts, &remaining)
     }

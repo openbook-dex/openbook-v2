@@ -56,18 +56,20 @@ enum FuzzInstruction {
         referrer_id: Option<ReferrerId>,
         makers: Option<HashSet<UserId>>,
     },
+    EditOrder {
+        user_id: UserId,
+        data: openbook_v2::instruction::EditOrder,
+        makers: Option<HashSet<UserId>>,
+    },
+    EditOrderPegged {
+        user_id: UserId,
+        data: openbook_v2::instruction::EditOrderPegged,
+        makers: Option<HashSet<UserId>>,
+    },
     CancelAndPlaceOrders {
         user_id: UserId,
         data: openbook_v2::instruction::CancelAndPlaceOrders,
         makers: Option<HashSet<UserId>>,
-    },
-    ConsumeEvents {
-        user_ids: HashSet<UserId>,
-        data: openbook_v2::instruction::ConsumeEvents,
-    },
-    ConsumeGivenEvents {
-        user_ids: HashSet<UserId>,
-        data: openbook_v2::instruction::ConsumeGivenEvents,
     },
     CancelOrder {
         user_id: UserId,
@@ -80,6 +82,14 @@ enum FuzzInstruction {
     CancelAllOrders {
         user_id: UserId,
         data: openbook_v2::instruction::CancelAllOrders,
+    },
+    ConsumeEvents {
+        user_ids: HashSet<UserId>,
+        data: openbook_v2::instruction::ConsumeEvents,
+    },
+    ConsumeGivenEvents {
+        user_ids: HashSet<UserId>,
+        data: openbook_v2::instruction::ConsumeGivenEvents,
     },
     SettleFunds {
         user_id: UserId,
@@ -138,6 +148,22 @@ impl FuzzRunner for FuzzContext {
                 .place_take_order(user_id, data, referrer_id.as_ref(), makers.as_ref())
                 .map_or_else(error_parser::place_take_order, keep),
 
+            FuzzInstruction::EditOrder {
+                user_id,
+                data,
+                makers,
+            } => self
+                .edit_order(user_id, data, makers.as_ref())
+                .map_or_else(error_parser::edit_order, keep),
+
+            FuzzInstruction::EditOrderPegged {
+                user_id,
+                data,
+                makers,
+            } => self
+                .edit_order_pegged(user_id, data, makers.as_ref())
+                .map_or_else(error_parser::edit_order_pegged, keep),
+
             FuzzInstruction::CancelAndPlaceOrders {
                 user_id,
                 data,
@@ -145,14 +171,6 @@ impl FuzzRunner for FuzzContext {
             } => self
                 .cancel_and_place_orders(user_id, data, makers.as_ref())
                 .map_or_else(error_parser::cancel_and_place_orders, keep),
-
-            FuzzInstruction::ConsumeEvents { user_ids, data } => self
-                .consume_events(user_ids, data)
-                .map_or_else(error_parser::consume_events, keep),
-
-            FuzzInstruction::ConsumeGivenEvents { user_ids, data } => self
-                .consume_given_events(user_ids, data)
-                .map_or_else(error_parser::consume_given_events, keep),
 
             FuzzInstruction::CancelOrder { user_id, data } => self
                 .cancel_order(user_id, data)
@@ -165,6 +183,14 @@ impl FuzzRunner for FuzzContext {
             FuzzInstruction::CancelAllOrders { user_id, data } => self
                 .cancel_all_orders(user_id, data)
                 .map_or_else(error_parser::cancel_all_orders, keep),
+
+            FuzzInstruction::ConsumeEvents { user_ids, data } => self
+                .consume_events(user_ids, data)
+                .map_or_else(error_parser::consume_events, keep),
+
+            FuzzInstruction::ConsumeGivenEvents { user_ids, data } => self
+                .consume_given_events(user_ids, data)
+                .map_or_else(error_parser::consume_given_events, keep),
 
             FuzzInstruction::SettleFunds {
                 user_id,
@@ -481,6 +507,22 @@ mod error_parser {
         }
     }
 
+    pub fn edit_order(err: ProgramError) -> Corpus {
+        match err {
+            e if e == OpenBookError::OpenOrdersOrderNotFound.into() => Corpus::Keep,
+            e if e == OpenBookError::OrderIdNotFound.into() => Corpus::Keep,
+            _ => place_order(err),
+        }
+    }
+
+    pub fn edit_order_pegged(err: ProgramError) -> Corpus {
+        match err {
+            e if e == OpenBookError::OpenOrdersOrderNotFound.into() => Corpus::Keep,
+            e if e == OpenBookError::OrderIdNotFound.into() => Corpus::Keep,
+            _ => place_order_pegged(err),
+        }
+    }
+
     pub fn cancel_and_place_orders(err: ProgramError) -> Corpus {
         match err {
             e if e == OpenBookError::InvalidInputLots.into() => Corpus::Reject,
@@ -497,17 +539,6 @@ mod error_parser {
         }
     }
 
-    pub fn consume_events(err: ProgramError) -> Corpus {
-        panic!("{}", err);
-    }
-
-    pub fn consume_given_events(err: ProgramError) -> Corpus {
-        match err {
-            e if e == OpenBookError::InvalidInputHeapSlots.into() => Corpus::Reject,
-            _ => panic!("{}", err),
-        }
-    }
-
     pub fn cancel_order(err: ProgramError) -> Corpus {
         match err {
             e if e == OpenBookError::InvalidInputOrderId.into() => Corpus::Reject,
@@ -520,6 +551,17 @@ mod error_parser {
         match err {
             e if e == OpenBookError::OpenOrdersOrderNotFound.into() => Corpus::Keep,
             e if e == OpenBookError::OrderIdNotFound.into() => Corpus::Keep,
+            _ => panic!("{}", err),
+        }
+    }
+
+    pub fn consume_events(err: ProgramError) -> Corpus {
+        panic!("{}", err);
+    }
+
+    pub fn consume_given_events(err: ProgramError) -> Corpus {
+        match err {
+            e if e == OpenBookError::InvalidInputHeapSlots.into() => Corpus::Reject,
             _ => panic!("{}", err),
         }
     }
