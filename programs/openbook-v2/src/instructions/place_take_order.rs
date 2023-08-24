@@ -37,16 +37,20 @@ pub fn place_take_order<'info>(
 
     let now_ts: u64 = clock.unix_timestamp.try_into().unwrap();
     let oracle_price = if market.oracle_a.is_some() && market.oracle_b.is_some() {
-        Some(market.oracle_price_from_a_and_b(
-            &AccountInfoRef::borrow(ctx.accounts.oracle_a.as_ref().unwrap())?,
-            &AccountInfoRef::borrow(ctx.accounts.oracle_b.as_ref().unwrap())?,
-            clock.slot,
-        )?)
+        market
+            .oracle_price_from_a_and_b(
+                &AccountInfoRef::borrow(ctx.accounts.oracle_a.as_ref().unwrap())?,
+                &AccountInfoRef::borrow(ctx.accounts.oracle_b.as_ref().unwrap())?,
+                clock.slot,
+            )
+            .ok()
     } else if market.oracle_a.is_some() {
-        Some(market.oracle_price_from_a(
-            &AccountInfoRef::borrow(ctx.accounts.oracle_a.as_ref().unwrap())?,
-            clock.slot,
-        )?)
+        market
+            .oracle_price_from_a(
+                &AccountInfoRef::borrow(ctx.accounts.oracle_a.as_ref().unwrap())?,
+                clock.slot,
+            )
+            .ok()
     } else {
         None
     };
