@@ -56,7 +56,11 @@ pub enum OrderState {
 /// this function returns Skipped and clamps `price` to that range.
 ///
 /// Orders that exceed their peg_limit will have Invalid state.
-pub fn oracle_pegged_price(oracle_price_lots: i64, node: &LeafNode, side: Side) -> (OrderState, i64) {
+pub fn oracle_pegged_price(
+    oracle_price_lots: i64,
+    node: &LeafNode,
+    side: Side,
+) -> (OrderState, i64) {
     let price_data = node.price_data();
     let price_offset = oracle_pegged_price_offset(price_data);
     let price = oracle_price_lots.saturating_add(price_offset);

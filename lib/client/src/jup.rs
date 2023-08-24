@@ -110,15 +110,19 @@ impl Amm for OpenBookMarket {
         };
 
         if self.market.oracle_a.is_some() && self.market.oracle_b.is_some() {
-            self.oracle_price = self.market.oracle_price_from_a_and_b(
-                &oracle_acc(self.market.oracle_a),
-                &oracle_acc(self.market.oracle_b),
-                self.timestamp,
-            ).ok();
+            self.oracle_price = self
+                .market
+                .oracle_price_from_a_and_b(
+                    &oracle_acc(self.market.oracle_a),
+                    &oracle_acc(self.market.oracle_b),
+                    self.timestamp,
+                )
+                .ok();
         } else if self.market.oracle_a.is_some() {
             self.oracle_price = self
                 .market
-                .oracle_price_from_a(&oracle_acc(self.market.oracle_a), self.timestamp).ok();
+                .oracle_price_from_a(&oracle_acc(self.market.oracle_a), self.timestamp)
+                .ok();
         };
 
         Ok(())

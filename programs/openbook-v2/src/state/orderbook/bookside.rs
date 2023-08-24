@@ -105,18 +105,19 @@ impl BookSide {
         oracle_price_lots: Option<i64>,
     ) -> Option<(LeafNode, i64)> {
         let worst = self.nodes.find_worst(&self.root(component));
-        if let Some((_handle, leaf)) =  worst {
+        if let Some((_handle, leaf)) = worst {
             let leaf = self.remove_by_key(component, leaf.key).unwrap();
             match component {
                 BookSideOrderTree::Fixed => {
                     return Some((leaf, fixed_price_lots(leaf.price_data())));
-                },
+                }
                 BookSideOrderTree::OraclePegged => {
                     let side = self.nodes.order_tree_type().side();
                     if let Some(oracle_price_lots) = oracle_price_lots {
-                        let (_order_state, price) = oracle_pegged_price(oracle_price_lots, &leaf, side);
+                        let (_order_state, price) =
+                            oracle_pegged_price(oracle_price_lots, &leaf, side);
                         // ignore order_state so all orders can get removed
-                        return Some((leaf, price))
+                        return Some((leaf, price));
                     }
                 }
             };

@@ -406,8 +406,9 @@ impl<'a> Orderbook<'a> {
 
             if bookside.is_full() {
                 // If this bid is higher than lowest bid, boot that bid and insert this one
-                let (worst_order, worst_price) =
-                    bookside.remove_worst(order_tree_target, oracle_price_lots).unwrap();
+                let (worst_order, worst_price) = bookside
+                    .remove_worst(order_tree_target, oracle_price_lots)
+                    .unwrap();
                 // OpenBookErrorCode::OutOfSpace
                 require!(
                     side.is_price_better(price_lots, worst_price),
