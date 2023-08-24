@@ -27,7 +27,6 @@ use crate::account_fetcher::*;
 use crate::gpa::{fetch_anchor_account, fetch_openbook_accounts};
 
 use anyhow::Context;
-use solana_sdk::account::ReadableAccount;
 use solana_sdk::instruction::Instruction;
 use solana_sdk::signature::{Keypair, Signature};
 use solana_sdk::{commitment_config::CommitmentConfig, pubkey::Pubkey, signer::Signer};
@@ -297,14 +296,6 @@ impl OpenBookClient {
     pub async fn openorders_account(&self) -> anyhow::Result<OpenOrdersAccount> {
         account_fetcher_fetch_openorders_account(&*self.account_fetcher, &self.open_orders_account)
             .await
-    }
-
-    pub async fn get_oracle_price(
-        &self,
-        oracle: &Pubkey,
-    ) -> Result<pyth_sdk_solana::Price, anyhow::Error> {
-        let oracle_account = self.account_fetcher.fetch_raw_account(oracle).await?;
-        Ok(pyth_sdk_solana::load_price(oracle_account.data()).unwrap())
     }
 
     #[allow(clippy::too_many_arguments)]

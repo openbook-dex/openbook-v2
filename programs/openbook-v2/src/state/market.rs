@@ -5,7 +5,6 @@ use std::convert::{TryFrom, TryInto};
 use std::mem::size_of;
 
 use crate::error::OpenBookError;
-use crate::i80f48::Power;
 use crate::pubkey_option::NonZeroPubkeyOption;
 use crate::state::oracle;
 use crate::{accounts_zerocopy::KeyedAccountReader, state::orderbook::Side};

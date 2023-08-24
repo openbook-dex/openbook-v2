@@ -46,31 +46,8 @@ pub const fn power_of_ten_fixed(decimals: i8) -> I80F48 {
     DECIMAL_CONSTANTS_I80F48[(decimals + DECIMAL_CONSTANT_ZERO_INDEX) as usize]
 }
 const DECIMAL_CONSTANTS_F64: [f64; 25] = [
-    10e-12,
-    10e-11,
-    10e-10,
-    10e-9,
-    10e-8,
-    10e-7,
-    10e-6,
-    10e-5,
-    10e-4,
-    10e-3,
-    10e-2,
-    10e-1,
-    10e0,
-    10e1,
-    10e2,
-    10e3,
-    10e4,
-    10e5,
-    10e6,
-    10e7,
-    10e8,
-    10e9,
-    10e10,
-    10e11,
-    10e12,
+    10e-12, 10e-11, 10e-10, 10e-9, 10e-8, 10e-7, 10e-6, 10e-5, 10e-4, 10e-3, 10e-2, 10e-1, 10e0,
+    10e1, 10e2, 10e3, 10e4, 10e5, 10e6, 10e7, 10e8, 10e9, 10e10, 10e11, 10e12,
 ];
 
 pub const fn power_of_ten_float(decimals: i8) -> f64 {
@@ -348,7 +325,8 @@ pub fn oracle_state_unchecked(acc_info: &impl KeyedAccountReader) -> Result<Orac
             let sqrt_price = U64F64::from_bits(pool.sqrt_price_x64);
 
             let decimals: i8 = (pool.mint_decimals_0 as i8) - (pool.mint_decimals_1 as i8);
-            let price: f64 = (sqrt_price * sqrt_price).to_num::<f64>() * power_of_ten_float(decimals);
+            let price: f64 =
+                (sqrt_price * sqrt_price).to_num::<f64>() * power_of_ten_float(decimals);
 
             require_gte!(price, 0f64);
             OracleState {
@@ -430,7 +408,6 @@ mod tests {
 
         let price_from_raydium_sdk = 24.470_087_964_273_85f64;
         let tolerance = 1e-10f64;
-        msg!("{} - {}", oracle.price, price_from_raydium_sdk)
         assert!((oracle.price - price_from_raydium_sdk).abs() < tolerance);
 
         Ok(())
@@ -443,7 +420,7 @@ mod tests {
                 power_of_ten_fixed(idx),
                 I80F48::from_str(&format!(
                     "0.{}1",
-                    str::repeat("0", (idx.abs() as usize) - 1)
+                    str::repeat("0", (idx.unsigned_abs() as usize) - 1)
                 ))
                 .unwrap()
             )
@@ -454,7 +431,11 @@ mod tests {
         for idx in 1..=12 {
             assert_eq!(
                 power_of_ten_fixed(idx),
-                I80F48::from_str(&format!("1{}", str::repeat("0", idx.abs() as usize))).unwrap()
+                I80F48::from_str(&format!(
+                    "1{}",
+                    str::repeat("0", idx.unsigned_abs() as usize)
+                ))
+                .unwrap()
             )
         }
     }
