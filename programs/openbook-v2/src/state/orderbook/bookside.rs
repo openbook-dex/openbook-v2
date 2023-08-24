@@ -98,31 +98,28 @@ impl BookSide {
         self.nodes.insert_leaf(root, new_leaf)
     }
 
-    /// Remove the overall worst-price order on a given book component
+    /// Remove the overall worst-price order.
     pub fn remove_worst(
         &mut self,
-        component: BookSideOrderTree,
+        now_ts: u64,
         oracle_price_lots: Option<i64>,
     ) -> Option<(LeafNode, i64)> {
-        let worst = self.nodes.find_worst(&self.root(component));
-        if let Some((_handle, leaf)) = worst {
-            let leaf = self.remove_by_key(component, leaf.key).unwrap();
-            match component {
-                BookSideOrderTree::Fixed => {
-                    return Some((leaf, fixed_price_lots(leaf.price_data())));
-                }
-                BookSideOrderTree::OraclePegged => {
-                    let side = self.nodes.order_tree_type().side();
-                    if let Some(oracle_price_lots) = oracle_price_lots {
-                        let (_order_state, price) =
-                            oracle_pegged_price(oracle_price_lots, &leaf, side);
-                        // ignore order_state so all orders can get removed
-                        return Some((leaf, price));
-                    }
-                }
-            };
-        }
-        None
+        let worst_fixed = self.nodes.find_worst(&self.roots[0]);
+        let worst_pegged = self.nodes.find_worst(&self.roots[1]);
+        let side = self.nodes.order_tree_type().side();
+        let worse = rank_orders(
+            side,
+            worst_fixed,
+            worst_pegged,
+            true,
+            now_ts,
+            oracle_price_lots,
+        )?;
+        let price = worse.price_lots;
+        let key = worse.node.key;
+        let order_tree = worse.handle.order_tree;
+        let n = self.remove_by_key(order_tree, key)?;
+        Some((n, price))
     }
 
     /// Remove the order with the lowest expiry timestamp in the component, if that's < now_ts.
