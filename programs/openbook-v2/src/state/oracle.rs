@@ -1,12 +1,9 @@
-use std::mem::size_of;
-
 use anchor_lang::prelude::*;
 use anchor_lang::Discriminator;
-use fixed::types::I80F48;
-
-use fixed::types::U64F64;
+use fixed::types::{I80F48, U64F64};
 use raydium_amm_v3::states::PoolState;
 use static_assertions::const_assert_eq;
+use std::mem::size_of;
 use switchboard_program::FastRoundResultAccountData;
 use switchboard_v2::AggregatorAccountData;
 
@@ -46,8 +43,8 @@ pub const fn power_of_ten_fixed(decimals: i8) -> I80F48 {
     DECIMAL_CONSTANTS_I80F48[(decimals + DECIMAL_CONSTANT_ZERO_INDEX) as usize]
 }
 const DECIMAL_CONSTANTS_F64: [f64; 25] = [
-    10e-12, 10e-11, 10e-10, 10e-9, 10e-8, 10e-7, 10e-6, 10e-5, 10e-4, 10e-3, 10e-2, 10e-1, 10e0,
-    10e1, 10e2, 10e3, 10e4, 10e5, 10e6, 10e7, 10e8, 10e9, 10e10, 10e11, 10e12,
+    1e-12, 1e-11, 1e-10, 1e-9, 1e-8, 1e-7, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 1e0, 1e1, 1e2, 1e3,
+    1e4, 1e5, 1e6, 1e7, 1e8, 1e9, 1e10, 1e11, 1e12,
 ];
 
 pub const fn power_of_ten_float(decimals: i8) -> f64 {
@@ -389,54 +386,46 @@ mod tests {
         Ok(())
     }
 
-    // #[test]
-    // pub fn test_raydium_price() -> Result<()> {
-    //     let filename = format!(
-    //         "resources/test/{}.bin",
-    //         "2QdhepnKRTLjjSqPL1PtKNwqrUkoLee5Gqs8bvZhRdMv"
-    //     );
+    #[test]
+    pub fn test_raydium_price() -> Result<()> {
+        let filename = format!(
+            "resources/test/{}.bin",
+            "2QdhepnKRTLjjSqPL1PtKNwqrUkoLee5Gqs8bvZhRdMv"
+        );
 
-    //     let mut file_data = read_file(find_file(&filename).unwrap());
-    //     let data = RefCell::new(&mut file_data[..]);
-    //     let ai = &AccountInfoRef {
-    //         key: &Pubkey::default(),
-    //         owner: &raydium_amm_v3::ID,
-    //         data: data.borrow(),
-    //     };
+        let mut file_data = read_file(find_file(&filename).unwrap());
+        let data = RefCell::new(&mut file_data[..]);
+        let ai = &AccountInfoRef {
+            key: &Pubkey::default(),
+            owner: &raydium_amm_v3::ID,
+            data: data.borrow(),
+        };
 
-    //     let oracle = oracle_state_unchecked(ai)?;
+        let oracle = oracle_state_unchecked(ai)?;
 
-    //     let price_from_raydium_sdk = 24.470_087_964_273_85f64;
-    //     let tolerance = 1e-10f64;
-    //     assert!((oracle.price - price_from_raydium_sdk).abs() < tolerance);
+        let price_from_raydium_sdk = 24.470_087_964_273_85f64;
+        let tolerance = 1e-10f64;
+        println!("{:?}", oracle.price);
+        assert!((oracle.price - price_from_raydium_sdk).abs() < tolerance);
 
-    //     Ok(())
-    // }
+        Ok(())
+    }
 
     #[test]
     pub fn lookup_test() {
-        for idx in -12..0 {
-            assert_eq!(
-                power_of_ten_fixed(idx),
-                I80F48::from_str(&format!(
-                    "0.{}1",
-                    str::repeat("0", (idx.unsigned_abs() as usize) - 1)
-                ))
-                .unwrap()
-            )
+        for idx in -12..0_i8 {
+            let s = format!("0.{}1", str::repeat("0", (idx.unsigned_abs() as usize) - 1));
+            assert_eq!(power_of_ten_fixed(idx), I80F48::from_str(&s).unwrap());
+            assert_eq!(power_of_ten_float(idx), f64::from_str(&s).unwrap());
         }
 
         assert_eq!(power_of_ten_fixed(0), I80F48::ONE);
+        assert_eq!(power_of_ten_float(0), 1.);
 
-        for idx in 1..=12 {
-            assert_eq!(
-                power_of_ten_fixed(idx),
-                I80F48::from_str(&format!(
-                    "1{}",
-                    str::repeat("0", idx.unsigned_abs() as usize)
-                ))
-                .unwrap()
-            )
+        for idx in 1..=12_i8 {
+            let s = format!("1{}", str::repeat("0", idx.unsigned_abs() as usize));
+            assert_eq!(power_of_ten_fixed(idx), I80F48::from_str(&s).unwrap());
+            assert_eq!(power_of_ten_float(idx), f64::from_str(&s).unwrap());
         }
     }
 }
