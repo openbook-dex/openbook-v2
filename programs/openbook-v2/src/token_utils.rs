@@ -82,7 +82,7 @@ pub fn system_program_transfer<
                     to: to.to_account_info(),
                 },
             ),
-            5000,
+            amount,
         )
     } else {
         Ok(())

@@ -148,11 +148,7 @@ impl ClientInstruction for CreateOpenOrdersIndexerInstruction {
         let instruction = openbook_v2::instruction::CreateOpenOrdersIndexer {};
 
         let open_orders_indexer = Pubkey::find_program_address(
-            &[
-                b"OpenOrdersIndexer".as_ref(),
-                self.owner.pubkey().as_ref(),
-                self.market.as_ref(),
-            ],
+            &[b"OpenOrdersIndexer".as_ref(), self.owner.pubkey().as_ref()],
             &program_id,
         )
         .0;
@@ -193,11 +189,7 @@ impl ClientInstruction for CreateOpenOrdersAccountInstruction {
         let instruction = openbook_v2::instruction::CreateOpenOrdersAccount {};
 
         let open_orders_indexer = Pubkey::find_program_address(
-            &[
-                b"OpenOrdersIndexer".as_ref(),
-                self.owner.pubkey().as_ref(),
-                self.market.as_ref(),
-            ],
+            &[b"OpenOrdersIndexer".as_ref(), self.owner.pubkey().as_ref()],
             &program_id,
         )
         .0;
@@ -220,6 +212,59 @@ impl ClientInstruction for CreateOpenOrdersAccountInstruction {
             market: self.market,
             payer: self.payer.pubkey(),
             delegate_account: self.delegate,
+            system_program: System::id(),
+        };
+
+        let instruction = make_instruction(program_id, &accounts, instruction);
+        (accounts, instruction)
+    }
+
+    fn signers(&self) -> Vec<TestKeypair> {
+        vec![self.owner, self.payer]
+    }
+}
+
+pub struct CloseOpenOrdersAccountInstruction {
+    pub account_num: u32,
+    pub market: Pubkey,
+    pub owner: TestKeypair,
+    pub payer: TestKeypair,
+    pub sol_destination: Pubkey,
+}
+#[async_trait::async_trait(?Send)]
+impl ClientInstruction for CloseOpenOrdersAccountInstruction {
+    type Accounts = openbook_v2::accounts::CloseOpenOrdersAccount;
+    type Instruction = openbook_v2::instruction::CloseOpenOrdersAccount;
+    async fn to_instruction(
+        &self,
+        _account_loader: impl ClientAccountLoader + 'async_trait,
+    ) -> (Self::Accounts, instruction::Instruction) {
+        let program_id = openbook_v2::id();
+        let instruction = openbook_v2::instruction::CloseOpenOrdersAccount {};
+
+        let open_orders_indexer = Pubkey::find_program_address(
+            &[b"OpenOrdersIndexer".as_ref(), self.owner.pubkey().as_ref()],
+            &program_id,
+        )
+        .0;
+
+        let open_orders_account = Pubkey::find_program_address(
+            &[
+                b"OpenOrders".as_ref(),
+                self.owner.pubkey().as_ref(),
+                self.market.as_ref(),
+                &self.account_num.to_le_bytes(),
+            ],
+            &program_id,
+        )
+        .0;
+
+        let accounts = openbook_v2::accounts::CloseOpenOrdersAccount {
+            owner: self.owner.pubkey(),
+            payer: self.payer.pubkey(),
+            open_orders_indexer,
+            open_orders_account,
+            sol_destination: self.sol_destination,
             system_program: System::id(),
         };
 
@@ -410,7 +455,6 @@ impl ClientInstruction for PlaceOrderInstruction {
             user_token_account: self.user_token_account,
             market_vault: self.market_vault,
             token_program: Token::id(),
-            system_program: System::id(),
         };
         let mut instruction = make_instruction(program_id, &accounts, instruction);
         let mut vec_remainings: Vec<AccountMeta> = Vec::new();
@@ -488,7 +532,6 @@ impl ClientInstruction for PlaceOrderPeggedInstruction {
             user_token_account: self.user_token_account,
             market_vault: self.market_vault,
             token_program: Token::id(),
-            system_program: System::id(),
         };
         let instruction = make_instruction(program_id, &accounts, instruction);
 
@@ -814,6 +857,7 @@ impl ClientInstruction for SettleFundsInstruction {
 #[derive(Clone)]
 pub struct SettleFundsExpiredInstruction {
     pub close_market_admin: TestKeypair,
+    pub payer: TestKeypair,
     pub open_orders_account: Pubkey,
     pub market: Pubkey,
     pub market_base_vault: Pubkey,
@@ -835,6 +879,7 @@ impl ClientInstruction for SettleFundsExpiredInstruction {
         let market: Market = account_loader.load(&self.market).await.unwrap();
         let accounts = Self::Accounts {
             close_market_admin: self.close_market_admin.pubkey(),
+            payer: self.payer.pubkey(),
             open_orders_account: self.open_orders_account,
             market: self.market,
             market_authority: market.market_authority,
@@ -852,7 +897,7 @@ impl ClientInstruction for SettleFundsExpiredInstruction {
     }
 
     fn signers(&self) -> Vec<TestKeypair> {
-        vec![self.close_market_admin]
+        vec![self.close_market_admin, self.payer]
     }
 }
 
@@ -881,7 +926,6 @@ impl ClientInstruction for SweepFeesInstruction {
             market_quote_vault: self.market_quote_vault,
             token_receiver_account: self.token_receiver_account,
             token_program: Token::id(),
-            system_program: System::id(),
         };
         let instruction = make_instruction(program_id, &accounts, instruction);
 
@@ -927,7 +971,6 @@ impl ClientInstruction for DepositInstruction {
             user_base_account: self.user_base_account,
             user_quote_account: self.user_quote_account,
             token_program: Token::id(),
-            system_program: System::id(),
         };
         let instruction = make_instruction(program_id, &accounts, instruction);
 

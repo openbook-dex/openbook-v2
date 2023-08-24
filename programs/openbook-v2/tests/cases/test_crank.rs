@@ -368,7 +368,7 @@ async fn test_crank_given_events() -> Result<(), TransportError> {
         ConsumeGivenEventsInstruction {
             consume_events_admin: None,
             market,
-            slots: vec![2, 2, 0],
+            slots: vec![2, 0],
             open_orders_accounts: vec![maker_1, maker_3],
         },
     )
@@ -379,6 +379,37 @@ async fn test_crank_given_events() -> Result<(), TransportError> {
         let event_heap = solana.get_account_boxed::<EventHeap>(event_heap).await;
         assert_eq!(event_heap.header.count(), 1);
         assert_eq!(fill_maker(event_heap.front().unwrap()), maker_2);
+    }
+
+    // is not possible to process slots > limit
+    assert!(send_tx(
+        solana,
+        ConsumeGivenEventsInstruction {
+            consume_events_admin: None,
+            market,
+            slots: vec![openbook_v2::state::MAX_NUM_EVENTS.into()],
+            open_orders_accounts: vec![maker_2],
+        },
+    )
+    .await
+    .is_err());
+
+    // but if non-valid free slots are sent, the crank is performed from the front
+    send_tx(
+        solana,
+        ConsumeGivenEventsInstruction {
+            consume_events_admin: None,
+            market,
+            slots: vec![100, 100, 200],
+            open_orders_accounts: vec![maker_2],
+        },
+    )
+    .await
+    .unwrap();
+
+    {
+        let event_heap = solana.get_account_boxed::<EventHeap>(event_heap).await;
+        assert_eq!(event_heap.header.count(), 0);
     }
 
     Ok(())

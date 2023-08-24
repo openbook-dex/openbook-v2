@@ -68,10 +68,7 @@ pub fn consume_events(
         .collect_vec();
 
     for slot in slots_to_consume {
-        let event = match event_heap.at_slot(slot) {
-            Some(e) => e,
-            None => continue,
-        };
+        let event = event_heap.at_slot(slot).unwrap();
 
         match EventType::try_from(event.event_type).map_err(|_| error!(OpenBookError::SomeError))? {
             EventType::Fill => {

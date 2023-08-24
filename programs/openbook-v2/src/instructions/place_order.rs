@@ -103,6 +103,10 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<
         }
     };
 
+    if event_heap.len() > event_heap_size_before {
+        position.penalty_heap_count += 1;
+    }
+
     token_transfer(
         deposit_amount,
         &ctx.accounts.token_program,
@@ -110,15 +114,6 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<
         &ctx.accounts.market_vault,
         &ctx.accounts.signer,
     )?;
-
-    if event_heap.len() > event_heap_size_before {
-        system_program_transfer(
-            PENALTY_EVENT_HEAP,
-            &ctx.accounts.system_program,
-            &ctx.accounts.signer,
-            &ctx.accounts.market,
-        )?;
-    }
 
     Ok(order_id)
 }

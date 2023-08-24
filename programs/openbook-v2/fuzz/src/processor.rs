@@ -49,7 +49,7 @@ impl program_stubs::SyscallStubs for TestSyscallStubs {
         }
 
         match instruction.program_id {
-            // accounts should already be created
+            // accounts should already be created & reallocated
             id if id == system_program::ID => Ok(()),
             id if id == spl_token::ID => spl_token::processor::Processor::process(
                 &instruction.program_id,

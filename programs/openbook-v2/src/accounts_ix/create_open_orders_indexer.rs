@@ -8,12 +8,12 @@ pub struct CreateOpenOrdersIndexer<'info> {
     pub owner: Signer<'info>,
     #[account(
         init,
-        seeds = [b"OpenOrdersIndexer".as_ref(), owner.key().as_ref(), market.key().as_ref()],
+        seeds = [b"OpenOrdersIndexer".as_ref(), owner.key().as_ref()],
         bump,
         payer = payer,
-        space = OpenOrdersIndexer::space(),
+        space = OpenOrdersIndexer::space(0),
     )]
-    pub open_orders_indexer: AccountLoader<'info, OpenOrdersIndexer>,
+    pub open_orders_indexer: Account<'info, OpenOrdersIndexer>,
     pub market: AccountLoader<'info, Market>,
     pub system_program: Program<'info, System>,
 }

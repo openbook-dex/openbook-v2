@@ -54,14 +54,17 @@ pub fn cancel_and_place_orders(
             let order_id = oo.id;
             let order_side_and_tree = oo.side_and_tree();
 
-            book.cancel_order(
+            let cancel_result = book.cancel_order(
                 &mut open_orders_account,
                 order_id,
                 order_side_and_tree,
                 *market,
                 Some(ctx.accounts.open_orders_account.key()),
-            )
-            .ok();
+            );
+            // Allow cancel fails due order ID not found. Otherwise propagates error
+            if !cancel_result.is_anchor_error_with_code(OpenBookError::OrderIdNotFound.into()) {
+                cancel_result?;
+            }
         };
     }
 
@@ -129,6 +132,10 @@ pub fn cancel_and_place_orders(
     market.base_deposit_total += deposit_base_amount;
     market.quote_deposit_total += deposit_quote_amount;
 
+    if event_heap.len() > event_heap_size_before {
+        position.penalty_heap_count += 1;
+    }
+
     token_transfer(
         deposit_quote_amount,
         &ctx.accounts.token_program,
@@ -143,15 +150,6 @@ pub fn cancel_and_place_orders(
         &ctx.accounts.market_base_vault,
         &ctx.accounts.signer,
     )?;
-
-    if event_heap.len() > event_heap_size_before {
-        system_program_transfer(
-            PENALTY_EVENT_HEAP,
-            &ctx.accounts.system_program,
-            &ctx.accounts.signer,
-            &ctx.accounts.market,
-        )?;
-    }
 
     Ok(order_ids)
 }

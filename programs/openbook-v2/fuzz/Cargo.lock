@@ -2176,6 +2176,7 @@ dependencies = [
  "bytemuck",
  "derivative",
  "fixed",
+ "itertools 0.10.5",
  "num_enum 0.5.11",
  "pyth-sdk-solana",
  "raydium-amm-v3",
