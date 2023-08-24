@@ -107,19 +107,6 @@ pub struct OracleState {
 }
 
 impl OracleState {
-    #[inline]
-    pub fn check_confidence_and_maybe_staleness(
-        &self,
-        oracle_pk: &Pubkey,
-        config: &OracleConfig,
-        staleness_slot: Option<u64>,
-    ) -> Result<()> {
-        if let Some(now_slot) = staleness_slot {
-            self.check_staleness(oracle_pk, config, now_slot)?;
-        }
-        self.check_confidence(oracle_pk, config)
-    }
-
     pub fn check_staleness(
         &self,
         oracle_pk: &Pubkey,
