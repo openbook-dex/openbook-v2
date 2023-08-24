@@ -228,29 +228,19 @@ impl Market {
         assert_eq!(self.oracle_b, *oracle_b_acc.key());
 
         let oracle_a = oracle::oracle_state_unchecked(oracle_a_acc)?;
-
         oracle_a.check_staleness(oracle_a_acc.key(), &self.oracle_config, now_slot)?;
 
         let oracle_b = oracle::oracle_state_unchecked(oracle_b_acc)?;
-
         oracle_b.check_staleness(oracle_b_acc.key(), &self.oracle_config, now_slot)?;
 
-        let price = oracle_a.price / oracle_b.price;
+        let (price, var) = oracle_a.combine_div_with_var(&oracle_b)?;
 
-        // target uncertainty reads
-        //   $ \sigma \approx \frac{A}{B} * \sqrt{\frac{\sigma_A}{A}^2 + \frac{\sigma_B}{B}^2} $
-        // but alternatively, to avoid costly operations, everything can be scaled by $B^2$, i.e.
-        //   $ \sigma^2 * B^4 \approx (\sigma_A * B)^2 + (\sigma_B * A)^2 $
-        let sigma_b = self.oracle_config.conf_filter * oracle_b.price;
-        let scaled_target_var = sigma_b * sigma_b * oracle_b.price * oracle_b.price;
-        let scaled_var =
-            (oracle_a.deviation * oracle_a.deviation * oracle_b.price * oracle_b.price)
-                + (oracle_b.deviation * oracle_b.deviation * oracle_a.price * oracle_a.price);
-        if scaled_var > scaled_target_var {
+        let target_var = self.oracle_config.conf_filter.powi(2);
+        if target_var > var {
             msg!(
-                "Combined variance too high; scaled value {}, target {}",
-                scaled_var,
-                scaled_target_var
+                "Combined variance too high; value {}, target {}",
+                var,
+                target_var
             );
             return Err(OpenBookError::OracleConfidence.into());
         }

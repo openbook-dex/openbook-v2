@@ -144,6 +144,18 @@ impl OracleState {
         }
         Ok(())
     }
+
+    pub fn combine_div_with_var(&self, other: &Self) -> Result<(f64, f64)> {
+        let price = self.price / other.price;
+
+        // target uncertainty reads
+        //   $ \sigma \approx \frac{A}{B} * \sqrt{(\frac{\sigma_A}{A})^2 + (\frac{\sigma_B}{B})^2} $
+        // but alternatively, to avoid costly operations, we compute the square
+        let var = ((self.deviation / self.price).powi(2) + (other.deviation / other.price).powi(2))
+            * price.powi(2);
+
+        Ok((price, var))
+    }
 }
 
 #[account(zero_copy)]
