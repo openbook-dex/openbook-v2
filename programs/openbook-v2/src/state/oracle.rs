@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 use anchor_lang::Discriminator;
-use fixed::types::{I80F48, U64F64};
+use fixed::types::U64F64;
 use raydium_amm_v3::states::PoolState;
 use static_assertions::const_assert_eq;
 use std::mem::size_of;
@@ -11,37 +11,6 @@ use crate::accounts_zerocopy::*;
 use crate::error::*;
 
 const DECIMAL_CONSTANT_ZERO_INDEX: i8 = 12;
-const DECIMAL_CONSTANTS_I80F48: [I80F48; 25] = [
-    I80F48::from_bits((1 << 48) / 10i128.pow(12u32)),
-    I80F48::from_bits((1 << 48) / 10i128.pow(11u32) + 1),
-    I80F48::from_bits((1 << 48) / 10i128.pow(10u32)),
-    I80F48::from_bits((1 << 48) / 10i128.pow(9u32) + 1),
-    I80F48::from_bits((1 << 48) / 10i128.pow(8u32) + 1),
-    I80F48::from_bits((1 << 48) / 10i128.pow(7u32) + 1),
-    I80F48::from_bits((1 << 48) / 10i128.pow(6u32) + 1),
-    I80F48::from_bits((1 << 48) / 10i128.pow(5u32)),
-    I80F48::from_bits((1 << 48) / 10i128.pow(4u32)),
-    I80F48::from_bits((1 << 48) / 10i128.pow(3u32) + 1), // 0.001
-    I80F48::from_bits((1 << 48) / 10i128.pow(2u32) + 1), // 0.01
-    I80F48::from_bits((1 << 48) / 10i128.pow(1u32) + 1), // 0.1
-    I80F48::from_bits((1 << 48) * 10i128.pow(0u32)),     // 1, index 12
-    I80F48::from_bits((1 << 48) * 10i128.pow(1u32)),     // 10
-    I80F48::from_bits((1 << 48) * 10i128.pow(2u32)),     // 100
-    I80F48::from_bits((1 << 48) * 10i128.pow(3u32)),     // 1000
-    I80F48::from_bits((1 << 48) * 10i128.pow(4u32)),
-    I80F48::from_bits((1 << 48) * 10i128.pow(5u32)),
-    I80F48::from_bits((1 << 48) * 10i128.pow(6u32)),
-    I80F48::from_bits((1 << 48) * 10i128.pow(7u32)),
-    I80F48::from_bits((1 << 48) * 10i128.pow(8u32)),
-    I80F48::from_bits((1 << 48) * 10i128.pow(9u32)),
-    I80F48::from_bits((1 << 48) * 10i128.pow(10u32)),
-    I80F48::from_bits((1 << 48) * 10i128.pow(11u32)),
-    I80F48::from_bits((1 << 48) * 10i128.pow(12u32)),
-];
-
-pub const fn power_of_ten_fixed(decimals: i8) -> I80F48 {
-    DECIMAL_CONSTANTS_I80F48[(decimals + DECIMAL_CONSTANT_ZERO_INDEX) as usize]
-}
 const DECIMAL_CONSTANTS_F64: [f64; 25] = [
     1e-12, 1e-11, 1e-10, 1e-9, 1e-8, 1e-7, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 1e0, 1e1, 1e2, 1e3,
     1e4, 1e5, 1e6, 1e7, 1e8, 1e9, 1e10, 1e11, 1e12,
@@ -414,16 +383,13 @@ mod tests {
     pub fn lookup_test() {
         for idx in -12..0_i8 {
             let s = format!("0.{}1", str::repeat("0", (idx.unsigned_abs() as usize) - 1));
-            assert_eq!(power_of_ten_fixed(idx), I80F48::from_str(&s).unwrap());
             assert_eq!(power_of_ten_float(idx), f64::from_str(&s).unwrap());
         }
 
-        assert_eq!(power_of_ten_fixed(0), I80F48::ONE);
         assert_eq!(power_of_ten_float(0), 1.);
 
         for idx in 1..=12_i8 {
             let s = format!("1{}", str::repeat("0", idx.unsigned_abs() as usize));
-            assert_eq!(power_of_ten_fixed(idx), I80F48::from_str(&s).unwrap());
             assert_eq!(power_of_ten_float(idx), f64::from_str(&s).unwrap());
         }
     }
