@@ -20,10 +20,10 @@ pub fn edit_order<'info>(
     )?;
 
     let filled_amount = expected_cancel_size - leaf_node_quantity;
-    if filled_amount > 0 {
+    if order.max_base_lots > filled_amount {
         // Do not reduce max_quote_lots_including_fees as implicitly it's limited by max_base_lots.
         order.max_base_lots -= filled_amount;
+        return crate::instructions::place_order(ctx, order, limit);
     }
-
-    crate::instructions::place_order(ctx, order, limit)
+    Ok(None)
 }
