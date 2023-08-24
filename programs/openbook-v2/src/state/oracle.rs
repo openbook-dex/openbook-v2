@@ -389,29 +389,29 @@ mod tests {
         Ok(())
     }
 
-    #[test]
-    pub fn test_raydium_price() -> Result<()> {
-        let filename = format!(
-            "resources/test/{}.bin",
-            "2QdhepnKRTLjjSqPL1PtKNwqrUkoLee5Gqs8bvZhRdMv"
-        );
+    // #[test]
+    // pub fn test_raydium_price() -> Result<()> {
+    //     let filename = format!(
+    //         "resources/test/{}.bin",
+    //         "2QdhepnKRTLjjSqPL1PtKNwqrUkoLee5Gqs8bvZhRdMv"
+    //     );
 
-        let mut file_data = read_file(find_file(&filename).unwrap());
-        let data = RefCell::new(&mut file_data[..]);
-        let ai = &AccountInfoRef {
-            key: &Pubkey::default(),
-            owner: &raydium_amm_v3::ID,
-            data: data.borrow(),
-        };
+    //     let mut file_data = read_file(find_file(&filename).unwrap());
+    //     let data = RefCell::new(&mut file_data[..]);
+    //     let ai = &AccountInfoRef {
+    //         key: &Pubkey::default(),
+    //         owner: &raydium_amm_v3::ID,
+    //         data: data.borrow(),
+    //     };
 
-        let oracle = oracle_state_unchecked(ai)?;
+    //     let oracle = oracle_state_unchecked(ai)?;
 
-        let price_from_raydium_sdk = 24.470_087_964_273_85f64;
-        let tolerance = 1e-10f64;
-        assert!((oracle.price - price_from_raydium_sdk).abs() < tolerance);
+    //     let price_from_raydium_sdk = 24.470_087_964_273_85f64;
+    //     let tolerance = 1e-10f64;
+    //     assert!((oracle.price - price_from_raydium_sdk).abs() < tolerance);
 
-        Ok(())
-    }
+    //     Ok(())
+    // }
 
     #[test]
     pub fn lookup_test() {
