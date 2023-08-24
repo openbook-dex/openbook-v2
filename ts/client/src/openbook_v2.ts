@@ -1,4 +1,4 @@
-export interface OpenbookV2 {
+export type OpenbookV2 = {
   version: '0.1.0';
   name: 'openbook_v2';
   instructions: [
@@ -33,7 +33,7 @@ export interface OpenbookV2 {
           isSigner: false;
         },
         {
-          name: 'eventQueue';
+          name: 'eventHeap';
           isMut: true;
           isSigner: false;
         },
@@ -174,7 +174,7 @@ export interface OpenbookV2 {
           isSigner: false;
         },
         {
-          name: 'eventQueue';
+          name: 'eventHeap';
           isMut: true;
           isSigner: false;
         },
@@ -306,6 +306,11 @@ export interface OpenbookV2 {
       ];
       accounts: [
         {
+          name: 'payer';
+          isMut: true;
+          isSigner: true;
+        },
+        {
           name: 'owner';
           isMut: false;
           isSigner: true;
@@ -323,6 +328,11 @@ export interface OpenbookV2 {
         {
           name: 'solDestination';
           isMut: true;
+          isSigner: false;
+        },
+        {
+          name: 'systemProgram';
+          isMut: false;
           isSigner: false;
         },
       ];
@@ -386,7 +396,7 @@ export interface OpenbookV2 {
           isSigner: false;
         },
         {
-          name: 'eventQueue';
+          name: 'eventHeap';
           isMut: true;
           isSigner: false;
         },
@@ -409,11 +419,6 @@ export interface OpenbookV2 {
         },
         {
           name: 'tokenProgram';
-          isMut: false;
-          isSigner: false;
-        },
-        {
-          name: 'systemProgram';
           isMut: false;
           isSigner: false;
         },
@@ -476,7 +481,7 @@ export interface OpenbookV2 {
           isSigner: false;
         },
         {
-          name: 'eventQueue';
+          name: 'eventHeap';
           isMut: true;
           isSigner: false;
         },
@@ -504,11 +509,6 @@ export interface OpenbookV2 {
         },
         {
           name: 'tokenProgram';
-          isMut: false;
-          isSigner: false;
-        },
-        {
-          name: 'systemProgram';
           isMut: false;
           isSigner: false;
         },
@@ -576,7 +576,7 @@ export interface OpenbookV2 {
           isSigner: false;
         },
         {
-          name: 'eventQueue';
+          name: 'eventHeap';
           isMut: true;
           isSigner: false;
         },
@@ -599,11 +599,6 @@ export interface OpenbookV2 {
         },
         {
           name: 'tokenProgram';
-          isMut: false;
-          isSigner: false;
-        },
-        {
-          name: 'systemProgram';
           isMut: false;
           isSigner: false;
         },
@@ -631,7 +626,7 @@ export interface OpenbookV2 {
       accounts: [
         {
           name: 'signer';
-          isMut: false;
+          isMut: true;
           isSigner: true;
         },
         {
@@ -665,7 +660,7 @@ export interface OpenbookV2 {
           isSigner: false;
         },
         {
-          name: 'eventQueue';
+          name: 'eventHeap';
           isMut: true;
           isSigner: false;
         },
@@ -763,7 +758,7 @@ export interface OpenbookV2 {
           isSigner: false;
         },
         {
-          name: 'eventQueue';
+          name: 'eventHeap';
           isMut: true;
           isSigner: false;
         },
@@ -793,7 +788,7 @@ export interface OpenbookV2 {
           isSigner: false;
         },
         {
-          name: 'eventQueue';
+          name: 'eventHeap';
           isMut: true;
           isSigner: false;
         },
@@ -986,11 +981,6 @@ export interface OpenbookV2 {
           isMut: false;
           isSigner: false;
         },
-        {
-          name: 'systemProgram';
-          isMut: false;
-          isSigner: false;
-        },
       ];
       args: [
         {
@@ -1053,11 +1043,6 @@ export interface OpenbookV2 {
           isMut: false;
           isSigner: false;
         },
-        {
-          name: 'systemProgram';
-          isMut: false;
-          isSigner: false;
-        },
       ];
       args: [
         {
@@ -1076,7 +1061,7 @@ export interface OpenbookV2 {
       accounts: [
         {
           name: 'owner';
-          isMut: false;
+          isMut: true;
           isSigner: true;
         },
         {
@@ -1143,6 +1128,11 @@ export interface OpenbookV2 {
         {
           name: 'closeMarketAdmin';
           isMut: false;
+          isSigner: true;
+        },
+        {
+          name: 'payer';
+          isMut: true;
           isSigner: true;
         },
         {
@@ -1230,11 +1220,6 @@ export interface OpenbookV2 {
         },
         {
           name: 'tokenProgram';
-          isMut: false;
-          isSigner: false;
-        },
-        {
-          name: 'systemProgram';
           isMut: false;
           isSigner: false;
         },
@@ -1501,8 +1486,8 @@ export interface OpenbookV2 {
             type: 'publicKey';
           },
           {
-            name: 'eventQueue';
-            docs: ['Address of the EventQueue account'];
+            name: 'eventHeap';
+            docs: ['Address of the EventHeap account'];
             type: 'publicKey';
           },
           {
@@ -1555,7 +1540,7 @@ export interface OpenbookV2 {
           {
             name: 'registrationTime';
             docs: ['Timestamp in seconds that the market was registered at.'];
-            type: 'u64';
+            type: 'i64';
           },
           {
             name: 'makerFee';
@@ -1689,7 +1674,7 @@ export interface OpenbookV2 {
                 {
                   defined: 'OpenOrder';
                 },
-                128,
+                24,
               ];
             };
           },
@@ -1702,35 +1687,17 @@ export interface OpenbookV2 {
         kind: 'struct';
         fields: [
           {
-            name: 'owner';
-            type: 'publicKey';
-          },
-          {
-            name: 'market';
-            type: 'publicKey';
-          },
-          {
             name: 'bump';
             type: 'u8';
-          },
-          {
-            name: 'padding';
-            type: {
-              array: ['u8', 3];
-            };
           },
           {
             name: 'createdCounter';
             type: 'u32';
           },
           {
-            name: 'closedCounter';
-            type: 'u32';
-          },
-          {
-            name: 'reserved';
+            name: 'addresses';
             type: {
-              array: ['u8', 20];
+              vec: 'publicKey';
             };
           },
         ];
@@ -1811,7 +1778,7 @@ export interface OpenbookV2 {
       };
     },
     {
-      name: 'eventQueue';
+      name: 'eventHeap';
       docs: [
         'Container for the different EventTypes.',
         '',
@@ -1825,7 +1792,7 @@ export interface OpenbookV2 {
           {
             name: 'header';
             type: {
-              defined: 'EventQueueHeader';
+              defined: 'EventHeapHeader';
             };
           },
           {
@@ -1892,6 +1859,14 @@ export interface OpenbookV2 {
           },
           {
             name: 'referrerRebatesAvailable';
+            type: 'u64';
+          },
+          {
+            name: 'penaltyHeapCount';
+            docs: [
+              'Count of ixs when events are added to the heap',
+              'To avoid this, send remaining accounts in order to process the events',
+            ];
             type: 'u64';
           },
           {
@@ -1989,6 +1964,204 @@ export interface OpenbookV2 {
             name: 'maxStalenessSlots';
             type: {
               option: 'u32';
+            };
+          },
+        ];
+      };
+    },
+    {
+      name: 'EventHeapHeader';
+      type: {
+        kind: 'struct';
+        fields: [
+          {
+            name: 'freeHead';
+            type: 'u16';
+          },
+          {
+            name: 'usedHead';
+            type: 'u16';
+          },
+          {
+            name: 'count';
+            type: 'u16';
+          },
+          {
+            name: 'padd';
+            type: 'u16';
+          },
+          {
+            name: 'seqNum';
+            type: 'u64';
+          },
+        ];
+      };
+    },
+    {
+      name: 'EventNode';
+      type: {
+        kind: 'struct';
+        fields: [
+          {
+            name: 'next';
+            type: 'u16';
+          },
+          {
+            name: 'prev';
+            type: 'u16';
+          },
+          {
+            name: 'pad';
+            type: {
+              array: ['u8', 4];
+            };
+          },
+          {
+            name: 'event';
+            type: {
+              defined: 'AnyEvent';
+            };
+          },
+        ];
+      };
+    },
+    {
+      name: 'AnyEvent';
+      type: {
+        kind: 'struct';
+        fields: [
+          {
+            name: 'eventType';
+            type: 'u8';
+          },
+          {
+            name: 'padding';
+            type: {
+              array: ['u8', 143];
+            };
+          },
+        ];
+      };
+    },
+    {
+      name: 'FillEvent';
+      type: {
+        kind: 'struct';
+        fields: [
+          {
+            name: 'eventType';
+            type: 'u8';
+          },
+          {
+            name: 'takerSide';
+            type: 'u8';
+          },
+          {
+            name: 'makerOut';
+            type: 'u8';
+          },
+          {
+            name: 'makerSlot';
+            type: 'u8';
+          },
+          {
+            name: 'padding';
+            type: {
+              array: ['u8', 4];
+            };
+          },
+          {
+            name: 'timestamp';
+            type: 'u64';
+          },
+          {
+            name: 'seqNum';
+            type: 'u64';
+          },
+          {
+            name: 'maker';
+            type: 'publicKey';
+          },
+          {
+            name: 'makerTimestamp';
+            type: 'u64';
+          },
+          {
+            name: 'taker';
+            type: 'publicKey';
+          },
+          {
+            name: 'takerClientOrderId';
+            type: 'u64';
+          },
+          {
+            name: 'price';
+            type: 'i64';
+          },
+          {
+            name: 'pegLimit';
+            type: 'i64';
+          },
+          {
+            name: 'quantity';
+            type: 'i64';
+          },
+          {
+            name: 'makerClientOrderId';
+            type: 'u64';
+          },
+          {
+            name: 'reserved';
+            type: {
+              array: ['u8', 8];
+            };
+          },
+        ];
+      };
+    },
+    {
+      name: 'OutEvent';
+      type: {
+        kind: 'struct';
+        fields: [
+          {
+            name: 'eventType';
+            type: 'u8';
+          },
+          {
+            name: 'side';
+            type: 'u8';
+          },
+          {
+            name: 'ownerSlot';
+            type: 'u8';
+          },
+          {
+            name: 'padding0';
+            type: {
+              array: ['u8', 5];
+            };
+          },
+          {
+            name: 'timestamp';
+            type: 'u64';
+          },
+          {
+            name: 'seqNum';
+            type: 'u64';
+          },
+          {
+            name: 'owner';
+            type: 'publicKey';
+          },
+          {
+            name: 'quantity';
+            type: 'i64';
+          },
+          {
+            name: 'padding1';
+            type: {
+              array: ['u8', 80];
             };
           },
         ];
@@ -2212,204 +2385,6 @@ export interface OpenbookV2 {
       };
     },
     {
-      name: 'EventQueueHeader';
-      type: {
-        kind: 'struct';
-        fields: [
-          {
-            name: 'freeHead';
-            type: 'u16';
-          },
-          {
-            name: 'usedHead';
-            type: 'u16';
-          },
-          {
-            name: 'count';
-            type: 'u16';
-          },
-          {
-            name: 'padd';
-            type: 'u16';
-          },
-          {
-            name: 'seqNum';
-            type: 'u64';
-          },
-        ];
-      };
-    },
-    {
-      name: 'EventNode';
-      type: {
-        kind: 'struct';
-        fields: [
-          {
-            name: 'next';
-            type: 'u16';
-          },
-          {
-            name: 'prev';
-            type: 'u16';
-          },
-          {
-            name: 'pad';
-            type: {
-              array: ['u8', 4];
-            };
-          },
-          {
-            name: 'event';
-            type: {
-              defined: 'AnyEvent';
-            };
-          },
-        ];
-      };
-    },
-    {
-      name: 'AnyEvent';
-      type: {
-        kind: 'struct';
-        fields: [
-          {
-            name: 'eventType';
-            type: 'u8';
-          },
-          {
-            name: 'padding';
-            type: {
-              array: ['u8', 143];
-            };
-          },
-        ];
-      };
-    },
-    {
-      name: 'FillEvent';
-      type: {
-        kind: 'struct';
-        fields: [
-          {
-            name: 'eventType';
-            type: 'u8';
-          },
-          {
-            name: 'takerSide';
-            type: 'u8';
-          },
-          {
-            name: 'makerOut';
-            type: 'u8';
-          },
-          {
-            name: 'makerSlot';
-            type: 'u8';
-          },
-          {
-            name: 'padding';
-            type: {
-              array: ['u8', 4];
-            };
-          },
-          {
-            name: 'timestamp';
-            type: 'u64';
-          },
-          {
-            name: 'seqNum';
-            type: 'u64';
-          },
-          {
-            name: 'maker';
-            type: 'publicKey';
-          },
-          {
-            name: 'makerTimestamp';
-            type: 'u64';
-          },
-          {
-            name: 'taker';
-            type: 'publicKey';
-          },
-          {
-            name: 'takerClientOrderId';
-            type: 'u64';
-          },
-          {
-            name: 'price';
-            type: 'i64';
-          },
-          {
-            name: 'pegLimit';
-            type: 'i64';
-          },
-          {
-            name: 'quantity';
-            type: 'i64';
-          },
-          {
-            name: 'makerClientOrderId';
-            type: 'u64';
-          },
-          {
-            name: 'reserved';
-            type: {
-              array: ['u8', 8];
-            };
-          },
-        ];
-      };
-    },
-    {
-      name: 'OutEvent';
-      type: {
-        kind: 'struct';
-        fields: [
-          {
-            name: 'eventType';
-            type: 'u8';
-          },
-          {
-            name: 'side';
-            type: 'u8';
-          },
-          {
-            name: 'ownerSlot';
-            type: 'u8';
-          },
-          {
-            name: 'padding0';
-            type: {
-              array: ['u8', 5];
-            };
-          },
-          {
-            name: 'timestamp';
-            type: 'u64';
-          },
-          {
-            name: 'seqNum';
-            type: 'u64';
-          },
-          {
-            name: 'owner';
-            type: 'publicKey';
-          },
-          {
-            name: 'quantity';
-            type: 'i64';
-          },
-          {
-            name: 'padding1';
-            type: {
-              array: ['u8', 80];
-            };
-          },
-        ];
-      };
-    },
-    {
       name: 'I80F48';
       docs: [
         'Nothing in Rust shall use these types. They only exist so that the Anchor IDL',
@@ -2620,6 +2595,20 @@ export interface OpenbookV2 {
       };
     },
     {
+      name: 'EventType';
+      type: {
+        kind: 'enum';
+        variants: [
+          {
+            name: 'Fill';
+          },
+          {
+            name: 'Out';
+          },
+        ];
+      };
+    },
+    {
       name: 'NodeTag';
       type: {
         kind: 'enum';
@@ -2809,20 +2798,6 @@ export interface OpenbookV2 {
         ];
       };
     },
-    {
-      name: 'EventType';
-      type: {
-        kind: 'enum';
-        variants: [
-          {
-            name: 'Fill';
-          },
-          {
-            name: 'Out';
-          },
-        ];
-      };
-    },
   ];
   events: [
     {
@@ -2853,6 +2828,11 @@ export interface OpenbookV2 {
     {
       name: 'FillLog';
       fields: [
+        {
+          name: 'market';
+          type: 'publicKey';
+          index: false;
+        },
         {
           name: 'takerSide';
           type: 'u8';
@@ -3001,93 +2981,6 @@ export interface OpenbookV2 {
       ];
     },
     {
-      name: 'CancelOrderLog';
-      fields: [
-        {
-          name: 'openOrdersAccount';
-          type: 'publicKey';
-          index: false;
-        },
-        {
-          name: 'slot';
-          type: 'u8';
-          index: false;
-        },
-        {
-          name: 'side';
-          type: 'u8';
-          index: false;
-        },
-        {
-          name: 'quantity';
-          type: 'i64';
-          index: false;
-        },
-      ];
-    },
-    {
-      name: 'CancelOrdersLog';
-      fields: [
-        {
-          name: 'openOrdersAccount';
-          type: 'publicKey';
-          index: false;
-        },
-        {
-          name: 'totalQuantity';
-          type: 'i64';
-          index: false;
-        },
-      ];
-    },
-    {
-      name: 'CancelAllOrdersLog';
-      fields: [
-        {
-          name: 'openOrdersAccount';
-          type: 'publicKey';
-          index: false;
-        },
-        {
-          name: 'side';
-          type: {
-            option: 'u8';
-          };
-          index: false;
-        },
-        {
-          name: 'quantity';
-          type: 'i64';
-          index: false;
-        },
-        {
-          name: 'limit';
-          type: 'u8';
-          index: false;
-        },
-      ];
-    },
-    {
-      name: 'PruneOrdersLog';
-      fields: [
-        {
-          name: 'openOrdersAccount';
-          type: 'publicKey';
-          index: false;
-        },
-        {
-          name: 'quantity';
-          type: 'i64';
-          index: false;
-        },
-        {
-          name: 'limit';
-          type: 'u8';
-          index: false;
-        },
-      ];
-    },
-    {
       name: 'SetDelegateLog';
       fields: [
         {
@@ -3215,8 +3108,8 @@ export interface OpenbookV2 {
     },
     {
       code: 6011;
-      name: 'InvalidInputQueueSlots';
-      msg: 'Slot above queue limit';
+      name: 'InvalidInputHeapSlots';
+      msg: 'Slot above heap limit';
     },
     {
       code: 6012;
@@ -3275,8 +3168,8 @@ export interface OpenbookV2 {
     },
     {
       code: 6023;
-      name: 'EventQueueContainsElements';
-      msg: "Event queue contains elements and market can't be closed";
+      name: 'EventHeapContainsElements';
+      msg: "Event heap contains elements and market can't be closed";
     },
     {
       code: 6024;
@@ -3359,7 +3252,7 @@ export interface OpenbookV2 {
       msg: 'Cannot close a non-empty open orders account';
     },
   ];
-}
+};
 
 export const IDL: OpenbookV2 = {
   version: '0.1.0',
@@ -3396,7 +3289,7 @@ export const IDL: OpenbookV2 = {
           isSigner: false,
         },
         {
-          name: 'eventQueue',
+          name: 'eventHeap',
           isMut: true,
           isSigner: false,
         },
@@ -3537,7 +3430,7 @@ export const IDL: OpenbookV2 = {
           isSigner: false,
         },
         {
-          name: 'eventQueue',
+          name: 'eventHeap',
           isMut: true,
           isSigner: false,
         },
@@ -3669,6 +3562,11 @@ export const IDL: OpenbookV2 = {
       ],
       accounts: [
         {
+          name: 'payer',
+          isMut: true,
+          isSigner: true,
+        },
+        {
           name: 'owner',
           isMut: false,
           isSigner: true,
@@ -3686,6 +3584,11 @@ export const IDL: OpenbookV2 = {
         {
           name: 'solDestination',
           isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'systemProgram',
+          isMut: false,
           isSigner: false,
         },
       ],
@@ -3749,7 +3652,7 @@ export const IDL: OpenbookV2 = {
           isSigner: false,
         },
         {
-          name: 'eventQueue',
+          name: 'eventHeap',
           isMut: true,
           isSigner: false,
         },
@@ -3772,11 +3675,6 @@ export const IDL: OpenbookV2 = {
         },
         {
           name: 'tokenProgram',
-          isMut: false,
-          isSigner: false,
-        },
-        {
-          name: 'systemProgram',
           isMut: false,
           isSigner: false,
         },
@@ -3839,7 +3737,7 @@ export const IDL: OpenbookV2 = {
           isSigner: false,
         },
         {
-          name: 'eventQueue',
+          name: 'eventHeap',
           isMut: true,
           isSigner: false,
         },
@@ -3867,11 +3765,6 @@ export const IDL: OpenbookV2 = {
         },
         {
           name: 'tokenProgram',
-          isMut: false,
-          isSigner: false,
-        },
-        {
-          name: 'systemProgram',
           isMut: false,
           isSigner: false,
         },
@@ -3939,7 +3832,7 @@ export const IDL: OpenbookV2 = {
           isSigner: false,
         },
         {
-          name: 'eventQueue',
+          name: 'eventHeap',
           isMut: true,
           isSigner: false,
         },
@@ -3962,11 +3855,6 @@ export const IDL: OpenbookV2 = {
         },
         {
           name: 'tokenProgram',
-          isMut: false,
-          isSigner: false,
-        },
-        {
-          name: 'systemProgram',
           isMut: false,
           isSigner: false,
         },
@@ -3994,7 +3882,7 @@ export const IDL: OpenbookV2 = {
       accounts: [
         {
           name: 'signer',
-          isMut: false,
+          isMut: true,
           isSigner: true,
         },
         {
@@ -4028,7 +3916,7 @@ export const IDL: OpenbookV2 = {
           isSigner: false,
         },
         {
-          name: 'eventQueue',
+          name: 'eventHeap',
           isMut: true,
           isSigner: false,
         },
@@ -4126,7 +4014,7 @@ export const IDL: OpenbookV2 = {
           isSigner: false,
         },
         {
-          name: 'eventQueue',
+          name: 'eventHeap',
           isMut: true,
           isSigner: false,
         },
@@ -4156,7 +4044,7 @@ export const IDL: OpenbookV2 = {
           isSigner: false,
         },
         {
-          name: 'eventQueue',
+          name: 'eventHeap',
           isMut: true,
           isSigner: false,
         },
@@ -4349,11 +4237,6 @@ export const IDL: OpenbookV2 = {
           isMut: false,
           isSigner: false,
         },
-        {
-          name: 'systemProgram',
-          isMut: false,
-          isSigner: false,
-        },
       ],
       args: [
         {
@@ -4416,11 +4299,6 @@ export const IDL: OpenbookV2 = {
           isMut: false,
           isSigner: false,
         },
-        {
-          name: 'systemProgram',
-          isMut: false,
-          isSigner: false,
-        },
       ],
       args: [
         {
@@ -4439,7 +4317,7 @@ export const IDL: OpenbookV2 = {
       accounts: [
         {
           name: 'owner',
-          isMut: false,
+          isMut: true,
           isSigner: true,
         },
         {
@@ -4506,6 +4384,11 @@ export const IDL: OpenbookV2 = {
         {
           name: 'closeMarketAdmin',
           isMut: false,
+          isSigner: true,
+        },
+        {
+          name: 'payer',
+          isMut: true,
           isSigner: true,
         },
         {
@@ -4593,11 +4476,6 @@ export const IDL: OpenbookV2 = {
         },
         {
           name: 'tokenProgram',
-          isMut: false,
-          isSigner: false,
-        },
-        {
-          name: 'systemProgram',
           isMut: false,
           isSigner: false,
         },
@@ -4864,8 +4742,8 @@ export const IDL: OpenbookV2 = {
             type: 'publicKey',
           },
           {
-            name: 'eventQueue',
-            docs: ['Address of the EventQueue account'],
+            name: 'eventHeap',
+            docs: ['Address of the EventHeap account'],
             type: 'publicKey',
           },
           {
@@ -4918,7 +4796,7 @@ export const IDL: OpenbookV2 = {
           {
             name: 'registrationTime',
             docs: ['Timestamp in seconds that the market was registered at.'],
-            type: 'u64',
+            type: 'i64',
           },
           {
             name: 'makerFee',
@@ -5052,7 +4930,7 @@ export const IDL: OpenbookV2 = {
                 {
                   defined: 'OpenOrder',
                 },
-                128,
+                24,
               ],
             },
           },
@@ -5065,35 +4943,17 @@ export const IDL: OpenbookV2 = {
         kind: 'struct',
         fields: [
           {
-            name: 'owner',
-            type: 'publicKey',
-          },
-          {
-            name: 'market',
-            type: 'publicKey',
-          },
-          {
             name: 'bump',
             type: 'u8',
-          },
-          {
-            name: 'padding',
-            type: {
-              array: ['u8', 3],
-            },
           },
           {
             name: 'createdCounter',
             type: 'u32',
           },
           {
-            name: 'closedCounter',
-            type: 'u32',
-          },
-          {
-            name: 'reserved',
+            name: 'addresses',
             type: {
-              array: ['u8', 20],
+              vec: 'publicKey',
             },
           },
         ],
@@ -5174,7 +5034,7 @@ export const IDL: OpenbookV2 = {
       },
     },
     {
-      name: 'eventQueue',
+      name: 'eventHeap',
       docs: [
         'Container for the different EventTypes.',
         '',
@@ -5188,7 +5048,7 @@ export const IDL: OpenbookV2 = {
           {
             name: 'header',
             type: {
-              defined: 'EventQueueHeader',
+              defined: 'EventHeapHeader',
             },
           },
           {
@@ -5255,6 +5115,14 @@ export const IDL: OpenbookV2 = {
           },
           {
             name: 'referrerRebatesAvailable',
+            type: 'u64',
+          },
+          {
+            name: 'penaltyHeapCount',
+            docs: [
+              'Count of ixs when events are added to the heap',
+              'To avoid this, send remaining accounts in order to process the events',
+            ],
             type: 'u64',
           },
           {
@@ -5352,6 +5220,204 @@ export const IDL: OpenbookV2 = {
             name: 'maxStalenessSlots',
             type: {
               option: 'u32',
+            },
+          },
+        ],
+      },
+    },
+    {
+      name: 'EventHeapHeader',
+      type: {
+        kind: 'struct',
+        fields: [
+          {
+            name: 'freeHead',
+            type: 'u16',
+          },
+          {
+            name: 'usedHead',
+            type: 'u16',
+          },
+          {
+            name: 'count',
+            type: 'u16',
+          },
+          {
+            name: 'padd',
+            type: 'u16',
+          },
+          {
+            name: 'seqNum',
+            type: 'u64',
+          },
+        ],
+      },
+    },
+    {
+      name: 'EventNode',
+      type: {
+        kind: 'struct',
+        fields: [
+          {
+            name: 'next',
+            type: 'u16',
+          },
+          {
+            name: 'prev',
+            type: 'u16',
+          },
+          {
+            name: 'pad',
+            type: {
+              array: ['u8', 4],
+            },
+          },
+          {
+            name: 'event',
+            type: {
+              defined: 'AnyEvent',
+            },
+          },
+        ],
+      },
+    },
+    {
+      name: 'AnyEvent',
+      type: {
+        kind: 'struct',
+        fields: [
+          {
+            name: 'eventType',
+            type: 'u8',
+          },
+          {
+            name: 'padding',
+            type: {
+              array: ['u8', 143],
+            },
+          },
+        ],
+      },
+    },
+    {
+      name: 'FillEvent',
+      type: {
+        kind: 'struct',
+        fields: [
+          {
+            name: 'eventType',
+            type: 'u8',
+          },
+          {
+            name: 'takerSide',
+            type: 'u8',
+          },
+          {
+            name: 'makerOut',
+            type: 'u8',
+          },
+          {
+            name: 'makerSlot',
+            type: 'u8',
+          },
+          {
+            name: 'padding',
+            type: {
+              array: ['u8', 4],
+            },
+          },
+          {
+            name: 'timestamp',
+            type: 'u64',
+          },
+          {
+            name: 'seqNum',
+            type: 'u64',
+          },
+          {
+            name: 'maker',
+            type: 'publicKey',
+          },
+          {
+            name: 'makerTimestamp',
+            type: 'u64',
+          },
+          {
+            name: 'taker',
+            type: 'publicKey',
+          },
+          {
+            name: 'takerClientOrderId',
+            type: 'u64',
+          },
+          {
+            name: 'price',
+            type: 'i64',
+          },
+          {
+            name: 'pegLimit',
+            type: 'i64',
+          },
+          {
+            name: 'quantity',
+            type: 'i64',
+          },
+          {
+            name: 'makerClientOrderId',
+            type: 'u64',
+          },
+          {
+            name: 'reserved',
+            type: {
+              array: ['u8', 8],
+            },
+          },
+        ],
+      },
+    },
+    {
+      name: 'OutEvent',
+      type: {
+        kind: 'struct',
+        fields: [
+          {
+            name: 'eventType',
+            type: 'u8',
+          },
+          {
+            name: 'side',
+            type: 'u8',
+          },
+          {
+            name: 'ownerSlot',
+            type: 'u8',
+          },
+          {
+            name: 'padding0',
+            type: {
+              array: ['u8', 5],
+            },
+          },
+          {
+            name: 'timestamp',
+            type: 'u64',
+          },
+          {
+            name: 'seqNum',
+            type: 'u64',
+          },
+          {
+            name: 'owner',
+            type: 'publicKey',
+          },
+          {
+            name: 'quantity',
+            type: 'i64',
+          },
+          {
+            name: 'padding1',
+            type: {
+              array: ['u8', 80],
             },
           },
         ],
@@ -5575,204 +5641,6 @@ export const IDL: OpenbookV2 = {
       },
     },
     {
-      name: 'EventQueueHeader',
-      type: {
-        kind: 'struct',
-        fields: [
-          {
-            name: 'freeHead',
-            type: 'u16',
-          },
-          {
-            name: 'usedHead',
-            type: 'u16',
-          },
-          {
-            name: 'count',
-            type: 'u16',
-          },
-          {
-            name: 'padd',
-            type: 'u16',
-          },
-          {
-            name: 'seqNum',
-            type: 'u64',
-          },
-        ],
-      },
-    },
-    {
-      name: 'EventNode',
-      type: {
-        kind: 'struct',
-        fields: [
-          {
-            name: 'next',
-            type: 'u16',
-          },
-          {
-            name: 'prev',
-            type: 'u16',
-          },
-          {
-            name: 'pad',
-            type: {
-              array: ['u8', 4],
-            },
-          },
-          {
-            name: 'event',
-            type: {
-              defined: 'AnyEvent',
-            },
-          },
-        ],
-      },
-    },
-    {
-      name: 'AnyEvent',
-      type: {
-        kind: 'struct',
-        fields: [
-          {
-            name: 'eventType',
-            type: 'u8',
-          },
-          {
-            name: 'padding',
-            type: {
-              array: ['u8', 143],
-            },
-          },
-        ],
-      },
-    },
-    {
-      name: 'FillEvent',
-      type: {
-        kind: 'struct',
-        fields: [
-          {
-            name: 'eventType',
-            type: 'u8',
-          },
-          {
-            name: 'takerSide',
-            type: 'u8',
-          },
-          {
-            name: 'makerOut',
-            type: 'u8',
-          },
-          {
-            name: 'makerSlot',
-            type: 'u8',
-          },
-          {
-            name: 'padding',
-            type: {
-              array: ['u8', 4],
-            },
-          },
-          {
-            name: 'timestamp',
-            type: 'u64',
-          },
-          {
-            name: 'seqNum',
-            type: 'u64',
-          },
-          {
-            name: 'maker',
-            type: 'publicKey',
-          },
-          {
-            name: 'makerTimestamp',
-            type: 'u64',
-          },
-          {
-            name: 'taker',
-            type: 'publicKey',
-          },
-          {
-            name: 'takerClientOrderId',
-            type: 'u64',
-          },
-          {
-            name: 'price',
-            type: 'i64',
-          },
-          {
-            name: 'pegLimit',
-            type: 'i64',
-          },
-          {
-            name: 'quantity',
-            type: 'i64',
-          },
-          {
-            name: 'makerClientOrderId',
-            type: 'u64',
-          },
-          {
-            name: 'reserved',
-            type: {
-              array: ['u8', 8],
-            },
-          },
-        ],
-      },
-    },
-    {
-      name: 'OutEvent',
-      type: {
-        kind: 'struct',
-        fields: [
-          {
-            name: 'eventType',
-            type: 'u8',
-          },
-          {
-            name: 'side',
-            type: 'u8',
-          },
-          {
-            name: 'ownerSlot',
-            type: 'u8',
-          },
-          {
-            name: 'padding0',
-            type: {
-              array: ['u8', 5],
-            },
-          },
-          {
-            name: 'timestamp',
-            type: 'u64',
-          },
-          {
-            name: 'seqNum',
-            type: 'u64',
-          },
-          {
-            name: 'owner',
-            type: 'publicKey',
-          },
-          {
-            name: 'quantity',
-            type: 'i64',
-          },
-          {
-            name: 'padding1',
-            type: {
-              array: ['u8', 80],
-            },
-          },
-        ],
-      },
-    },
-    {
       name: 'I80F48',
       docs: [
         'Nothing in Rust shall use these types. They only exist so that the Anchor IDL',
@@ -5983,6 +5851,20 @@ export const IDL: OpenbookV2 = {
       },
     },
     {
+      name: 'EventType',
+      type: {
+        kind: 'enum',
+        variants: [
+          {
+            name: 'Fill',
+          },
+          {
+            name: 'Out',
+          },
+        ],
+      },
+    },
+    {
       name: 'NodeTag',
       type: {
         kind: 'enum',
@@ -6172,20 +6054,6 @@ export const IDL: OpenbookV2 = {
         ],
       },
     },
-    {
-      name: 'EventType',
-      type: {
-        kind: 'enum',
-        variants: [
-          {
-            name: 'Fill',
-          },
-          {
-            name: 'Out',
-          },
-        ],
-      },
-    },
   ],
   events: [
     {
@@ -6216,6 +6084,11 @@ export const IDL: OpenbookV2 = {
     {
       name: 'FillLog',
       fields: [
+        {
+          name: 'market',
+          type: 'publicKey',
+          index: false,
+        },
         {
           name: 'takerSide',
           type: 'u8',
@@ -6364,93 +6237,6 @@ export const IDL: OpenbookV2 = {
       ],
     },
     {
-      name: 'CancelOrderLog',
-      fields: [
-        {
-          name: 'openOrdersAccount',
-          type: 'publicKey',
-          index: false,
-        },
-        {
-          name: 'slot',
-          type: 'u8',
-          index: false,
-        },
-        {
-          name: 'side',
-          type: 'u8',
-          index: false,
-        },
-        {
-          name: 'quantity',
-          type: 'i64',
-          index: false,
-        },
-      ],
-    },
-    {
-      name: 'CancelOrdersLog',
-      fields: [
-        {
-          name: 'openOrdersAccount',
-          type: 'publicKey',
-          index: false,
-        },
-        {
-          name: 'totalQuantity',
-          type: 'i64',
-          index: false,
-        },
-      ],
-    },
-    {
-      name: 'CancelAllOrdersLog',
-      fields: [
-        {
-          name: 'openOrdersAccount',
-          type: 'publicKey',
-          index: false,
-        },
-        {
-          name: 'side',
-          type: {
-            option: 'u8',
-          },
-          index: false,
-        },
-        {
-          name: 'quantity',
-          type: 'i64',
-          index: false,
-        },
-        {
-          name: 'limit',
-          type: 'u8',
-          index: false,
-        },
-      ],
-    },
-    {
-      name: 'PruneOrdersLog',
-      fields: [
-        {
-          name: 'openOrdersAccount',
-          type: 'publicKey',
-          index: false,
-        },
-        {
-          name: 'quantity',
-          type: 'i64',
-          index: false,
-        },
-        {
-          name: 'limit',
-          type: 'u8',
-          index: false,
-        },
-      ],
-    },
-    {
       name: 'SetDelegateLog',
       fields: [
         {
@@ -6578,8 +6364,8 @@ export const IDL: OpenbookV2 = {
     },
     {
       code: 6011,
-      name: 'InvalidInputQueueSlots',
-      msg: 'Slot above queue limit',
+      name: 'InvalidInputHeapSlots',
+      msg: 'Slot above heap limit',
     },
     {
       code: 6012,
@@ -6638,8 +6424,8 @@ export const IDL: OpenbookV2 = {
     },
     {
       code: 6023,
-      name: 'EventQueueContainsElements',
-      msg: "Event queue contains elements and market can't be closed",
+      name: 'EventHeapContainsElements',
+      msg: "Event heap contains elements and market can't be closed",
     },
     {
       code: 6024,
