@@ -5,7 +5,6 @@ use std::convert::{TryFrom, TryInto};
 use std::mem::size_of;
 
 use crate::error::OpenBookError;
-use crate::i80f48::Power;
 use crate::pubkey_option::NonZeroPubkeyOption;
 use crate::state::oracle;
 use crate::{accounts_zerocopy::KeyedAccountReader, state::orderbook::Side};
@@ -151,7 +150,7 @@ const_assert_eq!(
     8 +                         // referrer_rebates_accrued
     128 // reserved
 );
-const_assert_eq!(size_of::<Market>(), 816);
+const_assert_eq!(size_of::<Market>(), 808);
 const_assert_eq!(size_of::<Market>() % 8, 0);
 
 impl Market {
@@ -206,62 +205,49 @@ impl Market {
     pub fn oracle_price_from_a(
         &self,
         oracle_acc: &impl KeyedAccountReader,
-        staleness_slot: u64,
+        now_slot: u64,
     ) -> Result<I80F48> {
         assert_eq!(self.oracle_a, *oracle_acc.key());
-        let (price, _err) =
-            oracle::oracle_price_data(oracle_acc, &self.oracle_config, staleness_slot)?;
+        let oracle = oracle::oracle_state_unchecked(oracle_acc)?;
+
+        oracle.check_staleness(oracle_acc.key(), &self.oracle_config, now_slot)?;
+        oracle.check_confidence(oracle_acc.key(), &self.oracle_config)?;
 
         let decimals = (self.quote_decimals as i8) - (self.base_decimals as i8);
-        let decimal_adj = oracle::power_of_ten(decimals);
-        Ok(price * decimal_adj)
+        let decimal_adj = oracle::power_of_ten_float(decimals);
+        Ok(I80F48::from_num(oracle.price * decimal_adj))
     }
 
     pub fn oracle_price_from_a_and_b(
         &self,
         oracle_a_acc: &impl KeyedAccountReader,
         oracle_b_acc: &impl KeyedAccountReader,
-        staleness_slot: u64,
+        now_slot: u64,
     ) -> Result<I80F48> {
         assert_eq!(self.oracle_a, *oracle_a_acc.key());
         assert_eq!(self.oracle_b, *oracle_b_acc.key());
 
-        let (price_a, err_a) =
-            oracle::oracle_price_data(oracle_a_acc, &self.oracle_config, staleness_slot)?;
+        let oracle_a = oracle::oracle_state_unchecked(oracle_a_acc)?;
+        oracle_a.check_staleness(oracle_a_acc.key(), &self.oracle_config, now_slot)?;
 
-        let (price_b, err_b) =
-            oracle::oracle_price_data(oracle_b_acc, &self.oracle_config, staleness_slot)?;
+        let oracle_b = oracle::oracle_state_unchecked(oracle_b_acc)?;
+        oracle_b.check_staleness(oracle_b_acc.key(), &self.oracle_config, now_slot)?;
 
-        let price = price_a
-            .checked_div(price_b)
-            .ok_or_else(|| error!(OpenBookError::InvalidOraclePrice))?;
+        let (price, var) = oracle_a.combine_div_with_var(&oracle_b)?;
 
-        // target uncertainty reads
-        //   $ \sigma \approx \frac{A}{B} * \sqrt{\frac{\sigma_A}{A}^2 + \frac{\sigma_B}{B}^2} $
-        // but alternatively, to avoid costly operations, everything can be scaled by $B^2$, i.e.
-        //   $ \sigma^2 * B^4 \approx (\sigma_A * B)^2 + (\sigma_B * A)^2 $
-        let scaled_target_var = self
-            .oracle_config
-            .conf_filter
-            .checked_mul(price_b)
-            .and_then(|sigma_b| sigma_b.checked_square())
-            .and_then(|sigma2_b2| sigma2_b2.checked_mul(price_b))
-            .and_then(|sigma2_b3| sigma2_b3.checked_mul(price_b))
-            .unwrap_or(I80F48::MAX);
-
-        let scaled_var = (err_a * price_b).square() + (err_b * price_a).square();
-        if scaled_var > scaled_target_var {
+        let target_var = self.oracle_config.conf_filter.powi(2);
+        if target_var > var {
             msg!(
-                "Combined variance too high; scaled value {}, target {}",
-                scaled_var,
-                scaled_target_var
+                "Combined variance too high; value {}, target {}",
+                var,
+                target_var
             );
             return Err(OpenBookError::OracleConfidence.into());
         }
 
         let decimals = (self.quote_decimals as i8) - (self.base_decimals as i8);
-        let decimal_adj = oracle::power_of_ten(decimals);
-        Ok(price * decimal_adj)
+        let decimal_adj = oracle::power_of_ten_float(decimals);
+        Ok(I80F48::from_num(price * decimal_adj))
     }
 
     pub fn subtract_taker_fees(&self, quote: i64) -> i64 {
