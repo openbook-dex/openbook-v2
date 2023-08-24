@@ -4,6 +4,7 @@ use static_assertions::const_assert_eq;
 use std::convert::{TryFrom, TryInto};
 use std::mem::size_of;
 
+use crate::accounts_zerocopy::AccountInfoRef;
 use crate::error::OpenBookError;
 use crate::pubkey_option::NonZeroPubkeyOption;
 use crate::state::oracle;
@@ -200,6 +201,27 @@ impl Market {
             .and_then(|x| x.checked_div(I80F48::from_num(self.quote_lot_size)))
             .and_then(|x| x.checked_to_num())
             .ok_or_else(|| OpenBookError::InvalidOraclePrice.into())
+    }
+
+    pub fn oracle_price(
+        &self,
+        oracle_a_acc: Option<&UncheckedAccount>,
+        oracle_b_acc: Option<&UncheckedAccount>,
+        slot: u64,
+    ) -> Option<I80F48> {
+        if self.oracle_a.is_some() && self.oracle_b.is_some() {
+            self.oracle_price_from_a_and_b(
+                &AccountInfoRef::borrow(oracle_a_acc.unwrap()).ok()?,
+                &AccountInfoRef::borrow(oracle_b_acc.unwrap()).ok()?,
+                slot,
+            )
+            .ok()
+        } else if self.oracle_a.is_some() {
+            self.oracle_price_from_a(&AccountInfoRef::borrow(oracle_a_acc.unwrap()).ok()?, slot)
+                .ok()
+        } else {
+            None
+        }
     }
 
     pub fn oracle_price_from_a(

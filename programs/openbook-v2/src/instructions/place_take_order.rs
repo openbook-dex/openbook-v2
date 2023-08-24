@@ -1,7 +1,6 @@
 use anchor_lang::prelude::*;
 
 use crate::accounts_ix::*;
-use crate::accounts_zerocopy::*;
 use crate::error::*;
 use crate::state::*;
 use crate::token_utils::*;
@@ -36,24 +35,12 @@ pub fn place_take_order<'info>(
     let event_heap_size_before = event_heap.len();
 
     let now_ts: u64 = clock.unix_timestamp.try_into().unwrap();
-    let oracle_price = if market.oracle_a.is_some() && market.oracle_b.is_some() {
-        market
-            .oracle_price_from_a_and_b(
-                &AccountInfoRef::borrow(ctx.accounts.oracle_a.as_ref().unwrap())?,
-                &AccountInfoRef::borrow(ctx.accounts.oracle_b.as_ref().unwrap())?,
-                clock.slot,
-            )
-            .ok()
-    } else if market.oracle_a.is_some() {
-        market
-            .oracle_price_from_a(
-                &AccountInfoRef::borrow(ctx.accounts.oracle_a.as_ref().unwrap())?,
-                clock.slot,
-            )
-            .ok()
-    } else {
-        None
-    };
+
+    let oracle_price = market.oracle_price(
+        ctx.accounts.oracle_a.as_ref(),
+        ctx.accounts.oracle_b.as_ref(),
+        clock.slot,
+    );
 
     let side = order.side;
 
