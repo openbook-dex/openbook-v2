@@ -115,7 +115,7 @@ impl OracleState {
         let price = self.price / other.price;
 
         // target uncertainty reads
-        //   $ \sigma \approx \frac{A}{B} * \sqrt{(\frac{\sigma_A}{A})^2 + (\frac{\sigma_B}{B})^2} $
+        //   $ \sigma \approx \frac{A}{B} * \sqrt{(\sigma_A/A)^2 + (\sigma_B/B)^2} $
         // but alternatively, to avoid costly operations, we compute the square
         let var = ((self.deviation / self.price).powi(2) + (other.deviation / other.price).powi(2))
             * price.powi(2);
@@ -206,12 +206,6 @@ pub fn oracle_state_unchecked(acc_info: &impl KeyedAccountReader) -> Result<Orac
     Ok(match oracle_type {
         OracleType::Stub => {
             let stub = acc_info.load::<StubOracle>()?;
-            let deviation = if stub.deviation == 0f64 {
-                // allows the confidence check to pass even for negative prices
-                f64::MIN
-            } else {
-                stub.deviation
-            };
             let last_update_slot = if stub.last_update_slot == 0 {
                 // ensure staleness checks will never fail
                 u64::MAX
@@ -221,7 +215,7 @@ pub fn oracle_state_unchecked(acc_info: &impl KeyedAccountReader) -> Result<Orac
             OracleState {
                 price: stub.price,
                 last_update_slot,
-                deviation,
+                deviation: stub.deviation,
                 oracle_type: OracleType::Stub,
             }
         }
@@ -369,9 +363,8 @@ mod tests {
         let oracle = oracle_state_unchecked(ai)?;
 
         let price_from_raydium_sdk = 24.470_087_964_273_85f64;
-        let tolerance = 1e-10f64;
         println!("{:?}", oracle.price);
-        assert!((oracle.price - price_from_raydium_sdk).abs() < tolerance);
+        assert!((oracle.price - price_from_raydium_sdk).abs() < 1e-10);
 
         Ok(())
     }
