@@ -101,29 +101,19 @@ impl Amm for OpenBookMarket {
 
         let clock_data = account_map.get(&clock::ID).unwrap();
         let clock: Clock = bincode::deserialize(clock_data.data.as_slice())?;
-        self.timestamp = clock.unix_timestamp as u64;
 
-        let oracle_acc = |nonzero_pubkey: NonZeroPubkeyOption| -> accounts_zerocopy::KeyedAccount {
-            let key = Option::from(nonzero_pubkey).unwrap();
-            let account = account_map.get(&key).unwrap().clone();
-            accounts_zerocopy::KeyedAccount { key, account }
-        };
+        let oracle_acc =
+            |nonzero_pubkey: NonZeroPubkeyOption| -> Option<accounts_zerocopy::KeyedAccount> {
+                let key = Option::from(nonzero_pubkey)?;
+                let account = account_map.get(&key).unwrap().clone();
+                Some(accounts_zerocopy::KeyedAccount { key, account })
+            };
 
-        if self.market.oracle_a.is_some() && self.market.oracle_b.is_some() {
-            self.oracle_price = self
-                .market
-                .oracle_price_from_a_and_b(
-                    &oracle_acc(self.market.oracle_a),
-                    &oracle_acc(self.market.oracle_b),
-                    self.timestamp,
-                )
-                .ok();
-        } else if self.market.oracle_a.is_some() {
-            self.oracle_price = self
-                .market
-                .oracle_price_from_a(&oracle_acc(self.market.oracle_a), self.timestamp)
-                .ok();
-        };
+        self.oracle_price = self.market.oracle_price(
+            oracle_acc(self.market.oracle_a).as_ref(),
+            oracle_acc(self.market.oracle_b).as_ref(),
+            clock.slot,
+        );
 
         Ok(())
     }

@@ -2,6 +2,7 @@ use anchor_lang::prelude::*;
 use std::cmp;
 
 use crate::accounts_ix::*;
+use crate::accounts_zerocopy::AccountInfoRef;
 use crate::error::*;
 use crate::state::*;
 use crate::token_utils::*;
@@ -36,8 +37,8 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<
     let now_ts: u64 = clock.unix_timestamp.try_into().unwrap();
 
     let oracle_price = market.oracle_price(
-        ctx.accounts.oracle_a.as_ref(),
-        ctx.accounts.oracle_b.as_ref(),
+        AccountInfoRef::borrow_some(ctx.accounts.oracle_a.as_ref())?.as_ref(),
+        AccountInfoRef::borrow_some(ctx.accounts.oracle_b.as_ref())?.as_ref(),
         clock.slot,
     );
 

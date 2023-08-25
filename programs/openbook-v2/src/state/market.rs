@@ -4,7 +4,6 @@ use static_assertions::const_assert_eq;
 use std::convert::{TryFrom, TryInto};
 use std::mem::size_of;
 
-use crate::accounts_zerocopy::AccountInfoRef;
 use crate::error::OpenBookError;
 use crate::pubkey_option::NonZeroPubkeyOption;
 use crate::state::oracle;
@@ -205,26 +204,21 @@ impl Market {
 
     pub fn oracle_price(
         &self,
-        oracle_a_acc: Option<&UncheckedAccount>,
-        oracle_b_acc: Option<&UncheckedAccount>,
+        oracle_a_acc: Option<&impl KeyedAccountReader>,
+        oracle_b_acc: Option<&impl KeyedAccountReader>,
         slot: u64,
     ) -> Option<I80F48> {
         if self.oracle_a.is_some() && self.oracle_b.is_some() {
-            self.oracle_price_from_a_and_b(
-                &AccountInfoRef::borrow(oracle_a_acc.unwrap()).ok()?,
-                &AccountInfoRef::borrow(oracle_b_acc.unwrap()).ok()?,
-                slot,
-            )
-            .ok()
-        } else if self.oracle_a.is_some() {
-            self.oracle_price_from_a(&AccountInfoRef::borrow(oracle_a_acc.unwrap()).ok()?, slot)
+            self.oracle_price_from_a_and_b(oracle_a_acc.unwrap(), oracle_b_acc.unwrap(), slot)
                 .ok()
+        } else if self.oracle_a.is_some() {
+            self.oracle_price_from_a(oracle_a_acc.unwrap(), slot).ok()
         } else {
             None
         }
     }
 
-    pub fn oracle_price_from_a(
+    fn oracle_price_from_a(
         &self,
         oracle_acc: &impl KeyedAccountReader,
         now_slot: u64,
@@ -240,7 +234,7 @@ impl Market {
         Ok(I80F48::from_num(oracle.price * decimal_adj))
     }
 
-    pub fn oracle_price_from_a_and_b(
+    fn oracle_price_from_a_and_b(
         &self,
         oracle_a_acc: &impl KeyedAccountReader,
         oracle_b_acc: &impl KeyedAccountReader,
