@@ -2382,6 +2382,9 @@ name = "hex"
 version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7f24254aa9a54b5c858eaee2f5bccdb46aaf0e486a595ed5fd8f86ba55232a70"
+dependencies = [
+ "serde",
+]
 
 [[package]]
 name = "histogram"
@@ -4092,21 +4095,22 @@ dependencies = [
 
 [[package]]
 name = "pyth-sdk"
-version = "0.1.0"
+version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "446ff07d7ef3bd98214f9b4fe6a611a69e36b5aad74b18cdbad5150193c1f204"
+checksum = "00bf2540203ca3c7a5712fdb8b5897534b7f6a0b6e7b0923ff00466c5f9efcb3"
 dependencies = [
  "borsh",
  "borsh-derive",
+ "hex",
  "schemars",
  "serde",
 ]
 
 [[package]]
 name = "pyth-sdk-solana"
-version = "0.1.0"
+version = "0.7.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "27a648739aa69cab94edd900a0d7ca37d8a789e9c88741b23deec11fab418d16"
+checksum = "e1fcd2dcd063ea85004667cf5cb07f30de7387f17249df988a295e764a47b9f5"
 dependencies = [
  "borsh",
  "borsh-derive",

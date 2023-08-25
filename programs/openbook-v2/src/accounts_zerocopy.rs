@@ -39,6 +39,13 @@ impl<'a, 'info: 'a> AccountInfoRef<'a, 'info> {
         })
     }
 
+    pub fn borrow_some(account_info: Option<&'a UncheckedAccount<'info>>) -> Result<Option<Self>> {
+        Ok(match account_info {
+            Some(acc) => Some(AccountInfoRef::borrow(acc)?),
+            _ => None,
+        })
+    }
+
     pub fn borrow_slice(ais: &'a [AccountInfo<'info>]) -> Result<Vec<Self>> {
         ais.iter().map(Self::borrow).collect()
     }

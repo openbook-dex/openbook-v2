@@ -24,10 +24,14 @@ pub fn remaining_accounts_to_crank(
     max_base_lots: i64,
     max_quote_lots_including_fees: i64,
     market: &Market,
-    oracle_price: I80F48,
+    oracle_price: Option<I80F48>,
     now_ts: u64,
 ) -> Result<Vec<Pubkey>> {
-    let oracle_price_lots = market.native_price_to_lot(oracle_price)?;
+    let oracle_price_lots = if let Some(oracle_price) = oracle_price {
+        Some(market.native_price_to_lot(oracle_price)?)
+    } else {
+        None
+    };
     let mut accounts = Vec::new();
 
     iterate_book(
@@ -65,10 +69,14 @@ pub fn amounts_from_book(
     max_base_lots: i64,
     max_quote_lots_including_fees: i64,
     market: &Market,
-    oracle_price: I80F48,
+    oracle_price: Option<I80F48>,
     now_ts: u64,
 ) -> Result<Amounts> {
-    let oracle_price_lots = market.native_price_to_lot(oracle_price)?;
+    let oracle_price_lots = if let Some(oracle_price) = oracle_price {
+        Some(market.native_price_to_lot(oracle_price)?)
+    } else {
+        None
+    };
     let mut accounts = Vec::new();
     let (total_base_lots_taken, total_quote_lots_taken, not_enough_liquidity) = iterate_book(
         book,
@@ -99,7 +107,7 @@ pub fn iterate_book(
     max_base_lots: i64,
     max_quote_lots_including_fees: i64,
     market: &Market,
-    oracle_price_lots: i64,
+    oracle_price_lots: Option<i64>,
     now_ts: u64,
     accounts: &mut Vec<Pubkey>,
 ) -> (i64, i64, bool) {

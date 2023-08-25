@@ -2,7 +2,7 @@ use anchor_lang::prelude::*;
 use std::cmp;
 
 use crate::accounts_ix::*;
-use crate::accounts_zerocopy::*;
+use crate::accounts_zerocopy::AccountInfoRef;
 use crate::error::*;
 use crate::state::*;
 use crate::token_utils::*;
@@ -33,20 +33,12 @@ pub fn cancel_and_place_orders(
     let event_heap_size_before = event_heap.len();
 
     let now_ts: u64 = clock.unix_timestamp.try_into().unwrap();
-    let oracle_price = if market.oracle_a.is_some() && market.oracle_b.is_some() {
-        Some(market.oracle_price_from_a_and_b(
-            &AccountInfoRef::borrow(ctx.accounts.oracle_a.as_ref().unwrap())?,
-            &AccountInfoRef::borrow(ctx.accounts.oracle_b.as_ref().unwrap())?,
-            clock.slot,
-        )?)
-    } else if market.oracle_a.is_some() {
-        Some(market.oracle_price_from_a(
-            &AccountInfoRef::borrow(ctx.accounts.oracle_a.as_ref().unwrap())?,
-            clock.slot,
-        )?)
-    } else {
-        None
-    };
+
+    let oracle_price = market.oracle_price(
+        AccountInfoRef::borrow_some(ctx.accounts.oracle_a.as_ref())?.as_ref(),
+        AccountInfoRef::borrow_some(ctx.accounts.oracle_b.as_ref())?.as_ref(),
+        clock.slot,
+    )?;
 
     for client_order_id in cancel_client_orders_ids {
         let oo = open_orders_account.find_order_with_client_order_id(client_order_id);

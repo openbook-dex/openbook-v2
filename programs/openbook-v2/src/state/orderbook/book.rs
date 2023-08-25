@@ -79,9 +79,9 @@ impl<'a> Orderbook<'a> {
         let post_only = order.is_post_only();
         let mut post_target = order.post_target();
         let oracle_price_lots = if let Some(oracle_price) = oracle_price {
-            market.native_price_to_lot(oracle_price)?
+            Some(market.native_price_to_lot(oracle_price)?)
         } else {
-            0
+            None
         };
         let (price_lots, price_data) = order.price(now_ts, oracle_price_lots, self)?;
 
