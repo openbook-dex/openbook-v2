@@ -301,5 +301,3 @@ async fn test_take_bid_order() -> Result<(), TransportError> {
 
     Ok(())
 }
-
-// TODO: should test how this behaves with outdated oracles
