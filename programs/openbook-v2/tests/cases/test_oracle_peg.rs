@@ -27,7 +27,44 @@ async fn test_oracle_peg_enabled() -> Result<(), TransportError> {
             market_vault: market_quote_vault,
             side: Side::Bid,
             price_offset: -1,
-            peg_limit: 1,
+            peg_limit: 100,
+            max_base_lots: 1,
+            max_quote_lots_including_fees: 100_000,
+            client_order_id: 0,
+        },
+    )
+    .await
+    .is_err());
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_oracle_peg_invalid_oracle_state() -> Result<(), TransportError> {
+    let TestInitialize {
+        context,
+        owner,
+        owner_token_1,
+        market,
+        market_quote_vault,
+        account_1,
+        ..
+    } = TestContext::new_with_market(TestNewMarketInitialize::default()).await?;
+    let solana = &context.solana.clone();
+
+    solana.advance_clock(200).await;
+
+    assert!(send_tx(
+        solana,
+        PlaceOrderPeggedInstruction {
+            open_orders_account: account_1,
+            market,
+            signer: owner,
+            user_token_account: owner_token_1,
+            market_vault: market_quote_vault,
+            side: Side::Bid,
+            price_offset: -1,
+            peg_limit: 100,
             max_base_lots: 1,
             max_quote_lots_including_fees: 100_000,
             client_order_id: 0,
