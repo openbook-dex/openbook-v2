@@ -131,7 +131,7 @@ impl Order {
                 ..
             } => {
                 let price_lots = oracle_price_lots
-                    .unwrap() // unwrap fails if oracle has currently no price
+                    .ok_or(OpenBookError::OraclePegInvalidOracleState)?
                     .checked_add(price_offset_lots)
                     .ok_or(OpenBookError::InvalidPriceLots)?;
 
@@ -147,7 +147,7 @@ impl Order {
         require_gte!(price_lots, 1, OpenBookError::InvalidPriceLots);
         let price_data = match self.params {
             OrderParams::OraclePegged { .. } => {
-                // unwrap fails oracle has currently no price
+                // unwrap cannot fail (already handled above)
                 oracle_pegged_price_data(price_lots - oracle_price_lots.unwrap())
             }
             _ => fixed_price_data(price_lots)?,

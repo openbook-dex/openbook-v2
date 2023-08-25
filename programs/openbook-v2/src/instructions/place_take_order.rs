@@ -41,7 +41,7 @@ pub fn place_take_order<'info>(
         AccountInfoRef::borrow_some(ctx.accounts.oracle_a.as_ref())?.as_ref(),
         AccountInfoRef::borrow_some(ctx.accounts.oracle_b.as_ref())?.as_ref(),
         clock.slot,
-    );
+    )?;
 
     let side = order.side;
 

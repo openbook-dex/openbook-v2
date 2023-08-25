@@ -207,14 +207,13 @@ impl Market {
         oracle_a_acc: Option<&impl KeyedAccountReader>,
         oracle_b_acc: Option<&impl KeyedAccountReader>,
         slot: u64,
-    ) -> Option<I80F48> {
+    ) -> Result<Option<I80F48>> {
         if self.oracle_a.is_some() && self.oracle_b.is_some() {
             self.oracle_price_from_a_and_b(oracle_a_acc.unwrap(), oracle_b_acc.unwrap(), slot)
-                .ok()
         } else if self.oracle_a.is_some() {
-            self.oracle_price_from_a(oracle_a_acc.unwrap(), slot).ok()
+            self.oracle_price_from_a(oracle_a_acc.unwrap(), slot)
         } else {
-            None
+            Ok(None)
         }
     }
 
@@ -222,16 +221,19 @@ impl Market {
         &self,
         oracle_acc: &impl KeyedAccountReader,
         now_slot: u64,
-    ) -> Result<I80F48> {
+    ) -> Result<Option<I80F48>> {
         assert_eq!(self.oracle_a, *oracle_acc.key());
         let oracle = oracle::oracle_state_unchecked(oracle_acc)?;
 
-        oracle.check_staleness(oracle_acc.key(), &self.oracle_config, now_slot)?;
-        oracle.check_confidence(oracle_acc.key(), &self.oracle_config)?;
-
-        let decimals = (self.quote_decimals as i8) - (self.base_decimals as i8);
-        let decimal_adj = oracle::power_of_ten_float(decimals);
-        Ok(I80F48::from_num(oracle.price * decimal_adj))
+        if oracle.is_stale(oracle_acc.key(), &self.oracle_config, now_slot)
+            || !oracle.has_valid_confidence(oracle_acc.key(), &self.oracle_config)
+        {
+            Ok(None)
+        } else {
+            let decimals = (self.quote_decimals as i8) - (self.base_decimals as i8);
+            let decimal_adj = oracle::power_of_ten_float(decimals);
+            Ok(Some(I80F48::from_num(oracle.price * decimal_adj)))
+        }
     }
 
     fn oracle_price_from_a_and_b(
@@ -239,15 +241,18 @@ impl Market {
         oracle_a_acc: &impl KeyedAccountReader,
         oracle_b_acc: &impl KeyedAccountReader,
         now_slot: u64,
-    ) -> Result<I80F48> {
+    ) -> Result<Option<I80F48>> {
         assert_eq!(self.oracle_a, *oracle_a_acc.key());
         assert_eq!(self.oracle_b, *oracle_b_acc.key());
 
         let oracle_a = oracle::oracle_state_unchecked(oracle_a_acc)?;
-        oracle_a.check_staleness(oracle_a_acc.key(), &self.oracle_config, now_slot)?;
-
         let oracle_b = oracle::oracle_state_unchecked(oracle_b_acc)?;
-        oracle_b.check_staleness(oracle_b_acc.key(), &self.oracle_config, now_slot)?;
+
+        if oracle_a.is_stale(oracle_a_acc.key(), &self.oracle_config, now_slot)
+            || oracle_b.is_stale(oracle_b_acc.key(), &self.oracle_config, now_slot)
+        {
+            return Ok(None);
+        }
 
         let (price, var) = oracle_a.combine_div_with_var(&oracle_b)?;
 
@@ -258,12 +263,12 @@ impl Market {
                 var,
                 target_var
             );
-            return Err(OpenBookError::OracleConfidence.into());
+            Ok(None)
+        } else {
+            let decimals = (self.quote_decimals as i8) - (self.base_decimals as i8);
+            let decimal_adj = oracle::power_of_ten_float(decimals);
+            Ok(Some(I80F48::from_num(price * decimal_adj)))
         }
-
-        let decimals = (self.quote_decimals as i8) - (self.base_decimals as i8);
-        let decimal_adj = oracle::power_of_ten_float(decimals);
-        Ok(I80F48::from_num(price * decimal_adj))
     }
 
     pub fn subtract_taker_fees(&self, quote: i64) -> i64 {

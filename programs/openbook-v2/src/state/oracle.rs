@@ -76,12 +76,7 @@ pub struct OracleState {
 }
 
 impl OracleState {
-    pub fn check_staleness(
-        &self,
-        oracle_pk: &Pubkey,
-        config: &OracleConfig,
-        now_slot: u64,
-    ) -> Result<()> {
+    pub fn is_stale(&self, oracle_pk: &Pubkey, config: &OracleConfig, now_slot: u64) -> bool {
         if config.max_staleness_slots >= 0
             && self
                 .last_update_slot
@@ -95,12 +90,13 @@ impl OracleState {
                 self.last_update_slot,
                 now_slot,
             );
-            return Err(OpenBookError::OracleStale.into());
+            true
+        } else {
+            false
         }
-        Ok(())
     }
 
-    pub fn check_confidence(&self, oracle_pk: &Pubkey, config: &OracleConfig) -> Result<()> {
+    pub fn has_valid_confidence(&self, oracle_pk: &Pubkey, config: &OracleConfig) -> bool {
         if self.deviation > config.conf_filter * self.price {
             msg!(
                 "Oracle confidence not good enough: pubkey {}, price: {}, deviation: {}, conf_filter: {}",
@@ -109,9 +105,10 @@ impl OracleState {
                 self.deviation,
                 config.conf_filter,
             );
-            return Err(OpenBookError::OracleConfidence.into());
+            false
+        } else {
+            true
         }
-        Ok(())
     }
 
     pub fn combine_div_with_var(&self, other: &Self) -> Result<(f64, f64)> {

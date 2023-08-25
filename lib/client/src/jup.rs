@@ -113,7 +113,7 @@ impl Amm for OpenBookMarket {
             oracle_acc(self.market.oracle_a).as_ref(),
             oracle_acc(self.market.oracle_b).as_ref(),
             clock.slot,
-        );
+        )?;
 
         Ok(())
     }

@@ -40,7 +40,7 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<
         AccountInfoRef::borrow_some(ctx.accounts.oracle_a.as_ref())?.as_ref(),
         AccountInfoRef::borrow_some(ctx.accounts.oracle_b.as_ref())?.as_ref(),
         clock.slot,
-    );
+    )?;
 
     let OrderWithAmounts {
         order_id,

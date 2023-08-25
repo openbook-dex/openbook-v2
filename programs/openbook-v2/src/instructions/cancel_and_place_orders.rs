@@ -38,7 +38,7 @@ pub fn cancel_and_place_orders(
         AccountInfoRef::borrow_some(ctx.accounts.oracle_a.as_ref())?.as_ref(),
         AccountInfoRef::borrow_some(ctx.accounts.oracle_b.as_ref())?.as_ref(),
         clock.slot,
-    );
+    )?;
 
     for client_order_id in cancel_client_orders_ids {
         let oo = open_orders_account.find_order_with_client_order_id(client_order_id);
