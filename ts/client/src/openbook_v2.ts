@@ -1,4 +1,4 @@
-export interface OpenbookV2 {
+export type OpenbookV2 = {
   version: '0.1.0';
   name: 'openbook_v2';
   instructions: [
@@ -1718,18 +1718,24 @@ export interface OpenbookV2 {
           },
           {
             name: 'price';
-            type: {
-              defined: 'I80F48';
-            };
+            type: 'f64';
           },
           {
-            name: 'lastUpdated';
+            name: 'lastUpdateTs';
             type: 'i64';
+          },
+          {
+            name: 'lastUpdateSlot';
+            type: 'u64';
+          },
+          {
+            name: 'deviation';
+            type: 'f64';
           },
           {
             name: 'reserved';
             type: {
-              array: ['u8', 128];
+              array: ['u8', 104];
             };
           },
         ];
@@ -1934,9 +1940,7 @@ export interface OpenbookV2 {
         fields: [
           {
             name: 'confFilter';
-            type: {
-              defined: 'I80F48';
-            };
+            type: 'f64';
           },
           {
             name: 'maxStalenessSlots';
@@ -3148,111 +3152,116 @@ export interface OpenbookV2 {
     },
     {
       code: 6019;
+      name: 'OraclePegInvalidOracleState';
+      msg: 'Cannot place a peg order due to invalid oracle state';
+    },
+    {
+      code: 6020;
       name: 'UnknownOracleType';
       msg: 'oracle type cannot be determined';
     },
     {
-      code: 6020;
+      code: 6021;
       name: 'OracleConfidence';
       msg: 'an oracle does not reach the confidence threshold';
     },
     {
-      code: 6021;
+      code: 6022;
       name: 'OracleStale';
       msg: 'an oracle is stale';
     },
     {
-      code: 6022;
+      code: 6023;
       name: 'OrderIdNotFound';
       msg: 'Order id not found on the orderbook';
     },
     {
-      code: 6023;
+      code: 6024;
       name: 'EventHeapContainsElements';
       msg: "Event heap contains elements and market can't be closed";
     },
     {
-      code: 6024;
+      code: 6025;
       name: 'InvalidOrderPostIOC';
       msg: 'ImmediateOrCancel is not a PostOrderType';
     },
     {
-      code: 6025;
+      code: 6026;
       name: 'InvalidOrderPostMarket';
       msg: 'Market is not a PostOrderType';
     },
     {
-      code: 6026;
+      code: 6027;
       name: 'WouldSelfTrade';
       msg: 'would self trade';
     },
     {
-      code: 6027;
+      code: 6028;
       name: 'MarketHasExpired';
       msg: 'The Market has already expired.';
     },
     {
-      code: 6028;
+      code: 6029;
       name: 'InvalidPriceLots';
       msg: 'Price lots should be greater than zero';
     },
     {
-      code: 6029;
+      code: 6030;
       name: 'InvalidOraclePrice';
       msg: 'Oracle price above market limits';
     },
     {
-      code: 6030;
+      code: 6031;
       name: 'MarketHasNotExpired';
       msg: 'The Market has not expired yet.';
     },
     {
-      code: 6031;
+      code: 6032;
       name: 'NoOwnerOrDelegate';
       msg: 'No correct owner or delegate.';
     },
     {
-      code: 6032;
+      code: 6033;
       name: 'NoOwner';
       msg: 'No correct owner';
     },
     {
-      code: 6033;
+      code: 6034;
       name: 'OpenOrdersFull';
       msg: 'No free order index in open orders account';
     },
     {
-      code: 6034;
+      code: 6035;
       name: 'BookContainsElements';
       msg: 'Book contains elements';
     },
     {
-      code: 6035;
+      code: 6036;
       name: 'OpenOrdersOrderNotFound';
       msg: 'Could not find order in user account';
     },
     {
-      code: 6036;
+      code: 6037;
       name: 'InvalidPostAmount';
       msg: 'Amount to post above book limits';
     },
     {
-      code: 6037;
+      code: 6038;
       name: 'DisabledOraclePeg';
       msg: 'Oracle peg orders are not enabled for this market';
     },
     {
-      code: 6038;
+      code: 6039;
       name: 'NonEmptyMarket';
       msg: 'Cannot close a non-empty market';
     },
     {
-      code: 6039;
+      code: 6040;
       name: 'NonEmptyOpenOrdersPosition';
       msg: 'Cannot close a non-empty open orders account';
     },
   ];
-}
+};
 
 export const IDL: OpenbookV2 = {
   version: '0.1.0',
@@ -4974,18 +4983,24 @@ export const IDL: OpenbookV2 = {
           },
           {
             name: 'price',
-            type: {
-              defined: 'I80F48',
-            },
+            type: 'f64',
           },
           {
-            name: 'lastUpdated',
+            name: 'lastUpdateTs',
             type: 'i64',
+          },
+          {
+            name: 'lastUpdateSlot',
+            type: 'u64',
+          },
+          {
+            name: 'deviation',
+            type: 'f64',
           },
           {
             name: 'reserved',
             type: {
-              array: ['u8', 128],
+              array: ['u8', 104],
             },
           },
         ],
@@ -5190,9 +5205,7 @@ export const IDL: OpenbookV2 = {
         fields: [
           {
             name: 'confFilter',
-            type: {
-              defined: 'I80F48',
-            },
+            type: 'f64',
           },
           {
             name: 'maxStalenessSlots',
@@ -6404,106 +6417,111 @@ export const IDL: OpenbookV2 = {
     },
     {
       code: 6019,
+      name: 'OraclePegInvalidOracleState',
+      msg: 'Cannot place a peg order due to invalid oracle state',
+    },
+    {
+      code: 6020,
       name: 'UnknownOracleType',
       msg: 'oracle type cannot be determined',
     },
     {
-      code: 6020,
+      code: 6021,
       name: 'OracleConfidence',
       msg: 'an oracle does not reach the confidence threshold',
     },
     {
-      code: 6021,
+      code: 6022,
       name: 'OracleStale',
       msg: 'an oracle is stale',
     },
     {
-      code: 6022,
+      code: 6023,
       name: 'OrderIdNotFound',
       msg: 'Order id not found on the orderbook',
     },
     {
-      code: 6023,
+      code: 6024,
       name: 'EventHeapContainsElements',
       msg: "Event heap contains elements and market can't be closed",
     },
     {
-      code: 6024,
+      code: 6025,
       name: 'InvalidOrderPostIOC',
       msg: 'ImmediateOrCancel is not a PostOrderType',
     },
     {
-      code: 6025,
+      code: 6026,
       name: 'InvalidOrderPostMarket',
       msg: 'Market is not a PostOrderType',
     },
     {
-      code: 6026,
+      code: 6027,
       name: 'WouldSelfTrade',
       msg: 'would self trade',
     },
     {
-      code: 6027,
+      code: 6028,
       name: 'MarketHasExpired',
       msg: 'The Market has already expired.',
     },
     {
-      code: 6028,
+      code: 6029,
       name: 'InvalidPriceLots',
       msg: 'Price lots should be greater than zero',
     },
     {
-      code: 6029,
+      code: 6030,
       name: 'InvalidOraclePrice',
       msg: 'Oracle price above market limits',
     },
     {
-      code: 6030,
+      code: 6031,
       name: 'MarketHasNotExpired',
       msg: 'The Market has not expired yet.',
     },
     {
-      code: 6031,
+      code: 6032,
       name: 'NoOwnerOrDelegate',
       msg: 'No correct owner or delegate.',
     },
     {
-      code: 6032,
+      code: 6033,
       name: 'NoOwner',
       msg: 'No correct owner',
     },
     {
-      code: 6033,
+      code: 6034,
       name: 'OpenOrdersFull',
       msg: 'No free order index in open orders account',
     },
     {
-      code: 6034,
+      code: 6035,
       name: 'BookContainsElements',
       msg: 'Book contains elements',
     },
     {
-      code: 6035,
+      code: 6036,
       name: 'OpenOrdersOrderNotFound',
       msg: 'Could not find order in user account',
     },
     {
-      code: 6036,
+      code: 6037,
       name: 'InvalidPostAmount',
       msg: 'Amount to post above book limits',
     },
     {
-      code: 6037,
+      code: 6038,
       name: 'DisabledOraclePeg',
       msg: 'Oracle peg orders are not enabled for this market',
     },
     {
-      code: 6038,
+      code: 6039,
       name: 'NonEmptyMarket',
       msg: 'Cannot close a non-empty market',
     },
     {
-      code: 6039,
+      code: 6040,
       name: 'NonEmptyOpenOrdersPosition',
       msg: 'Cannot close a non-empty open orders account',
     },
