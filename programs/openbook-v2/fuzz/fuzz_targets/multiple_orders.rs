@@ -509,6 +509,7 @@ mod error_parser {
 
     pub fn edit_order(err: ProgramError) -> Corpus {
         match err {
+            e if e == OpenBookError::InvalidInputCancelSize.into() => Corpus::Reject,
             e if e == OpenBookError::OpenOrdersOrderNotFound.into() => Corpus::Keep,
             e if e == OpenBookError::OrderIdNotFound.into() => Corpus::Keep,
             _ => place_order(err),
@@ -517,6 +518,7 @@ mod error_parser {
 
     pub fn edit_order_pegged(err: ProgramError) -> Corpus {
         match err {
+            e if e == OpenBookError::InvalidInputCancelSize.into() => Corpus::Reject,
             e if e == OpenBookError::OpenOrdersOrderNotFound.into() => Corpus::Keep,
             e if e == OpenBookError::OrderIdNotFound.into() => Corpus::Keep,
             _ => place_order_pegged(err),

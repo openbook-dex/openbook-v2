@@ -19,6 +19,8 @@ pub enum OpenBookError {
     #[msg("Input amounts above limits")]
     InvalidInputOrdersAmounts,
     #[msg("Price lots should be greater than zero")]
+    InvalidInputCancelSize,
+    #[msg("Expected cancel size should be greater than zero")]
     InvalidInputPriceLots,
     #[msg("Peg limit should be greater than zero")]
     InvalidInputPegLimit,

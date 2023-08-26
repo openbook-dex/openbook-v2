@@ -1,4 +1,5 @@
 use crate::accounts_ix::*;
+use crate::error::*;
 use crate::state::Order;
 use anchor_lang::prelude::*;
 
@@ -9,6 +10,12 @@ pub fn edit_order<'info>(
     mut order: Order,
     limit: u8,
 ) -> Result<Option<u128>> {
+    require_gte!(
+        expected_cancel_size,
+        0,
+        OpenBookError::InvalidInputCancelSize
+    );
+
     let leaf_node_quantity = crate::instructions::cancel_order_by_client_order_id(
         Context::new(
             ctx.program_id,
