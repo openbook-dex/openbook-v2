@@ -37,7 +37,7 @@ export type OracleConfigParams = IdlTypes<OpenbookV2>['OracleConfigParams'];
 export type OracleConfig = IdlTypes<OpenbookV2>['OracleConfig'];
 export type MarketAccount = IdlAccounts<OpenbookV2>['market'];
 export type OpenOrdersAccount = IdlAccounts<OpenbookV2>['openOrdersAccount'];
-export type EventQueueAccount = IdlAccounts<OpenbookV2>['eventQueue'];
+export type EventHeapAccount = IdlAccounts<OpenbookV2>['eventHeap'];
 export type BookSideAccount = IdlAccounts<OpenbookV2>['bookSide'];
 export type LeafNode = IdlTypes<OpenbookV2>['LeafNode'];
 export type AnyNode = IdlTypes<OpenbookV2>['AnyNode'];
@@ -53,8 +53,8 @@ export function nameToString(name: number[]): string {
   return utf8.decode(new Uint8Array(name)).split('\x00')[0];
 }
 
-const booksideSpace = 90944 + 8;
-const eventQueueSpace = 91280 + 8;
+const BooksideSpace = 90944 + 8;
+const EventHeapSpace = 91280 + 8;
 
 export class OpenBookV2Client {
   public program: Program<OpenbookV2>;
@@ -151,11 +151,11 @@ export class OpenBookV2Client {
     }
   }
 
-  public async getEventQueue(
+  public async getEventHeap(
     publicKey: PublicKey,
-  ): Promise<EventQueueAccount | null> {
+  ): Promise<EventHeapAccount | null> {
     try {
-      return await this.program.account.eventQueue.fetch(publicKey);
+      return await this.program.account.eventHeap.fetch(publicKey);
     } catch {
       return null;
     }
@@ -212,9 +212,9 @@ export class OpenBookV2Client {
     },
     collectFeeAdmin?: PublicKey,
   ): Promise<string> {
-    const bids = await this.createProgramAccount(payer, booksideSpace);
-    const asks = await this.createProgramAccount(payer, booksideSpace);
-    const eventQueue = await this.createProgramAccount(payer, eventQueueSpace);
+    const bids = await this.createProgramAccount(payer, BooksideSpace);
+    const asks = await this.createProgramAccount(payer, BooksideSpace);
+    const eventHeap = await this.createProgramAccount(payer, EventHeapSpace);
 
     const market = Keypair.generate();
     const [marketAuthority] = PublicKey.findProgramAddressSync(
@@ -260,7 +260,7 @@ export class OpenBookV2Client {
         oracleB,
         bids,
         asks,
-        eventQueue,
+        eventHeap,
         payer: payer.publicKey,
         marketBaseVault: baseVault,
         marketQuoteVault: quoteVault,
@@ -284,11 +284,7 @@ export class OpenBookV2Client {
 
   public findOpenOrdersIndexer(market: PublicKey): PublicKey {
     const [openOrdersIndexer] = PublicKey.findProgramAddressSync(
-      [
-        Buffer.from('OpenOrdersIndexer'),
-        this.walletPk.toBuffer(),
-        market.toBuffer(),
-      ],
+      [Buffer.from('OpenOrdersIndexer'), this.walletPk.toBuffer()],
       this.programId,
     );
     return openOrdersIndexer;
@@ -342,6 +338,11 @@ export class OpenBookV2Client {
         console.log('Created open orders indexer', tx);
       }
     }
+    if (accountIndex.toNumber() === 0) {
+      throw Object.assign(new Error('accountIndex can not be 0'), {
+        code: 403,
+      });
+    }
     const openOrders = this.findOpenOrders(market, accountIndex);
 
     const ix = await this.program.methods
@@ -380,7 +381,6 @@ export class OpenBookV2Client {
         marketBaseVault: market.marketBaseVault,
         marketQuoteVault: market.marketQuoteVault,
         tokenProgram: TOKEN_PROGRAM_ID,
-        systemProgram: SystemProgram.programId,
       })
       .instruction();
 
@@ -437,7 +437,6 @@ export class OpenBookV2Client {
         marketBaseVault: market.marketBaseVault,
         marketQuoteVault: market.marketBaseVault,
         tokenProgram: TOKEN_PROGRAM_ID,
-        systemProgram: SystemProgram.programId,
       })
       .instruction();
 
@@ -472,13 +471,12 @@ export class OpenBookV2Client {
         asks: market.asks,
         bids: market.bids,
         marketVault,
-        eventQueue: market.eventQueue,
+        eventHeap: market.eventHeap,
         market: marketPublicKey,
         openOrdersAccount: openOrdersPublicKey,
         oracleA: market.oracleA.key,
         oracleB: market.oracleB.key,
         userTokenAccount,
-        systemProgram: SystemProgram.programId,
         tokenProgram: TOKEN_PROGRAM_ID,
         openOrdersAdmin,
       })
@@ -512,14 +510,13 @@ export class OpenBookV2Client {
         bids: market.bids,
         marketQuoteVault: market.marketQuoteVault,
         marketBaseVault: market.marketQuoteVault,
-        eventQueue: market.eventQueue,
+        eventHeap: market.eventHeap,
         market: marketPublicKey,
         openOrdersAccount: openOrdersPublicKey,
         oracleA: market.oracleA.key,
         oracleB: market.oracleB.key,
         userBaseAccount,
         userQuoteAccount,
-        systemProgram: SystemProgram.programId,
         tokenProgram: TOKEN_PROGRAM_ID,
         openOrdersAdmin,
       })
