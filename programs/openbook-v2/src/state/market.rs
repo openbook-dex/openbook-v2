@@ -232,7 +232,7 @@ impl Market {
         } else {
             let decimals = (self.quote_decimals as i8) - (self.base_decimals as i8);
             let decimal_adj = oracle::power_of_ten_float(decimals);
-            Ok(Some(I80F48::from_num(oracle.price * decimal_adj)))
+            Ok(I80F48::checked_from_num(oracle.price * decimal_adj))
         }
     }
 
@@ -254,7 +254,7 @@ impl Market {
             return Ok(None);
         }
 
-        let (price, var) = oracle_a.combine_div_with_var(&oracle_b)?;
+        let (price, var) = oracle_a.combine_div_with_var(&oracle_b);
 
         let target_var = self.oracle_config.conf_filter.powi(2);
         if target_var > var {
@@ -267,7 +267,8 @@ impl Market {
         } else {
             let decimals = (self.quote_decimals as i8) - (self.base_decimals as i8);
             let decimal_adj = oracle::power_of_ten_float(decimals);
-            Ok(Some(I80F48::from_num(price * decimal_adj)))
+
+            Ok(I80F48::checked_from_num(price * decimal_adj))
         }
     }
 

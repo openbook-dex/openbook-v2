@@ -111,7 +111,7 @@ impl OracleState {
         }
     }
 
-    pub fn combine_div_with_var(&self, other: &Self) -> Result<(f64, f64)> {
+    pub fn combine_div_with_var(&self, other: &Self) -> (f64, f64) {
         let price = self.price / other.price;
 
         // target uncertainty reads
@@ -120,7 +120,7 @@ impl OracleState {
         let var = ((self.deviation / self.price).powi(2) + (other.deviation / other.price).powi(2))
             * price.powi(2);
 
-        Ok((price, var))
+        (price, var)
     }
 }
 
