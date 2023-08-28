@@ -49,13 +49,17 @@ impl BookSide {
     pub fn iter_valid(
         &self,
         now_ts: u64,
-        oracle_price_lots: i64,
+        oracle_price_lots: Option<i64>,
     ) -> impl Iterator<Item = BookSideIterItem> {
         BookSideIter::new(self, now_ts, oracle_price_lots).filter(|it| it.is_valid())
     }
 
     /// Iterate over all entries, including invalid orders
-    pub fn iter_all_including_invalid(&self, now_ts: u64, oracle_price_lots: i64) -> BookSideIter {
+    pub fn iter_all_including_invalid(
+        &self,
+        now_ts: u64,
+        oracle_price_lots: Option<i64>,
+    ) -> BookSideIter {
         BookSideIter::new(self, now_ts, oracle_price_lots)
     }
 
@@ -95,7 +99,11 @@ impl BookSide {
     }
 
     /// Remove the overall worst-price order.
-    pub fn remove_worst(&mut self, now_ts: u64, oracle_price_lots: i64) -> Option<(LeafNode, i64)> {
+    pub fn remove_worst(
+        &mut self,
+        now_ts: u64,
+        oracle_price_lots: Option<i64>,
+    ) -> Option<(LeafNode, i64)> {
         let worst_fixed = self.nodes.find_worst(&self.roots[0]);
         let worst_pegged = self.nodes.find_worst(&self.roots[1]);
         let side = self.nodes.order_tree_type().side();
@@ -156,7 +164,7 @@ impl BookSide {
     ) -> i64 {
         let side = self.side();
         let mut sum = 0;
-        for item in self.iter_valid(now_ts, oracle_price_lots) {
+        for item in self.iter_valid(now_ts, Some(oracle_price_lots)) {
             if side.is_price_better(limit_price_lots, item.price_lots) {
                 break;
             }
@@ -166,7 +174,7 @@ impl BookSide {
     }
 
     /// Return the price of the order closest to the spread
-    pub fn best_price(&self, now_ts: u64, oracle_price_lots: i64) -> Option<i64> {
+    pub fn best_price(&self, now_ts: u64, oracle_price_lots: Option<i64>) -> Option<i64> {
         Some(
             self.iter_valid(now_ts, oracle_price_lots)
                 .next()?
@@ -178,7 +186,7 @@ impl BookSide {
     /// not on book, return None
     pub fn impact_price(&self, quantity: i64, now_ts: u64, oracle_price_lots: i64) -> Option<i64> {
         let mut sum: i64 = 0;
-        for order in self.iter_valid(now_ts, oracle_price_lots) {
+        for order in self.iter_valid(now_ts, Some(oracle_price_lots)) {
             sum += order.node.quantity;
             if sum >= quantity {
                 return Some(order.price_lots);
@@ -261,7 +269,7 @@ mod tests {
             let mut total = 0;
             let ascending = order_tree_type == OrderTreeType::Asks;
             let mut last_price = if ascending { 0 } else { i64::MAX };
-            for order in bookside.iter_all_including_invalid(0, oracle_price_lots) {
+            for order in bookside.iter_all_including_invalid(0, Some(oracle_price_lots)) {
                 let price = order.price_lots;
                 println!("{} {:?} {price}", order.node.key, order.handle.order_tree);
                 if ascending {
@@ -332,7 +340,7 @@ mod tests {
 
         let order_prices = |now_ts: u64, oracle: i64| -> Vec<i64> {
             bookside
-                .iter_valid(now_ts, oracle)
+                .iter_valid(now_ts, Some(oracle))
                 .map(|it| it.price_lots)
                 .collect()
         };
@@ -359,34 +367,36 @@ mod tests {
         let order_prices = |now_ts: u64, oracle: i64| -> Vec<i64> {
             bookside
                 .borrow()
-                .iter_valid(now_ts, oracle)
+                .iter_valid(now_ts, Some(oracle))
                 .map(|it| it.price_lots)
                 .collect()
         };
 
         // remove pegged order
         assert_eq!(order_prices(0, 100), vec![120, 100, 90, 85, 80]);
-        let (_, p) = bookside.borrow_mut().remove_worst(0, 100).unwrap();
+        let (_, p) = bookside.borrow_mut().remove_worst(0, Some(100)).unwrap();
         assert_eq!(p, 80);
         assert_eq!(order_prices(0, 100), vec![120, 100, 90, 85]);
 
         // remove fixed order (order at 190=200-10 hits the peg limit)
         assert_eq!(order_prices(0, 200), vec![185, 120, 100]);
-        let (_, p) = bookside.borrow_mut().remove_worst(0, 200).unwrap();
+        let (_, p) = bookside.borrow_mut().remove_worst(0, Some(200)).unwrap();
         assert_eq!(p, 100);
         assert_eq!(order_prices(0, 200), vec![185, 120]);
 
         // remove until end
 
         assert_eq!(order_prices(0, 100), vec![120, 90, 85]);
-        let (_, p) = bookside.borrow_mut().remove_worst(0, 100).unwrap();
+        let (_, p) = bookside.borrow_mut().remove_worst(0, Some(100)).unwrap();
         assert_eq!(p, 85);
         assert_eq!(order_prices(0, 100), vec![120, 90]);
-        let (_, p) = bookside.borrow_mut().remove_worst(0, 100).unwrap();
+        let (_, p) = bookside.borrow_mut().remove_worst(0, Some(100)).unwrap();
         assert_eq!(p, 90);
         assert_eq!(order_prices(0, 100), vec![120]);
-        let (_, p) = bookside.borrow_mut().remove_worst(0, 100).unwrap();
+        let (_, p) = bookside.borrow_mut().remove_worst(0, Some(100)).unwrap();
         assert_eq!(p, 120);
         assert_eq!(order_prices(0, 100), Vec::<i64>::new());
     }
+
+    // add test for oracle expired
 }

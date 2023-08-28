@@ -27,7 +27,44 @@ async fn test_oracle_peg_enabled() -> Result<(), TransportError> {
             market_vault: market_quote_vault,
             side: Side::Bid,
             price_offset: -1,
-            peg_limit: 1,
+            peg_limit: 100,
+            max_base_lots: 1,
+            max_quote_lots_including_fees: 100_000,
+            client_order_id: 0,
+        },
+    )
+    .await
+    .is_err());
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_oracle_peg_invalid_oracle() -> Result<(), TransportError> {
+    let TestInitialize {
+        context,
+        owner,
+        owner_token_1,
+        market,
+        market_quote_vault,
+        account_1,
+        ..
+    } = TestContext::new_with_market(TestNewMarketInitialize::default()).await?;
+    let solana = &context.solana.clone();
+
+    solana.advance_clock(200).await;
+
+    assert!(send_tx(
+        solana,
+        PlaceOrderPeggedInstruction {
+            open_orders_account: account_1,
+            market,
+            signer: owner,
+            user_token_account: owner_token_1,
+            market_vault: market_quote_vault,
+            side: Side::Bid,
+            price_offset: -1,
+            peg_limit: 100,
             max_base_lots: 1,
             max_quote_lots_including_fees: 100_000,
             client_order_id: 0,
@@ -52,10 +89,10 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
         market,
         market_base_vault,
         market_quote_vault,
-        collect_fee_admin,
         account_1,
         account_2,
         tokens,
+        collect_fee_admin,
         bids,
         ..
     } = TestContext::new_with_market(TestNewMarketInitialize {
@@ -421,14 +458,88 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
     Ok(())
 }
 
-async fn assert_no_orders(solana: &SolanaCookie, account_1: Pubkey) {
-    let open_orders_account = solana.get_account::<OpenOrdersAccount>(account_1).await;
+#[tokio::test]
+async fn test_take_peg_invalid_oracle() -> Result<(), TransportError> {
+    let TestInitialize {
+        context,
+        owner,
+        owner_token_0,
+        owner_token_1,
+        market,
+        market_base_vault,
+        market_quote_vault,
+        account_1,
+        account_2,
+        price_lots,
+        tokens,
+        collect_fee_admin,
+        ..
+    } = TestContext::new_with_market(TestNewMarketInitialize::default()).await?;
+    let solana = &context.solana.clone();
 
-    for oo in open_orders_account.open_orders.iter() {
-        assert!(oo.id == 0);
-        assert!(oo.side_and_tree() == SideAndOrderTree::BidFixed);
-        assert!(oo.client_id == 0);
+    send_tx(
+        solana,
+        PlaceOrderPeggedInstruction {
+            open_orders_account: account_1,
+            market,
+            signer: owner,
+            user_token_account: owner_token_1,
+            market_vault: market_quote_vault,
+            side: Side::Bid,
+            price_offset: -1,
+            peg_limit: 100,
+            max_base_lots: 1,
+            max_quote_lots_including_fees: 100_000,
+            client_order_id: 0,
+        },
+    )
+    .await
+    .unwrap();
+
+    {
+        let oo = solana.get_account::<OpenOrdersAccount>(account_1).await;
+        assert_eq!(oo.position.bids_base_lots, 1);
     }
+
+    let take_order_ix = PlaceOrderInstruction {
+        open_orders_account: account_2,
+        open_orders_admin: None,
+        market,
+        signer: owner,
+        user_token_account: owner_token_0,
+        market_vault: market_base_vault,
+        side: Side::Ask,
+        price_lots,
+        max_base_lots: 1,
+        max_quote_lots_including_fees: 100_000,
+        client_order_id: 6,
+        expiry_timestamp: 0,
+        order_type: PlaceOrderType::Limit,
+        self_trade_behavior: SelfTradeBehavior::default(),
+        remainings: vec![account_1],
+    };
+
+    solana.advance_clock(200).await;
+
+    // stale oracle, order will be posted since matching with the oracle peg component of the book
+    // is not possible
+    send_tx(solana, take_order_ix.clone()).await.unwrap();
+    {
+        let oo_1 = solana.get_account::<OpenOrdersAccount>(account_1).await;
+        let oo_2 = solana.get_account::<OpenOrdersAccount>(account_2).await;
+        assert_eq!(oo_1.position.bids_base_lots, 1);
+        assert_eq!(oo_2.position.asks_base_lots, 1);
+    }
+
+    // but once the oracle is back, the match will be made
+    set_stub_oracle_price(solana, &tokens[0], collect_fee_admin, 1000.0).await;
+    send_tx(solana, take_order_ix.clone()).await.unwrap();
+    {
+        let oo = solana.get_account::<OpenOrdersAccount>(account_1).await;
+        assert_eq!(oo.position.bids_base_lots, 0);
+    }
+
+    Ok(())
 }
 
 #[tokio::test]
@@ -684,4 +795,14 @@ async fn test_locked_amounts() -> Result<(), TransportError> {
     }
 
     Ok(())
+}
+
+async fn assert_no_orders(solana: &SolanaCookie, account_1: Pubkey) {
+    let open_orders_account = solana.get_account::<OpenOrdersAccount>(account_1).await;
+
+    for oo in open_orders_account.open_orders.iter() {
+        assert!(oo.id == 0);
+        assert!(oo.side_and_tree() == SideAndOrderTree::BidFixed);
+        assert!(oo.client_id == 0);
+    }
 }

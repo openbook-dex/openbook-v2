@@ -531,7 +531,7 @@ pub mod openbook_v2 {
 
     pub fn stub_oracle_create(ctx: Context<StubOracleCreate>, price: I80F48) -> Result<()> {
         #[cfg(feature = "enable-gpl")]
-        instructions::stub_oracle_create(ctx, price)?;
+        instructions::stub_oracle_create(ctx, price.to_num())?;
         Ok(())
     }
 
@@ -543,7 +543,7 @@ pub mod openbook_v2 {
 
     pub fn stub_oracle_set(ctx: Context<StubOracleSet>, price: I80F48) -> Result<()> {
         #[cfg(feature = "enable-gpl")]
-        instructions::stub_oracle_set(ctx, price)?;
+        instructions::stub_oracle_set(ctx, price.to_num())?;
         Ok(())
     }
 }

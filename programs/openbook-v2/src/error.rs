@@ -47,6 +47,8 @@ pub enum OpenBookError {
     #[msg("Cannot be closed due to the existence of open orders accounts")]
     IndexerActiveOO,
 
+    #[msg("Cannot place a peg order due to invalid oracle state")]
+    OraclePegInvalidOracleState,
     #[msg("oracle type cannot be determined")]
     UnknownOracleType,
     #[msg("an oracle does not reach the confidence threshold")]

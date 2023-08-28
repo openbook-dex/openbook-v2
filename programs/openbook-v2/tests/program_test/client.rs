@@ -340,7 +340,7 @@ impl ClientInstruction for CreateMarketInstruction {
             name: "ONE-TWO".to_string(),
             oracle_config: OracleConfigParams {
                 conf_filter: 0.1,
-                max_staleness_slots: None,
+                max_staleness_slots: Some(100),
             },
             quote_lot_size: self.quote_lot_size,
             base_lot_size: self.base_lot_size,

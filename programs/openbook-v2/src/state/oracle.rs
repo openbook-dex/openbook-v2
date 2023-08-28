@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 use anchor_lang::Discriminator;
-use fixed::types::I80F48;
+use fixed::types::U64F64;
 use raydium_amm_v3::states::PoolState;
 use static_assertions::const_assert_eq;
 use std::mem::size_of;
@@ -9,38 +9,15 @@ use switchboard_v2::AggregatorAccountData;
 
 use crate::accounts_zerocopy::*;
 use crate::error::*;
-use crate::i80f48::Power;
 
 const DECIMAL_CONSTANT_ZERO_INDEX: i8 = 12;
-const DECIMAL_CONSTANTS: [I80F48; 25] = [
-    I80F48::from_bits((1 << 48) / 10i128.pow(12u32)),
-    I80F48::from_bits((1 << 48) / 10i128.pow(11u32) + 1),
-    I80F48::from_bits((1 << 48) / 10i128.pow(10u32)),
-    I80F48::from_bits((1 << 48) / 10i128.pow(9u32) + 1),
-    I80F48::from_bits((1 << 48) / 10i128.pow(8u32) + 1),
-    I80F48::from_bits((1 << 48) / 10i128.pow(7u32) + 1),
-    I80F48::from_bits((1 << 48) / 10i128.pow(6u32) + 1),
-    I80F48::from_bits((1 << 48) / 10i128.pow(5u32)),
-    I80F48::from_bits((1 << 48) / 10i128.pow(4u32)),
-    I80F48::from_bits((1 << 48) / 10i128.pow(3u32) + 1), // 0.001
-    I80F48::from_bits((1 << 48) / 10i128.pow(2u32) + 1), // 0.01
-    I80F48::from_bits((1 << 48) / 10i128.pow(1u32) + 1), // 0.1
-    I80F48::from_bits((1 << 48) * 10i128.pow(0u32)),     // 1, index 12
-    I80F48::from_bits((1 << 48) * 10i128.pow(1u32)),     // 10
-    I80F48::from_bits((1 << 48) * 10i128.pow(2u32)),     // 100
-    I80F48::from_bits((1 << 48) * 10i128.pow(3u32)),     // 1000
-    I80F48::from_bits((1 << 48) * 10i128.pow(4u32)),
-    I80F48::from_bits((1 << 48) * 10i128.pow(5u32)),
-    I80F48::from_bits((1 << 48) * 10i128.pow(6u32)),
-    I80F48::from_bits((1 << 48) * 10i128.pow(7u32)),
-    I80F48::from_bits((1 << 48) * 10i128.pow(8u32)),
-    I80F48::from_bits((1 << 48) * 10i128.pow(9u32)),
-    I80F48::from_bits((1 << 48) * 10i128.pow(10u32)),
-    I80F48::from_bits((1 << 48) * 10i128.pow(11u32)),
-    I80F48::from_bits((1 << 48) * 10i128.pow(12u32)),
+const DECIMAL_CONSTANTS_F64: [f64; 25] = [
+    1e-12, 1e-11, 1e-10, 1e-9, 1e-8, 1e-7, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 1e0, 1e1, 1e2, 1e3,
+    1e4, 1e5, 1e6, 1e7, 1e8, 1e9, 1e10, 1e11, 1e12,
 ];
-pub const fn power_of_ten(decimals: i8) -> I80F48 {
-    DECIMAL_CONSTANTS[(decimals + DECIMAL_CONSTANT_ZERO_INDEX) as usize]
+
+pub const fn power_of_ten_float(decimals: i8) -> f64 {
+    DECIMAL_CONSTANTS_F64[(decimals + DECIMAL_CONSTANT_ZERO_INDEX) as usize]
 }
 
 pub mod switchboard_v1_devnet_oracle {
@@ -55,12 +32,12 @@ pub mod switchboard_v2_mainnet_oracle {
 #[zero_copy]
 #[derive(AnchorDeserialize, AnchorSerialize, Debug)]
 pub struct OracleConfig {
-    pub conf_filter: I80F48,
+    pub conf_filter: f64,
     pub max_staleness_slots: i64,
     pub reserved: [u8; 72],
 }
-const_assert_eq!(size_of::<OracleConfig>(), 16 + 8 + 72);
-const_assert_eq!(size_of::<OracleConfig>(), 96);
+const_assert_eq!(size_of::<OracleConfig>(), 8 + 8 + 72);
+const_assert_eq!(size_of::<OracleConfig>(), 88);
 const_assert_eq!(size_of::<OracleConfig>() % 8, 0);
 
 #[derive(AnchorDeserialize, AnchorSerialize, Debug, Clone)]
@@ -75,14 +52,14 @@ pub struct OracleConfigParams {
 impl OracleConfigParams {
     pub fn to_oracle_config(&self) -> OracleConfig {
         OracleConfig {
-            conf_filter: I80F48::checked_from_num(self.conf_filter).unwrap_or(I80F48::MAX),
+            conf_filter: self.conf_filter as f64,
             max_staleness_slots: self.max_staleness_slots.map(|v| v as i64).unwrap_or(-1),
             reserved: [0; 72],
         }
     }
 }
 
-#[derive(PartialEq)]
+#[derive(Clone, Copy, PartialEq, AnchorSerialize, AnchorDeserialize)]
 pub enum OracleType {
     Pyth,
     Stub,
@@ -91,16 +68,74 @@ pub enum OracleType {
     RaydiumCLMM,
 }
 
+pub struct OracleState {
+    pub price: f64,
+    pub deviation: f64,
+    pub last_update_slot: u64,
+    pub oracle_type: OracleType,
+}
+
+impl OracleState {
+    pub fn is_stale(&self, oracle_pk: &Pubkey, config: &OracleConfig, now_slot: u64) -> bool {
+        if config.max_staleness_slots >= 0
+            && self
+                .last_update_slot
+                .saturating_add(config.max_staleness_slots as u64)
+                < now_slot
+        {
+            msg!(
+                "Oracle is stale; pubkey {}, price: {}, last_update_slot: {}, now_slot: {}",
+                oracle_pk,
+                self.price,
+                self.last_update_slot,
+                now_slot,
+            );
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn has_valid_confidence(&self, oracle_pk: &Pubkey, config: &OracleConfig) -> bool {
+        if self.deviation > config.conf_filter * self.price {
+            msg!(
+                "Oracle confidence not good enough: pubkey {}, price: {}, deviation: {}, conf_filter: {}",
+                oracle_pk,
+                self.price,
+                self.deviation,
+                config.conf_filter,
+            );
+            false
+        } else {
+            true
+        }
+    }
+
+    pub fn combine_div_with_var(&self, other: &Self) -> (f64, f64) {
+        let price = self.price / other.price;
+
+        // target uncertainty reads
+        //   $ \sigma \approx \frac{A}{B} * \sqrt{(\sigma_A/A)^2 + (\sigma_B/B)^2} $
+        // but alternatively, to avoid costly operations, we compute the square
+        let var = ((self.deviation / self.price).powi(2) + (other.deviation / other.price).powi(2))
+            * price.powi(2);
+
+        (price, var)
+    }
+}
+
 #[account(zero_copy)]
 pub struct StubOracle {
     pub owner: Pubkey,
     pub mint: Pubkey,
-    pub price: I80F48,
-    pub last_updated: i64,
-    pub reserved: [u8; 128],
+    pub price: f64,
+    pub last_update_ts: i64,
+    pub last_update_slot: u64,
+    pub deviation: f64,
+    pub reserved: [u8; 104],
 }
-const_assert_eq!(size_of::<StubOracle>(), 32 + 32 + 16 + 8 + 128);
-const_assert_eq!(size_of::<StubOracle>(), 216);
+const_assert_eq!(size_of::<StubOracle>(), 32 + 32 + 8 + 8 + 8 + 8 + 104);
+const_assert_eq!(size_of::<StubOracle>(), 200);
 const_assert_eq!(size_of::<StubOracle>() % 8, 0);
 
 pub fn determine_oracle_type(acc_info: &impl KeyedAccountReader) -> Result<OracleType> {
@@ -128,57 +163,77 @@ pub fn determine_oracle_type(acc_info: &impl KeyedAccountReader) -> Result<Oracl
     Err(OpenBookError::UnknownOracleType.into())
 }
 
-/// Read the price & uncertainty of the given oracle
-pub fn oracle_price_data(
-    acc_info: &impl KeyedAccountReader,
-    config: &OracleConfig,
-    staleness_slot: u64,
-) -> Result<(I80F48, I80F48)> {
+/// Get the pyth agg price if it's available, otherwise take the prev price.
+///
+/// Returns the publish slot in addition to the price info.
+///
+/// Also see pyth's PriceAccount::get_price_no_older_than().
+fn pyth_get_price(account: &pyth_sdk_solana::state::PriceAccount) -> (pyth_sdk_solana::Price, u64) {
+    use pyth_sdk_solana::*;
+    if account.agg.status == state::PriceStatus::Trading {
+        (
+            Price {
+                conf: account.agg.conf,
+                expo: account.expo,
+                price: account.agg.price,
+                publish_time: account.timestamp,
+            },
+            account.agg.pub_slot,
+        )
+    } else {
+        (
+            Price {
+                conf: account.prev_conf,
+                expo: account.expo,
+                price: account.prev_price,
+                publish_time: account.prev_timestamp,
+            },
+            account.prev_slot,
+        )
+    }
+}
+
+/// Returns the price of one native base token, in native quote tokens
+///
+/// Example: The for SOL at 40 USDC/SOL it would return 0.04 (the unit is USDC-native/SOL-native)
+///
+/// The staleness and confidence of the oracle is not checked. Use the functions on
+/// OracleState to validate them if needed. That's why this function is called _unchecked.
+pub fn oracle_state_unchecked(acc_info: &impl KeyedAccountReader) -> Result<OracleState> {
     let data = &acc_info.data();
     let oracle_type = determine_oracle_type(acc_info)?;
 
     Ok(match oracle_type {
-        OracleType::Stub => (acc_info.load::<StubOracle>()?.price, fixed::FixedI128::ZERO),
+        OracleType::Stub => {
+            let stub = acc_info.load::<StubOracle>()?;
+            let last_update_slot = if stub.last_update_slot == 0 {
+                // ensure staleness checks will never fail
+                u64::MAX
+            } else {
+                stub.last_update_slot
+            };
+            OracleState {
+                price: stub.price,
+                last_update_slot,
+                deviation: stub.deviation,
+                oracle_type: OracleType::Stub,
+            }
+        }
         OracleType::Pyth => {
             let price_account = pyth_sdk_solana::state::load_price_account(data).unwrap();
-            let price_data = price_account.to_price();
-            let price = I80F48::from_num(price_data.price);
+            let (price_data, last_update_slot) = pyth_get_price(price_account);
 
-            // Filter out bad prices
-            let error = I80F48::from_num(price_data.conf);
-            if error > (config.conf_filter * price) {
-                msg!(
-                    "Pyth conf interval too high; pubkey {} price: {} price_data.conf: {}",
-                    acc_info.key(),
-                    price.to_num::<f64>(),
-                    price_data.conf
-                );
-
-                // future: in v3, we had pricecache, and in case of luna, when there were no updates, we used last known value from cache
-                // we'll have to add a CachedOracle that is based on one of the oracle types, needs a separate keeper and supports
-                // maintaining this "last known good value"
-                return Err(OpenBookError::OracleConfidence.into());
+            let decimals = price_account.expo as i8;
+            let decimal_adj = power_of_ten_float(decimals);
+            let price = price_data.price as f64 * decimal_adj;
+            let deviation = price_data.conf as f64 * decimal_adj;
+            require_gte!(price, 0f64);
+            OracleState {
+                price,
+                last_update_slot,
+                deviation,
+                oracle_type: OracleType::Pyth,
             }
-
-            // The last_slot is when the price was actually updated
-            let last_slot = price_account.last_slot;
-            if config.max_staleness_slots >= 0
-                && price_account
-                    .last_slot
-                    .saturating_add(config.max_staleness_slots as u64)
-                    < staleness_slot
-            {
-                msg!(
-                    "Pyth price too stale; pubkey {} price: {} last slot: {}",
-                    acc_info.key(),
-                    price.to_num::<f64>(),
-                    last_slot,
-                );
-
-                return Err(OpenBookError::OracleStale.into());
-            }
-
-            (price, error)
         }
         OracleType::SwitchboardV2 => {
             fn from_foreign_error(e: impl std::fmt::Display) -> Error {
@@ -187,90 +242,55 @@ pub fn oracle_price_data(
 
             let feed = bytemuck::from_bytes::<AggregatorAccountData>(&data[8..]);
             let feed_result = feed.get_result().map_err(from_foreign_error)?;
-            let price_decimal: f64 = feed_result.try_into().map_err(from_foreign_error)?;
-            let price = I80F48::from_num(price_decimal);
-
-            // Filter out bad prices
-            let std_deviation_decimal: f64 = feed
+            let price: f64 = feed_result.try_into().map_err(from_foreign_error)?;
+            let deviation: f64 = feed
                 .latest_confirmed_round
                 .std_deviation
                 .try_into()
                 .map_err(from_foreign_error)?;
-            let error = I80F48::from_num(std_deviation_decimal);
 
-            if error > (config.conf_filter * price) {
-                msg!(
-                    "Switchboard v2 std deviation too high; pubkey {} price: {} latest_confirmed_round.std_deviation: {}",
-                    acc_info.key(),
-                    price.to_num::<f64>(),
-                    error
-                );
-                return Err(OpenBookError::OracleConfidence.into());
-            }
-
-            // The round_open_slot is an overestimate of the oracle staleness: Reporters will see
+            // The round_open_slot is an underestimate of the last update slot: Reporters will see
             // the round opening and only then start executing the price tasks.
-            let round_open_slot = feed.latest_confirmed_round.round_open_slot;
-            if config.max_staleness_slots >= 0
-                && round_open_slot.saturating_add(config.max_staleness_slots as u64)
-                    < staleness_slot
-            {
-                msg!(
-                    "Switchboard v2 price too stale; pubkey {} price: {} latest_confirmed_round.round_open_slot: {}",
-                    acc_info.key(),
-                    price.to_num::<f64>(),
-                    round_open_slot,
-                );
-                return Err(OpenBookError::OracleConfidence.into());
-            }
+            let last_update_slot = feed.latest_confirmed_round.round_open_slot;
 
-            (price, error)
+            require_gte!(price, 0f64);
+            OracleState {
+                price,
+                last_update_slot,
+                deviation,
+                oracle_type: OracleType::SwitchboardV2,
+            }
         }
         OracleType::SwitchboardV1 => {
             let result = FastRoundResultAccountData::deserialize(data).unwrap();
-            let price = I80F48::from_num(result.result.result);
+            let price = result.result.result;
 
-            // Filter out bad prices
-            let min_response = I80F48::from_num(result.result.min_response);
-            let max_response = I80F48::from_num(result.result.max_response);
-            if (max_response - min_response) > (config.conf_filter * price) {
-                msg!(
-                    "Switchboard v1 min-max response gap too wide; pubkey {} price: {} min_response: {} max_response {}",
-                    acc_info.key(),
-                    price.to_num::<f64>(),
-                    min_response,
-                    max_response
-                );
-                return Err(OpenBookError::OracleConfidence.into());
+            let deviation = result.result.max_response - result.result.min_response;
+            let last_update_slot = result.result.round_open_slot;
+            require_gte!(price, 0f64);
+            OracleState {
+                price,
+                last_update_slot,
+                deviation,
+                oracle_type: OracleType::SwitchboardV1,
             }
-
-            let round_open_slot = result.result.round_open_slot;
-            if config.max_staleness_slots >= 0
-                && round_open_slot.saturating_add(config.max_staleness_slots as u64)
-                    < staleness_slot
-            {
-                msg!(
-                    "Switchboard v1 price too stale; pubkey {} price: {} round_open_slot: {}",
-                    acc_info.key(),
-                    price.to_num::<f64>(),
-                    round_open_slot,
-                );
-                return Err(OpenBookError::OracleConfidence.into());
-            }
-
-            (price, max_response - min_response)
         }
-
         OracleType::RaydiumCLMM => {
             let pool = bytemuck::from_bytes::<PoolState>(&data[8..]);
 
-            let sqrt_price = I80F48::checked_from_num(pool.sqrt_price_x64).unwrap()
-                >> raydium_amm_v3::libraries::RESOLUTION;
+            let sqrt_price = U64F64::from_bits(pool.sqrt_price_x64);
 
-            let decimals = (pool.mint_decimals_0 as i8) - (pool.mint_decimals_1 as i8);
-            let price = sqrt_price.square() * power_of_ten(decimals);
+            let decimals: i8 = (pool.mint_decimals_0 as i8) - (pool.mint_decimals_1 as i8);
+            let price: f64 =
+                (sqrt_price * sqrt_price).to_num::<f64>() * power_of_ten_float(decimals);
 
-            (price, fixed::FixedI128::ZERO)
+            require_gte!(price, 0f64);
+            OracleState {
+                price,
+                last_update_slot: u64::MAX, // ensure staleness slot will never fail
+                deviation: 0f64,
+                oracle_type: OracleType::RaydiumCLMM,
+            }
         }
     })
 }
@@ -340,47 +360,27 @@ mod tests {
             data: data.borrow(),
         };
 
-        let (price, _err) = oracle_price_data(
-            ai,
-            &OracleConfig {
-                conf_filter: fixed::FixedI128::ZERO,
-                max_staleness_slots: 0,
-                reserved: [0; 72],
-            },
-            0,
-        )?;
+        let oracle = oracle_state_unchecked(ai)?;
 
-        let price_from_raydium_sdk = I80F48::from_num(24.470_087_964_273_85);
-        let tolerance = I80F48::from_num(1e-10);
-        assert!((price - price_from_raydium_sdk).abs() < tolerance);
+        let price_from_raydium_sdk = 24.470_087_964_273_85f64;
+        println!("{:?}", oracle.price);
+        assert!((oracle.price - price_from_raydium_sdk).abs() < 1e-10);
 
         Ok(())
     }
 
     #[test]
     pub fn lookup_test() {
-        for idx in -12..0 {
-            assert_eq!(
-                power_of_ten(idx),
-                I80F48::from_str(&format!(
-                    "0.{}1",
-                    str::repeat("0", (idx.unsigned_abs() as usize) - 1)
-                ))
-                .unwrap()
-            )
+        for idx in -12..0_i8 {
+            let s = format!("0.{}1", str::repeat("0", (idx.unsigned_abs() as usize) - 1));
+            assert_eq!(power_of_ten_float(idx), f64::from_str(&s).unwrap());
         }
 
-        assert_eq!(power_of_ten(0), I80F48::ONE);
+        assert_eq!(power_of_ten_float(0), 1.);
 
-        for idx in 1..=12 {
-            assert_eq!(
-                power_of_ten(idx),
-                I80F48::from_str(&format!(
-                    "1{}",
-                    str::repeat("0", idx.unsigned_abs() as usize)
-                ))
-                .unwrap()
-            )
+        for idx in 1..=12_i8 {
+            let s = format!("1{}", str::repeat("0", idx.unsigned_abs() as usize));
+            assert_eq!(power_of_ten_float(idx), f64::from_str(&s).unwrap());
         }
     }
 }
