@@ -436,6 +436,182 @@ export type OpenbookV2 = {
       };
     },
     {
+      name: 'editOrder';
+      docs: ['Edit an order.'];
+      accounts: [
+        {
+          name: 'signer';
+          isMut: false;
+          isSigner: true;
+        },
+        {
+          name: 'openOrdersAccount';
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: 'openOrdersAdmin';
+          isMut: false;
+          isSigner: true;
+          isOptional: true;
+        },
+        {
+          name: 'userTokenAccount';
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: 'market';
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: 'bids';
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: 'asks';
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: 'eventHeap';
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: 'marketVault';
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: 'oracleA';
+          isMut: false;
+          isSigner: false;
+          isOptional: true;
+        },
+        {
+          name: 'oracleB';
+          isMut: false;
+          isSigner: false;
+          isOptional: true;
+        },
+        {
+          name: 'tokenProgram';
+          isMut: false;
+          isSigner: false;
+        },
+      ];
+      args: [
+        {
+          name: 'clientOrderId';
+          type: 'u64';
+        },
+        {
+          name: 'expectedCancelSize';
+          type: 'i64';
+        },
+        {
+          name: 'placeOrder';
+          type: {
+            defined: 'PlaceOrderArgs';
+          };
+        },
+      ];
+      returns: {
+        option: 'u128';
+      };
+    },
+    {
+      name: 'editOrderPegged';
+      docs: ['Edit an order pegged.'];
+      accounts: [
+        {
+          name: 'signer';
+          isMut: false;
+          isSigner: true;
+        },
+        {
+          name: 'openOrdersAccount';
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: 'openOrdersAdmin';
+          isMut: false;
+          isSigner: true;
+          isOptional: true;
+        },
+        {
+          name: 'userTokenAccount';
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: 'market';
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: 'bids';
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: 'asks';
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: 'eventHeap';
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: 'marketVault';
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: 'oracleA';
+          isMut: false;
+          isSigner: false;
+          isOptional: true;
+        },
+        {
+          name: 'oracleB';
+          isMut: false;
+          isSigner: false;
+          isOptional: true;
+        },
+        {
+          name: 'tokenProgram';
+          isMut: false;
+          isSigner: false;
+        },
+      ];
+      args: [
+        {
+          name: 'clientOrderId';
+          type: 'u64';
+        },
+        {
+          name: 'expectedCancelSize';
+          type: 'i64';
+        },
+        {
+          name: 'placeOrder';
+          type: {
+            defined: 'PlaceOrderPeggedArgs';
+          };
+        },
+      ];
+      returns: {
+        option: 'u128';
+      };
+    },
+    {
       name: 'cancelAndPlaceOrders';
       docs: ['Cancel orders and place multiple orders.'];
       accounts: [
@@ -885,6 +1061,7 @@ export type OpenbookV2 = {
           type: 'u64';
         },
       ];
+      returns: 'i64';
     },
     {
       name: 'cancelAllOrders';
@@ -3092,171 +3269,176 @@ export type OpenbookV2 = {
     },
     {
       code: 6007;
-      name: 'InvalidInputPriceLots';
+      name: 'InvalidInputCancelSize';
       msg: 'Price lots should be greater than zero';
     },
     {
       code: 6008;
+      name: 'InvalidInputPriceLots';
+      msg: 'Expected cancel size should be greater than zero';
+    },
+    {
+      code: 6009;
       name: 'InvalidInputPegLimit';
       msg: 'Peg limit should be greater than zero';
     },
     {
-      code: 6009;
+      code: 6010;
       name: 'InvalidInputOrderType';
       msg: 'The order type is invalid. A taker order must be Market or ImmediateOrCancel';
     },
     {
-      code: 6010;
+      code: 6011;
       name: 'InvalidInputOrderId';
       msg: 'Order id cannot be zero';
     },
     {
-      code: 6011;
+      code: 6012;
       name: 'InvalidInputHeapSlots';
       msg: 'Slot above heap limit';
     },
     {
-      code: 6012;
+      code: 6013;
       name: 'InvalidOracleTypes';
       msg: 'Cannot combine two oracles of different providers';
     },
     {
-      code: 6013;
+      code: 6014;
       name: 'InvalidSecondOracle';
       msg: 'Cannot configure secondary oracle without primary';
     },
     {
-      code: 6014;
+      code: 6015;
       name: 'NoCloseMarketAdmin';
       msg: 'This market does not have a `close_market_admin` and thus cannot be closed.';
     },
     {
-      code: 6015;
+      code: 6016;
       name: 'InvalidCloseMarketAdmin';
       msg: "The signer of this transaction is not this market's `close_market_admin`.";
     },
     {
-      code: 6016;
+      code: 6017;
       name: 'InvalidOpenOrdersAdmin';
       msg: 'The `open_orders_admin` required by this market to sign all instructions that creates orders is missing or is not valid';
     },
     {
-      code: 6017;
+      code: 6018;
       name: 'InvalidConsumeEventsAdmin';
       msg: 'The `consume_events_admin` required by this market to sign all instructions that consume events is missing or is not valid';
     },
     {
-      code: 6018;
+      code: 6019;
       name: 'IndexerActiveOO';
       msg: 'Cannot be closed due to the existence of open orders accounts';
     },
     {
-      code: 6019;
+      code: 6020;
       name: 'OraclePegInvalidOracleState';
       msg: 'Cannot place a peg order due to invalid oracle state';
     },
     {
-      code: 6020;
+      code: 6021;
       name: 'UnknownOracleType';
       msg: 'oracle type cannot be determined';
     },
     {
-      code: 6021;
+      code: 6022;
       name: 'OracleConfidence';
       msg: 'an oracle does not reach the confidence threshold';
     },
     {
-      code: 6022;
+      code: 6023;
       name: 'OracleStale';
       msg: 'an oracle is stale';
     },
     {
-      code: 6023;
+      code: 6024;
       name: 'OrderIdNotFound';
       msg: 'Order id not found on the orderbook';
     },
     {
-      code: 6024;
+      code: 6025;
       name: 'EventHeapContainsElements';
       msg: "Event heap contains elements and market can't be closed";
     },
     {
-      code: 6025;
+      code: 6026;
       name: 'InvalidOrderPostIOC';
       msg: 'ImmediateOrCancel is not a PostOrderType';
     },
     {
-      code: 6026;
+      code: 6027;
       name: 'InvalidOrderPostMarket';
       msg: 'Market is not a PostOrderType';
     },
     {
-      code: 6027;
+      code: 6028;
       name: 'WouldSelfTrade';
       msg: 'would self trade';
     },
     {
-      code: 6028;
+      code: 6029;
       name: 'MarketHasExpired';
       msg: 'The Market has already expired.';
     },
     {
-      code: 6029;
+      code: 6030;
       name: 'InvalidPriceLots';
       msg: 'Price lots should be greater than zero';
     },
     {
-      code: 6030;
+      code: 6031;
       name: 'InvalidOraclePrice';
       msg: 'Oracle price above market limits';
     },
     {
-      code: 6031;
+      code: 6032;
       name: 'MarketHasNotExpired';
       msg: 'The Market has not expired yet.';
     },
     {
-      code: 6032;
+      code: 6033;
       name: 'NoOwnerOrDelegate';
       msg: 'No correct owner or delegate.';
     },
     {
-      code: 6033;
+      code: 6034;
       name: 'NoOwner';
       msg: 'No correct owner';
     },
     {
-      code: 6034;
+      code: 6035;
       name: 'OpenOrdersFull';
       msg: 'No free order index in open orders account';
     },
     {
-      code: 6035;
+      code: 6036;
       name: 'BookContainsElements';
       msg: 'Book contains elements';
     },
     {
-      code: 6036;
+      code: 6037;
       name: 'OpenOrdersOrderNotFound';
       msg: 'Could not find order in user account';
     },
     {
-      code: 6037;
+      code: 6038;
       name: 'InvalidPostAmount';
       msg: 'Amount to post above book limits';
     },
     {
-      code: 6038;
+      code: 6039;
       name: 'DisabledOraclePeg';
       msg: 'Oracle peg orders are not enabled for this market';
     },
     {
-      code: 6039;
+      code: 6040;
       name: 'NonEmptyMarket';
       msg: 'Cannot close a non-empty market';
     },
     {
-      code: 6040;
+      code: 6041;
       name: 'NonEmptyOpenOrdersPosition';
       msg: 'Cannot close a non-empty open orders account';
     },
@@ -3693,6 +3875,182 @@ export const IDL: OpenbookV2 = {
           name: 'args',
           type: {
             defined: 'PlaceOrderArgs',
+          },
+        },
+      ],
+      returns: {
+        option: 'u128',
+      },
+    },
+    {
+      name: 'editOrder',
+      docs: ['Edit an order.'],
+      accounts: [
+        {
+          name: 'signer',
+          isMut: false,
+          isSigner: true,
+        },
+        {
+          name: 'openOrdersAccount',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'openOrdersAdmin',
+          isMut: false,
+          isSigner: true,
+          isOptional: true,
+        },
+        {
+          name: 'userTokenAccount',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'market',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'bids',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'asks',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'eventHeap',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'marketVault',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'oracleA',
+          isMut: false,
+          isSigner: false,
+          isOptional: true,
+        },
+        {
+          name: 'oracleB',
+          isMut: false,
+          isSigner: false,
+          isOptional: true,
+        },
+        {
+          name: 'tokenProgram',
+          isMut: false,
+          isSigner: false,
+        },
+      ],
+      args: [
+        {
+          name: 'clientOrderId',
+          type: 'u64',
+        },
+        {
+          name: 'expectedCancelSize',
+          type: 'i64',
+        },
+        {
+          name: 'placeOrder',
+          type: {
+            defined: 'PlaceOrderArgs',
+          },
+        },
+      ],
+      returns: {
+        option: 'u128',
+      },
+    },
+    {
+      name: 'editOrderPegged',
+      docs: ['Edit an order pegged.'],
+      accounts: [
+        {
+          name: 'signer',
+          isMut: false,
+          isSigner: true,
+        },
+        {
+          name: 'openOrdersAccount',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'openOrdersAdmin',
+          isMut: false,
+          isSigner: true,
+          isOptional: true,
+        },
+        {
+          name: 'userTokenAccount',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'market',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'bids',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'asks',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'eventHeap',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'marketVault',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'oracleA',
+          isMut: false,
+          isSigner: false,
+          isOptional: true,
+        },
+        {
+          name: 'oracleB',
+          isMut: false,
+          isSigner: false,
+          isOptional: true,
+        },
+        {
+          name: 'tokenProgram',
+          isMut: false,
+          isSigner: false,
+        },
+      ],
+      args: [
+        {
+          name: 'clientOrderId',
+          type: 'u64',
+        },
+        {
+          name: 'expectedCancelSize',
+          type: 'i64',
+        },
+        {
+          name: 'placeOrder',
+          type: {
+            defined: 'PlaceOrderPeggedArgs',
           },
         },
       ],
@@ -4150,6 +4508,7 @@ export const IDL: OpenbookV2 = {
           type: 'u64',
         },
       ],
+      returns: 'i64',
     },
     {
       name: 'cancelAllOrders',
@@ -6357,171 +6716,176 @@ export const IDL: OpenbookV2 = {
     },
     {
       code: 6007,
-      name: 'InvalidInputPriceLots',
+      name: 'InvalidInputCancelSize',
       msg: 'Price lots should be greater than zero',
     },
     {
       code: 6008,
+      name: 'InvalidInputPriceLots',
+      msg: 'Expected cancel size should be greater than zero',
+    },
+    {
+      code: 6009,
       name: 'InvalidInputPegLimit',
       msg: 'Peg limit should be greater than zero',
     },
     {
-      code: 6009,
+      code: 6010,
       name: 'InvalidInputOrderType',
       msg: 'The order type is invalid. A taker order must be Market or ImmediateOrCancel',
     },
     {
-      code: 6010,
+      code: 6011,
       name: 'InvalidInputOrderId',
       msg: 'Order id cannot be zero',
     },
     {
-      code: 6011,
+      code: 6012,
       name: 'InvalidInputHeapSlots',
       msg: 'Slot above heap limit',
     },
     {
-      code: 6012,
+      code: 6013,
       name: 'InvalidOracleTypes',
       msg: 'Cannot combine two oracles of different providers',
     },
     {
-      code: 6013,
+      code: 6014,
       name: 'InvalidSecondOracle',
       msg: 'Cannot configure secondary oracle without primary',
     },
     {
-      code: 6014,
+      code: 6015,
       name: 'NoCloseMarketAdmin',
       msg: 'This market does not have a `close_market_admin` and thus cannot be closed.',
     },
     {
-      code: 6015,
+      code: 6016,
       name: 'InvalidCloseMarketAdmin',
       msg: "The signer of this transaction is not this market's `close_market_admin`.",
     },
     {
-      code: 6016,
+      code: 6017,
       name: 'InvalidOpenOrdersAdmin',
       msg: 'The `open_orders_admin` required by this market to sign all instructions that creates orders is missing or is not valid',
     },
     {
-      code: 6017,
+      code: 6018,
       name: 'InvalidConsumeEventsAdmin',
       msg: 'The `consume_events_admin` required by this market to sign all instructions that consume events is missing or is not valid',
     },
     {
-      code: 6018,
+      code: 6019,
       name: 'IndexerActiveOO',
       msg: 'Cannot be closed due to the existence of open orders accounts',
     },
     {
-      code: 6019,
+      code: 6020,
       name: 'OraclePegInvalidOracleState',
       msg: 'Cannot place a peg order due to invalid oracle state',
     },
     {
-      code: 6020,
+      code: 6021,
       name: 'UnknownOracleType',
       msg: 'oracle type cannot be determined',
     },
     {
-      code: 6021,
+      code: 6022,
       name: 'OracleConfidence',
       msg: 'an oracle does not reach the confidence threshold',
     },
     {
-      code: 6022,
+      code: 6023,
       name: 'OracleStale',
       msg: 'an oracle is stale',
     },
     {
-      code: 6023,
+      code: 6024,
       name: 'OrderIdNotFound',
       msg: 'Order id not found on the orderbook',
     },
     {
-      code: 6024,
+      code: 6025,
       name: 'EventHeapContainsElements',
       msg: "Event heap contains elements and market can't be closed",
     },
     {
-      code: 6025,
+      code: 6026,
       name: 'InvalidOrderPostIOC',
       msg: 'ImmediateOrCancel is not a PostOrderType',
     },
     {
-      code: 6026,
+      code: 6027,
       name: 'InvalidOrderPostMarket',
       msg: 'Market is not a PostOrderType',
     },
     {
-      code: 6027,
+      code: 6028,
       name: 'WouldSelfTrade',
       msg: 'would self trade',
     },
     {
-      code: 6028,
+      code: 6029,
       name: 'MarketHasExpired',
       msg: 'The Market has already expired.',
     },
     {
-      code: 6029,
+      code: 6030,
       name: 'InvalidPriceLots',
       msg: 'Price lots should be greater than zero',
     },
     {
-      code: 6030,
+      code: 6031,
       name: 'InvalidOraclePrice',
       msg: 'Oracle price above market limits',
     },
     {
-      code: 6031,
+      code: 6032,
       name: 'MarketHasNotExpired',
       msg: 'The Market has not expired yet.',
     },
     {
-      code: 6032,
+      code: 6033,
       name: 'NoOwnerOrDelegate',
       msg: 'No correct owner or delegate.',
     },
     {
-      code: 6033,
+      code: 6034,
       name: 'NoOwner',
       msg: 'No correct owner',
     },
     {
-      code: 6034,
+      code: 6035,
       name: 'OpenOrdersFull',
       msg: 'No free order index in open orders account',
     },
     {
-      code: 6035,
+      code: 6036,
       name: 'BookContainsElements',
       msg: 'Book contains elements',
     },
     {
-      code: 6036,
+      code: 6037,
       name: 'OpenOrdersOrderNotFound',
       msg: 'Could not find order in user account',
     },
     {
-      code: 6037,
+      code: 6038,
       name: 'InvalidPostAmount',
       msg: 'Amount to post above book limits',
     },
     {
-      code: 6038,
+      code: 6039,
       name: 'DisabledOraclePeg',
       msg: 'Oracle peg orders are not enabled for this market',
     },
     {
-      code: 6039,
+      code: 6040,
       name: 'NonEmptyMarket',
       msg: 'Cannot close a non-empty market',
     },
     {
-      code: 6040,
+      code: 6041,
       name: 'NonEmptyOpenOrdersPosition',
       msg: 'Cannot close a non-empty open orders account',
     },

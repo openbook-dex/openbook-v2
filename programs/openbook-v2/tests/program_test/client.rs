@@ -1244,3 +1244,87 @@ impl ClientInstruction for SetDelegateInstruction {
         vec![self.owner]
     }
 }
+
+#[derive(Clone)]
+pub struct EditOrderInstruction {
+    pub open_orders_account: Pubkey,
+    pub open_orders_admin: Option<TestKeypair>,
+    pub market: Pubkey,
+    pub signer: TestKeypair,
+    pub market_vault: Pubkey,
+    pub user_token_account: Pubkey,
+    pub side: Side,
+    pub price_lots: i64,
+    pub max_base_lots: i64,
+    pub max_quote_lots_including_fees: i64,
+    pub client_order_id: u64,
+    pub expiry_timestamp: u64,
+    pub order_type: PlaceOrderType,
+    pub self_trade_behavior: SelfTradeBehavior,
+    pub remainings: Vec<Pubkey>,
+    pub expected_cancel_size: i64,
+}
+
+#[async_trait::async_trait(?Send)]
+impl ClientInstruction for EditOrderInstruction {
+    type Accounts = openbook_v2::accounts::PlaceOrder;
+    type Instruction = openbook_v2::instruction::EditOrder;
+    async fn to_instruction(
+        &self,
+        account_loader: impl ClientAccountLoader + 'async_trait,
+    ) -> (Self::Accounts, instruction::Instruction) {
+        let program_id = openbook_v2::id();
+        let instruction = Self::Instruction {
+            expected_cancel_size: self.expected_cancel_size,
+            client_order_id: self.client_order_id,
+            place_order: PlaceOrderArgs {
+                side: self.side,
+                price_lots: self.price_lots,
+                max_base_lots: self.max_base_lots,
+                max_quote_lots_including_fees: self.max_quote_lots_including_fees,
+                client_order_id: self.client_order_id,
+                order_type: self.order_type,
+                expiry_timestamp: self.expiry_timestamp,
+                self_trade_behavior: self.self_trade_behavior,
+                limit: 10,
+            },
+        };
+
+        let market: Market = account_loader.load(&self.market).await.unwrap();
+
+        let accounts = Self::Accounts {
+            open_orders_account: self.open_orders_account,
+            open_orders_admin: self.open_orders_admin.map(|kp| kp.pubkey()),
+            market: self.market,
+            bids: market.bids,
+            asks: market.asks,
+            event_heap: market.event_heap,
+            oracle_a: market.oracle_a.into(),
+            oracle_b: market.oracle_b.into(),
+            signer: self.signer.pubkey(),
+            user_token_account: self.user_token_account,
+            market_vault: self.market_vault,
+            token_program: Token::id(),
+        };
+        let mut instruction = make_instruction(program_id, &accounts, instruction);
+        let mut vec_remainings: Vec<AccountMeta> = Vec::new();
+        for remaining in &self.remainings {
+            vec_remainings.push(AccountMeta {
+                pubkey: *remaining,
+                is_signer: false,
+                is_writable: true,
+            })
+        }
+        instruction.accounts.append(&mut vec_remainings);
+        (accounts, instruction)
+    }
+
+    fn signers(&self) -> Vec<TestKeypair> {
+        let mut signers = vec![self.signer];
+        if let Some(open_orders_admin) = self.open_orders_admin {
+            signers.push(open_orders_admin);
+        }
+
+        signers
+    }
+}
