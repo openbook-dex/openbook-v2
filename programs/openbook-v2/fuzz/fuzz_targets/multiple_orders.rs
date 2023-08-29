@@ -489,6 +489,7 @@ mod error_parser {
             e if e == OpenBookError::InvalidOrderPostMarket.into() => Corpus::Keep,
             e if e == OpenBookError::InvalidPostAmount.into() => Corpus::Keep,
             e if e == OpenBookError::InvalidPriceLots.into() => Corpus::Keep,
+            e if e == OpenBookError::OraclePegInvalidOracleState.into() => Corpus::Keep,
             e if e == OpenBookError::WouldSelfTrade.into() => Corpus::Keep,
             e if e == TokenError::InsufficientFunds.into() => Corpus::Keep,
             _ => panic!("{}", err),
