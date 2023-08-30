@@ -328,9 +328,16 @@ export class OpenBookV2Client {
   ): Promise<TransactionSignature> {
     if (openOrdersIndexer == null) {
       openOrdersIndexer = this.findOpenOrdersIndexer(market);
-      const acc = await this.connection.getAccountInfo(openOrdersIndexer);
-
-      if (acc == null) {
+      try {
+        const acc = await this.connection.getAccountInfo(openOrdersIndexer);
+        if (acc == null) {
+          const tx = await this.createOpenOrdersIndexer(
+            market,
+            openOrdersIndexer,
+          );
+          console.log('Created open orders indexer', tx);
+        }
+      } catch {
         const tx = await this.createOpenOrdersIndexer(
           market,
           openOrdersIndexer,
@@ -343,6 +350,7 @@ export class OpenBookV2Client {
         code: 403,
       });
     }
+    accountIndex = accountIndex.add(new BN(1));
     const openOrders = this.findOpenOrders(market, accountIndex);
 
     const ix = await this.program.methods
@@ -509,7 +517,7 @@ export class OpenBookV2Client {
         asks: market.asks,
         bids: market.bids,
         marketQuoteVault: market.marketQuoteVault,
-        marketBaseVault: market.marketQuoteVault,
+        marketBaseVault: market.marketBaseVault,
         eventHeap: market.eventHeap,
         market: marketPublicKey,
         openOrdersAccount: openOrdersPublicKey,
