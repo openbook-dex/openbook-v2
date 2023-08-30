@@ -16,6 +16,7 @@ mod test;
 mod test_crank;
 mod test_edit_order;
 mod test_fees;
+mod test_indexer;
 mod test_oracle_peg;
 mod test_order_types;
 mod test_permissioned;

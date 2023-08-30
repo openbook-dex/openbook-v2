@@ -15,6 +15,7 @@ pub struct CreateOpenOrdersAccount<'info> {
         realloc = OpenOrdersIndexer::space(open_orders_indexer.addresses.len()+1),
         realloc::payer = payer,
         realloc::zero = false,
+        constraint = open_orders_indexer.addresses.len() < 256,
     )]
     pub open_orders_indexer: Account<'info, OpenOrdersIndexer>,
     #[account(
