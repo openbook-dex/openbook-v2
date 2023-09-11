@@ -10,7 +10,7 @@ test TEST_NAME:
     cargo test-sbf --features enable-gpl --  {{ TEST_NAME }}
 
 test-all:
-    (cd ./programs/openbook-v2 && RUST_LOG=ERROR cargo test-sbf --features enable-gpl)
+    (cd ./programs/openbook-v2 && RUST_LOG=ERROR cargo +1.70.0 test-sbf --features enable-gpl)
 
 test-dev:
     (find programs) | entr -s 'just test-all'

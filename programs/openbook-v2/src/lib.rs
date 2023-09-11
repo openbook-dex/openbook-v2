@@ -1,6 +1,9 @@
 //! A central-limit order book (CLOB) program that targets the Sealevel runtime.
 
-use anchor_lang::prelude::{*, borsh::{BorshDeserialize, BorshSerialize}};
+use anchor_lang::prelude::{
+    borsh::{BorshDeserialize, BorshSerialize},
+    *,
+};
 
 declare_id!("opnbkNkqux64GppQhwbyEVc3axhssFhVYuwar8rDHCu");
 
@@ -21,10 +24,10 @@ pub mod types;
 pub mod instructions;
 
 use accounts_ix::*;
+use accounts_ix::{StubOracleCreate, StubOracleSet};
 use error::*;
 use state::{OracleConfigParams, Order, OrderParams, PlaceOrderType, SelfTradeBehavior, Side};
 use std::cmp;
-use accounts_ix::{StubOracleCreate, StubOracleSet};
 
 #[cfg(all(not(feature = "no-entrypoint"), not(feature = "enable-gpl")))]
 compile_error!("compiling the program entrypoint without 'enable-gpl' makes no sense, enable it or use the 'cpi' or 'client' features");
@@ -548,7 +551,7 @@ pub mod openbook_v2 {
     }
 }
 
-#[derive(AnchorSerialize, AnchorDeserialize, Debug, Copy, Clone)] 
+#[derive(AnchorSerialize, AnchorDeserialize, Debug, Copy, Clone)]
 #[cfg_attr(feature = "arbitrary", derive(arbitrary::Arbitrary))]
 pub struct PlaceOrderArgs {
     pub side: Side,
