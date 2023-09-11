@@ -1,6 +1,6 @@
 //! A central-limit order book (CLOB) program that targets the Sealevel runtime.
 
-use anchor_lang::prelude::*;
+use anchor_lang::prelude::{*, borsh::{BorshDeserialize, BorshSerialize}};
 
 declare_id!("opnbkNkqux64GppQhwbyEVc3axhssFhVYuwar8rDHCu");
 
@@ -22,9 +22,9 @@ pub mod instructions;
 
 use accounts_ix::*;
 use error::*;
-use fixed::types::I80F48;
 use state::{OracleConfigParams, Order, OrderParams, PlaceOrderType, SelfTradeBehavior, Side};
 use std::cmp;
+use accounts_ix::{StubOracleCreate, StubOracleSet};
 
 #[cfg(all(not(feature = "no-entrypoint"), not(feature = "enable-gpl")))]
 compile_error!("compiling the program entrypoint without 'enable-gpl' makes no sense, enable it or use the 'cpi' or 'client' features");
@@ -529,9 +529,9 @@ pub mod openbook_v2 {
         Ok(())
     }
 
-    pub fn stub_oracle_create(ctx: Context<StubOracleCreate>, price: I80F48) -> Result<()> {
+    pub fn stub_oracle_create(ctx: Context<StubOracleCreate>, price: f64) -> Result<()> {
         #[cfg(feature = "enable-gpl")]
-        instructions::stub_oracle_create(ctx, price.to_num())?;
+        instructions::stub_oracle_create(ctx, price)?;
         Ok(())
     }
 
@@ -541,14 +541,14 @@ pub mod openbook_v2 {
         Ok(())
     }
 
-    pub fn stub_oracle_set(ctx: Context<StubOracleSet>, price: I80F48) -> Result<()> {
+    pub fn stub_oracle_set(ctx: Context<StubOracleSet>, price: f64) -> Result<()> {
         #[cfg(feature = "enable-gpl")]
-        instructions::stub_oracle_set(ctx, price.to_num())?;
+        instructions::stub_oracle_set(ctx, price)?;
         Ok(())
     }
 }
 
-#[derive(AnchorSerialize, AnchorDeserialize, Debug, Copy, Clone)]
+#[derive(AnchorSerialize, AnchorDeserialize, Debug, Copy, Clone)] 
 #[cfg_attr(feature = "arbitrary", derive(arbitrary::Arbitrary))]
 pub struct PlaceOrderArgs {
     pub side: Side,
