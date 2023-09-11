@@ -53,6 +53,8 @@ jobs:
           toolchain: 1.70.0
           profile: minimal
           components: rustc
+          override: true
+          default: true
 
       - name: Cache dependencies
         uses: Swatinem/rust-cache@v2
