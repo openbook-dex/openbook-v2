@@ -8,23 +8,22 @@ edition = "2021"
 cargo-fuzz = true
 
 [dependencies]
-anchor-lang = { git = "https://github.com/coral-xyz/anchor.git" }
-anchor-spl = { git = "https://github.com/coral-xyz/anchor.git" }
+anchor-lang = "0.28.0"
+anchor-spl = "0.28.0"
 arbitrary = { version = "~1.0", features = ["derive"] }
 bumpalo = "3.13.0"
-fixed = {path = "../../../3rdparty/fixed", version = "1.11.0", features = ["serde", "borsh", "debug-assert-in-release", "arbitrary"]}
 libfuzzer-sys = "0.4"
-solana-program = "~1.14.16"
-solana-runtime = "~1.14.16"
+solana-program = "~1.16.1"
+solana-runtime = "~1.16.1"
+solana-sdk = "~1.16.1"
 spl-associated-token-account = { version = "^1.0.3", features = ["no-entrypoint"] }
-solana-sdk = "~1.14.16"
 env_logger = "0.10.0"
 log = "0.4.19"
 base64 = "0.21.2"
 itertools = "0.11.0"
 num_enum = "0.6.1"
 
-[patch."https://github.com/coral-xyz/anchor.git"]
+[patch.crates-io]
 anchor-syn = { path = "../../../3rdparty/anchor/lang/syn" }
 
 [dependencies.openbook-v2]
