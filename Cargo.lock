@@ -3487,6 +3487,8 @@ dependencies = [
  "solana-account-decoder",
  "solana-client",
  "solana-rpc",
+ "solana-rpc-client",
+ "solana-rpc-client-api",
  "solana-sdk",
  "spl-associated-token-account",
  "thiserror",
