@@ -10,7 +10,6 @@ pub mod util;
 pub mod accounts_ix;
 pub mod accounts_zerocopy;
 pub mod error;
-pub mod i80f48;
 pub mod logs;
 pub mod pubkey_option;
 pub mod state;
