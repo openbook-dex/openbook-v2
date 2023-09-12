@@ -17,6 +17,13 @@ struct FuzzData {
 }
 
 impl FuzzData {
+    fn is_borsh_serializable(&self) -> bool {
+        self.instructions.iter().all(|ix| match ix {
+            FuzzInstruction::StubOracleSet { data, .. } => !data.price.is_nan(),
+            _ => true,
+        })
+    }
+
     fn contains_place_order_ixs(&self) -> bool {
         self.instructions.iter().any(|ix| {
             matches!(
@@ -219,7 +226,7 @@ fuzz_target!(|fuzz_data: FuzzData| -> Corpus {
 });
 
 fn run_fuzz(fuzz_data: FuzzData) -> Corpus {
-    if !fuzz_data.contains_place_order_ixs() {
+    if !fuzz_data.is_borsh_serializable() || !fuzz_data.contains_place_order_ixs() {
         return Corpus::Reject;
     }
 
