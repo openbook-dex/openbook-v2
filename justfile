@@ -22,7 +22,7 @@ idl:
     yarn format
 
 fuzz:
-  cd ./programs/openbook-v2/fuzz && cargo {{ fuzz-toolchain }} fuzz run multiple_orders
+  cd ./programs/openbook-v2/fuzz && cargo {{ fuzz-toolchain }} fuzz run --strip-dead-code multiple_orders
 
 fuzz-reproduce CASE:
-  cd ./programs/openbook-v2/fuzz && RUST_LOG=debug cargo {{ fuzz-toolchain }} fuzz run multiple_orders {{ CASE }}
+  cd ./programs/openbook-v2/fuzz && RUST_LOG=debug cargo {{ fuzz-toolchain }} fuzz run --strip-dead-code multiple_orders {{ CASE }}
