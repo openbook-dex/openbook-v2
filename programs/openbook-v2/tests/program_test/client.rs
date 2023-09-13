@@ -2,7 +2,6 @@
 
 use anchor_lang::prelude::*;
 use anchor_spl::token::Token;
-use fixed::types::I80F48;
 use solana_program::instruction::Instruction;
 use solana_program_test::BanksClientError;
 use solana_sdk::instruction;
@@ -997,9 +996,7 @@ impl ClientInstruction for StubOracleSetInstruction {
         _loader: impl ClientAccountLoader + 'async_trait,
     ) -> (Self::Accounts, Instruction) {
         let program_id = openbook_v2::id();
-        let instruction = Self::Instruction {
-            price: I80F48::from_num(self.price),
-        };
+        let instruction = Self::Instruction { price: self.price };
 
         let oracle = Pubkey::find_program_address(
             &[
@@ -1040,9 +1037,7 @@ impl ClientInstruction for StubOracleCreate {
         _loader: impl ClientAccountLoader + 'async_trait,
     ) -> (Self::Accounts, Instruction) {
         let program_id = openbook_v2::id();
-        let instruction = Self::Instruction {
-            price: I80F48::from_num(1.0),
-        };
+        let instruction = Self::Instruction { price: 1.0 };
 
         let oracle = Pubkey::find_program_address(
             &[

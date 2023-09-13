@@ -4,7 +4,6 @@ pub mod processor;
 use accounts_state::*;
 use anchor_spl::token::spl_token;
 use arbitrary::{Arbitrary, Unstructured};
-use fixed::types::I80F48;
 use num_enum::IntoPrimitive;
 use openbook_v2::state::*;
 use processor::*;
@@ -288,7 +287,7 @@ impl FuzzContext {
             payer: self.payer,
             system_program: system_program::ID,
         };
-        let data = openbook_v2::instruction::StubOracleCreate { price: I80F48::ONE };
+        let data = openbook_v2::instruction::StubOracleCreate { price: 1. };
         process_instruction(&mut self.state, &data, &accounts, &[])
     }
 

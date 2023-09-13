@@ -1,6 +1,9 @@
 //! A central-limit order book (CLOB) program that targets the Sealevel runtime.
 
-use anchor_lang::prelude::*;
+use anchor_lang::prelude::{
+    borsh::{BorshDeserialize, BorshSerialize},
+    *,
+};
 
 declare_id!("opnbkNkqux64GppQhwbyEVc3axhssFhVYuwar8rDHCu");
 
@@ -20,8 +23,8 @@ pub mod types;
 pub mod instructions;
 
 use accounts_ix::*;
+use accounts_ix::{StubOracleCreate, StubOracleSet};
 use error::*;
-use fixed::types::I80F48;
 use state::{OracleConfigParams, Order, OrderParams, PlaceOrderType, SelfTradeBehavior, Side};
 use std::cmp;
 
@@ -528,9 +531,9 @@ pub mod openbook_v2 {
         Ok(())
     }
 
-    pub fn stub_oracle_create(ctx: Context<StubOracleCreate>, price: I80F48) -> Result<()> {
+    pub fn stub_oracle_create(ctx: Context<StubOracleCreate>, price: f64) -> Result<()> {
         #[cfg(feature = "enable-gpl")]
-        instructions::stub_oracle_create(ctx, price.to_num())?;
+        instructions::stub_oracle_create(ctx, price)?;
         Ok(())
     }
 
@@ -540,9 +543,9 @@ pub mod openbook_v2 {
         Ok(())
     }
 
-    pub fn stub_oracle_set(ctx: Context<StubOracleSet>, price: I80F48) -> Result<()> {
+    pub fn stub_oracle_set(ctx: Context<StubOracleSet>, price: f64) -> Result<()> {
         #[cfg(feature = "enable-gpl")]
-        instructions::stub_oracle_set(ctx, price.to_num())?;
+        instructions::stub_oracle_set(ctx, price)?;
         Ok(())
     }
 }

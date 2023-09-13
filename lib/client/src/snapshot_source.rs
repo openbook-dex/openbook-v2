@@ -1,11 +1,13 @@
 use jsonrpc_core_client::transports::http;
 
+use serde_json::json;
 use solana_account_decoder::{UiAccount, UiAccountEncoding};
 use solana_client::{
     rpc_config::{RpcAccountInfoConfig, RpcContextConfig, RpcProgramAccountsConfig},
+    rpc_request::RpcRequest,
     rpc_response::{OptionalContext, Response, RpcKeyedAccount},
 };
-use solana_rpc::rpc::{rpc_accounts::AccountsDataClient, rpc_minimal::MinimalClient};
+use solana_rpc::rpc::rpc_minimal::MinimalClient;
 use solana_sdk::{commitment_config::CommitmentConfig, pubkey::Pubkey};
 
 use anyhow::Context;
@@ -77,9 +79,13 @@ async fn feed_snapshots(
     openbook_oracles: Vec<Pubkey>,
     sender: &async_channel::Sender<Message>,
 ) -> anyhow::Result<()> {
-    let rpc_client = http::connect::<AccountsDataClient>(&config.rpc_http_url)
-        .await
-        .map_err_anyhow()?;
+    let rpc_client =
+        solana_rpc_client::nonblocking::rpc_client::RpcClient::new(config.rpc_http_url.clone());
+
+    // rpc_client.get_program_accounts_with_config(pubkey, config);
+    // let rpc_client = http::connect::<AccountsDataClient>(&config.rpc_http_url)
+    //     .await
+    //     .map_err_anyhow()?;
 
     let account_info_config = RpcAccountInfoConfig {
         encoding: Some(UiAccountEncoding::Base64),
@@ -99,13 +105,11 @@ async fn feed_snapshots(
 
     // Get all accounts of the openorders program
     let response = rpc_client
-        .get_program_accounts(
-            openbook_v2::id().to_string(),
-            Some(all_accounts_config.clone()),
+        .send::<OptionalContext<Vec<RpcKeyedAccount>>>(
+            RpcRequest::GetProgramAccounts,
+            json!([openbook_v2::id().to_string(), all_accounts_config]),
         )
-        .await
-        .map_err_anyhow()
-        .context("error during getProgamAccounts for openbook program")?;
+        .await?;
     if let OptionalContext::Context(account_snapshot_response) = response {
         snapshot.extend_from_gpa_rpc(account_snapshot_response)?;
     } else {
@@ -115,7 +119,7 @@ async fn feed_snapshots(
     // Get all the pyth oracles
     let results: Vec<(
         Vec<Pubkey>,
-        Result<Response<Vec<Option<UiAccount>>>, jsonrpc_core_client::RpcError>,
+        Result<Response<Vec<Option<UiAccount>>>, solana_rpc_client_api::client_error::Error>,
     )> = stream::iter(openbook_oracles)
         .chunks(config.get_multiple_accounts_count)
         .map(|keys| {
@@ -126,7 +130,10 @@ async fn feed_snapshots(
                 (
                     keys,
                     rpc_client
-                        .get_multiple_accounts(string_keys, Some(account_info_config))
+                        .send(
+                            RpcRequest::GetMultipleAccounts,
+                            json!([string_keys, account_info_config]),
+                        )
                         .await,
                 )
             }

@@ -12,7 +12,7 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
-  SOLANA_VERSION: '1.14.17'
+  SOLANA_VERSION: '1.16.1'
 
 jobs:
   format:
@@ -50,9 +50,11 @@ jobs:
       - name: Install Rust toolchain
         uses: actions-rs/toolchain@v1
         with:
-          toolchain: stable
+          toolchain: 1.70.0
           profile: minimal
           components: rustc
+          override: true
+          default: true
 
       - name: Cache dependencies
         uses: Swatinem/rust-cache@v2
