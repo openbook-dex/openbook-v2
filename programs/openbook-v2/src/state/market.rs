@@ -250,24 +250,13 @@ impl Market {
 
         if oracle_a.is_stale(oracle_a_acc.key(), &self.oracle_config, now_slot)
             || oracle_b.is_stale(oracle_b_acc.key(), &self.oracle_config, now_slot)
+            || !oracle_a.has_valid_combined_confidence(&oracle_b, &self.oracle_config)
         {
-            return Ok(None);
-        }
-
-        let (price, var) = oracle_a.combine_div_with_var(&oracle_b);
-
-        let target_var = self.oracle_config.conf_filter.powi(2);
-        if var > target_var {
-            msg!(
-                "Combined variance too high; value {}, target {}",
-                var,
-                target_var
-            );
             Ok(None)
         } else {
+            let price = oracle_a.price / oracle_b.price;
             let decimals = (self.quote_decimals as i8) - (self.base_decimals as i8);
             let decimal_adj = oracle::power_of_ten_float(decimals);
-
             Ok(I80F48::checked_from_num(price * decimal_adj))
         }
     }
