@@ -3,6 +3,7 @@ use crate::error::OpenBookError;
 use crate::state::*;
 use anchor_lang::prelude::*;
 use anchor_spl::token::{Token, TokenAccount};
+use anchor_spl::token_interface::{TokenInterface, self};
 
 #[derive(Accounts)]
 pub struct SettleFundsExpired<'info> {
@@ -26,27 +27,28 @@ pub struct SettleFundsExpired<'info> {
     /// CHECK: checked on has_one in market
     pub market_authority: UncheckedAccount<'info>,
     #[account(mut)]
-    pub market_base_vault: Account<'info, TokenAccount>,
+    pub market_base_vault: InterfaceAccount<'info, token_interface::TokenAccount>,
     #[account(mut)]
-    pub market_quote_vault: Account<'info, TokenAccount>,
+    pub market_quote_vault: InterfaceAccount<'info, token_interface::TokenAccount>,
     #[account(
         mut,
         token::mint = market_base_vault.mint,
         constraint = user_base_account.owner == open_orders_account.load()?.owner
     )]
-    pub user_base_account: Account<'info, TokenAccount>,
+    pub user_base_account: InterfaceAccount<'info, token_interface::TokenAccount>,
     #[account(
         mut,
         token::mint = market_quote_vault.mint,
         constraint = user_base_account.owner == open_orders_account.load()?.owner
     )]
-    pub user_quote_account: Account<'info, TokenAccount>,
+    pub user_quote_account: InterfaceAccount<'info, token_interface::TokenAccount>,
     #[account(
         mut,
         token::mint = market_quote_vault.mint
     )]
-    pub referrer_account: Option<Box<Account<'info, TokenAccount>>>,
+    pub referrer_account: Option<Box<InterfaceAccount<'info, token_interface::TokenAccount>>>,
     pub token_program: Program<'info, Token>,
+    pub v2_token_program: Interface<'info, TokenInterface>,
     pub system_program: Program<'info, System>,
 }
 
@@ -63,6 +65,7 @@ impl<'info> SettleFundsExpired<'info> {
             user_quote_account: self.user_quote_account.clone(),
             referrer_account: self.referrer_account.clone(),
             token_program: self.token_program.clone(),
+            v2_token_program: self.v2_token_program.clone(),
             system_program: self.system_program.clone(),
         }
     }

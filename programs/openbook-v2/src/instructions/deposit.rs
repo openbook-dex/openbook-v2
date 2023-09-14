@@ -12,8 +12,27 @@ pub fn deposit(ctx: Context<Deposit>, base_amount: u64, quote_amount: u64) -> Re
         OpenBookError::MarketHasExpired
     );
 
+    let remaining_accounts = ctx.remaining_accounts;
+
+    // Getting actual base token amount to be deposited
+    
+    let base_token_account_info = remaining_accounts[0]; // base token mint
+
+    let base_token_fee_wrapped = get_token_fee(base_token_account_info, ctx.accounts.v2_token_program.to_account_info(), base_amount);
+    let base_token_fee = base_token_fee_wrapped.unwrap().unwrap();
+
+    let quote_token_account_info = remaining_accounts[1]; // quote token mint
+
+    let quote_token_fee_wrapped = get_token_fee(base_token_account_info, ctx.accounts.v2_token_program.to_account_info(), quote_amount);
+    let quote_token_fee = quote_token_fee_wrapped.unwrap().unwrap();
+
+    let base_actual_amount = base_amount + base_token_fee;
+
+    let quote_actual_amount = quote_amount + quote_token_fee;
+
+
     token_transfer(
-        base_amount,
+        base_actual_amount,
         &ctx.accounts.token_program,
         &ctx.accounts.user_base_account,
         &ctx.accounts.market_base_vault,
@@ -23,7 +42,7 @@ pub fn deposit(ctx: Context<Deposit>, base_amount: u64, quote_amount: u64) -> Re
     market.base_deposit_total += base_amount;
 
     token_transfer(
-        quote_amount,
+        quote_actual_amount,
         &ctx.accounts.token_program,
         &ctx.accounts.user_quote_account,
         &ctx.accounts.market_quote_vault,

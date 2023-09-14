@@ -1,6 +1,17 @@
 use super::*;
 use anchor_lang::system_program;
+use anchor_spl::token_2022;
 use anchor_spl::token;
+use spl_token_2022::{
+    processor::Processor,
+    check_spl_token_program_account,
+    error::TokenError,
+    extension::{
+        BaseStateWithExtensions, mint_close_authority::MintCloseAuthority,
+        StateWithExtensions, transfer_fee::TransferFeeConfig,
+    },
+    state::{Account, Mint},
+};
 
 pub fn token_transfer<
     'info,
@@ -45,10 +56,10 @@ pub fn token_transfer_signed<
     seeds: &[&[u8]],
 ) -> Result<()> {
     if amount > 0 {
-        token::transfer(
+        token_2022::transfer(
             CpiContext::new_with_signer(
                 token_program.to_account_info(),
-                token::Transfer {
+                token_2022::Transfer {
                     from: from.to_account_info(),
                     to: to.to_account_info(),
                     authority: authority.to_account_info(),
@@ -87,4 +98,41 @@ pub fn system_program_transfer<
     } else {
         Ok(())
     }
+}
+
+/// Unpacks a spl_token `Mint` with extension data
+pub fn unpack_mint_with_extensions<'a>(
+    account_data: &'a [u8],
+    owner: &Pubkey,
+    token_program_id: &Pubkey,
+) -> Result<StateWithExtensions<'a, Mint>> {
+    if owner != token_program_id && check_spl_token_program_account(owner).is_err() {
+        Err(SwapError::IncorrectTokenProgramId)
+    } else {
+        StateWithExtensions::<Mint>::unpack(account_data).map_err(|_| SwapError::ExpectedMint)
+    }
+}
+
+// pub fn get_token_fee
+pub fn get_token_fee<
+    'info,
+>(
+    account_info: AccountInfo<'_>,
+    token_program: AccountInfo<'_>,
+    amount: u64,
+) -> Result<Option<u64>> {
+    let token_fee = {
+        let source_data = account_info.data.borrow();
+        let source_mint = unpack_mint_with_extensions(
+            &source_data,
+            account_info.owner,
+            token_program.key,
+        )?;
+
+        let Ok(transfer_fee_config) = source_mint.get_extension::<TransferFeeConfig>(); 
+        let transfer_fee = transfer_fee_config
+                .calculate_epoch_fee(Clock::get()?.epoch, amount);
+        transfer_fee
+    };
+    Ok(token_fee)
 }

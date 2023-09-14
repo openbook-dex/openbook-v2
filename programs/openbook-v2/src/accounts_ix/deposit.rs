@@ -1,6 +1,7 @@
 use crate::state::*;
 use anchor_lang::prelude::*;
 use anchor_spl::token::{Token, TokenAccount};
+use anchor_spl::token_interface::{TokenInterface, self};
 
 #[derive(Accounts)]
 pub struct Deposit<'info> {
@@ -9,12 +10,12 @@ pub struct Deposit<'info> {
         mut,
         token::mint = market_base_vault.mint
     )]
-    pub user_base_account: Account<'info, TokenAccount>,
+    pub user_base_account: InterfaceAccount<'info, token_interface::TokenAccount>,
     #[account(
         mut,
         token::mint = market_quote_vault.mint
     )]
-    pub user_quote_account: Account<'info, TokenAccount>,
+    pub user_quote_account: InterfaceAccount<'info, token_interface::TokenAccount>,
     #[account(
         mut,
         has_one = market,
@@ -28,9 +29,11 @@ pub struct Deposit<'info> {
     )]
     pub market: AccountLoader<'info, Market>,
     #[account(mut)]
-    pub market_base_vault: Account<'info, TokenAccount>,
+    pub market_base_vault: InterfaceAccount<'info, token_interface::TokenAccount>,
     #[account(mut)]
-    pub market_quote_vault: Account<'info, TokenAccount>,
+    pub market_quote_vault: InterfaceAccount<'info, token_interface::TokenAccount>,
 
     pub token_program: Program<'info, Token>,
+
+    pub v2_token_program: Interface<'info, TokenInterface>,
 }
