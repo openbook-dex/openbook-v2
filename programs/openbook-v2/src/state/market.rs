@@ -257,7 +257,7 @@ impl Market {
         let (price, var) = oracle_a.combine_div_with_var(&oracle_b);
 
         let target_var = self.oracle_config.conf_filter.powi(2);
-        if target_var > var {
+        if var > target_var {
             msg!(
                 "Combined variance too high; value {}, target {}",
                 var,
