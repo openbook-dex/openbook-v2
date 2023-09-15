@@ -33,7 +33,7 @@ pub struct Deposit<'info> {
     #[account(mut)]
     pub market_quote_vault: InterfaceAccount<'info, token_interface::TokenAccount>,
 
-    pub token_program: Program<'info, Token>,
+    pub base_token_program: Interface<'info, TokenInterface>,
 
-    pub v2_token_program: Interface<'info, TokenInterface>,
+    pub quote_token_program: Interface<'info, TokenInterface>,
 }

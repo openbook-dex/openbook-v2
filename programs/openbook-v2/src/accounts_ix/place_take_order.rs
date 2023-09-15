@@ -3,6 +3,7 @@ use crate::pubkey_option::NonZeroKey;
 use crate::state::*;
 use anchor_lang::prelude::*;
 use anchor_spl::token::{Token, TokenAccount};
+use anchor_spl::token_interface::{TokenInterface, self};
 
 #[derive(Accounts)]
 pub struct PlaceTakeOrder<'info> {
@@ -29,9 +30,9 @@ pub struct PlaceTakeOrder<'info> {
     #[account(mut)]
     pub asks: AccountLoader<'info, BookSide>,
     #[account(mut)]
-    pub market_base_vault: Account<'info, TokenAccount>,
+    pub market_base_vault: InterfaceAccount<'info, token_interface::TokenAccount>,
     #[account(mut)]
-    pub market_quote_vault: Account<'info, TokenAccount>,
+    pub market_quote_vault: InterfaceAccount<'info, token_interface::TokenAccount>,
     #[account(mut)]
     pub event_heap: AccountLoader<'info, EventHeap>,
 
@@ -39,25 +40,25 @@ pub struct PlaceTakeOrder<'info> {
         mut,
         token::mint = market_base_vault.mint
     )]
-    pub user_base_account: Box<Account<'info, TokenAccount>>,
+    pub user_base_account: Box<InterfaceAccount<'info, token_interface::TokenAccount>>,
     #[account(
         mut,
         token::mint = market_quote_vault.mint
     )]
-    pub user_quote_account: Box<Account<'info, TokenAccount>>,
+    pub user_quote_account: Box<InterfaceAccount<'info, token_interface::TokenAccount>>,
 
     #[account(
         mut,
         token::mint = market_quote_vault.mint
     )]
-    pub referrer_account: Option<Box<Account<'info, TokenAccount>>>,
+    pub referrer_account: Option<Box<InterfaceAccount<'info, token_interface::TokenAccount>>>,
 
     /// CHECK: The oracle can be one of several different account types and the pubkey is checked above
     pub oracle_a: Option<UncheckedAccount<'info>>,
     /// CHECK: The oracle can be one of several different account types and the pubkey is checked above
     pub oracle_b: Option<UncheckedAccount<'info>>,
 
-    pub token_program: Program<'info, Token>,
+    pub token_program: Interface<'info, TokenInterface>,
     pub system_program: Program<'info, System>,
     pub open_orders_admin: Option<Signer<'info>>,
 }

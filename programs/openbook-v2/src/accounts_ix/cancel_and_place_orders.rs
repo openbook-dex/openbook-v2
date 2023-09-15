@@ -3,6 +3,7 @@ use crate::pubkey_option::NonZeroKey;
 use crate::state::*;
 use anchor_lang::prelude::*;
 use anchor_spl::token::{Token, TokenAccount};
+use anchor_spl::token_interface::{TokenInterface, self};
 
 #[derive(Accounts)]
 pub struct CancelAndPlaceOrders<'info> {
@@ -19,13 +20,13 @@ pub struct CancelAndPlaceOrders<'info> {
         mut,
         token::mint = market_quote_vault.mint
     )]
-    pub user_quote_account: Account<'info, TokenAccount>,
+    pub user_quote_account: InterfaceAccount<'info, token_interface::TokenAccount>,
 
     #[account(
         mut,
         token::mint = market_base_vault.mint
     )]
-    pub user_base_account: Account<'info, TokenAccount>,
+    pub user_base_account: InterfaceAccount<'info, token_interface::TokenAccount>,
 
     #[account(
         mut,
@@ -47,14 +48,14 @@ pub struct CancelAndPlaceOrders<'info> {
     pub event_heap: AccountLoader<'info, EventHeap>,
 
     #[account(mut)]
-    pub market_quote_vault: Box<Account<'info, TokenAccount>>,
+    pub market_quote_vault: Box<InterfaceAccount<'info, token_interface::TokenAccount>>,
     #[account(mut)]
-    pub market_base_vault: Box<Account<'info, TokenAccount>>,
+    pub market_base_vault: Box<InterfaceAccount<'info, token_interface::TokenAccount>>,
 
     /// CHECK: The oracle can be one of several different account types and the pubkey is checked above
     pub oracle_a: Option<UncheckedAccount<'info>>,
     /// CHECK: The oracle can be one of several different account types and the pubkey is checked above
     pub oracle_b: Option<UncheckedAccount<'info>>,
 
-    pub token_program: Program<'info, Token>,
+    pub token_program: Interface<'info, TokenInterface>,
 }

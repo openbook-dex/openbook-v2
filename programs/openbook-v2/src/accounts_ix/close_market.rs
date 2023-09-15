@@ -2,6 +2,7 @@ use crate::error::OpenBookError;
 use crate::state::*;
 use anchor_lang::prelude::*;
 use anchor_spl::token::Token;
+use anchor_spl::token_interface::{TokenInterface, self};
 
 #[derive(Accounts)]
 pub struct CloseMarket<'info> {
@@ -39,5 +40,5 @@ pub struct CloseMarket<'info> {
     /// CHECK: target for account rent needs no checks
     pub sol_destination: UncheckedAccount<'info>,
 
-    pub token_program: Program<'info, Token>,
+    pub token_program: Interface<'info, TokenInterface>,
 }

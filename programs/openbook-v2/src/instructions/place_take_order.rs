@@ -5,6 +5,7 @@ use crate::accounts_zerocopy::AccountInfoRef;
 use crate::error::*;
 use crate::state::*;
 use crate::token_utils::*;
+use anchor_spl::token_interface::{TokenInterface, self, Mint, TokenAccount};
 
 #[allow(clippy::too_many_arguments)]
 pub fn place_take_order<'info>(
@@ -20,6 +21,8 @@ pub fn place_take_order<'info>(
     );
 
     let clock = Clock::get()?;
+
+    let remaining_accounts = ctx.remaining_accounts;
 
     let mut market = ctx.accounts.market.load_mut()?;
     require!(
@@ -114,12 +117,38 @@ pub fn place_take_order<'info>(
         ),
     };
 
+    let deposit_token_account_info = remaining_accounts[0]; // deposit token mint
+
+    let deposit_token_fee_wrapped = get_token_fee(deposit_token_account_info, ctx.accounts.token_program.to_account_info(), deposit_amount);
+    let deposit_token_fee = deposit_token_fee_wrapped.unwrap().unwrap();
+
+    let deposit_actual_amount = deposit_amount + deposit_token_fee;
+
+    let deposit_data = &mut &**deposit_token_account_info.try_borrow_data()?;
+    let deposit_mint = Mint::try_deserialize(deposit_data).unwrap();
+    let deposit_decimals = deposit_mint.decimals;
+
+
+
+    let withdraw_token_account_info = remaining_accounts[1]; // withdraw token mint
+
+    let withdraw_token_fee_wrapped = get_token_fee(withdraw_token_account_info, ctx.accounts.token_program.to_account_info(), withdraw_amount);
+    let withdraw_token_fee = withdraw_token_fee_wrapped.unwrap().unwrap();
+
+    let withdraw_actual_amount = withdraw_amount - withdraw_token_fee;
+
+    let withdraw_data = &mut &**withdraw_token_account_info.try_borrow_data()?;
+    let withdraw_mint = Mint::try_deserialize(withdraw_data).unwrap();
+    let withdraw_decimals = withdraw_mint.decimals;
+
     token_transfer(
         deposit_amount,
         &ctx.accounts.token_program,
         user_deposit_acc.as_ref(),
         market_deposit_acc,
         &ctx.accounts.signer,
+        deposit_token_account_info,
+        deposit_decimals,
     )?;
 
     token_transfer_signed(
@@ -129,9 +158,23 @@ pub fn place_take_order<'info>(
         user_withdraw_acc.as_ref(),
         &ctx.accounts.market_authority,
         seeds,
+        withdraw_token_account_info,
+        withdraw_decimals,
     )?;
 
     if let Some(referrer_account) = &ctx.accounts.referrer_account {
+
+        let referrer_token_account_info = remaining_accounts[1]; // referrer token mint
+
+        let referrer_token_fee_wrapped = get_token_fee(referrer_token_account_info, ctx.accounts.token_program.to_account_info(), referrer_amount);
+        let referrer_token_fee = referrer_token_fee_wrapped.unwrap().unwrap();
+
+        let referrer_actual_amount = referrer_amount - referrer_token_fee;
+
+        let referrer_data = &mut &**referrer_token_account_info.try_borrow_data()?;
+        let referrer_mint = Mint::try_deserialize(referrer_data).unwrap();
+        let referrer_decimals = referrer_mint.decimals;
+
         token_transfer_signed(
             referrer_amount,
             &ctx.accounts.token_program,
@@ -139,6 +182,8 @@ pub fn place_take_order<'info>(
             referrer_account,
             &ctx.accounts.market_authority,
             seeds,
+            referrer_token_account_info,
+            referrer_decimals,
         )?;
     }
 
