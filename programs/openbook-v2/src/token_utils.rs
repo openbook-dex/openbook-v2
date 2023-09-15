@@ -2,6 +2,7 @@ use super::*;
 use anchor_lang::system_program;
 use anchor_spl::token_2022;
 use anchor_spl::token;
+use anchor_spl::token_interface;
 use spl_token_2022::{
     processor::Processor,
     check_spl_token_program_account,
@@ -13,6 +14,7 @@ use spl_token_2022::{
     state::{Account, Mint},
 };
 
+// How do these P, A, S work??
 pub fn token_transfer<
     'info,
     P: ToAccountInfo<'info>,
@@ -24,18 +26,21 @@ pub fn token_transfer<
     from: &A,
     to: &A,
     authority: &S,
+    mint: AccountInfo<'info>,
+    decimals: u8,
 ) -> Result<()> {
     if amount > 0 {
-        token::transfer(
+        token_interface::transfer_checked(
             CpiContext::new(
                 token_program.to_account_info(),
-                token::Transfer {
+                token_interface::TransferChecked {
                     from: from.to_account_info(),
                     to: to.to_account_info(),
                     authority: authority.to_account_info(),
+                    mint: mint.to_account_info(),
                 },
             ),
-            amount,
+            amount, decimals
         )
     } else {
         Ok(())
@@ -54,19 +59,22 @@ pub fn token_transfer_signed<
     to: &A,
     authority: &L,
     seeds: &[&[u8]],
+    mint: AccountInfo<'info>,
+    decimals: u8,
 ) -> Result<()> {
     if amount > 0 {
-        token_2022::transfer(
+        token_2022::transfer_checked(
             CpiContext::new_with_signer(
                 token_program.to_account_info(),
-                token_2022::Transfer {
+                token_2022::TransferChecked {
                     from: from.to_account_info(),
                     to: to.to_account_info(),
                     authority: authority.to_account_info(),
+                    mint: mint.to_account_info(),
                 },
                 &[seeds],
             ),
-            amount,
+            amount, decimals
         )
     } else {
         Ok(())
@@ -107,9 +115,9 @@ pub fn unpack_mint_with_extensions<'a>(
     token_program_id: &Pubkey,
 ) -> Result<StateWithExtensions<'a, Mint>> {
     if owner != token_program_id && check_spl_token_program_account(owner).is_err() {
-        Err(SwapError::IncorrectTokenProgramId)
+        Err(OpenBookError::SomeError.into())
     } else {
-        StateWithExtensions::<Mint>::unpack(account_data).map_err(|_| SwapError::ExpectedMint)
+        StateWithExtensions::<Mint>::unpack(account_data).map_err(|_| OpenBookError::SomeError)
     }
 }
 

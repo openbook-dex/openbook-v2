@@ -6,6 +6,7 @@ use crate::accounts_zerocopy::AccountInfoRef;
 use crate::error::*;
 use crate::state::*;
 use crate::token_utils::*;
+use anchor_spl::token_interface::{TokenInterface, self, Mint, TokenAccount};
 
 #[allow(clippy::too_many_arguments)]
 pub fn cancel_and_place_orders(
@@ -18,6 +19,8 @@ pub fn cancel_and_place_orders(
     let open_orders_account_pk = ctx.accounts.open_orders_account.key();
 
     let clock = Clock::get()?;
+
+    let remaining_accounts = ctx.remaining_accounts;
 
     let mut market = ctx.accounts.market.load_mut()?;
     require!(
@@ -128,19 +131,49 @@ pub fn cancel_and_place_orders(
         position.penalty_heap_count += 1;
     }
 
+    // Getting actual base amount to be paid
+    let base_token_account_info = remaining_accounts[0];
+
+    let base_token_fee_wrapped = get_token_fee(base_token_account_info, ctx.accounts.token_program.to_account_info(), deposit_base_amount);
+    let base_token_fee = base_token_fee_wrapped.unwrap().unwrap();
+
+    let base_amount = deposit_base_amount - base_token_fee;
+
+    // Getting actual quote native amount to be paid
+    let quote_token_account_info = remaining_accounts[1];
+
+    let quote_token_fee_wrapped = get_token_fee(quote_token_account_info, ctx.accounts.token_program.to_account_info(), deposit_quote_amount);
+    let quote_token_fee = quote_token_fee_wrapped.unwrap().unwrap();
+
+    let quote_amount = deposit_quote_amount - quote_token_fee;
+
+    let base_data = &mut &**base_token_account_info.try_borrow_data()?;
+    let base_mint = Mint::try_deserialize(base_data).unwrap();
+    let base_decimals = base_mint.decimals;
+
+    let quote_data = &mut &**quote_token_account_info.try_borrow_data()?;
+    let quote_mint = Mint::try_deserialize(quote_data).unwrap();
+    let quote_decimals = quote_mint.decimals;
+
+
     token_transfer(
-        deposit_quote_amount,
+        base_amount,
         &ctx.accounts.token_program,
         &ctx.accounts.user_quote_account,
         &ctx.accounts.market_quote_vault,
         &ctx.accounts.signer,
+        base_token_account_info,
+        base_decimals,
     )?;
+
     token_transfer(
-        deposit_base_amount,
+        quote_amount,
         &ctx.accounts.token_program,
         &ctx.accounts.user_base_account,
         &ctx.accounts.market_base_vault,
         &ctx.accounts.signer,
+        quote_token_account_info,
+        quote_decimals,
     )?;
 
     Ok(order_ids)

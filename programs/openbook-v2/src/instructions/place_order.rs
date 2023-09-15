@@ -6,6 +6,7 @@ use crate::accounts_zerocopy::AccountInfoRef;
 use crate::error::*;
 use crate::state::*;
 use crate::token_utils::*;
+use anchor_spl::token_interface::{TokenInterface, self, Mint, TokenAccount};
 
 #[allow(clippy::too_many_arguments)]
 pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<Option<u128>> {
@@ -18,6 +19,8 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<
 
     let mut open_orders_account = ctx.accounts.open_orders_account.load_mut()?;
     let open_orders_account_pk = ctx.accounts.open_orders_account.key();
+
+    let remaining_accounts = ctx.remaining_accounts;
 
     let clock = Clock::get()?;
 
@@ -99,12 +102,27 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<
         position.penalty_heap_count += 1;
     }
 
+    // Getting actual base token amount to be deposited
+    
+    let deposit_token_account_info = remaining_accounts[0]; // base token mint
+
+    let deposit_token_fee_wrapped = get_token_fee(deposit_token_account_info, ctx.accounts.token_program.to_account_info(), deposit_amount);
+    let deposit_token_fee = deposit_token_fee_wrapped.unwrap().unwrap();
+
+    let deposit_actual_amount = deposit_amount + deposit_token_fee;
+
+    let deposit_data = &mut &**deposit_token_account_info.try_borrow_data()?;
+    let deposit_mint = Mint::try_deserialize(deposit_data).unwrap();
+    let deposit_decimals = deposit_mint.decimals;
+
     token_transfer(
-        deposit_amount,
+        deposit_actual_amount,
         &ctx.accounts.token_program,
         &ctx.accounts.user_token_account,
         &ctx.accounts.market_vault,
         &ctx.accounts.signer,
+        deposit_token_account_info,
+        deposit_decimals
     )?;
 
     Ok(order_id)

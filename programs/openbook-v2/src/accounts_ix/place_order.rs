@@ -4,6 +4,7 @@ use crate::pubkey_option::NonZeroKey;
 use crate::state::*;
 use anchor_lang::prelude::*;
 use anchor_spl::token::{Token, TokenAccount};
+use anchor_spl::token_interface::{TokenInterface, self};
 
 #[derive(Accounts)]
 pub struct PlaceOrder<'info> {
@@ -20,7 +21,7 @@ pub struct PlaceOrder<'info> {
         mut,
         token::mint = market_vault.mint
     )]
-    pub user_token_account: Account<'info, TokenAccount>,
+    pub user_token_account: InterfaceAccount<'info, token_interface::TokenAccount>,
 
     #[account(
         mut,
@@ -42,14 +43,14 @@ pub struct PlaceOrder<'info> {
         mut,
         constraint = market.load()?.is_market_vault(market_vault.key())
     )]
-    pub market_vault: Account<'info, TokenAccount>,
+    pub market_vault: InterfaceAccount<'info, token_interface::TokenAccount>,
 
     /// CHECK: The oracle can be one of several different account types and the pubkey is checked above
     pub oracle_a: Option<UncheckedAccount<'info>>,
     /// CHECK: The oracle can be one of several different account types and the pubkey is checked above
     pub oracle_b: Option<UncheckedAccount<'info>>,
 
-    pub token_program: Program<'info, Token>,
+    pub token_program: Interface<'info, TokenInterface>,
 }
 
 impl<'info> PlaceOrder<'info> {
