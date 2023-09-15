@@ -1520,9 +1520,7 @@ export interface OpenbookV2 {
       args: [
         {
           name: 'price';
-          type: {
-            defined: 'I80F48';
-          };
+          type: 'f64';
         },
       ];
     },
@@ -1569,9 +1567,7 @@ export interface OpenbookV2 {
       args: [
         {
           name: 'price';
-          type: {
-            defined: 'I80F48';
-          };
+          type: 'f64';
         },
       ];
     },
@@ -4967,9 +4963,7 @@ export const IDL: OpenbookV2 = {
       args: [
         {
           name: 'price',
-          type: {
-            defined: 'I80F48',
-          },
+          type: 'f64',
         },
       ],
     },
@@ -5016,9 +5010,7 @@ export const IDL: OpenbookV2 = {
       args: [
         {
           name: 'price',
-          type: {
-            defined: 'I80F48',
-          },
+          type: 'f64',
         },
       ],
     },
