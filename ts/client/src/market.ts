@@ -55,47 +55,80 @@ export async function findAllMarkets(
     await connection.getSignaturesForAddress(eventAuthority)
   ).map((x) => x.signature);
   const batchSignatures: [string[]] = [[]];
-  for (var i = 0; i < signatures.length; i += BATCH_TX_SIZE) {
+  for (let i = 0; i < signatures.length; i += BATCH_TX_SIZE) {
     batchSignatures.push(signatures.slice(0, BATCH_TX_SIZE));
   }
   for (const batch of batchSignatures) {
     const allTxs = await connection.getTransactions(batch, {
       commitment: 'confirmed',
+      maxSupportedTransactionVersion: 0, // Set the maximum supported transaction version
     });
+    
     for (const tx of allTxs) {
       if (
         tx?.meta?.innerInstructions !== null &&
         tx?.meta?.innerInstructions !== undefined
       )
         for (const innerIns of tx.meta.innerInstructions) {
-          // validate key and program key
-          const eventAuthorityKey = innerIns.instructions[1].accounts[0];
-          const programKey = innerIns.instructions[1].programIdIndex;
-
+          // Check if innerIns.instructions[1] exists and has the 'accounts' property
           if (
-            tx.transaction.message.accountKeys[eventAuthorityKey].toString() !==
-              eventAuthority.toString() ||
-            tx.transaction.message.accountKeys[programKey].toString() !==
-              programId.toString()
+            innerIns.instructions[1] &&
+            innerIns.instructions[1].accounts &&
+            Array.isArray(innerIns.instructions[1].accounts)
           ) {
-            continue;
-          } else {
-            const ixData = utils.bytes.bs58.decode(
-              innerIns.instructions[1].data,
-            );
-            const eventData = utils.bytes.base64.encode(ixData.slice(8));
-            const event = program.coder.events.decode(eventData);
-
-            if (event != null) {
-              const market: Market = {
-                market: (event.data.market as PublicKey).toString(),
-                baseMint: (event.data.baseMint as PublicKey).toString(),
-                quoteMint: (event.data.quoteMint as PublicKey).toString(),
-                name: event.data.name as string,
-                timestamp: tx.blockTime,
-              };
-              marketsAll.push(market);
+            const eventAuthorityKeyIndex = innerIns.instructions[1].accounts[0];
+            const programKeyIndex = innerIns.instructions[1].programIdIndex;
+    
+            // console.log("eventAuthorityKeyIndex:", eventAuthorityKeyIndex);
+            // console.log("programKeyIndex:", programKeyIndex);
+      
+            const message = tx.transaction.message;
+            // console.log("message:", message);
+      
+            if (!message) {
+              // console.error("Message is undefined!");
+              continue;
             }
+      
+            const accountKeys = message.getAccountKeys();
+            // console.log("accountKeys:", accountKeys);
+      
+            if (!accountKeys) {
+              console.error("Account keys are undefined!");
+              continue;
+            }
+      
+            const eventAuthorityKey: any = accountKeys.get(eventAuthorityKeyIndex);
+            const programKey: any = accountKeys.get(programKeyIndex);
+      
+            // console.log("eventAuthorityKey:", eventAuthorityKey);
+            // console.log("programKey:", programKey);
+      
+            if (
+              eventAuthorityKey.toString() !== eventAuthority.toString() ||
+              programKey.toString() !== programId.toString()
+            ) {
+              continue;
+            } else {
+              const ixData = utils.bytes.bs58.decode(
+                innerIns.instructions[1].data,
+              );
+              const eventData = utils.bytes.base64.encode(ixData.slice(8));
+              const event = program.coder.events.decode(eventData);
+      
+              if (event != null) {
+                const market: Market = {
+                  market: (event.data.market as PublicKey).toString(),
+                  baseMint: (event.data.baseMint as PublicKey).toString(),
+                  quoteMint: (event.data.quoteMint as PublicKey).toString(),
+                  name: event.data.name as string,
+                  timestamp: tx.blockTime,
+                };
+                marketsAll.push(market);
+              }
+            }
+          } else {
+            console.error("Inner instruction is missing 'accounts' property.");
           }
         }
     }

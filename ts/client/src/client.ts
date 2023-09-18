@@ -49,6 +49,14 @@ export interface OpenBookClientOptions {
   txConfirmationCommitment?: Commitment;
 }
 
+export interface Filter {
+  memcmp: {
+    offset: number;
+    bytes: string;
+  };
+  // Add other filter properties as needed
+}
+
 export function nameToString(name: number[]): string {
   return utf8.decode(new Uint8Array(name)).split('\x00')[0];
 }
@@ -60,7 +68,7 @@ export class OpenBookV2Client {
   public program: Program<OpenbookV2>;
 
   private readonly idsSource: IdsSource;
-  private readonly postSendTxCallback?: ({ txid }) => void;
+  private readonly postSendTxCallback?: ({ txid }: { txid: string }) => void;
   private readonly prioritizationFee: number;
   private readonly txConfirmationCommitment: Commitment;
 
@@ -328,16 +336,9 @@ export class OpenBookV2Client {
   ): Promise<TransactionSignature> {
     if (openOrdersIndexer == null) {
       openOrdersIndexer = this.findOpenOrdersIndexer(market);
-      try {
-        const acc = await this.connection.getAccountInfo(openOrdersIndexer);
-        if (acc == null) {
-          const tx = await this.createOpenOrdersIndexer(
-            market,
-            openOrdersIndexer,
-          );
-          console.log('Created open orders indexer', tx);
-        }
-      } catch {
+      const acc = await this.connection.getAccountInfo(openOrdersIndexer);
+
+      if (acc == null) {
         const tx = await this.createOpenOrdersIndexer(
           market,
           openOrdersIndexer,
@@ -350,7 +351,6 @@ export class OpenBookV2Client {
         code: 403,
       });
     }
-    accountIndex = accountIndex.add(new BN(1));
     const openOrders = this.findOpenOrders(market, accountIndex);
 
     const ix = await this.program.methods
@@ -496,46 +496,6 @@ export class OpenBookV2Client {
     return await this.sendAndConfirmTransaction([ix], { signers });
   }
 
-  public async placeTakeOrder(
-    marketPublicKey: PublicKey,
-    market: MarketAccount,
-    userBaseAccount: PublicKey,
-    userQuoteAccount: PublicKey,
-    openOrdersAdmin: PublicKey | null,
-    args: PlaceOrderArgs,
-    referrerAccount: PublicKey | null,
-    openOrdersDelegate?: Keypair,
-  ): Promise<TransactionSignature> {
-    const ix = await this.program.methods
-      .placeTakeOrder(args)
-      .accounts({
-        signer:
-          openOrdersDelegate != null
-            ? openOrdersDelegate.publicKey
-            : this.walletPk,
-        asks: market.asks,
-        bids: market.bids,
-        eventHeap: market.eventHeap,
-        market: marketPublicKey,
-        oracleA: market.oracleA.key,
-        oracleB: market.oracleB.key,
-        userBaseAccount,
-        userQuoteAccount,
-        marketBaseVault: market.marketBaseVault,
-        marketQuoteVault: market.marketQuoteVault,
-        marketAuthority: market.marketAuthority,
-        referrerAccount,
-        tokenProgram: TOKEN_PROGRAM_ID,
-        openOrdersAdmin,
-      })
-      .instruction();
-    const signers: Signer[] = [];
-    if (openOrdersDelegate != null) {
-      signers.push(openOrdersDelegate);
-    }
-    return await this.sendAndConfirmTransaction([ix], { signers });
-  }
-
   public async cancelAndPlaceOrders(
     openOrdersPublicKey: PublicKey,
     marketPublicKey: PublicKey,
@@ -557,7 +517,7 @@ export class OpenBookV2Client {
         asks: market.asks,
         bids: market.bids,
         marketQuoteVault: market.marketQuoteVault,
-        marketBaseVault: market.marketBaseVault,
+        marketBaseVault: market.marketQuoteVault,
         eventHeap: market.eventHeap,
         market: marketPublicKey,
         openOrdersAccount: openOrdersPublicKey,
@@ -632,7 +592,7 @@ export function decodeMint(data: Buffer): RawMint {
 export async function getFilteredProgramAccounts(
   connection: Connection,
   programId: PublicKey,
-  filters,
+  filters: Filter[], // Specify the type of 'filters' as an array of 'Filter'
 ): Promise<Array<{ publicKey: PublicKey; accountInfo: AccountInfo<Buffer> }>> {
   // @ts-expect-error not need check
   const resp = await connection._rpcRequest('getProgramAccounts', [
@@ -647,7 +607,7 @@ export async function getFilteredProgramAccounts(
     throw new Error(resp.error.message);
   }
   return resp.result.map(
-    ({ pubkey, account: { data, executable, owner, lamports } }) => ({
+    ({ pubkey, account: { data, executable, owner, lamports } }: any) => ({
       publicKey: new PublicKey(pubkey),
       accountInfo: {
         data: Buffer.from(data[0], 'base64'),
@@ -655,6 +615,7 @@ export async function getFilteredProgramAccounts(
         owner: new PublicKey(owner),
         lamports,
       },
-    }),
+    })
   );
 }
+
