@@ -39,3 +39,6 @@ name = "multiple_orders"
 path = "fuzz_targets/multiple_orders.rs"
 test = false
 doc = false
+
+[patch."https://github.com/coral-xyz/anchor.git"]
+anchor-syn = { git = "https://github.com/openbook-dex/anchor.git", branch = "v0.28.0_2af9cc66-arbitrary" }
