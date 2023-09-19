@@ -8,8 +8,8 @@ edition = "2021"
 cargo-fuzz = true
 
 [dependencies]
-anchor-lang = { git = "https://github.com/coral-xyz/anchor.git", rev = "2af9cc669", version = "0.28.0" }
-anchor-spl = { git = "https://github.com/coral-xyz/anchor.git", rev = "2af9cc669", version = "0.28.0" }
+anchor-lang = { git = "https://github.com/openbook-dex/anchor.git", branch = "v0.28.0_abfdc4e-arbitrary", version = "0.28.0" }
+anchor-spl = { git = "https://github.com/openbook-dex/anchor.git", branch = "v0.28.0_abfdc4e-arbitrary", version = "0.28.0" }
 arbitrary = { version = "~1.0", features = ["derive"] }
 bumpalo = "3.13.0"
 libfuzzer-sys = "0.4"
@@ -22,9 +22,6 @@ log = "0.4.19"
 base64 = "0.21.2"
 itertools = "0.11.0"
 num_enum = "0.6.1"
-
-[patch.crates-io]
-anchor-syn = { path = "../../../3rdparty/anchor/lang/syn" }
 
 [dependencies.openbook-v2]
 path = ".."

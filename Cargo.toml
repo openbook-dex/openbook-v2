@@ -6,9 +6,9 @@ members = [
 
 [workspace.dependencies]
 # 2af9cc669 is a successor of 0.28.0
-anchor-client = { git = "https://github.com/coral-xyz/anchor.git", rev = "2af9cc669", version = "0.28.0" }
-anchor-lang = { git = "https://github.com/coral-xyz/anchor.git", rev = "2af9cc669", version = "0.28.0" }
-anchor-spl = { git = "https://github.com/coral-xyz/anchor.git", rev = "2af9cc669", version = "0.28.0" }
+anchor-client = { git = "https://github.com/openbook-dex/anchor.git", branch = "v0.28.0_abfdc4e-arbitrary", version = "0.28.0" }
+anchor-lang = { git = "https://github.com/openbook-dex/anchor.git", branch = "v0.28.0_abfdc4e-arbitrary", version = "0.28.0" }
+anchor-spl = { git = "https://github.com/openbook-dex/anchor.git", branch = "v0.28.0_abfdc4e-arbitrary", version = "0.28.0" }
 fixed = { git = "https://github.com/blockworks-foundation/fixed.git", branch = "v1.11.0-borsh0_10-mango" }
 pyth-sdk-solana = "0.8.0"
 solana-account-decoder = "~1.16.1"

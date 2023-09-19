@@ -53,4 +53,3 @@ solana-program-test = { workspace = true }
 solana-logger = { workspace = true }
 spl-token = { version = "^3.5.0", features = ["no-entrypoint"] }
 spl-associated-token-account = { workspace = true, features = ["no-entrypoint"] }
-mpl-utils = { version = "0.3.2", features = ["spl-token"] }
