@@ -84,6 +84,7 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
     let TestInitialize {
         context,
         owner,
+        mints,
         owner_token_0,
         owner_token_1,
         market,
@@ -104,6 +105,11 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
     })
     .await?;
     let solana = &context.solana.clone();
+
+    let mut vec_remainings: Vec<Pubkey> = Vec::new();
+    vec_remainings.push(mints[0].pubkey);
+    vec_remainings.push(mints[1].pubkey);
+
 
     let price_lots = {
         let market = solana.get_account::<Market>(market).await;
@@ -216,7 +222,7 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings: vec![],
+            remainings: vec![mints[0].pubkey, mints[1].pubkey],
         },
     )
     .await
@@ -293,7 +299,7 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings: vec![],
+            remainings: vec![mints[0].pubkey, mints[1].pubkey],
         },
     )
     .await
@@ -330,7 +336,7 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings: vec![],
+            remainings: vec![mints[0].pubkey, mints[1].pubkey],
         },
     )
     .await
@@ -390,7 +396,7 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings: vec![],
+            remainings: vec![mints[0].pubkey, mints[1].pubkey],
         },
     )
     .await
@@ -427,7 +433,7 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings: vec![],
+            remainings: vec![mints[0].pubkey, mints[1].pubkey],
         },
     )
     .await
@@ -501,6 +507,7 @@ async fn test_take_peg_invalid_oracle() -> Result<(), TransportError> {
         assert_eq!(oo.position.bids_base_lots, 1);
     }
 
+    // Check on remaining_accounts here
     let take_order_ix = PlaceOrderInstruction {
         open_orders_account: account_2,
         open_orders_admin: None,
@@ -644,6 +651,7 @@ async fn test_locked_amounts() -> Result<(), TransportError> {
     let TestInitialize {
         context,
         owner,
+        mints,
         owner_token_0: owner_base_ata,
         owner_token_1: owner_quote_ata,
         market,
@@ -662,6 +670,10 @@ async fn test_locked_amounts() -> Result<(), TransportError> {
     })
     .await?;
     let solana = &context.solana.clone();
+    let mut vec_remainings: Vec<Pubkey> = Vec::new();
+    vec_remainings.push(mints[0].pubkey);
+    vec_remainings.push(mints[1].pubkey);
+
 
     let place_bid_0_ix = PlaceOrderPeggedInstruction {
         open_orders_account: account_1,
@@ -695,6 +707,7 @@ async fn test_locked_amounts() -> Result<(), TransportError> {
         user_base_account: owner_base_ata,
         user_quote_account: owner_quote_ata,
         referrer_account: None,
+        remainings: vec_remainings
     };
 
     let settle_funds_1_ix = SettleFundsInstruction {

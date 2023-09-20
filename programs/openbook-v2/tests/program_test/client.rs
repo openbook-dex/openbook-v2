@@ -1,7 +1,8 @@
 #![allow(dead_code)]
 
 use anchor_lang::prelude::*;
-use anchor_spl::token::Token;
+use anchor_spl::{token::Token, token_interface::Token2022};
+use fixed::types::I80F48;
 use solana_program::instruction::Instruction;
 use solana_program_test::BanksClientError;
 use solana_sdk::instruction;
@@ -555,6 +556,7 @@ pub struct PlaceTakeOrderInstruction {
     pub max_base_lots: i64,
     pub max_quote_lots_including_fees: i64,
     pub referrer_account: Option<Pubkey>,
+    pub remainings: Vec<Pubkey>,
 }
 #[async_trait::async_trait(?Send)]
 impl ClientInstruction for PlaceTakeOrderInstruction {
@@ -597,7 +599,17 @@ impl ClientInstruction for PlaceTakeOrderInstruction {
             system_program: System::id(),
         };
 
-        let instruction = make_instruction(program_id, &accounts, instruction);
+        let mut instruction = make_instruction(program_id, &accounts, instruction);
+
+        let mut vec_remainings: Vec<AccountMeta> = Vec::new();
+        for remaining in &self.remainings {
+            vec_remainings.push(AccountMeta {
+                pubkey: *remaining,
+                is_signer: false,
+                is_writable: true,
+            })
+        }
+        instruction.accounts.append(&mut vec_remainings);
         (accounts, instruction)
     }
 
@@ -818,6 +830,7 @@ pub struct SettleFundsInstruction {
     pub user_base_account: Pubkey,
     pub user_quote_account: Pubkey,
     pub referrer_account: Option<Pubkey>,
+    pub remainings: Vec<Pubkey>,
 }
 #[async_trait::async_trait(?Send)]
 impl ClientInstruction for SettleFundsInstruction {
@@ -840,11 +853,22 @@ impl ClientInstruction for SettleFundsInstruction {
             user_base_account: self.user_base_account,
             user_quote_account: self.user_quote_account,
             referrer_account: self.referrer_account,
-            token_program: Token::id(),
+            base_token_program: Token::id(),
+            quote_token_program: Token::id(),
             system_program: System::id(),
         };
 
-        let instruction = make_instruction(program_id, &accounts, instruction);
+        let mut instruction = make_instruction(program_id, &accounts, instruction);
+
+        let mut vec_remainings: Vec<AccountMeta> = Vec::new();
+        for remaining in &self.remainings {
+            vec_remainings.push(AccountMeta {
+                pubkey: *remaining,
+                is_signer: false,
+                is_writable: true,
+            })
+        }
+        instruction.accounts.append(&mut vec_remainings);
         (accounts, instruction)
     }
 
@@ -887,7 +911,8 @@ impl ClientInstruction for SettleFundsExpiredInstruction {
             user_base_account: self.user_base_account,
             user_quote_account: self.user_quote_account,
             referrer_account: self.referrer_account,
-            token_program: Token::id(),
+            base_token_program: Token::id(),
+            quote_token_program: Token::id(),
             system_program: System::id(),
         };
 
@@ -905,6 +930,7 @@ pub struct SweepFeesInstruction {
     pub market: Pubkey,
     pub market_quote_vault: Pubkey,
     pub token_receiver_account: Pubkey,
+    pub remainings: Vec<Pubkey>,
 }
 #[async_trait::async_trait(?Send)]
 impl ClientInstruction for SweepFeesInstruction {
@@ -926,8 +952,17 @@ impl ClientInstruction for SweepFeesInstruction {
             token_receiver_account: self.token_receiver_account,
             token_program: Token::id(),
         };
-        let instruction = make_instruction(program_id, &accounts, instruction);
+        let mut instruction = make_instruction(program_id, &accounts, instruction);
 
+        let mut vec_remainings: Vec<AccountMeta> = Vec::new();
+        for remaining in &self.remainings {
+            vec_remainings.push(AccountMeta {
+                pubkey: *remaining,
+                is_signer: false,
+                is_writable: true,
+            })
+        }
+        instruction.accounts.append(&mut vec_remainings);
         (accounts, instruction)
     }
 
@@ -946,6 +981,7 @@ pub struct DepositInstruction {
     pub owner: TestKeypair,
     pub base_amount: u64,
     pub quote_amount: u64,
+    pub remainings: Vec<Pubkey>,
 }
 #[async_trait::async_trait(?Send)]
 impl ClientInstruction for DepositInstruction {
@@ -969,10 +1005,20 @@ impl ClientInstruction for DepositInstruction {
             market_quote_vault: self.market_quote_vault,
             user_base_account: self.user_base_account,
             user_quote_account: self.user_quote_account,
-            token_program: Token::id(),
+            base_token_program: Token::id(),
+            quote_token_program: Token::id(),
         };
-        let instruction = make_instruction(program_id, &accounts, instruction);
+        let mut instruction = make_instruction(program_id, &accounts, instruction);
 
+        let mut vec_remainings: Vec<AccountMeta> = Vec::new();
+        for remaining in &self.remainings {
+            vec_remainings.push(AccountMeta {
+                pubkey: *remaining,
+                is_signer: false,
+                is_writable: true,
+            })
+        }
+        instruction.accounts.append(&mut vec_remainings);
         (accounts, instruction)
     }
 

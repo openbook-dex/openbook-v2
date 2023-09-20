@@ -25,6 +25,10 @@ async fn test_simple_settle() -> Result<(), TransportError> {
     .await?;
     let solana = &context.solana.clone();
 
+    let mut vec_remainings: Vec<Pubkey> = Vec::new();
+    vec_remainings.push(mints[0].pubkey);
+    vec_remainings.push(mints[1].pubkey);
+
     //
     // TEST: Create another market
     //
@@ -82,7 +86,7 @@ async fn test_simple_settle() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings: vec![],
+            remainings: vec![mints[0].pubkey, mints[1].pubkey],
         },
     )
     .await
@@ -106,7 +110,7 @@ async fn test_simple_settle() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings: vec![],
+            remainings: vec![mints[0].pubkey, mints[1].pubkey],
         },
     )
     .await
@@ -162,6 +166,7 @@ async fn test_simple_settle() -> Result<(), TransportError> {
             user_base_account: owner_token_0,
             user_quote_account: owner_token_1,
             referrer_account: None,
+            remainings: vec![mints[0].pubkey, mints[1].pubkey],
         },
     )
     .await
@@ -188,6 +193,7 @@ async fn test_simple_settle() -> Result<(), TransportError> {
             user_base_account: owner_token_0,
             user_quote_account: owner_token_1,
             referrer_account: None,
+            remainings: vec![mints[0].pubkey, mints[1].pubkey],
         },
     )
     .await
@@ -211,6 +217,7 @@ async fn test_cancel_orders() -> Result<(), TransportError> {
     let TestInitialize {
         context,
         owner,
+        mints,
         owner_token_0,
         owner_token_1,
         market,
@@ -227,6 +234,10 @@ async fn test_cancel_orders() -> Result<(), TransportError> {
     })
     .await?;
     let solana = &context.solana.clone();
+
+    let mut vec_remainings: Vec<Pubkey> = Vec::new();
+    vec_remainings.push(mints[0].pubkey);
+    vec_remainings.push(mints[1].pubkey);
 
     send_tx(
         solana,
@@ -246,7 +257,7 @@ async fn test_cancel_orders() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings: vec![],
+            remainings: vec![mints[0].pubkey, mints[1].pubkey],
         },
     )
     .await
@@ -270,7 +281,7 @@ async fn test_cancel_orders() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings: vec![],
+            remainings: vec![mints[0].pubkey, mints[1].pubkey],
         },
     )
     .await
@@ -327,6 +338,7 @@ async fn test_cancel_orders() -> Result<(), TransportError> {
             user_quote_account: owner_token_1,
             base_amount: 10000,
             quote_amount: 0,
+            remainings: vec![mints[0].pubkey, mints[1].pubkey],
         },
     )
     .await
@@ -359,7 +371,7 @@ async fn test_cancel_orders() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings: vec![],
+            remainings: vec![mints[0].pubkey, mints[1].pubkey],
         },
     )
     .await
@@ -391,6 +403,7 @@ async fn test_cancel_orders() -> Result<(), TransportError> {
             user_base_account: owner_token_0,
             user_quote_account: owner_token_1,
             referrer_account: None,
+            remainings: vec![mints[0].pubkey, mints[1].pubkey],
         },
     )
     .await
@@ -452,7 +465,7 @@ async fn test_cancel_orders() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings: vec![],
+            remainings: vec![mints[0].pubkey, mints[1].pubkey],
         },
     )
     .await
@@ -500,6 +513,7 @@ async fn test_expired_orders() -> Result<(), TransportError> {
     let TestInitialize {
         context,
         owner,
+        mints,
         owner_token_0,
         owner_token_1,
         market,
@@ -511,6 +525,10 @@ async fn test_expired_orders() -> Result<(), TransportError> {
         ..
     } = TestContext::new_with_market(TestNewMarketInitialize::default()).await?;
     let solana = &context.solana.clone();
+
+    let mut vec_remainings: Vec<Pubkey> = Vec::new();
+    vec_remainings.push(mints[0].pubkey);
+    vec_remainings.push(mints[1].pubkey);
 
     // Order with expiry time of 2s
     let now_ts: u64 = solana.get_clock().await.unix_timestamp as u64;
@@ -532,7 +550,7 @@ async fn test_expired_orders() -> Result<(), TransportError> {
             expiry_timestamp: now_ts + 2,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings: vec![],
+            remainings: vec![mints[0].pubkey, mints[1].pubkey],
         },
     )
     .await
@@ -568,7 +586,7 @@ async fn test_expired_orders() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings: vec![],
+            remainings: vec![mints[0].pubkey, mints[1].pubkey],
         },
     )
     .await

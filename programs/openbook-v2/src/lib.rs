@@ -5,7 +5,7 @@ use anchor_lang::prelude::{
     *,
 };
 
-declare_id!("opnbkNkqux64GppQhwbyEVc3axhssFhVYuwar8rDHCu");
+declare_id!("AHFkpKtzs7vXpbDpr1yiNHSXAwZSqPC9srrRWVoUARno");
 
 #[macro_use]
 pub mod util;
@@ -113,7 +113,7 @@ pub mod openbook_v2 {
     /// `limit` determines the maximum number of orders from the book to fill,
     /// and can be used to limit CU spent. When the limit is reached, processing
     /// stops and the instruction succeeds.
-    pub fn place_order(ctx: Context<PlaceOrder>, args: PlaceOrderArgs) -> Result<Option<u128>> {
+    pub fn place_order<'info>(ctx: Context<'_, '_, '_, 'info, PlaceOrder<'info>>, args: PlaceOrderArgs) -> Result<Option<u128>> {
         require_gte!(args.price_lots, 1, OpenBookError::InvalidInputPriceLots);
 
         let time_in_force = match Order::tif_from_expiry(args.expiry_timestamp) {
@@ -252,8 +252,8 @@ pub mod openbook_v2 {
     }
 
     /// Cancel orders and place multiple orders.
-    pub fn cancel_and_place_orders(
-        ctx: Context<CancelAndPlaceOrders>,
+    pub fn cancel_and_place_orders<'info>(
+        ctx: Context<'_, '_, '_, 'info, CancelAndPlaceOrders<'info>>,
         cancel_client_orders_ids: Vec<u64>,
         place_orders: Vec<PlaceOrderArgs>,
     ) -> Result<Vec<Option<u128>>> {
@@ -306,8 +306,8 @@ pub mod openbook_v2 {
     }
 
     /// Place an oracle-peg order.
-    pub fn place_order_pegged(
-        ctx: Context<PlaceOrder>,
+    pub fn place_order_pegged<'info>(
+        ctx: Context<'_, '_, '_, 'info, PlaceOrder<'info>>,
         args: PlaceOrderPeggedArgs,
     ) -> Result<Option<u128>> {
         require!(
@@ -459,7 +459,7 @@ pub mod openbook_v2 {
     ///
     /// Makers might wish to `deposit`, rather than have actual tokens moved for
     /// each trade, in order to reduce CUs.
-    pub fn deposit(ctx: Context<Deposit>, base_amount: u64, quote_amount: u64) -> Result<()> {
+    pub fn deposit<'info>(ctx: Context<'_, '_, '_, 'info, Deposit<'info>>, base_amount: u64, quote_amount: u64) -> Result<()> {
         #[cfg(feature = "enable-gpl")]
         instructions::deposit(ctx, base_amount, quote_amount)?;
         Ok(())
@@ -470,7 +470,7 @@ pub mod openbook_v2 {
     ///
     /// Makers might wish to `refill`, rather than have actual tokens moved for
     /// each trade, in order to reduce CUs.
-    pub fn refill(ctx: Context<Deposit>, base_amount: u64, quote_amount: u64) -> Result<()> {
+    pub fn refill<'info>(ctx: Context<'_, '_, '_, 'info, Deposit<'info>>, base_amount: u64, quote_amount: u64) -> Result<()> {
         let (quote_amount, base_amount) = {
             let open_orders_account = ctx.accounts.open_orders_account.load()?;
             (
@@ -502,7 +502,7 @@ pub mod openbook_v2 {
     }
 
     /// Sweep fees, as a [`Market`](crate::state::Market)'s admin.
-    pub fn sweep_fees(ctx: Context<SweepFees>) -> Result<()> {
+    pub fn sweep_fees<'info>(ctx: Context<'_, '_, '_, 'info, SweepFees<'info>>) -> Result<()> {
         #[cfg(feature = "enable-gpl")]
         instructions::sweep_fees(ctx)?;
         Ok(())

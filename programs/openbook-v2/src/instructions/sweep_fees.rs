@@ -6,7 +6,7 @@ use crate::logs::SweepFeesLog;
 use crate::token_utils::*;
 use anchor_spl::token_interface::{TokenInterface, self, Mint, TokenAccount};
 
-pub fn sweep_fees(ctx: Context<SweepFees>) -> Result<()> {
+pub fn sweep_fees<'info>(ctx: Context<'_, '_, '_, 'info, SweepFees<'info>>) -> Result<()> {
     let mut market = ctx.accounts.market.load_mut()?;
 
     let amount = market.fees_available;
@@ -20,14 +20,16 @@ pub fn sweep_fees(ctx: Context<SweepFees>) -> Result<()> {
 
     // Getting actual base token amount to be deposited
     
-    let token_account_info = remaining_accounts[0]; // base token mint
+    // let token_account_info = remaining_accounts[0]; // base token mint
 
-    let token_fee_wrapped = get_token_fee(token_account_info, ctx.accounts.token_program.to_account_info(), amount);
+    let token_fee_wrapped = {
+        get_token_fee(remaining_accounts[0].to_account_info(), ctx.accounts.token_program.to_account_info(), amount)
+    };
     let token_fee = token_fee_wrapped.unwrap().unwrap();
 
     let actual_amount = amount - token_fee;
 
-    let data = &mut &**token_account_info.try_borrow_data()?;
+    let data = &mut &**remaining_accounts[0].try_borrow_data()?;
     let mint = Mint::try_deserialize(data).unwrap();
     let decimals = mint.decimals;
 
@@ -39,7 +41,7 @@ pub fn sweep_fees(ctx: Context<SweepFees>) -> Result<()> {
         &ctx.accounts.token_receiver_account,
         &ctx.accounts.market_authority,
         seeds,
-        token_account_info,
+        remaining_accounts[0].to_account_info(),
         decimals,
     )?;
 

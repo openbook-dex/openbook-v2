@@ -1,14 +1,14 @@
 [features]
 seeds = false
 skip-lint = false
-[programs.localnet]
-openbook_v2 = "8qkavBpvoHVYkmPhu6QRpXRX39Kcop9uMXvZorBAz43o"
+[programs.devnet]
+openbook_v2 = "AHFkpKtzs7vXpbDpr1yiNHSXAwZSqPC9srrRWVoUARno"
 
 [registry]
 url = "https://api.apr.dev"
 
 [provider]
-cluster = "Localnet"
+cluster = "devnet"
 wallet = "~/.config/solana/id.json"
 
 [scripts]
