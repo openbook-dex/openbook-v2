@@ -27,6 +27,4 @@ overflow-checks = true
 codegen-units = 1
 incremental = false
 opt-level = 3
-
-[patch.crates-io]
-fixed = { git = "https://github.com/blockworks-foundation/fixed.git", branch = "v1.11.0-borsh0_10-mango" }
+g
