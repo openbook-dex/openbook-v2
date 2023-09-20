@@ -8,7 +8,7 @@ members = [
 anchor-client = "0.28.0"
 anchor-lang = "0.28.0"
 anchor-spl = "0.28.0"
-fixed = {path = "./3rdparty/fixed", version = "1.11.0"}
+fixed = { git = "https://github.com/blockworks-foundation/fixed.git", branch = "v1.11.0-borsh0_10-mango" }
 pyth-sdk-solana = "0.8.0"
 solana-account-decoder = "~1.16.1"
 solana-client = "~1.16.1"
@@ -27,3 +27,6 @@ overflow-checks = true
 codegen-units = 1
 incremental = false
 opt-level = 3
+
+[patch.crates-io]
+fixed = { git = "https://github.com/blockworks-foundation/fixed.git", branch = "v1.11.0-borsh0_10-mango" }
