@@ -433,7 +433,8 @@ impl OpenBookClient {
                         user_quote_account,
                         market_base_vault,
                         market_quote_vault,
-                        token_program: Token::id(),
+                        base_token_program: Token::id(),
+                        quote_token_program: Token::id(),
                     },
                     None,
                 )
@@ -472,7 +473,8 @@ impl OpenBookClient {
                         market_quote_vault,
                         referrer_account,
                         system_program: System::id(),
-                        token_program: Token::id(),
+                        base_token_program: Token::id(),
+                        quote_token_program: Token::id(),
                     },
                     None,
                 )

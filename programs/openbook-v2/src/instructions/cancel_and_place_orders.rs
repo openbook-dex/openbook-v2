@@ -9,8 +9,8 @@ use crate::token_utils::*;
 use anchor_spl::token_interface::{TokenInterface, self, Mint, TokenAccount};
 
 #[allow(clippy::too_many_arguments)]
-pub fn cancel_and_place_orders(
-    ctx: Context<CancelAndPlaceOrders>,
+pub fn cancel_and_place_orders<'info>(
+    ctx: Context<'_, '_, '_, 'info, CancelAndPlaceOrders<'info>>,
     cancel_client_orders_ids: Vec<u64>,
     orders: Vec<Order>,
     limits: Vec<u8>,
@@ -132,26 +132,30 @@ pub fn cancel_and_place_orders(
     }
 
     // Getting actual base amount to be paid
-    let base_token_account_info = remaining_accounts[0];
+    // let base_token_account_info = remaining_accounts[0];
 
-    let base_token_fee_wrapped = get_token_fee(base_token_account_info, ctx.accounts.token_program.to_account_info(), deposit_base_amount);
+    let base_token_fee_wrapped = {
+        get_token_fee(remaining_accounts[0].to_account_info(), ctx.accounts.token_program.to_account_info(), deposit_base_amount)
+    };
     let base_token_fee = base_token_fee_wrapped.unwrap().unwrap();
 
     let base_amount = deposit_base_amount - base_token_fee;
 
     // Getting actual quote native amount to be paid
-    let quote_token_account_info = remaining_accounts[1];
+    // let quote_token_account_info = remaining_accounts[1];
 
-    let quote_token_fee_wrapped = get_token_fee(quote_token_account_info, ctx.accounts.token_program.to_account_info(), deposit_quote_amount);
+    let quote_token_fee_wrapped = {
+        get_token_fee(remaining_accounts[1].to_account_info(), ctx.accounts.token_program.to_account_info(), deposit_quote_amount)
+    };
     let quote_token_fee = quote_token_fee_wrapped.unwrap().unwrap();
 
     let quote_amount = deposit_quote_amount - quote_token_fee;
 
-    let base_data = &mut &**base_token_account_info.try_borrow_data()?;
+    let base_data = &mut &**remaining_accounts[0].try_borrow_data()?;
     let base_mint = Mint::try_deserialize(base_data).unwrap();
     let base_decimals = base_mint.decimals;
 
-    let quote_data = &mut &**quote_token_account_info.try_borrow_data()?;
+    let quote_data = &mut &**remaining_accounts[1].try_borrow_data()?;
     let quote_mint = Mint::try_deserialize(quote_data).unwrap();
     let quote_decimals = quote_mint.decimals;
 
@@ -162,7 +166,7 @@ pub fn cancel_and_place_orders(
         &ctx.accounts.user_quote_account,
         &ctx.accounts.market_quote_vault,
         &ctx.accounts.signer,
-        base_token_account_info,
+        remaining_accounts[0].to_account_info(),
         base_decimals,
     )?;
 
@@ -172,7 +176,7 @@ pub fn cancel_and_place_orders(
         &ctx.accounts.user_base_account,
         &ctx.accounts.market_base_vault,
         &ctx.accounts.signer,
-        quote_token_account_info,
+        remaining_accounts[1].to_account_info(),
         quote_decimals,
     )?;
 

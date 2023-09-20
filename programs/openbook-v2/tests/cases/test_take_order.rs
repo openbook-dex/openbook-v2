@@ -6,6 +6,7 @@ async fn test_take_ask_order() -> Result<(), TransportError> {
         context,
         collect_fee_admin,
         owner,
+        mints,
         owner_token_0,
         owner_token_1,
         market,
@@ -19,6 +20,10 @@ async fn test_take_ask_order() -> Result<(), TransportError> {
         ..
     } = TestContext::new_with_market(TestNewMarketInitialize::default()).await?;
     let solana = &context.solana.clone();
+
+    let mut vec_remainings: Vec<Pubkey> = Vec::new();
+    vec_remainings.push(mints[0].pubkey);
+    vec_remainings.push(mints[1].pubkey);
 
     // Set the initial oracle price
     set_stub_oracle_price(solana, &tokens[1], collect_fee_admin, 1000.0).await;
@@ -41,7 +46,7 @@ async fn test_take_ask_order() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings: vec![],
+            remainings: vec![mints[0].pubkey, mints[1].pubkey],
         },
     )
     .await
@@ -65,6 +70,7 @@ async fn test_take_ask_order() -> Result<(), TransportError> {
             max_quote_lots_including_fees: 10000,
             referrer_account: None,
             open_orders_admin: None,
+            remainings: vec![mints[0].pubkey, mints[1].pubkey],
         },
     )
     .await
@@ -128,6 +134,7 @@ async fn test_take_ask_order() -> Result<(), TransportError> {
             user_base_account: owner_token_0,
             user_quote_account: owner_token_1,
             referrer_account: None,
+            remainings: vec![mints[0].pubkey, mints[1].pubkey],
         },
     )
     .await
@@ -167,6 +174,10 @@ async fn test_take_bid_order() -> Result<(), TransportError> {
     } = TestContext::new_with_market(TestNewMarketInitialize::default()).await?;
     let solana = &context.solana.clone();
 
+    let mut vec_remainings: Vec<Pubkey> = Vec::new();
+    vec_remainings.push(mints[0].pubkey);
+    vec_remainings.push(mints[1].pubkey);
+
     // Set the initial oracle price
     set_stub_oracle_price(solana, &tokens[1], collect_fee_admin, 1000.0).await;
 
@@ -188,7 +199,7 @@ async fn test_take_bid_order() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings: vec![],
+            remainings: vec![mints[0].pubkey, mints[1].pubkey],
         },
     )
     .await
@@ -217,6 +228,7 @@ async fn test_take_bid_order() -> Result<(), TransportError> {
             max_quote_lots_including_fees: 10040,
             referrer_account: Some(admin_token_1),
             open_orders_admin: None,
+            remainings: vec![mints[0].pubkey, mints[1].pubkey],
         },
     )
     .await
@@ -284,6 +296,7 @@ async fn test_take_bid_order() -> Result<(), TransportError> {
             user_base_account: owner_token_0,
             user_quote_account: owner_token_1,
             referrer_account: None,
+            remainings: vec![mints[0].pubkey, mints[1].pubkey],
         },
     )
     .await

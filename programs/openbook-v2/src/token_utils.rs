@@ -109,15 +109,15 @@ pub fn system_program_transfer<
 }
 
 /// Unpacks a spl_token `Mint` with extension data
-pub fn unpack_mint_with_extensions<'a>(
-    account_data: &'a [u8],
+pub fn unpack_mint_with_extensions<'info>(
+    account_data: &'info [u8],
     owner: &Pubkey,
     token_program_id: &Pubkey,
-) -> Result<StateWithExtensions<'a, Mint>> {
+) -> Result<StateWithExtensions<'info, Mint>> {
     if owner != token_program_id && check_spl_token_program_account(owner).is_err() {
         Err(OpenBookError::SomeError.into())
     } else {
-        StateWithExtensions::<Mint>::unpack(account_data).map_err(|_| OpenBookError::SomeError)
+        StateWithExtensions::<Mint>::unpack(account_data).map_err(|_| anchor_lang::error::Error::from(OpenBookError::SomeError))
     }
 }
 
@@ -137,10 +137,14 @@ pub fn get_token_fee<
             token_program.key,
         )?;
 
-        let Ok(transfer_fee_config) = source_mint.get_extension::<TransferFeeConfig>(); 
-        let transfer_fee = transfer_fee_config
+        if let Ok(transfer_fee_config) = source_mint.get_extension::<TransferFeeConfig>() {
+            let transfer_fee = transfer_fee_config
                 .calculate_epoch_fee(Clock::get()?.epoch, amount);
-        transfer_fee
+            transfer_fee
+        } else {
+            let default_fee: u64 = 0;
+            Some(default_fee)
+        }
     };
     Ok(token_fee)
 }
