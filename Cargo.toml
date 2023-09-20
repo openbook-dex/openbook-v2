@@ -27,4 +27,3 @@ overflow-checks = true
 codegen-units = 1
 incremental = false
 opt-level = 3
-g
