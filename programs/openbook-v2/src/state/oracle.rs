@@ -111,16 +111,26 @@ impl OracleState {
         }
     }
 
-    pub fn combine_div_with_var(&self, other: &Self) -> (f64, f64) {
-        let price = self.price / other.price;
-
+    pub fn has_valid_combined_confidence(&self, other: &Self, config: &OracleConfig) -> bool {
         // target uncertainty reads
         //   $ \sigma \approx \frac{A}{B} * \sqrt{(\sigma_A/A)^2 + (\sigma_B/B)^2} $
         // but alternatively, to avoid costly operations, we compute the square
-        let var = ((self.deviation / self.price).powi(2) + (other.deviation / other.price).powi(2))
-            * price.powi(2);
+        // Also note that the relative scaled var, i.e. without the \frac{A}{B} factor, is computed
+        let relative_var =
+            (self.deviation / self.price).powi(2) + (other.deviation / other.price).powi(2);
 
-        (price, var)
+        let relative_target_var = config.conf_filter.powi(2);
+
+        if relative_var > relative_target_var {
+            msg!(
+                "Combined confidence too high: computed^2: {}, conf_filter^2: {}",
+                relative_var,
+                relative_target_var
+            );
+            false
+        } else {
+            true
+        }
     }
 }
 
