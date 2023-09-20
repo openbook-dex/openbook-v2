@@ -37,8 +37,11 @@ pyth-sdk-solana = { workspace = true }
 solana-program = { workspace = true }
 solana-sdk = { workspace = true, default-features = false, optional = true }
 static_assertions = "1.1"
-switchboard-program = ">=0.2.0"
-switchboard-v2 = "0.4.0"
+
+switchboard-program = "0.2.0"
+# note: 0.8.19 seems broken
+switchboard-common = "=0.8.18"
+switchboard-v2 = { package = "switchboard-solana", version = "0.28" }
 
 [dev-dependencies]
 async-trait = "0.1.52"
