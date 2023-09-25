@@ -79,7 +79,7 @@ pub fn place_take_order<'info>(
     };
 
     if ctx.accounts.referrer_account.is_some() {
-        market.fees_to_referrers += referrer_amount;
+        market.fees_to_referrers += referrer_amount as u128;
         market.quote_deposit_total -= referrer_amount;
     } else {
         market.fees_available += referrer_amount;

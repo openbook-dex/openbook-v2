@@ -161,11 +161,11 @@ impl OpenOrdersAccount {
             }
         };
 
-        pa.maker_volume += quote_native;
+        pa.maker_volume += quote_native as u128;
         pa.referrer_rebates_available += maker_fees;
         market.referrer_rebates_accrued += maker_fees;
-        market.maker_volume += quote_native;
-        market.fees_accrued += maker_fees;
+        market.maker_volume += quote_native as u128;
+        market.fees_accrued += maker_fees as u128;
 
         if fill.maker_out() {
             self.remove_order(fill.maker_slot as usize, fill.quantity);
@@ -211,7 +211,7 @@ impl OpenOrdersAccount {
             Side::Ask => pa.quote_free_native += quote_native - taker_fees,
         };
 
-        pa.taker_volume += quote_native;
+        pa.taker_volume += quote_native as u128;
         pa.referrer_rebates_available += referrer_amount;
         market.referrer_rebates_accrued += referrer_amount;
     }
@@ -297,17 +297,17 @@ pub struct Position {
     pub penalty_heap_count: u64,
 
     /// Cumulative maker volume in quote native units (display only)
-    pub maker_volume: u64,
+    pub maker_volume: u128,
     /// Cumulative taker volume in quote native units (display only)
-    pub taker_volume: u64,
+    pub taker_volume: u128,
 
     #[derivative(Debug = "ignore")]
-    pub reserved: [u8; 88],
+    pub reserved: [u8; 72],
 }
 
 const_assert_eq!(
     size_of::<Position>(),
-    8 + 8 + 8 + 8 + 8 + 8 + 8 + 8 + 8 + 88
+    8 + 8 + 8 + 8 + 8 + 8 + 8 + 16 + 16 + 72
 );
 const_assert_eq!(size_of::<Position>(), 160);
 const_assert_eq!(size_of::<Position>() % 8, 0);
@@ -324,7 +324,7 @@ impl Default for Position {
             penalty_heap_count: 0,
             maker_volume: 0,
             taker_volume: 0,
-            reserved: [0; 88],
+            reserved: [0; 72],
         }
     }
 }
