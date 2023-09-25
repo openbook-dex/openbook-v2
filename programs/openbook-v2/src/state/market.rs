@@ -175,6 +175,13 @@ impl Market {
         pubkey == self.market_quote_vault || pubkey == self.market_base_vault
     }
 
+    pub fn get_vault_by_side(&self, side: Side) -> Pubkey {
+        match side {
+            Side::Ask => self.market_base_vault,
+            Side::Bid => self.market_quote_vault,
+        }
+    }
+
     pub fn gen_order_id(&mut self, side: Side, price_data: u64) -> u128 {
         self.seq_num += 1;
         orderbook::new_node_key(side, price_data, self.seq_num)

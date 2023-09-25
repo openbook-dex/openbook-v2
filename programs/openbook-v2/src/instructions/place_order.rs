@@ -22,6 +22,11 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<
     let clock = Clock::get()?;
 
     let mut market = ctx.accounts.market.load_mut()?;
+    require_keys_eq!(
+        market.get_vault_by_side(order.side),
+        ctx.accounts.market_vault.key(),
+        OpenBookError::InvalidMarketVault
+    );
     require!(
         !market.is_expired(clock.unix_timestamp),
         OpenBookError::MarketHasExpired
