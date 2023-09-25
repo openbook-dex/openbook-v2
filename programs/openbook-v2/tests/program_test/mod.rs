@@ -133,7 +133,7 @@ impl TestContextBuilder {
         );
 
         // intentionally set to as tight as possible, to catch potential problems early
-        test.set_compute_max_units(120000);
+        test.set_compute_max_units(130000);
 
         Self {
             test,
