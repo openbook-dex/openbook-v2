@@ -152,6 +152,7 @@ impl FuzzContext {
             .add_empty_system_account(self.market_authority)
             .add_empty_system_account(self.event_authority)
             .add_program(openbook_v2::ID) // optional accounts use this pubkey
+            .add_program(spl_associated_token_account::ID)
             .add_program(spl_token::ID)
             .add_program(system_program::ID)
             .add_token_account_with_lamports(
@@ -306,6 +307,8 @@ impl FuzzContext {
             oracle_a: self.oracle_a,
             oracle_b: self.oracle_b,
             system_program: system_program::ID,
+            token_program: spl_token::ID,
+            associated_token_program: spl_associated_token_account::ID,
             collect_fee_admin: self.collect_fee_admin,
             open_orders_admin: None,
             consume_events_admin: None,

@@ -14,13 +14,6 @@ async fn test_indexer() -> Result<(), TransportError> {
     let tokens = Token::create(mints.to_vec(), solana, collect_fee_admin, payer).await;
 
     let market = TestKeypair::new();
-    let market_authority = get_market_address(market);
-    let market_base_vault = solana
-        .create_associated_token_account(&market_authority, mints[0].pubkey)
-        .await;
-    let market_quote_vault = solana
-        .create_associated_token_account(&market_authority, mints[1].pubkey)
-        .await;
 
     let openbook_v2::accounts::CreateMarket { market, .. } = send_tx(
         solana,
@@ -36,8 +29,6 @@ async fn test_indexer() -> Result<(), TransportError> {
             taker_fee: 400,
             base_mint: mints[0].pubkey,
             quote_mint: mints[1].pubkey,
-            market_base_vault,
-            market_quote_vault,
             ..CreateMarketInstruction::with_new_book_and_heap(solana, Some(tokens[1].oracle), None)
                 .await
         },
@@ -123,13 +114,6 @@ async fn test_size_vector() -> Result<(), TransportError> {
     let tokens = Token::create(mints.to_vec(), solana, collect_fee_admin, payer).await;
 
     let market = TestKeypair::new();
-    let market_authority = get_market_address(market);
-    let market_base_vault = solana
-        .create_associated_token_account(&market_authority, mints[0].pubkey)
-        .await;
-    let market_quote_vault = solana
-        .create_associated_token_account(&market_authority, mints[1].pubkey)
-        .await;
 
     let openbook_v2::accounts::CreateMarket { market, .. } = send_tx(
         solana,
@@ -145,8 +129,6 @@ async fn test_size_vector() -> Result<(), TransportError> {
             taker_fee: 400,
             base_mint: mints[0].pubkey,
             quote_mint: mints[1].pubkey,
-            market_base_vault,
-            market_quote_vault,
             ..CreateMarketInstruction::with_new_book_and_heap(solana, Some(tokens[1].oracle), None)
                 .await
         },

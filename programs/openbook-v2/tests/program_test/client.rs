@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 
 use anchor_lang::prelude::*;
-use anchor_spl::token::Token;
+use anchor_spl::{associated_token::AssociatedToken, token::Token};
 use solana_program::instruction::Instruction;
 use solana_program_test::BanksClientError;
 use solana_sdk::instruction;
@@ -286,8 +286,6 @@ pub struct CreateMarketInstruction {
     pub oracle_b: Option<Pubkey>,
     pub base_mint: Pubkey,
     pub quote_mint: Pubkey,
-    pub market_base_vault: Pubkey,
-    pub market_quote_vault: Pubkey,
     pub name: String,
     pub bids: Pubkey,
     pub asks: Pubkey,
@@ -378,6 +376,8 @@ impl ClientInstruction for CreateMarketInstruction {
             quote_mint: self.quote_mint,
             base_mint: self.base_mint,
             system_program: System::id(),
+            token_program: Token::id(),
+            associated_token_program: AssociatedToken::id(),
             collect_fee_admin: self.collect_fee_admin,
             open_orders_admin: self.open_orders_admin,
             consume_events_admin: self.consume_events_admin,

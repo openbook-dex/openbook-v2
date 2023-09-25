@@ -133,7 +133,7 @@ impl TestContextBuilder {
         );
 
         // intentionally set to as tight as possible, to catch potential problems early
-        test.set_compute_max_units(75000);
+        test.set_compute_max_units(120000);
 
         Self {
             test,
@@ -342,13 +342,6 @@ impl TestContext {
         // Create a market
 
         let market = TestKeypair::new();
-        let market_authority = get_market_address(market);
-        let market_base_vault = solana
-            .create_associated_token_account(&market_authority, mints[0].pubkey)
-            .await;
-        let market_quote_vault = solana
-            .create_associated_token_account(&market_authority, mints[1].pubkey)
-            .await;
 
         let oracle = if args.with_oracle {
             Some(tokens[0].oracle)
@@ -358,7 +351,6 @@ impl TestContext {
 
         let openbook_v2::accounts::CreateMarket {
             market,
-
             market_base_vault,
             market_quote_vault,
             bids,
@@ -378,8 +370,6 @@ impl TestContext {
                 taker_fee: args.taker_fee,
                 base_mint: mints[0].pubkey,
                 quote_mint: mints[1].pubkey,
-                market_base_vault,
-                market_quote_vault,
                 fee_penalty: args.fee_penalty,
                 time_expiry: args.time_expiry,
                 ..CreateMarketInstruction::with_new_book_and_heap(solana, oracle, None).await
