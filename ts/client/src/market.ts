@@ -1,4 +1,4 @@
-import { PublicKey, type Connection, type AccountInfo } from '@solana/web3.js';
+import { PublicKey, type Connection, type AccountInfo, ParsedInstruction, PartiallyDecodedInstruction, Message } from '@solana/web3.js';
 import { getFilteredProgramAccounts } from './client';
 import { utils, Program, type Provider, getProvider } from '@coral-xyz/anchor';
 
@@ -59,8 +59,11 @@ export async function findAllMarkets(
     batchSignatures.push(signatures.slice(0, BATCH_TX_SIZE));
   }
   for (const batch of batchSignatures) {
+    // SolanaJSONRPCError: failed to get transactions
+    // Fix: Add support for VersionedTransactions
     const allTxs = await connection.getTransactions(batch, {
       commitment: 'confirmed',
+      maxSupportedTransactionVersion: 0,
     });
     for (const tx of allTxs) {
       if (
@@ -68,14 +71,20 @@ export async function findAllMarkets(
         tx?.meta?.innerInstructions !== undefined
       )
         for (const innerIns of tx.meta.innerInstructions) {
-          // validate key and program key
-          const eventAuthorityKey = innerIns.instructions[1].accounts[0];
-          const programKey = innerIns.instructions[1].programIdIndex;
+          // TypeError: Cannot read properties of undefined (reading 'accounts')
+          // Fix: Check and match the types
+          if (innerIns.instructions[1] && innerIns.instructions[1].accounts[0]) {
+            console.log("err")
+            // validate key and program key
+            const eventAuthorityKey = innerIns.instructions[1].accounts[0];
+            const programKey = innerIns.instructions[1].programIdIndex;
 
+          // TypeError: Cannot read properties of undefined (reading '12')
+          // Fix: Define the types
           if (
-            tx.transaction.message.accountKeys[eventAuthorityKey].toString() !==
+              (tx.transaction.message as Message).staticAccountKeys[eventAuthorityKey].toString() !==
               eventAuthority.toString() ||
-            tx.transaction.message.accountKeys[programKey].toString() !==
+              (tx.transaction.message as Message).staticAccountKeys[programKey].toString() !==
               programId.toString()
           ) {
             continue;
@@ -98,8 +107,8 @@ export async function findAllMarkets(
             }
           }
         }
+      }
     }
   }
-
   return marketsAll;
 }
