@@ -145,26 +145,51 @@ pub fn place_take_order<'info>(
     let withdraw_mint = Mint::try_deserialize(withdraw_data).unwrap();
     let withdraw_decimals = withdraw_mint.decimals;
 
-    token_transfer(
-        deposit_actual_amount,
-        &ctx.accounts.token_program,
-        user_deposit_acc.as_ref(),
-        market_deposit_acc,
-        &ctx.accounts.signer,
-        remaining_accounts[0].to_account_info(),
-        deposit_decimals,
-    )?;
+    
+    if &market_deposit_acc.mint == &remaining_accounts[0].key() {
+        token_transfer(
+            deposit_actual_amount,
+            &ctx.accounts.token_program,
+            user_deposit_acc.as_ref(),
+            market_deposit_acc,
+            &ctx.accounts.signer,
+            remaining_accounts[0].to_account_info(),
+            deposit_decimals,
+        )?;
 
-    token_transfer_signed(
-        withdraw_actual_amount,
-        &ctx.accounts.token_program,
-        market_withdraw_acc,
-        user_withdraw_acc.as_ref(),
-        &ctx.accounts.market_authority,
-        seeds,
-        remaining_accounts[1].to_account_info(),
-        withdraw_decimals,
-    )?;
+        token_transfer_signed(
+            withdraw_actual_amount,
+            &ctx.accounts.token_program,
+            market_withdraw_acc,
+            user_withdraw_acc.as_ref(),
+            &ctx.accounts.market_authority,
+            seeds,
+            remaining_accounts[1].to_account_info(),
+            withdraw_decimals,
+        )?;
+        
+    } else if &market_deposit_acc.mint == &remaining_accounts[1].key() {
+        token_transfer(
+            deposit_actual_amount,
+            &ctx.accounts.token_program,
+            user_deposit_acc.as_ref(),
+            market_deposit_acc,
+            &ctx.accounts.signer,
+            remaining_accounts[1].to_account_info(),
+            deposit_decimals,
+        )?;
+
+        token_transfer_signed(
+            withdraw_actual_amount,
+            &ctx.accounts.token_program,
+            market_withdraw_acc,
+            user_withdraw_acc.as_ref(),
+            &ctx.accounts.market_authority,
+            seeds,
+            remaining_accounts[0].to_account_info(),
+            withdraw_decimals,
+        )?;
+    }
 
     if let Some(referrer_account) = &ctx.accounts.referrer_account {
 
@@ -181,16 +206,30 @@ pub fn place_take_order<'info>(
         let referrer_mint = Mint::try_deserialize(referrer_data).unwrap();
         let referrer_decimals = referrer_mint.decimals;
 
-        token_transfer_signed(
-            referrer_actual_amount,
-            &ctx.accounts.token_program,
-            &ctx.accounts.market_quote_vault,
-            referrer_account,
-            &ctx.accounts.market_authority,
-            seeds,
-            remaining_accounts[1].to_account_info(),
-            referrer_decimals,
-        )?;
+        if &referrer_account.mint == &remaining_accounts[0].key() {
+            token_transfer_signed(
+                referrer_actual_amount,
+                &ctx.accounts.token_program,
+                &ctx.accounts.market_quote_vault,
+                referrer_account,
+                &ctx.accounts.market_authority,
+                seeds,
+                remaining_accounts[0].to_account_info(),
+                referrer_decimals,
+            )?;
+            
+        } else if &referrer_account.mint == &remaining_accounts[1].key() {
+            token_transfer_signed(
+                referrer_actual_amount,
+                &ctx.accounts.token_program,
+                &ctx.accounts.market_quote_vault,
+                referrer_account,
+                &ctx.accounts.market_authority,
+                seeds,
+                remaining_accounts[1].to_account_info(),
+                referrer_decimals,
+            )?;
+        }
     }
 
     Ok(())

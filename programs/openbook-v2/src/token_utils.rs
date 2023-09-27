@@ -1,5 +1,6 @@
 use super::*;
 use anchor_lang::system_program;
+use anchor_spl::token::Token;
 use anchor_spl::token_2022;
 use anchor_spl::token;
 use anchor_spl::token_interface;
@@ -63,10 +64,10 @@ pub fn token_transfer_signed<
     decimals: u8,
 ) -> Result<()> {
     if amount > 0 {
-        token_2022::transfer_checked(
+        token_interface::transfer_checked(
             CpiContext::new_with_signer(
                 token_program.to_account_info(),
-                token_2022::TransferChecked {
+                token_interface::TransferChecked {
                     from: from.to_account_info(),
                     to: to.to_account_info(),
                     authority: authority.to_account_info(),
@@ -130,20 +131,25 @@ pub fn get_token_fee<
     amount: u64,
 ) -> Result<Option<u64>> {
     let token_fee = {
-        let source_data = account_info.data.borrow();
-        let source_mint = unpack_mint_with_extensions(
-            &source_data,
-            account_info.owner,
-            token_program.key,
-        )?;
-
-        if let Ok(transfer_fee_config) = source_mint.get_extension::<TransferFeeConfig>() {
-            let transfer_fee = transfer_fee_config
-                .calculate_epoch_fee(Clock::get()?.epoch, amount);
-            transfer_fee
-        } else {
+        if token_program.key() == Token::id() {
             let default_fee: u64 = 0;
             Some(default_fee)
+        } else {
+            let source_data = account_info.data.borrow();
+            let source_mint = unpack_mint_with_extensions(
+                &source_data,
+                account_info.owner,
+                token_program.key,
+            )?;
+
+            if let Ok(transfer_fee_config) = source_mint.get_extension::<TransferFeeConfig>() {
+                let transfer_fee = transfer_fee_config
+                    .calculate_epoch_fee(Clock::get()?.epoch, amount);
+                transfer_fee
+            } else {
+                let default_fee: u64 = 0;
+                Some(default_fee)
+            }
         }
     };
     Ok(token_fee)

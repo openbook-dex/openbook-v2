@@ -21,11 +21,6 @@ async fn test_permissioned_open_order() -> Result<(), TransportError> {
     .await?;
     let solana = &context.solana.clone();
 
-    let mut vec_remainings: Vec<Pubkey> = Vec::new();
-    vec_remainings.push(mints[0].pubkey);
-    vec_remainings.push(mints[1].pubkey);
-
-
     let price_lots = {
         let market = solana.get_account::<Market>(market).await;
         market.native_price_to_lot(I80F48::from(1000)).unwrap()
@@ -108,10 +103,6 @@ async fn test_permissioned_open_take_order() -> Result<(), TransportError> {
     .await?;
     let solana = &context.solana.clone();
 
-    let mut vec_remainings: Vec<Pubkey> = Vec::new();
-    vec_remainings.push(mints[0].pubkey);
-    vec_remainings.push(mints[1].pubkey);
-
     // Set the initial oracle price
     set_stub_oracle_price(solana, &tokens[1], collect_fee_admin, 1000.0).await;
 
@@ -191,10 +182,6 @@ async fn test_consume_events_admin() -> Result<(), TransportError> {
     })
     .await?;
     let solana = &context.solana.clone();
-
-    let mut vec_remainings: Vec<Pubkey> = Vec::new();
-    vec_remainings.push(mints[0].pubkey);
-    vec_remainings.push(mints[1].pubkey);
 
 
     // Set the initial oracle price
@@ -298,10 +285,6 @@ async fn test_close_market_admin() -> Result<(), TransportError> {
     })
     .await?;
     let solana = &context.solana.clone();
-
-    let mut vec_remainings: Vec<Pubkey> = Vec::new();
-    vec_remainings.push(mints[0].pubkey);
-    vec_remainings.push(mints[1].pubkey);
 
     let fee_admin_ata = solana
         .create_associated_token_account(&collect_fee_admin.pubkey(), mints[1].pubkey)
@@ -541,10 +524,6 @@ async fn test_delegate() -> Result<(), TransportError> {
     })
     .await?;
     let solana = &context.solana.clone();
-
-    let mut vec_remainings: Vec<Pubkey> = Vec::new();
-    vec_remainings.push(mints[0].pubkey);
-    vec_remainings.push(mints[1].pubkey);
 
     let account_3_delegate = context.users[2].key;
     let account_3 = create_open_orders_account(

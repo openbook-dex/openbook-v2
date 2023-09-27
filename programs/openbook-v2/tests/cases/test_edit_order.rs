@@ -6,6 +6,7 @@ async fn test_edit_order() -> Result<(), TransportError> {
         context,
         collect_fee_admin,
         owner,
+        mints,
         owner_token_1,
         market,
         market_quote_vault,

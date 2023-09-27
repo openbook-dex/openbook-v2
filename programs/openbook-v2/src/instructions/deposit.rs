@@ -4,7 +4,7 @@ use crate::logs::DepositLog;
 use crate::token_utils::*;
 use anchor_lang::prelude::*;
 // use anchor_spl::token_2022::{Token, TokenAccount, Mint};
-use anchor_spl::token_interface::{TokenInterface, self, Mint, TokenAccount};
+use anchor_spl::token_interface::Mint;
 
 // Try converting ther mint to TokenInterface??
 

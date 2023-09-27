@@ -6,7 +6,7 @@ use crate::accounts_zerocopy::AccountInfoRef;
 use crate::error::*;
 use crate::state::*;
 use crate::token_utils::*;
-use anchor_spl::token_interface::{TokenInterface, self, Mint, TokenAccount};
+use anchor_spl::token_interface::Mint;
 
 #[allow(clippy::too_many_arguments)]
 pub fn place_order<'info>(ctx: Context<'_, '_, '_, 'info, PlaceOrder<'info>>, order: Order, limit: u8) -> Result<Option<u128>> {
@@ -103,9 +103,6 @@ pub fn place_order<'info>(ctx: Context<'_, '_, '_, 'info, PlaceOrder<'info>>, or
     }
 
     // Getting actual base token amount to be deposited
-    
-    // let deposit_token_account_info = remaining_accounts[0].to_account_info(); // base token mint
-
     let deposit_token_fee_wrapped = {
         get_token_fee(remaining_accounts[0].to_account_info(), ctx.accounts.token_program.to_account_info(), deposit_amount)
     };
@@ -113,19 +110,36 @@ pub fn place_order<'info>(ctx: Context<'_, '_, '_, 'info, PlaceOrder<'info>>, or
 
     let deposit_actual_amount = deposit_amount + deposit_token_fee;
 
+
     let deposit_data = &mut &**remaining_accounts[0].try_borrow_data()?;
     let deposit_mint = Mint::try_deserialize(deposit_data).unwrap();
     let deposit_decimals = deposit_mint.decimals;
 
-    token_transfer(
-        deposit_actual_amount,
-        &ctx.accounts.token_program,
-        &ctx.accounts.user_token_account,
-        &ctx.accounts.market_vault,
-        &ctx.accounts.signer,
-        remaining_accounts[0].to_account_info(),
-        deposit_decimals
-    )?;
+    if &ctx.accounts.market_vault.mint == &market.base_mint {
+        token_transfer(
+            deposit_actual_amount,
+            &ctx.accounts.token_program,
+            &ctx.accounts.user_token_account,
+            &ctx.accounts.market_vault,
+            &ctx.accounts.signer,
+            remaining_accounts[0].to_account_info(),
+            deposit_decimals
+        )?;
+    
+        Ok(order_id)
+    } else if &ctx.accounts.market_vault.mint == &market.quote_mint {
+        token_transfer(
+            deposit_actual_amount,
+            &ctx.accounts.token_program,
+            &ctx.accounts.user_token_account,
+            &ctx.accounts.market_vault,
+            &ctx.accounts.signer,
+            remaining_accounts[1].to_account_info(),
+            deposit_decimals
+        )?;
 
-    Ok(order_id)
+        Ok(order_id)
+    } else {
+        Err(anchor_lang::error::Error::from(OpenBookError::SomeError))
+    }
 }

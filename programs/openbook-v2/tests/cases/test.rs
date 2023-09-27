@@ -24,11 +24,7 @@ async fn test_simple_settle() -> Result<(), TransportError> {
     })
     .await?;
     let solana = &context.solana.clone();
-
-    let mut vec_remainings: Vec<Pubkey> = Vec::new();
-    vec_remainings.push(mints[0].pubkey);
-    vec_remainings.push(mints[1].pubkey);
-
+    
     //
     // TEST: Create another market
     //
@@ -234,10 +230,6 @@ async fn test_cancel_orders() -> Result<(), TransportError> {
     })
     .await?;
     let solana = &context.solana.clone();
-
-    let mut vec_remainings: Vec<Pubkey> = Vec::new();
-    vec_remainings.push(mints[0].pubkey);
-    vec_remainings.push(mints[1].pubkey);
 
     send_tx(
         solana,
@@ -525,10 +517,6 @@ async fn test_expired_orders() -> Result<(), TransportError> {
         ..
     } = TestContext::new_with_market(TestNewMarketInitialize::default()).await?;
     let solana = &context.solana.clone();
-
-    let mut vec_remainings: Vec<Pubkey> = Vec::new();
-    vec_remainings.push(mints[0].pubkey);
-    vec_remainings.push(mints[1].pubkey);
 
     // Order with expiry time of 2s
     let now_ts: u64 = solana.get_clock().await.unix_timestamp as u64;

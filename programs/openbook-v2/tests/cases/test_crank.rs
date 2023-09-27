@@ -87,7 +87,7 @@ async fn test_skip_missing_accounts() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings: vec![],
+            remainings: vec![mints[0].pubkey, mints[1].pubkey],
         },
     )
     .await
@@ -110,7 +110,7 @@ async fn test_skip_missing_accounts() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings: vec![],
+            remainings: vec![mints[0].pubkey, mints[1].pubkey],
         },
     )
     .await
@@ -133,7 +133,7 @@ async fn test_skip_missing_accounts() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings: vec![],
+            remainings: vec![mints[0].pubkey, mints[1].pubkey],
         },
     )
     .await
@@ -156,7 +156,7 @@ async fn test_skip_missing_accounts() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings: vec![],
+            remainings: vec![mints[0].pubkey, mints[1].pubkey],
         },
     )
     .await
@@ -280,7 +280,7 @@ async fn test_crank_given_events() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings: vec![],
+            remainings: vec![mints[0].pubkey, mints[1].pubkey],
         },
     )
     .await
@@ -303,7 +303,7 @@ async fn test_crank_given_events() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings: vec![],
+            remainings: vec![mints[0].pubkey, mints[1].pubkey],
         },
     )
     .await
@@ -326,7 +326,7 @@ async fn test_crank_given_events() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings: vec![],
+            remainings: vec![mints[0].pubkey, mints[1].pubkey],
         },
     )
     .await
@@ -349,7 +349,7 @@ async fn test_crank_given_events() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings: vec![],
+            remainings: vec![mints[0].pubkey, mints[1].pubkey],
         },
     )
     .await

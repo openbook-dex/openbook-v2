@@ -1,7 +1,7 @@
-export interface OpenbookV2 {
-  version: '0.1.0';
-  name: 'openbook_v2';
-  instructions: [
+export type OpenbookV2 = {
+  "version": "0.1.0",
+  "name": "openbook_v2",
+  "instructions": [
     {
       "name": "createMarket",
       "docs": [
@@ -1553,10 +1553,10 @@ export interface OpenbookV2 {
       ],
       "args": [
         {
-          name: 'price';
-          type: 'f64';
-        },
-      ];
+          "name": "price",
+          "type": "f64"
+        }
+      ]
     },
     {
       "name": "stubOracleClose",
@@ -1600,13 +1600,13 @@ export interface OpenbookV2 {
       ],
       "args": [
         {
-          name: 'price';
-          type: 'f64';
-        },
-      ];
-    },
-  ];
-  accounts: [
+          "name": "price",
+          "type": "f64"
+        }
+      ]
+    }
+  ],
+  "accounts": [
     {
       "name": "market",
       "type": {
@@ -3599,12 +3599,12 @@ export interface OpenbookV2 {
       "msg": "Cannot close a non-empty market"
     },
     {
-      code: 6041;
-      name: 'NonEmptyOpenOrdersPosition';
-      msg: 'Cannot close a non-empty open orders account';
-    },
-  ];
-}
+      "code": 6041,
+      "name": "NonEmptyOpenOrdersPosition",
+      "msg": "Cannot close a non-empty open orders account"
+    }
+  ]
+};
 
 export const IDL: OpenbookV2 = {
   "version": "0.1.0",
@@ -5161,10 +5161,10 @@ export const IDL: OpenbookV2 = {
       ],
       "args": [
         {
-          name: 'price',
-          type: 'f64',
-        },
-      ],
+          "name": "price",
+          "type": "f64"
+        }
+      ]
     },
     {
       "name": "stubOracleClose",
@@ -5208,11 +5208,11 @@ export const IDL: OpenbookV2 = {
       ],
       "args": [
         {
-          name: 'price',
-          type: 'f64',
-        },
-      ],
-    },
+          "name": "price",
+          "type": "f64"
+        }
+      ]
+    }
   ],
   "accounts": [
     {
