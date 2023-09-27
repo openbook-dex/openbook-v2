@@ -37,6 +37,8 @@ export type OracleConfigParams = IdlTypes<OpenbookV2>['OracleConfigParams'];
 export type OracleConfig = IdlTypes<OpenbookV2>['OracleConfig'];
 export type MarketAccount = IdlAccounts<OpenbookV2>['market'];
 export type OpenOrdersAccount = IdlAccounts<OpenbookV2>['openOrdersAccount'];
+export type OpenOrdersIndexerAccount =
+  IdlAccounts<OpenbookV2>['openOrdersIndexer'];
 export type EventHeapAccount = IdlAccounts<OpenbookV2>['eventHeap'];
 export type BookSideAccount = IdlAccounts<OpenbookV2>['bookSide'];
 export type LeafNode = IdlTypes<OpenbookV2>['LeafNode'];
@@ -151,6 +153,16 @@ export class OpenBookV2Client {
     }
   }
 
+  public async getOpenOrdersIndexer(
+    publicKey: PublicKey,
+  ): Promise<OpenOrdersIndexerAccount | null> {
+    try {
+      return await this.program.account.openOrdersIndexer.fetch(publicKey);
+    } catch {
+      return null;
+    }
+  }
+
   public async getEventHeap(
     publicKey: PublicKey,
   ): Promise<EventHeapAccount | null> {
@@ -196,8 +208,8 @@ export class OpenBookV2Client {
     name: string,
     quoteMint: PublicKey,
     baseMint: PublicKey,
-    quoteLoteSize: BN,
-    baseLoteSize: BN,
+    quoteLotSize: BN,
+    baseLotSize: BN,
     makerFee: BN,
     takerFee: BN,
     timeExpiry: BN,
@@ -247,8 +259,8 @@ export class OpenBookV2Client {
       .createMarket(
         name,
         oracleConfigParams,
-        quoteLoteSize,
-        baseLoteSize,
+        quoteLotSize,
+        baseLotSize,
         makerFee,
         takerFee,
         timeExpiry,
@@ -314,7 +326,7 @@ export class OpenBookV2Client {
         Buffer.from('OpenOrders'),
         this.walletPk.toBuffer(),
         market.toBuffer(),
-        accountIndex.toBuffer('le', 4),
+        accountIndex.toArrayLike(Buffer, 'le', 4),
       ],
       this.programId,
     );
