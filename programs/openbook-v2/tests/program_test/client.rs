@@ -156,7 +156,6 @@ impl ClientInstruction for CreateOpenOrdersIndexerInstruction {
             payer: self.payer.pubkey(),
             owner: self.owner.pubkey(),
             open_orders_indexer,
-            market: self.market,
             system_program: System::id(),
         };
 

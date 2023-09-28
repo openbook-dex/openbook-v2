@@ -146,16 +146,11 @@ impl OpenBookClient {
 
     pub async fn create_open_orders_indexer(
         client: &Client,
-        market: Pubkey,
         owner: &Keypair,
         payer: &Keypair, // pays the SOL for the new account
     ) -> anyhow::Result<(Pubkey, Signature)> {
         let open_orders_indexer = Pubkey::find_program_address(
-            &[
-                b"OpenOrdersIndexer".as_ref(),
-                owner.pubkey().as_ref(),
-                market.as_ref(),
-            ],
+            &[b"OpenOrdersIndexer".as_ref(), owner.pubkey().as_ref()],
             &openbook_v2::id(),
         )
         .0;
@@ -167,7 +162,6 @@ impl OpenBookClient {
                     owner: owner.pubkey(),
                     open_orders_indexer,
                     payer: payer.pubkey(),
-                    market,
                     system_program: System::id(),
                 },
                 None,

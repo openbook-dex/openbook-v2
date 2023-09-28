@@ -227,7 +227,6 @@ impl FuzzContext {
                 open_orders_indexer: indexer,
                 owner,
                 payer: self.payer,
-                market: self.market,
                 system_program: system_program::ID,
             };
             let data = openbook_v2::instruction::CreateOpenOrdersIndexer {};
