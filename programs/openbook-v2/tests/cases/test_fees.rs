@@ -337,6 +337,10 @@ async fn test_maker_fees() -> Result<(), TransportError> {
         .create_associated_token_account(&collect_fee_admin.pubkey(), mints[1].pubkey)
         .await;
 
+    // let mut vec_remainings: Vec<Pubkey> = Vec::new();
+    // vec_remainings.push(mints[0].pubkey);
+    // vec_remainings.push(mints[1].pubkey);
+
     send_tx(
         solana,
         SettleFundsInstruction {
@@ -629,6 +633,7 @@ async fn test_maker_fees_ask() -> Result<(), TransportError> {
     .await?;
     let solana = &context.solana.clone();
 
+
     // Set the initial oracle price
     set_stub_oracle_price(solana, &tokens[1], collect_fee_admin, 1000.0).await;
 
@@ -824,6 +829,7 @@ async fn test_fees_half() -> Result<(), TransportError> {
     })
     .await?;
     let solana = &context.solana.clone();
+
 
     // Set the initial oracle price
     set_stub_oracle_price(solana, &tokens[1], collect_fee_admin, 1000.0).await;
@@ -1157,6 +1163,7 @@ async fn test_locked_maker_fees() -> Result<(), TransportError> {
     })
     .await?;
     let solana = &context.solana.clone();
+
 
     let place_maker_bid = PlaceOrderInstruction {
         open_orders_account: maker,

@@ -117,8 +117,6 @@ pub fn place_take_order<'info>(
         ),
     };
 
-    // let deposit_token_account_info = remaining_accounts[0]; // deposit token mint
-
     let deposit_token_fee_wrapped = {
         get_token_fee(remaining_accounts[0].to_account_info(), ctx.accounts.token_program.to_account_info(), deposit_amount)
     };
@@ -130,9 +128,6 @@ pub fn place_take_order<'info>(
     let deposit_mint = Mint::try_deserialize(deposit_data).unwrap();
     let deposit_decimals = deposit_mint.decimals;
 
-
-
-    // let withdraw_token_account_info = remaining_accounts[1]; // withdraw token mint
 
     let withdraw_token_fee_wrapped = {
         get_token_fee(remaining_accounts[1].to_account_info(), ctx.accounts.token_program.to_account_info(), withdraw_amount)

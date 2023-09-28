@@ -110,7 +110,6 @@ pub fn place_order<'info>(ctx: Context<'_, '_, '_, 'info, PlaceOrder<'info>>, or
 
     let deposit_actual_amount = deposit_amount + deposit_token_fee;
 
-
     let deposit_data = &mut &**remaining_accounts[0].try_borrow_data()?;
     let deposit_mint = Mint::try_deserialize(deposit_data).unwrap();
     let deposit_decimals = deposit_mint.decimals;

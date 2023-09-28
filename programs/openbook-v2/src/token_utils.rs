@@ -15,7 +15,6 @@ use spl_token_2022::{
     state::{Account, Mint},
 };
 
-// How do these P, A, S work??
 pub fn token_transfer<
     'info,
     P: ToAccountInfo<'info>,

@@ -19,9 +19,6 @@ pub fn sweep_fees<'info>(ctx: Context<'_, '_, '_, 'info, SweepFees<'info>>) -> R
     let remaining_accounts = ctx.remaining_accounts;
 
     // Getting actual base token amount to be deposited
-    
-    // let token_account_info = remaining_accounts[0]; // base token mint
-
     let token_fee_wrapped = {
         get_token_fee(remaining_accounts[0].to_account_info(), ctx.accounts.token_program.to_account_info(), amount)
     };
