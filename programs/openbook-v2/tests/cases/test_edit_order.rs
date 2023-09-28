@@ -43,7 +43,7 @@ async fn test_edit_order() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings: vec![],
+            remainings: vec![mints[0].pubkey, mints[1].pubkey],
         },
     )
     .await
@@ -73,7 +73,7 @@ async fn test_edit_order() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings: vec![],
+            remainings: vec![mints[0].pubkey, mints[1].pubkey],
             expected_cancel_size: 1,
         },
     )
@@ -98,7 +98,7 @@ async fn test_edit_order() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings: vec![account_1],
+            remainings: vec![mints[0].pubkey, mints[1].pubkey, account_1],
         },
     )
     .await
@@ -122,7 +122,7 @@ async fn test_edit_order() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings: vec![],
+            remainings: vec![mints[0].pubkey, mints[1].pubkey],
             expected_cancel_size: 2,
         },
     )

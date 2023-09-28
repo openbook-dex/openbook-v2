@@ -379,6 +379,7 @@ async fn test_close_market_admin() -> Result<(), TransportError> {
         user_base_account: owner_token_0,
         user_quote_account: owner_token_1,
         referrer_account: None,
+        remainings: vec![mints[0].pubkey, mints[1].pubkey],
     };
 
     // Can't close yet, market not market as expired

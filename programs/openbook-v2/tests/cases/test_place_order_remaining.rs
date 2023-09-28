@@ -42,7 +42,7 @@ async fn test_place_cancel_order_remaining() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings: vec![],
+            remainings: vec![mints[0].pubkey, mints[1].pubkey],
         },
     )
     .await
@@ -72,7 +72,7 @@ async fn test_place_cancel_order_remaining() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings: vec![account_1],
+            remainings: vec![mints[0].pubkey, mints[1].pubkey, account_1],
         },
     )
     .await
@@ -125,7 +125,7 @@ async fn test_place_cancel_order_remaining() -> Result<(), TransportError> {
             expiry_timestamp: now_ts + 10,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings: vec![],
+            remainings: vec![mints[0].pubkey, mints[1].pubkey],
         },
     )
     .await
@@ -162,7 +162,7 @@ async fn test_place_cancel_order_remaining() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings: vec![account_1],
+            remainings: vec![mints[0].pubkey, mints[1].pubkey, account_1],
         },
     )
     .await
@@ -232,7 +232,7 @@ async fn test_cancel_order_yourself() -> Result<(), TransportError> {
             expiry_timestamp: now_ts + 10,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings: vec![],
+            remainings: vec![mints[0].pubkey, mints[1].pubkey],
         },
     )
     .await
@@ -265,7 +265,7 @@ async fn test_cancel_order_yourself() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings: vec![account_1],
+            remainings: vec![mints[0].pubkey, mints[1].pubkey],
         },
     )
     .await

@@ -492,6 +492,7 @@ pub struct PlaceOrderPeggedInstruction {
     pub max_quote_lots_including_fees: i64,
     pub client_order_id: u64,
     pub peg_limit: i64,
+    pub remainings: Vec<Pubkey>,
 }
 #[async_trait::async_trait(?Send)]
 impl ClientInstruction for PlaceOrderPeggedInstruction {
@@ -533,8 +534,16 @@ impl ClientInstruction for PlaceOrderPeggedInstruction {
             market_vault: self.market_vault,
             token_program: Token::id(),
         };
-        let instruction = make_instruction(program_id, &accounts, instruction);
-
+        let mut instruction = make_instruction(program_id, &accounts, instruction);
+        let mut vec_remainings: Vec<AccountMeta> = Vec::new();
+        for remaining in &self.remainings {
+            vec_remainings.push(AccountMeta {
+                pubkey: *remaining,
+                is_signer: false,
+                is_writable: true,
+            })
+        }
+        instruction.accounts.append(&mut vec_remainings);
         (accounts, instruction)
     }
 
@@ -888,6 +897,7 @@ pub struct SettleFundsExpiredInstruction {
     pub user_base_account: Pubkey,
     pub user_quote_account: Pubkey,
     pub referrer_account: Option<Pubkey>,
+    pub remainings: Vec<Pubkey>,
 }
 #[async_trait::async_trait(?Send)]
 impl ClientInstruction for SettleFundsExpiredInstruction {
@@ -916,7 +926,17 @@ impl ClientInstruction for SettleFundsExpiredInstruction {
             system_program: System::id(),
         };
 
-        let instruction = make_instruction(program_id, &accounts, instruction);
+        let mut instruction = make_instruction(program_id, &accounts, instruction);
+
+        let mut vec_remainings: Vec<AccountMeta> = Vec::new();
+        for remaining in &self.remainings {
+            vec_remainings.push(AccountMeta {
+                pubkey: *remaining,
+                is_signer: false,
+                is_writable: true,
+            })
+        }
+        instruction.accounts.append(&mut vec_remainings);
         (accounts, instruction)
     }
 
