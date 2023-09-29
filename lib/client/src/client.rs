@@ -6,10 +6,12 @@ use anchor_client::Cluster;
 
 use anchor_lang::prelude::System;
 use anchor_lang::{AccountDeserialize, Id};
+use anchor_spl::associated_token::AssociatedToken;
 use anchor_spl::token::Token;
 
 use itertools::Itertools;
 
+use openbook_v2::state::OracleConfigParams;
 use openbook_v2::{
     state::{Market, OpenOrdersAccount, PlaceOrderType, SelfTradeBehavior, Side},
     PlaceOrderArgs, PlaceOrderPeggedArgs,
@@ -144,16 +146,11 @@ impl OpenBookClient {
 
     pub async fn create_open_orders_indexer(
         client: &Client,
-        market: Pubkey,
         owner: &Keypair,
         payer: &Keypair, // pays the SOL for the new account
     ) -> anyhow::Result<(Pubkey, Signature)> {
         let open_orders_indexer = Pubkey::find_program_address(
-            &[
-                b"OpenOrdersIndexer".as_ref(),
-                owner.pubkey().as_ref(),
-                market.as_ref(),
-            ],
+            &[b"OpenOrdersIndexer".as_ref(), owner.pubkey().as_ref()],
             &openbook_v2::id(),
         )
         .0;
@@ -165,7 +162,6 @@ impl OpenBookClient {
                     owner: owner.pubkey(),
                     open_orders_indexer,
                     payer: payer.pubkey(),
-                    market,
                     system_program: System::id(),
                 },
                 None,
@@ -296,6 +292,82 @@ impl OpenBookClient {
     pub async fn openorders_account(&self) -> anyhow::Result<OpenOrdersAccount> {
         account_fetcher_fetch_openorders_account(&*self.account_fetcher, &self.open_orders_account)
             .await
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    pub async fn create_market(
+        &self,
+        market: Pubkey,
+        market_authority: Pubkey,
+        bids: Pubkey,
+        asks: Pubkey,
+        event_heap: Pubkey,
+        base_mint: Pubkey,
+        quote_mint: Pubkey,
+        oracle_a: Option<Pubkey>,
+        oracle_b: Option<Pubkey>,
+        collect_fee_admin: Pubkey,
+        open_orders_admin: Option<Pubkey>,
+        consume_events_admin: Option<Pubkey>,
+        close_market_admin: Option<Pubkey>,
+        event_authority: Pubkey,
+        name: String,
+        oracle_config: OracleConfigParams,
+        base_lot_size: i64,
+        quote_lot_size: i64,
+        maker_fee: i64,
+        taker_fee: i64,
+        time_expiry: i64,
+    ) -> anyhow::Result<Signature> {
+        let ix = Instruction {
+            program_id: openbook_v2::id(),
+            accounts: {
+                anchor_lang::ToAccountMetas::to_account_metas(
+                    &openbook_v2::accounts::CreateMarket {
+                        market,
+                        market_authority,
+                        bids,
+                        asks,
+                        event_heap,
+                        payer: self.owner(),
+                        market_base_vault:
+                            spl_associated_token_account::get_associated_token_address(
+                                &market_authority,
+                                &base_mint,
+                            ),
+                        market_quote_vault:
+                            spl_associated_token_account::get_associated_token_address(
+                                &market_authority,
+                                &quote_mint,
+                            ),
+                        base_mint,
+                        quote_mint,
+                        system_program: solana_sdk::system_program::id(),
+                        oracle_a,
+                        oracle_b,
+                        collect_fee_admin,
+                        open_orders_admin,
+                        consume_events_admin,
+                        close_market_admin,
+                        event_authority,
+                        program: openbook_v2::id(),
+                        token_program: Token::id(),
+                        associated_token_program: AssociatedToken::id(),
+                    },
+                    None,
+                )
+            },
+            data: anchor_lang::InstructionData::data(&openbook_v2::instruction::CreateMarket {
+                name,
+                oracle_config,
+                base_lot_size,
+                quote_lot_size,
+                maker_fee,
+                taker_fee,
+                time_expiry,
+            }),
+        };
+        self.send_and_confirm_owner_tx(vec![ix]).await
     }
 
     #[allow(clippy::too_many_arguments)]

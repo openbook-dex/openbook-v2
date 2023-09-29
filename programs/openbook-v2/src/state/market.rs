@@ -89,20 +89,21 @@ pub struct Market {
     pub taker_fee: i64,
 
     /// Total fees accrued in native quote
-    pub fees_accrued: u64,
-    // Total fees settled in native quote
-    pub fees_to_referrers: u64,
-    // Total referrer rebates
+    pub fees_accrued: u128,
+    /// Total fees settled in native quote
+    pub fees_to_referrers: u128,
+
+    /// Referrer rebates to be distributed
     pub referrer_rebates_accrued: u64,
 
-    // Fees generated and available to withdraw via sweep_fees
+    /// Fees generated and available to withdraw via sweep_fees
     pub fees_available: u64,
 
     /// Cumulative maker volume (same as taker volume) in quote native units
-    pub maker_volume: u64,
+    pub maker_volume: u128,
 
     /// Cumulative taker volume in quote native units due to place take orders
-    pub taker_volume_wo_oo: u64,
+    pub taker_volume_wo_oo: u128,
 
     pub base_mint: Pubkey,
     pub quote_mint: Pubkey,
@@ -139,10 +140,10 @@ const_assert_eq!(
     8 +                         // registration_time
     8 +                         // maker_fee
     8 +                         // taker_fee
-    8 +                         // fees_accrued
-    8 +                         // fees_to_referrers
-    8 +                         // maker_volume
-    8 +                         // taker_volume_wo_oo
+    16 +                        // fees_accrued
+    16 +                        // fees_to_referrers
+    16 +                        // maker_volume
+    16 +                        // taker_volume_wo_oo
     4 * 32 +                    // base_mint, quote_mint, market_base_vault, and market_quote_vault
     8 +                         // base_deposit_total
     8 +                         // quote_deposit_total
@@ -150,7 +151,7 @@ const_assert_eq!(
     8 +                         // referrer_rebates_accrued
     128 // reserved
 );
-const_assert_eq!(size_of::<Market>(), 808);
+const_assert_eq!(size_of::<Market>(), 840);
 const_assert_eq!(size_of::<Market>() % 8, 0);
 
 impl Market {
@@ -173,6 +174,13 @@ impl Market {
 
     pub fn is_market_vault(&self, pubkey: Pubkey) -> bool {
         pubkey == self.market_quote_vault || pubkey == self.market_base_vault
+    }
+
+    pub fn get_vault_by_side(&self, side: Side) -> Pubkey {
+        match side {
+            Side::Ask => self.market_base_vault,
+            Side::Bid => self.market_quote_vault,
+        }
     }
 
     pub fn gen_order_id(&mut self, side: Side, price_data: u64) -> u128 {

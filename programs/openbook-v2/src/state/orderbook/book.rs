@@ -271,7 +271,7 @@ impl<'a> Orderbook<'a> {
 
                 // Only account taker fees now. Maker fees accounted once processing the event
                 referrer_amount = taker_fees - maker_rebates_acc;
-                market.fees_accrued += referrer_amount;
+                market.fees_accrued += referrer_amount as u128;
             };
 
             if let Some(open_orders_account) = &mut open_orders_account {
@@ -284,7 +284,7 @@ impl<'a> Orderbook<'a> {
                     referrer_amount,
                 );
             } else {
-                market.taker_volume_wo_oo += total_quote_taken_native;
+                market.taker_volume_wo_oo += total_quote_taken_native as u128;
             }
 
             let (total_quantity_paid, total_quantity_received) = match side {

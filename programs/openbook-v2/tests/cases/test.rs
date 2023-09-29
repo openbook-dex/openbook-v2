@@ -30,14 +30,6 @@ async fn test_simple_settle() -> Result<(), TransportError> {
     //
 
     let market_2 = TestKeypair::new();
-    let market_2_authority = get_market_address(market_2);
-
-    let market_base_vault_2 = solana
-        .create_associated_token_account(&market_2_authority, mints[0].pubkey)
-        .await;
-    let market_quote_vault_2 = solana
-        .create_associated_token_account(&market_2_authority, mints[1].pubkey)
-        .await;
 
     send_tx(
         solana,
@@ -53,8 +45,6 @@ async fn test_simple_settle() -> Result<(), TransportError> {
             taker_fee: 400,
             base_mint: mints[0].pubkey,
             quote_mint: mints[1].pubkey,
-            market_base_vault: market_base_vault_2,
-            market_quote_vault: market_quote_vault_2,
             ..CreateMarketInstruction::with_new_book_and_heap(solana, None, None).await
         },
     )

@@ -1247,9 +1247,10 @@ dependencies = [
 [[package]]
 name = "fixed"
 version = "1.11.0"
+source = "git+https://github.com/blockworks-foundation/fixed.git?branch=v1.11.0-borsh0_10-mango#01516ae3e29418feb066b67830540aa81d04df05"
 dependencies = [
  "az",
- "borsh 0.9.3",
+ "borsh 0.10.3",
  "bytemuck",
  "half",
  "serde",

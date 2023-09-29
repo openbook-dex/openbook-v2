@@ -1,4 +1,4 @@
-use crate::state::{Market, OpenOrdersIndexer};
+use crate::state::OpenOrdersIndexer;
 use anchor_lang::prelude::*;
 
 #[derive(Accounts)]
@@ -14,6 +14,5 @@ pub struct CreateOpenOrdersIndexer<'info> {
         space = OpenOrdersIndexer::space(0),
     )]
     pub open_orders_indexer: Account<'info, OpenOrdersIndexer>,
-    pub market: AccountLoader<'info, Market>,
     pub system_program: Program<'info, System>,
 }

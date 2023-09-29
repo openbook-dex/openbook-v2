@@ -323,8 +323,8 @@ fn run_fuzz(fuzz_data: FuzzData) -> Corpus {
             })
             .collect::<Vec<_>>();
 
-        let maker_volume_in_oo: u64 = positions.iter().map(|pos| pos.maker_volume).sum();
-        let taker_volume_in_oo: u64 = positions.iter().map(|pos| pos.taker_volume).sum();
+        let maker_volume_in_oo: u128 = positions.iter().map(|pos| pos.maker_volume).sum();
+        let taker_volume_in_oo: u128 = positions.iter().map(|pos| pos.taker_volume).sum();
 
         let market = ctx
             .state
@@ -411,7 +411,7 @@ fn run_fuzz(fuzz_data: FuzzData) -> Corpus {
         assert_eq!(market.quote_deposit_total, 0);
         assert_eq!(market.fees_available, 0);
         assert_eq!(market.referrer_rebates_accrued, 0);
-        assert_eq!(market.fees_to_referrers, referrers_balances);
+        assert_eq!(market.fees_to_referrers as u64, referrers_balances);
     }
 
     {

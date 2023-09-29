@@ -19,6 +19,8 @@ pub mod state;
 pub mod token_utils;
 pub mod types;
 
+mod i80f48;
+
 #[cfg(feature = "enable-gpl")]
 pub mod instructions;
 

@@ -43,6 +43,8 @@ pub enum OpenBookError {
     InvalidOpenOrdersAdmin,
     #[msg("The `consume_events_admin` required by this market to sign all instructions that consume events is missing or is not valid")]
     InvalidConsumeEventsAdmin,
+    #[msg("Provided `market_vault` is invalid")]
+    InvalidMarketVault,
 
     #[msg("Cannot be closed due to the existence of open orders accounts")]
     IndexerActiveOO,

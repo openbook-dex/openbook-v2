@@ -23,7 +23,7 @@ pub fn settle_funds<'info>(ctx: Context<'_, '_, '_, 'info, SettleFunds<'info>>) 
     let referrer_rebate = pa.referrer_rebates_available + roundoff_maker_fees;
 
     if ctx.accounts.referrer_account.is_some() {
-        market.fees_to_referrers += referrer_rebate;
+        market.fees_to_referrers += referrer_rebate as u128;
         market.quote_deposit_total -= referrer_rebate;
     } else {
         market.fees_available += referrer_rebate;
