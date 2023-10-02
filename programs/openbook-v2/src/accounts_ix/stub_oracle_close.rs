@@ -1,6 +1,5 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token::Token;
-use anchor_spl::token_interface::{TokenInterface, self};
+use anchor_spl::token_interface::TokenInterface;
 
 use crate::state::*;
 

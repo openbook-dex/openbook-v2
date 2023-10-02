@@ -4,7 +4,7 @@ use crate::accounts_ix::*;
 use crate::logs::SettleFundsLog;
 use crate::state::*;
 use crate::token_utils::*;
-use anchor_spl::token_interface::{TokenInterface, self, Mint, TokenAccount};
+use anchor_spl::token_interface::Mint;
 
 pub fn settle_funds<'info>(ctx: Context<'_, '_, '_, 'info, SettleFunds<'info>>) -> Result<()> {
     let mut open_orders_account = ctx.accounts.open_orders_account.load_mut()?;

@@ -27,9 +27,13 @@ To ensure compatibility with both the older token standard and the Token-2022 st
 
 For tokens adhering to the older standard, the token fee is set to 0 by default. This means that no token fee calculation occurs for transactions involving tokens conforming to this standard.
 
+We added the token_fee calculation logic in the `token_utils` file, located at `programs/openbook-v2/src/token_utils.rs`. 
+
 We believe these enhancements will provide a more robust and versatile experience for our users when working with different token standards.
 
-All tests so far have passed with these modifications
+
+
+### All tests so far have passed with these modifications
 
 
 ---

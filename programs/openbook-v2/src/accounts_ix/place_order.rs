@@ -3,7 +3,6 @@ use crate::error::OpenBookError;
 use crate::pubkey_option::NonZeroKey;
 use crate::state::*;
 use anchor_lang::prelude::*;
-use anchor_spl::token::{Token, TokenAccount};
 use anchor_spl::token_interface::{TokenInterface, self};
 
 #[derive(Accounts)]

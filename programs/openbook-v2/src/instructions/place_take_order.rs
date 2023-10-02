@@ -5,7 +5,7 @@ use crate::accounts_zerocopy::AccountInfoRef;
 use crate::error::*;
 use crate::state::*;
 use crate::token_utils::*;
-use anchor_spl::token_interface::{TokenInterface, self, Mint, TokenAccount};
+use anchor_spl::token_interface::Mint;
 
 #[allow(clippy::too_many_arguments)]
 pub fn place_take_order<'info>(

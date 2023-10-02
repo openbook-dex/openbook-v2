@@ -1,18 +1,13 @@
 use super::*;
 use anchor_lang::system_program;
 use anchor_spl::token::Token;
-use anchor_spl::token_2022;
-use anchor_spl::token;
 use anchor_spl::token_interface;
 use spl_token_2022::{
-    processor::Processor,
     check_spl_token_program_account,
-    error::TokenError,
     extension::{
-        BaseStateWithExtensions, mint_close_authority::MintCloseAuthority,
-        StateWithExtensions, transfer_fee::TransferFeeConfig,
+        BaseStateWithExtensions, StateWithExtensions, transfer_fee::TransferFeeConfig,
     },
-    state::{Account, Mint},
+    state::Mint,
 };
 
 pub fn token_transfer<
