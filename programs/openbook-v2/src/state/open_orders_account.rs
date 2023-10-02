@@ -3,9 +3,9 @@ use derivative::Derivative;
 use static_assertions::const_assert_eq;
 use std::mem::size_of;
 
-use crate::error::*;
 use crate::logs::FillLog;
 use crate::pubkey_option::NonZeroPubkeyOption;
+use crate::{error::*, logs::OpenOrdersPositionLog};
 
 use super::{BookSideOrderTree, FillEvent, LeafNode, Market, Side, SideAndOrderTree};
 
@@ -148,32 +148,34 @@ impl OpenOrdersAccount {
             locked_amount_above_fill_price = quote_to_free + maker_fees_to_free;
         }
 
-        let pa = &mut self.position;
+        {
+            let pa = &mut self.position;
 
-        match side {
-            Side::Bid => {
-                pa.base_free_native += (fill.quantity * market.base_lot_size) as u64;
-                pa.quote_free_native += maker_rebate + locked_amount_above_fill_price;
-                pa.locked_maker_fees -= locked_maker_fees;
-            }
-            Side::Ask => {
-                pa.quote_free_native += quote_native + maker_rebate - maker_fees;
-            }
-        };
-
-        pa.maker_volume += quote_native as u128;
-        pa.referrer_rebates_available += maker_fees;
-        market.referrer_rebates_accrued += maker_fees;
-        market.maker_volume += quote_native as u128;
-        market.fees_accrued += maker_fees as u128;
-
-        if fill.maker_out() {
-            self.remove_order(fill.maker_slot as usize, fill.quantity);
-        } else {
             match side {
-                Side::Bid => pa.bids_base_lots -= fill.quantity,
-                Side::Ask => pa.asks_base_lots -= fill.quantity,
+                Side::Bid => {
+                    pa.base_free_native += (fill.quantity * market.base_lot_size) as u64;
+                    pa.quote_free_native += maker_rebate + locked_amount_above_fill_price;
+                    pa.locked_maker_fees -= locked_maker_fees;
+                }
+                Side::Ask => {
+                    pa.quote_free_native += quote_native + maker_rebate - maker_fees;
+                }
             };
+
+            pa.maker_volume += quote_native as u128;
+            pa.referrer_rebates_available += maker_fees;
+            market.referrer_rebates_accrued += maker_fees;
+            market.maker_volume += quote_native as u128;
+            market.fees_accrued += maker_fees as u128;
+
+            if fill.maker_out() {
+                self.remove_order(fill.maker_slot as usize, fill.quantity);
+            } else {
+                match side {
+                    Side::Bid => pa.bids_base_lots -= fill.quantity,
+                    Side::Ask => pa.asks_base_lots -= fill.quantity,
+                };
+            }
         }
 
         emit!(FillLog {
@@ -193,6 +195,21 @@ impl OpenOrdersAccount {
             price: fill.price,
             quantity: fill.quantity,
         });
+
+        let pa = &self.position;
+        emit!(OpenOrdersPositionLog {
+            owner: self.owner,
+            open_orders_account_num: self.account_num,
+            market: self.market,
+            bids_base_lots: pa.bids_base_lots,
+            asks_base_lots: pa.asks_base_lots,
+            base_free_native: pa.base_free_native,
+            quote_free_native: pa.quote_free_native,
+            locked_maker_fees: pa.locked_maker_fees,
+            referrer_rebates_available: pa.referrer_rebates_available,
+            maker_volume: pa.maker_volume,
+            taker_volume: pa.taker_volume
+        })
     }
 
     /// Release funds and apply taker fees to the taker account. Account fees for referrer
@@ -214,6 +231,20 @@ impl OpenOrdersAccount {
         pa.taker_volume += quote_native as u128;
         pa.referrer_rebates_available += referrer_amount;
         market.referrer_rebates_accrued += referrer_amount;
+
+        emit!(OpenOrdersPositionLog {
+            owner: self.owner,
+            open_orders_account_num: self.account_num,
+            market: self.market,
+            bids_base_lots: pa.bids_base_lots,
+            asks_base_lots: pa.asks_base_lots,
+            base_free_native: pa.base_free_native,
+            quote_free_native: pa.quote_free_native,
+            locked_maker_fees: pa.locked_maker_fees,
+            referrer_rebates_available: pa.referrer_rebates_available,
+            maker_volume: pa.maker_volume,
+            taker_volume: pa.taker_volume
+        })
     }
 
     pub fn add_order(

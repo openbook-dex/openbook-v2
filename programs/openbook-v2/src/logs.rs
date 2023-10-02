@@ -75,3 +75,22 @@ pub struct SweepFeesLog {
     pub amount: u64,
     pub receiver: Pubkey,
 }
+
+#[event]
+pub struct OpenOrdersPositionLog {
+    pub owner: Pubkey,
+    pub open_orders_account_num: u32,
+    pub market: Pubkey,
+    /// Base lots in open bids
+    pub bids_base_lots: i64,
+    /// Base lots in open asks
+    pub asks_base_lots: i64,
+    pub base_free_native: u64,
+    pub quote_free_native: u64,
+    pub locked_maker_fees: u64,
+    pub referrer_rebates_available: u64,
+    /// Cumulative maker volume in quote native units (display only)
+    pub maker_volume: u128,
+    /// Cumulative taker volume in quote native units (display only)
+    pub taker_volume: u128,
+}
