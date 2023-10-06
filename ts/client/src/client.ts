@@ -362,7 +362,6 @@ export class OpenBookV2Client {
         code: 403,
       });
     }
-    accountIndex = accountIndex.add(new BN(1));
     const openOrders = this.findOpenOrders(market, accountIndex);
 
     const ix = await this.program.methods
