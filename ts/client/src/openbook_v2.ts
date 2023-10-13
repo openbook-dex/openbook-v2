@@ -44,12 +44,12 @@ export interface OpenbookV2 {
         },
         {
           name: 'marketBaseVault';
-          isMut: false;
+          isMut: true;
           isSigner: false;
         },
         {
           name: 'marketQuoteVault';
-          isMut: false;
+          isMut: true;
           isSigner: false;
         },
         {
@@ -64,6 +64,16 @@ export interface OpenbookV2 {
         },
         {
           name: 'systemProgram';
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: 'tokenProgram';
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: 'associatedTokenProgram';
           isMut: false;
           isSigner: false;
         },
@@ -210,11 +220,6 @@ export interface OpenbookV2 {
         {
           name: 'openOrdersIndexer';
           isMut: true;
-          isSigner: false;
-        },
-        {
-          name: 'market';
-          isMut: false;
           isSigner: false;
         },
         {
@@ -1734,18 +1739,21 @@ export interface OpenbookV2 {
           {
             name: 'feesAccrued';
             docs: ['Total fees accrued in native quote'];
-            type: 'u64';
+            type: 'u128';
           },
           {
             name: 'feesToReferrers';
-            type: 'u64';
+            docs: ['Total fees settled in native quote'];
+            type: 'u128';
           },
           {
             name: 'referrerRebatesAccrued';
+            docs: ['Referrer rebates to be distributed'];
             type: 'u64';
           },
           {
             name: 'feesAvailable';
+            docs: ['Fees generated and available to withdraw via sweep_fees'];
             type: 'u64';
           },
           {
@@ -1753,14 +1761,14 @@ export interface OpenbookV2 {
             docs: [
               'Cumulative maker volume (same as taker volume) in quote native units',
             ];
-            type: 'u64';
+            type: 'u128';
           },
           {
             name: 'takerVolumeWoOo';
             docs: [
               'Cumulative taker volume in quote native units due to place take orders',
             ];
-            type: 'u64';
+            type: 'u128';
           },
           {
             name: 'baseMint';
@@ -2053,19 +2061,19 @@ export interface OpenbookV2 {
             docs: [
               'Cumulative maker volume in quote native units (display only)',
             ];
-            type: 'u64';
+            type: 'u128';
           },
           {
             name: 'takerVolume';
             docs: [
               'Cumulative taker volume in quote native units (display only)',
             ];
-            type: 'u64';
+            type: 'u128';
           },
           {
             name: 'reserved';
             type: {
-              array: ['u8', 88];
+              array: ['u8', 72];
             };
           },
         ];
@@ -3226,6 +3234,66 @@ export interface OpenbookV2 {
         },
       ];
     },
+    {
+      name: 'OpenOrdersPositionLog';
+      fields: [
+        {
+          name: 'owner';
+          type: 'publicKey';
+          index: false;
+        },
+        {
+          name: 'openOrdersAccountNum';
+          type: 'u32';
+          index: false;
+        },
+        {
+          name: 'market';
+          type: 'publicKey';
+          index: false;
+        },
+        {
+          name: 'bidsBaseLots';
+          type: 'i64';
+          index: false;
+        },
+        {
+          name: 'asksBaseLots';
+          type: 'i64';
+          index: false;
+        },
+        {
+          name: 'baseFreeNative';
+          type: 'u64';
+          index: false;
+        },
+        {
+          name: 'quoteFreeNative';
+          type: 'u64';
+          index: false;
+        },
+        {
+          name: 'lockedMakerFees';
+          type: 'u64';
+          index: false;
+        },
+        {
+          name: 'referrerRebatesAvailable';
+          type: 'u64';
+          index: false;
+        },
+        {
+          name: 'makerVolume';
+          type: 'u128';
+          index: false;
+        },
+        {
+          name: 'takerVolume';
+          type: 'u128';
+          index: false;
+        },
+      ];
+    },
   ];
   errors: [
     {
@@ -3325,116 +3393,121 @@ export interface OpenbookV2 {
     },
     {
       code: 6019;
+      name: 'InvalidMarketVault';
+      msg: 'Provided `market_vault` is invalid';
+    },
+    {
+      code: 6020;
       name: 'IndexerActiveOO';
       msg: 'Cannot be closed due to the existence of open orders accounts';
     },
     {
-      code: 6020;
+      code: 6021;
       name: 'OraclePegInvalidOracleState';
       msg: 'Cannot place a peg order due to invalid oracle state';
     },
     {
-      code: 6021;
+      code: 6022;
       name: 'UnknownOracleType';
       msg: 'oracle type cannot be determined';
     },
     {
-      code: 6022;
+      code: 6023;
       name: 'OracleConfidence';
       msg: 'an oracle does not reach the confidence threshold';
     },
     {
-      code: 6023;
+      code: 6024;
       name: 'OracleStale';
       msg: 'an oracle is stale';
     },
     {
-      code: 6024;
+      code: 6025;
       name: 'OrderIdNotFound';
       msg: 'Order id not found on the orderbook';
     },
     {
-      code: 6025;
+      code: 6026;
       name: 'EventHeapContainsElements';
       msg: "Event heap contains elements and market can't be closed";
     },
     {
-      code: 6026;
+      code: 6027;
       name: 'InvalidOrderPostIOC';
       msg: 'ImmediateOrCancel is not a PostOrderType';
     },
     {
-      code: 6027;
+      code: 6028;
       name: 'InvalidOrderPostMarket';
       msg: 'Market is not a PostOrderType';
     },
     {
-      code: 6028;
+      code: 6029;
       name: 'WouldSelfTrade';
       msg: 'would self trade';
     },
     {
-      code: 6029;
+      code: 6030;
       name: 'MarketHasExpired';
       msg: 'The Market has already expired.';
     },
     {
-      code: 6030;
+      code: 6031;
       name: 'InvalidPriceLots';
       msg: 'Price lots should be greater than zero';
     },
     {
-      code: 6031;
+      code: 6032;
       name: 'InvalidOraclePrice';
       msg: 'Oracle price above market limits';
     },
     {
-      code: 6032;
+      code: 6033;
       name: 'MarketHasNotExpired';
       msg: 'The Market has not expired yet.';
     },
     {
-      code: 6033;
+      code: 6034;
       name: 'NoOwnerOrDelegate';
       msg: 'No correct owner or delegate.';
     },
     {
-      code: 6034;
+      code: 6035;
       name: 'NoOwner';
       msg: 'No correct owner';
     },
     {
-      code: 6035;
+      code: 6036;
       name: 'OpenOrdersFull';
       msg: 'No free order index in open orders account';
     },
     {
-      code: 6036;
+      code: 6037;
       name: 'BookContainsElements';
       msg: 'Book contains elements';
     },
     {
-      code: 6037;
+      code: 6038;
       name: 'OpenOrdersOrderNotFound';
       msg: 'Could not find order in user account';
     },
     {
-      code: 6038;
+      code: 6039;
       name: 'InvalidPostAmount';
       msg: 'Amount to post above book limits';
     },
     {
-      code: 6039;
+      code: 6040;
       name: 'DisabledOraclePeg';
       msg: 'Oracle peg orders are not enabled for this market';
     },
     {
-      code: 6040;
+      code: 6041;
       name: 'NonEmptyMarket';
       msg: 'Cannot close a non-empty market';
     },
     {
-      code: 6041;
+      code: 6042;
       name: 'NonEmptyOpenOrdersPosition';
       msg: 'Cannot close a non-empty open orders account';
     },
@@ -3487,12 +3560,12 @@ export const IDL: OpenbookV2 = {
         },
         {
           name: 'marketBaseVault',
-          isMut: false,
+          isMut: true,
           isSigner: false,
         },
         {
           name: 'marketQuoteVault',
-          isMut: false,
+          isMut: true,
           isSigner: false,
         },
         {
@@ -3507,6 +3580,16 @@ export const IDL: OpenbookV2 = {
         },
         {
           name: 'systemProgram',
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: 'tokenProgram',
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: 'associatedTokenProgram',
           isMut: false,
           isSigner: false,
         },
@@ -3653,11 +3736,6 @@ export const IDL: OpenbookV2 = {
         {
           name: 'openOrdersIndexer',
           isMut: true,
-          isSigner: false,
-        },
-        {
-          name: 'market',
-          isMut: false,
           isSigner: false,
         },
         {
@@ -5177,18 +5255,21 @@ export const IDL: OpenbookV2 = {
           {
             name: 'feesAccrued',
             docs: ['Total fees accrued in native quote'],
-            type: 'u64',
+            type: 'u128',
           },
           {
             name: 'feesToReferrers',
-            type: 'u64',
+            docs: ['Total fees settled in native quote'],
+            type: 'u128',
           },
           {
             name: 'referrerRebatesAccrued',
+            docs: ['Referrer rebates to be distributed'],
             type: 'u64',
           },
           {
             name: 'feesAvailable',
+            docs: ['Fees generated and available to withdraw via sweep_fees'],
             type: 'u64',
           },
           {
@@ -5196,14 +5277,14 @@ export const IDL: OpenbookV2 = {
             docs: [
               'Cumulative maker volume (same as taker volume) in quote native units',
             ],
-            type: 'u64',
+            type: 'u128',
           },
           {
             name: 'takerVolumeWoOo',
             docs: [
               'Cumulative taker volume in quote native units due to place take orders',
             ],
-            type: 'u64',
+            type: 'u128',
           },
           {
             name: 'baseMint',
@@ -5496,19 +5577,19 @@ export const IDL: OpenbookV2 = {
             docs: [
               'Cumulative maker volume in quote native units (display only)',
             ],
-            type: 'u64',
+            type: 'u128',
           },
           {
             name: 'takerVolume',
             docs: [
               'Cumulative taker volume in quote native units (display only)',
             ],
-            type: 'u64',
+            type: 'u128',
           },
           {
             name: 'reserved',
             type: {
-              array: ['u8', 88],
+              array: ['u8', 72],
             },
           },
         ],
@@ -6669,6 +6750,66 @@ export const IDL: OpenbookV2 = {
         },
       ],
     },
+    {
+      name: 'OpenOrdersPositionLog',
+      fields: [
+        {
+          name: 'owner',
+          type: 'publicKey',
+          index: false,
+        },
+        {
+          name: 'openOrdersAccountNum',
+          type: 'u32',
+          index: false,
+        },
+        {
+          name: 'market',
+          type: 'publicKey',
+          index: false,
+        },
+        {
+          name: 'bidsBaseLots',
+          type: 'i64',
+          index: false,
+        },
+        {
+          name: 'asksBaseLots',
+          type: 'i64',
+          index: false,
+        },
+        {
+          name: 'baseFreeNative',
+          type: 'u64',
+          index: false,
+        },
+        {
+          name: 'quoteFreeNative',
+          type: 'u64',
+          index: false,
+        },
+        {
+          name: 'lockedMakerFees',
+          type: 'u64',
+          index: false,
+        },
+        {
+          name: 'referrerRebatesAvailable',
+          type: 'u64',
+          index: false,
+        },
+        {
+          name: 'makerVolume',
+          type: 'u128',
+          index: false,
+        },
+        {
+          name: 'takerVolume',
+          type: 'u128',
+          index: false,
+        },
+      ],
+    },
   ],
   errors: [
     {
@@ -6768,116 +6909,121 @@ export const IDL: OpenbookV2 = {
     },
     {
       code: 6019,
+      name: 'InvalidMarketVault',
+      msg: 'Provided `market_vault` is invalid',
+    },
+    {
+      code: 6020,
       name: 'IndexerActiveOO',
       msg: 'Cannot be closed due to the existence of open orders accounts',
     },
     {
-      code: 6020,
+      code: 6021,
       name: 'OraclePegInvalidOracleState',
       msg: 'Cannot place a peg order due to invalid oracle state',
     },
     {
-      code: 6021,
+      code: 6022,
       name: 'UnknownOracleType',
       msg: 'oracle type cannot be determined',
     },
     {
-      code: 6022,
+      code: 6023,
       name: 'OracleConfidence',
       msg: 'an oracle does not reach the confidence threshold',
     },
     {
-      code: 6023,
+      code: 6024,
       name: 'OracleStale',
       msg: 'an oracle is stale',
     },
     {
-      code: 6024,
+      code: 6025,
       name: 'OrderIdNotFound',
       msg: 'Order id not found on the orderbook',
     },
     {
-      code: 6025,
+      code: 6026,
       name: 'EventHeapContainsElements',
       msg: "Event heap contains elements and market can't be closed",
     },
     {
-      code: 6026,
+      code: 6027,
       name: 'InvalidOrderPostIOC',
       msg: 'ImmediateOrCancel is not a PostOrderType',
     },
     {
-      code: 6027,
+      code: 6028,
       name: 'InvalidOrderPostMarket',
       msg: 'Market is not a PostOrderType',
     },
     {
-      code: 6028,
+      code: 6029,
       name: 'WouldSelfTrade',
       msg: 'would self trade',
     },
     {
-      code: 6029,
+      code: 6030,
       name: 'MarketHasExpired',
       msg: 'The Market has already expired.',
     },
     {
-      code: 6030,
+      code: 6031,
       name: 'InvalidPriceLots',
       msg: 'Price lots should be greater than zero',
     },
     {
-      code: 6031,
+      code: 6032,
       name: 'InvalidOraclePrice',
       msg: 'Oracle price above market limits',
     },
     {
-      code: 6032,
+      code: 6033,
       name: 'MarketHasNotExpired',
       msg: 'The Market has not expired yet.',
     },
     {
-      code: 6033,
+      code: 6034,
       name: 'NoOwnerOrDelegate',
       msg: 'No correct owner or delegate.',
     },
     {
-      code: 6034,
+      code: 6035,
       name: 'NoOwner',
       msg: 'No correct owner',
     },
     {
-      code: 6035,
+      code: 6036,
       name: 'OpenOrdersFull',
       msg: 'No free order index in open orders account',
     },
     {
-      code: 6036,
+      code: 6037,
       name: 'BookContainsElements',
       msg: 'Book contains elements',
     },
     {
-      code: 6037,
+      code: 6038,
       name: 'OpenOrdersOrderNotFound',
       msg: 'Could not find order in user account',
     },
     {
-      code: 6038,
+      code: 6039,
       name: 'InvalidPostAmount',
       msg: 'Amount to post above book limits',
     },
     {
-      code: 6039,
+      code: 6040,
       name: 'DisabledOraclePeg',
       msg: 'Oracle peg orders are not enabled for this market',
     },
     {
-      code: 6040,
+      code: 6041,
       name: 'NonEmptyMarket',
       msg: 'Cannot close a non-empty market',
     },
     {
-      code: 6041,
+      code: 6042,
       name: 'NonEmptyOpenOrdersPosition',
       msg: 'Cannot close a non-empty open orders account',
     },
