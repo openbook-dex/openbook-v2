@@ -336,7 +336,7 @@ export class OpenBookV2Client {
     market: PublicKey,
     accountIndex: BN,
     openOrdersIndexer?: PublicKey,
-  ): Promise<TransactionSignature> {
+  ): Promise<PublicKey> {
     if (openOrdersIndexer == null) {
       openOrdersIndexer = this.findOpenOrdersIndexer();
       try {
@@ -370,7 +370,9 @@ export class OpenBookV2Client {
       })
       .instruction();
 
-    return await this.sendAndConfirmTransaction([ix]);
+    await this.sendAndConfirmTransaction([ix]);
+
+    return openOrders;
   }
 
   public async deposit(
