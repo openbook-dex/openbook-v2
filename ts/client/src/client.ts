@@ -294,7 +294,7 @@ export class OpenBookV2Client {
     });
   }
 
-  public findOpenOrdersIndexer(market: PublicKey): PublicKey {
+  public findOpenOrdersIndexer(): PublicKey {
     const [openOrdersIndexer] = PublicKey.findProgramAddressSync(
       [Buffer.from('OpenOrdersIndexer'), this.walletPk.toBuffer()],
       this.programId,
@@ -303,14 +303,12 @@ export class OpenBookV2Client {
   }
 
   public async createOpenOrdersIndexer(
-    market: PublicKey,
     openOrdersIndexer: PublicKey,
   ): Promise<TransactionSignature> {
     const ix = await this.program.methods
       .createOpenOrdersIndexer()
       .accounts({
         openOrdersIndexer,
-        market,
         owner: this.walletPk,
         payer: this.walletPk,
         systemProgram: SystemProgram.programId,
@@ -339,19 +337,17 @@ export class OpenBookV2Client {
     openOrdersIndexer?: PublicKey,
   ): Promise<TransactionSignature> {
     if (openOrdersIndexer == null) {
-      openOrdersIndexer = this.findOpenOrdersIndexer(market);
+      openOrdersIndexer = this.findOpenOrdersIndexer();
       try {
         const acc = await this.connection.getAccountInfo(openOrdersIndexer);
         if (acc == null) {
           const tx = await this.createOpenOrdersIndexer(
-            market,
             openOrdersIndexer,
           );
           console.log('Created open orders indexer', tx);
         }
       } catch {
         const tx = await this.createOpenOrdersIndexer(
-          market,
           openOrdersIndexer,
         );
         console.log('Created open orders indexer', tx);
