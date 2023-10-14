@@ -224,7 +224,7 @@ export class OpenBookV2Client {
       maxStalenessSlots: 100,
     },
     collectFeeAdmin?: PublicKey,
-  ): Promise<string> {
+  ): Promise<PublicKey> {
     const bids = await this.createProgramAccount(payer, BooksideSpace);
     const asks = await this.createProgramAccount(payer, BooksideSpace);
     const eventHeap = await this.createProgramAccount(payer, EventHeapSpace);
@@ -288,9 +288,11 @@ export class OpenBookV2Client {
       })
       .instruction();
 
-    return await this.sendAndConfirmTransaction([ix], {
+    await this.sendAndConfirmTransaction([ix], {
       additionalSigners: [payer, market],
     });
+
+    return market.publicKey;
   }
 
   public findOpenOrdersIndexer(): PublicKey {
