@@ -223,13 +223,13 @@ export class OpenBookV2Client {
       confFilter: 0.1,
       maxStalenessSlots: 100,
     },
+    market = Keypair.generate(),
     collectFeeAdmin?: PublicKey,
   ): Promise<PublicKey> {
     const bids = await this.createProgramAccount(payer, BooksideSpace);
     const asks = await this.createProgramAccount(payer, BooksideSpace);
     const eventHeap = await this.createProgramAccount(payer, EventHeapSpace);
 
-    const market = Keypair.generate();
     const [marketAuthority] = PublicKey.findProgramAddressSync(
       [Buffer.from('Market'), market.publicKey.toBuffer()],
       this.program.programId,
