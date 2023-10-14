@@ -28,7 +28,6 @@ import {
   type TransactionSignature,
   Transaction,
 } from '@solana/web3.js';
-import * as splToken from '@solana/spl-token';
 import { IDL, type OpenbookV2 } from './openbook_v2';
 import { sendTransaction } from './utils/rpc';
 import { Side } from './utils/utils';
@@ -341,15 +340,11 @@ export class OpenBookV2Client {
       try {
         const acc = await this.connection.getAccountInfo(openOrdersIndexer);
         if (acc == null) {
-          const tx = await this.createOpenOrdersIndexer(
-            openOrdersIndexer,
-          );
+          const tx = await this.createOpenOrdersIndexer(openOrdersIndexer);
           console.log('Created open orders indexer', tx);
         }
       } catch {
-        const tx = await this.createOpenOrdersIndexer(
-          openOrdersIndexer,
-        );
+        const tx = await this.createOpenOrdersIndexer(openOrdersIndexer);
         console.log('Created open orders indexer', tx);
       }
     }
