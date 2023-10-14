@@ -10,9 +10,11 @@ import {
   MintLayout,
   NATIVE_MINT,
   type RawMint,
+  ASSOCIATED_TOKEN_PROGRAM_ID,
   TOKEN_PROGRAM_ID,
   createCloseAccountInstruction,
   createInitializeAccount3Instruction,
+  getAssociatedTokenAddressSync,
 } from '@solana/spl-token';
 import {
   type AccountInfo,
@@ -234,20 +236,16 @@ export class OpenBookV2Client {
       this.program.programId,
     );
 
-    const baseVault = await splToken.createAccount(
-      this.connection,
-      payer,
+    const baseVault = getAssociatedTokenAddressSync(
       baseMint,
       marketAuthority,
-      Keypair.generate(),
+      true,
     );
 
-    const quoteVault = await splToken.createAccount(
-      this.connection,
-      payer,
+    const quoteVault = getAssociatedTokenAddressSync(
       quoteMint,
       marketAuthority,
-      Keypair.generate(),
+      true,
     );
 
     const [eventAuthority] = PublicKey.findProgramAddressSync(
@@ -268,8 +266,6 @@ export class OpenBookV2Client {
       .accounts({
         market: market.publicKey,
         marketAuthority,
-        oracleA,
-        oracleB,
         bids,
         asks,
         eventHeap,
@@ -279,13 +275,17 @@ export class OpenBookV2Client {
         baseMint,
         quoteMint,
         systemProgram: SystemProgram.programId,
-        eventAuthority,
-        program: this.programId,
+        tokenProgram: TOKEN_PROGRAM_ID,
+        associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+        oracleA,
+        oracleB,
         collectFeeAdmin:
           collectFeeAdmin != null ? collectFeeAdmin : payer.publicKey,
         openOrdersAdmin,
         consumeEventsAdmin,
         closeMarketAdmin,
+        eventAuthority,
+        program: this.programId,
       })
       .instruction();
 
