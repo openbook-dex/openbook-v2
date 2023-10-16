@@ -40,6 +40,12 @@ pub struct SettleFunds<'info> {
         token::mint = market_quote_vault.mint
     )]
     pub referrer_account: Option<Box<InterfaceAccount<'info, token_interface::TokenAccount>>>,
+
+    #[account(mut)]
+    pub base_mint: Box<InterfaceAccount<'info, token_interface::Mint>>,
+    #[account(mut)]
+    pub quote_mint: Box<InterfaceAccount<'info, token_interface::Mint>>,
+    
     pub base_token_program: Interface<'info, TokenInterface>,
     pub quote_token_program: Interface<'info, TokenInterface>,
     pub system_program: Program<'info, System>,

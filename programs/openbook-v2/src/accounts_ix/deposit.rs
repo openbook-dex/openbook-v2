@@ -32,6 +32,11 @@ pub struct Deposit<'info> {
     #[account(mut)]
     pub market_quote_vault: InterfaceAccount<'info, token_interface::TokenAccount>,
 
+    #[account(mut)]
+    pub base_mint: Box<InterfaceAccount<'info, token_interface::Mint>>,
+    #[account(mut)]
+    pub quote_mint: Box<InterfaceAccount<'info, token_interface::Mint>>,
+
     pub base_token_program: Interface<'info, TokenInterface>,
 
     pub quote_token_program: Interface<'info, TokenInterface>,

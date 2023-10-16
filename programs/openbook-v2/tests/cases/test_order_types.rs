@@ -38,6 +38,7 @@ async fn test_inmediate_order() -> Result<(), TransportError> {
             signer: owner,
             user_token_account: owner_token_1,
             market_vault: market_quote_vault,
+            mint: mints[1].pubkey,
             side: Side::Bid,
             price_lots,
             max_base_lots: 1,
@@ -47,7 +48,7 @@ async fn test_inmediate_order() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings: vec![mints[0].pubkey, mints[1].pubkey],
+            remainings:vec![],
         },
     )
     .await
@@ -65,6 +66,7 @@ async fn test_inmediate_order() -> Result<(), TransportError> {
             signer: owner,
             user_token_account: owner_token_0,
             market_vault: market_base_vault,
+            mint: mints[0].pubkey,
             side: Side::Ask,
             price_lots,
             max_base_lots: 2,
@@ -74,7 +76,7 @@ async fn test_inmediate_order() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::ImmediateOrCancel,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings: vec![mints[0].pubkey, mints[1].pubkey],
+            remainings:vec![],
         },
     )
     .await
@@ -137,8 +139,10 @@ async fn test_inmediate_order() -> Result<(), TransportError> {
             market_quote_vault,
             user_base_account: owner_token_0,
             user_quote_account: owner_token_1,
+            base_mint: mints[0].pubkey,
+            quote_mint: mints[1].pubkey,
             referrer_account: None,
-            remainings: vec![mints[0].pubkey, mints[1].pubkey],
+            remainings:vec![],
         },
     )
     .await
@@ -160,6 +164,7 @@ async fn test_inmediate_order() -> Result<(), TransportError> {
             signer: owner,
             user_token_account: owner_token_1,
             market_vault: market_quote_vault,
+            mint: mints[1].pubkey,
             side: Side::Bid,
             price_lots,
             max_base_lots: 1,
@@ -169,7 +174,7 @@ async fn test_inmediate_order() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings: vec![mints[0].pubkey, mints[1].pubkey],
+            remainings:vec![],
         },
     )
     .await
@@ -188,6 +193,7 @@ async fn test_inmediate_order() -> Result<(), TransportError> {
             signer: owner,
             user_token_account: owner_token_0,
             market_vault: market_base_vault,
+            mint: mints[0].pubkey,
             side: Side::Ask,
             price_lots,
             max_base_lots: 1,
@@ -197,7 +203,7 @@ async fn test_inmediate_order() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::PostOnly,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings: vec![mints[0].pubkey, mints[1].pubkey],
+            remainings:vec![],
         },
     )
     .await
@@ -235,6 +241,7 @@ async fn test_inmediate_order() -> Result<(), TransportError> {
             signer: owner,
             user_token_account: owner_token_0,
             market_vault: market_base_vault,
+            mint: mints[0].pubkey,
             side: Side::Ask,
             price_lots: price_lots_2,
             max_base_lots: 1,
@@ -244,7 +251,7 @@ async fn test_inmediate_order() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::PostOnly,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings: vec![mints[0].pubkey, mints[1].pubkey],
+            remainings:vec![],
         },
     )
     .await
@@ -281,6 +288,7 @@ async fn test_inmediate_order() -> Result<(), TransportError> {
             signer: owner,
             user_token_account: owner_token_0,
             market_vault: market_base_vault,
+            mint: mints[0].pubkey,
             side: Side::Ask,
             price_lots,
             max_base_lots: 1,
@@ -290,7 +298,7 @@ async fn test_inmediate_order() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::PostOnlySlide,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings: vec![mints[0].pubkey, mints[1].pubkey],
+            remainings:vec![],
         },
     )
     .await

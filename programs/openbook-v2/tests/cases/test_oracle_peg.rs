@@ -26,13 +26,14 @@ async fn test_oracle_peg_enabled() -> Result<(), TransportError> {
             signer: owner,
             user_token_account: owner_token_1,
             market_vault: market_quote_vault,
+            mint: mints[1].pubkey,
             side: Side::Bid,
             price_offset: -1,
             peg_limit: 100,
             max_base_lots: 1,
             max_quote_lots_including_fees: 100_000,
             client_order_id: 0,
-            remainings: vec![mints[0].pubkey, mints[1].pubkey],
+            remainings:vec![],
         },
     )
     .await
@@ -65,13 +66,14 @@ async fn test_oracle_peg_invalid_oracle() -> Result<(), TransportError> {
             signer: owner,
             user_token_account: owner_token_1,
             market_vault: market_quote_vault,
+            mint: mints[1].pubkey,
             side: Side::Bid,
             price_offset: -1,
             peg_limit: 100,
             max_base_lots: 1,
             max_quote_lots_including_fees: 100_000,
             client_order_id: 0,
-            remainings: vec![mints[0].pubkey, mints[1].pubkey],
+            remainings:vec![],
         },
     )
     .await
@@ -122,13 +124,14 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
         signer: owner,
         user_token_account: owner_token_1,
         market_vault: market_quote_vault,
+        mint: mints[1].pubkey,
         side: Side::Bid,
         price_offset: -1,
         peg_limit: 1,
         max_base_lots: 1,
         max_quote_lots_including_fees: 100_000,
         client_order_id: 0,
-        remainings: vec![mints[0].pubkey, mints[1].pubkey],
+        remainings:vec![],
     };
 
     // posting invalid orderes by peg_limit are skipped
@@ -183,13 +186,14 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
             signer: owner,
             user_token_account: owner_token_1,
             market_vault: market_quote_vault,
+            mint: mints[1].pubkey,
             side: Side::Bid,
             price_offset: 0,
             peg_limit: price_lots,
             max_base_lots: 2,
             max_quote_lots_including_fees,
             client_order_id: 5,
-            remainings: vec![mints[0].pubkey, mints[1].pubkey],
+            remainings:vec![],
         },
     )
     .await
@@ -215,6 +219,7 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
             signer: owner,
             user_token_account: owner_token_0,
             market_vault: market_base_vault,
+            mint: mints[0].pubkey,
             side: Side::Ask,
             price_lots,
             max_base_lots: 1,
@@ -223,7 +228,7 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings: vec![mints[0].pubkey, mints[1].pubkey],
+            remainings:vec![],
         },
     )
     .await
@@ -237,13 +242,14 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
             signer: owner,
             user_token_account: owner_token_0,
             market_vault: market_base_vault,
+            mint: mints[0].pubkey,
             side: Side::Ask,
             price_offset: 0,
             peg_limit: price_lots,
             max_base_lots: 1,
             max_quote_lots_including_fees: 100_000,
             client_order_id: 7,
-            remainings: vec![mints[0].pubkey, mints[1].pubkey],
+            remainings:vec![],
         },
     )
     .await
@@ -271,13 +277,14 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
             signer: owner,
             user_token_account: owner_token_1,
             market_vault: market_quote_vault,
+            mint: mints[1].pubkey,
             side: Side::Bid,
             price_offset: -1,
             peg_limit: 1,
             max_base_lots: 2,
             max_quote_lots_including_fees: 100_000,
             client_order_id: 5,
-            remainings: vec![mints[0].pubkey, mints[1].pubkey],
+            remainings:vec![],
         },
     )
     .await
@@ -293,6 +300,7 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
             signer: owner,
             user_token_account: owner_token_0,
             market_vault: market_base_vault,
+            mint: mints[0].pubkey,
             side: Side::Ask,
             price_lots,
             max_base_lots: 1,
@@ -302,7 +310,7 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings: vec![mints[0].pubkey, mints[1].pubkey],
+            remainings:vec![],
         },
     )
     .await
@@ -330,6 +338,7 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
             signer: owner,
             user_token_account: owner_token_0,
             market_vault: market_base_vault,
+            mint: mints[0].pubkey,
             side: Side::Ask,
             price_lots,
             max_base_lots: 2,
@@ -339,7 +348,7 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings: vec![mints[0].pubkey, mints[1].pubkey],
+            remainings:vec![],
         },
     )
     .await
@@ -368,13 +377,14 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
             signer: owner,
             user_token_account: owner_token_1,
             market_vault: market_quote_vault,
+            mint: mints[1].pubkey,
             side: Side::Bid,
             price_offset: -1,
             peg_limit: price_lots + 2,
             max_base_lots: 2,
             max_quote_lots_including_fees: 100_000,
             client_order_id: 5,
-            remainings: vec![mints[0].pubkey, mints[1].pubkey],
+            remainings:vec![],
         },
     )
     .await
@@ -391,6 +401,7 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
             signer: owner,
             user_token_account: owner_token_0,
             market_vault: market_base_vault,
+            mint: mints[0].pubkey,
             side: Side::Ask,
             price_lots: price_lots + 2,
             max_base_lots: 1,
@@ -400,7 +411,7 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings: vec![mints[0].pubkey, mints[1].pubkey],
+            remainings:vec![],
         },
     )
     .await
@@ -428,6 +439,7 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
             signer: owner,
             user_token_account: owner_token_0,
             market_vault: market_base_vault,
+            mint: mints[0].pubkey,
             side: Side::Ask,
             price_lots: price_lots + 3,
             max_base_lots: 1,
@@ -437,7 +449,7 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings: vec![mints[0].pubkey, mints[1].pubkey],
+            remainings:vec![],
         },
     )
     .await
@@ -496,13 +508,14 @@ async fn test_take_peg_invalid_oracle() -> Result<(), TransportError> {
             signer: owner,
             user_token_account: owner_token_1,
             market_vault: market_quote_vault,
+            mint: mints[1].pubkey,
             side: Side::Bid,
             price_offset: -1,
             peg_limit: 100,
             max_base_lots: 1,
             max_quote_lots_including_fees: 100_000,
             client_order_id: 0,
-            remainings: vec![mints[0].pubkey, mints[1].pubkey],
+            remainings:vec![],
         },
     )
     .await
@@ -520,6 +533,7 @@ async fn test_take_peg_invalid_oracle() -> Result<(), TransportError> {
         signer: owner,
         user_token_account: owner_token_0,
         market_vault: market_base_vault,
+        mint: mints[0].pubkey,
         side: Side::Ask,
         price_lots,
         max_base_lots: 1,
@@ -528,7 +542,7 @@ async fn test_take_peg_invalid_oracle() -> Result<(), TransportError> {
         expiry_timestamp: 0,
         order_type: PlaceOrderType::Limit,
         self_trade_behavior: SelfTradeBehavior::default(),
-        remainings: vec![mints[0].pubkey, mints[1].pubkey, account_1],
+        remainings: vec![account_1],
     };
 
     solana.advance_clock(200).await;
@@ -597,13 +611,14 @@ async fn test_oracle_peg_limit() -> Result<(), TransportError> {
             signer: owner,
             user_token_account: owner_token_1,
             market_vault: market_quote_vault,
+            mint: mints[1].pubkey,
             side: Side::Bid,
             price_offset: -100,
             peg_limit: price_lots + 100_000,
             max_base_lots: 2,
             max_quote_lots_including_fees,
             client_order_id: 5,
-            remainings: vec![mints[0].pubkey, mints[1].pubkey],
+            remainings:vec![],
         },
     )
     .await
@@ -621,13 +636,14 @@ async fn test_oracle_peg_limit() -> Result<(), TransportError> {
             signer: owner,
             user_token_account: owner_token_1,
             market_vault: market_quote_vault,
+            mint: mints[1].pubkey,
             side: Side::Bid,
             price_offset: -100,
             peg_limit: price_lots + 100_000,
             max_base_lots: 2,
             max_quote_lots_including_fees,
             client_order_id: 5,
-            remainings: vec![mints[0].pubkey, mints[1].pubkey],
+            remainings:vec![],
         },
     )
     .await
@@ -685,19 +701,21 @@ async fn test_locked_amounts() -> Result<(), TransportError> {
         signer: owner,
         user_token_account: owner_quote_ata,
         market_vault: market_quote_vault,
+        mint: mints[1].pubkey,
         side: Side::Bid,
         price_offset: 0,
         peg_limit: 30,
         max_base_lots: 1_000,
         max_quote_lots_including_fees: 100_000_000,
         client_order_id: 0,
-        remainings: vec![mints[0].pubkey, mints[1].pubkey],
+        remainings:vec![],
     };
 
     let place_ask_1_ix = PlaceOrderPeggedInstruction {
         side: Side::Ask,
         peg_limit: 10,
         market_vault: market_base_vault,
+        mint: mints[0].pubkey,
         user_token_account: owner_base_ata,
         open_orders_account: account_2,
         ..place_bid_0_ix.clone()
@@ -711,8 +729,10 @@ async fn test_locked_amounts() -> Result<(), TransportError> {
         market_quote_vault,
         user_base_account: owner_base_ata,
         user_quote_account: owner_quote_ata,
+        base_mint: mints[0].pubkey,
+        quote_mint: mints[1].pubkey,
         referrer_account: None,
-        remainings: vec![mints[0].pubkey, mints[1].pubkey],
+        remainings:vec![],
     };
 
     let settle_funds_1_ix = SettleFundsInstruction {

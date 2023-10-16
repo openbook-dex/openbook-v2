@@ -1,11 +1,11 @@
 use super::*;
-use anchor_lang::system_program;
+use anchor_lang::system_program::{self, Transfer};
 use anchor_spl::token::Token;
 use anchor_spl::token_interface;
 use spl_token_2022::{
     check_spl_token_program_account,
     extension::{
-        BaseStateWithExtensions, StateWithExtensions, transfer_fee::TransferFeeConfig,
+        BaseStateWithExtensions, StateWithExtensions, transfer_fee::{TransferFeeConfig, TransferFee},
     },
     state::Mint,
 };
@@ -144,6 +144,15 @@ pub fn get_token_fee<
                 let default_fee: u64 = 0;
                 Some(default_fee)
             }
+
+            // if let Ok(transfer_fee) = source_mint.get_extension::<TransferFee>() {
+            //     let pre_fee_amount = transfer_fee
+            //         .calculate_pre_fee_amount(amount);
+            //     pre_fee_amount
+            // } else {
+            //     let default_fee: u64 = 0;
+            //     Some(default_fee)
+            // }
         }
     };
     Ok(token_fee)

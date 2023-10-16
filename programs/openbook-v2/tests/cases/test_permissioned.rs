@@ -40,6 +40,7 @@ async fn test_permissioned_open_order() -> Result<(), TransportError> {
             signer: owner,
             user_token_account: owner_token_1,
             market_vault: market_quote_vault,
+            mint: mints[1].pubkey,
             side: Side::Bid,
             price_lots,
             max_base_lots: 1,
@@ -48,7 +49,7 @@ async fn test_permissioned_open_order() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings: vec![mints[0].pubkey, mints[1].pubkey],
+            remainings:vec![],
         },
     )
     .await;
@@ -65,6 +66,7 @@ async fn test_permissioned_open_order() -> Result<(), TransportError> {
             signer: owner,
             user_token_account: owner_token_1,
             market_vault: market_quote_vault,
+            mint: mints[1].pubkey,
             side: Side::Bid,
             price_lots,
             max_base_lots: 1,
@@ -73,7 +75,7 @@ async fn test_permissioned_open_order() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings: vec![mints[0].pubkey, mints[1].pubkey],
+            remainings:vec![],
         },
     )
     .await
@@ -117,6 +119,7 @@ async fn test_permissioned_open_take_order() -> Result<(), TransportError> {
             signer: owner,
             user_token_account: owner_token_1,
             market_vault: market_quote_vault,
+            mint: mints[1].pubkey,
             side: Side::Bid,
             price_lots,
             max_base_lots: 1,
@@ -126,7 +129,7 @@ async fn test_permissioned_open_take_order() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings: vec![mints[0].pubkey, mints[1].pubkey],
+            remainings:vec![],
         },
     )
     .await;
@@ -142,6 +145,7 @@ async fn test_permissioned_open_take_order() -> Result<(), TransportError> {
             signer: owner,
             user_token_account: owner_token_1,
             market_vault: market_quote_vault,
+            mint: mints[1].pubkey,
             side: Side::Bid,
             price_lots,
             max_base_lots: 1,
@@ -151,7 +155,7 @@ async fn test_permissioned_open_take_order() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings: vec![mints[0].pubkey, mints[1].pubkey],
+            remainings:vec![],
         },
     )
     .await
@@ -198,6 +202,7 @@ async fn test_consume_events_admin() -> Result<(), TransportError> {
             signer: owner,
             user_token_account: owner_token_1,
             market_vault: market_quote_vault,
+            mint: mints[1].pubkey,
             side: Side::Bid,
             price_lots,
             max_base_lots: 1,
@@ -207,7 +212,7 @@ async fn test_consume_events_admin() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings: vec![mints[0].pubkey, mints[1].pubkey],
+            remainings:vec![],
         },
     )
     .await
@@ -222,6 +227,7 @@ async fn test_consume_events_admin() -> Result<(), TransportError> {
             signer: owner,
             user_token_account: owner_token_0,
             market_vault: market_base_vault,
+            mint: mints[0].pubkey,
             side: Side::Ask,
             price_lots,
             max_base_lots: 1,
@@ -231,7 +237,7 @@ async fn test_consume_events_admin() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings: vec![mints[0].pubkey, mints[1].pubkey],
+            remainings:vec![],
         },
     )
     .await
@@ -301,6 +307,7 @@ async fn test_close_market_admin() -> Result<(), TransportError> {
             signer: owner,
             user_token_account: owner_token_1,
             market_vault: market_quote_vault,
+            mint: mints[1].pubkey,
             side: Side::Bid,
             price_lots,
             max_base_lots: 1,
@@ -309,7 +316,7 @@ async fn test_close_market_admin() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings: vec![mints[0].pubkey, mints[1].pubkey],
+            remainings:vec![],
         },
     )
     .await
@@ -325,6 +332,7 @@ async fn test_close_market_admin() -> Result<(), TransportError> {
             signer: owner,
             user_token_account: owner_token_0,
             market_vault: market_base_vault,
+            mint: mints[0].pubkey,
             side: Side::Ask,
             price_lots,
             max_base_lots: 1,
@@ -333,7 +341,7 @@ async fn test_close_market_admin() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings: vec![mints[0].pubkey, mints[1].pubkey],
+            remainings:vec![],
         },
     )
     .await
@@ -349,6 +357,7 @@ async fn test_close_market_admin() -> Result<(), TransportError> {
             signer: owner,
             user_token_account: owner_token_1,
             market_vault: market_quote_vault,
+            mint: mints[1].pubkey,
             side: Side::Bid,
             price_lots,
             max_base_lots: 1,
@@ -357,7 +366,7 @@ async fn test_close_market_admin() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings: vec![mints[0].pubkey, mints[1].pubkey],
+            remainings:vec![],
         },
     )
     .await
@@ -378,8 +387,10 @@ async fn test_close_market_admin() -> Result<(), TransportError> {
         market_quote_vault,
         user_base_account: owner_token_0,
         user_quote_account: owner_token_1,
+        base_mint: mints[0].pubkey,
+        quote_mint: mints[1].pubkey,
         referrer_account: None,
-        remainings: vec![mints[0].pubkey, mints[1].pubkey],
+        remainings:vec![],
     };
 
     // Can't close yet, market not market as expired
@@ -415,6 +426,7 @@ async fn test_close_market_admin() -> Result<(), TransportError> {
             signer: owner,
             user_token_account: owner_token_1,
             market_vault: market_quote_vault,
+            mint: mints[1].pubkey,
             side: Side::Bid,
             price_lots,
             max_base_lots: 1,
@@ -423,7 +435,7 @@ async fn test_close_market_admin() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings: vec![mints[0].pubkey, mints[1].pubkey],
+            remainings:vec![],
         },
     )
     .await;
@@ -473,8 +485,10 @@ async fn test_close_market_admin() -> Result<(), TransportError> {
             market_quote_vault,
             user_base_account: owner_token_0,
             user_quote_account: owner_token_1,
+            base_mint: mints[0].pubkey,
+            quote_mint: mints[1].pubkey,
             referrer_account: None,
-            remainings: vec![mints[0].pubkey, mints[1].pubkey],
+            remainings:vec![],
         },
     )
     .await
@@ -497,8 +511,9 @@ async fn test_close_market_admin() -> Result<(), TransportError> {
             collect_fee_admin,
             market,
             market_quote_vault,
+            mint: mints[1].pubkey,
             token_receiver_account: fee_admin_ata,
-            remainings: vec![mints[0].pubkey, mints[1].pubkey],
+            remainings:vec![],
         },
     )
     .await
@@ -552,6 +567,7 @@ async fn test_delegate() -> Result<(), TransportError> {
             signer: account_3_delegate,
             user_token_account: delegate_token_1,
             market_vault: market_quote_vault,
+            mint: mints[1].pubkey,
             side: Side::Bid,
             price_lots,
             max_base_lots: 1,
@@ -561,7 +577,7 @@ async fn test_delegate() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings: vec![mints[0].pubkey, mints[1].pubkey],
+            remainings:vec![],
         },
     )
     .await
@@ -600,6 +616,7 @@ async fn test_delegate() -> Result<(), TransportError> {
             signer: account_3_delegate,
             user_token_account: delegate_token_1,
             market_vault: market_quote_vault,
+            mint: mints[1].pubkey,
             side: Side::Bid,
             price_lots,
             max_base_lots: 1,
@@ -609,7 +626,7 @@ async fn test_delegate() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings: vec![mints[0].pubkey, mints[1].pubkey],
+            remainings:vec![],
         },
     )
     .await;

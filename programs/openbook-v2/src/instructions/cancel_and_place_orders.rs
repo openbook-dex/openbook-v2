@@ -6,7 +6,6 @@ use crate::accounts_zerocopy::AccountInfoRef;
 use crate::error::*;
 use crate::state::*;
 use crate::token_utils::*;
-use anchor_spl::token_interface::Mint;
 
 #[allow(clippy::too_many_arguments)]
 pub fn cancel_and_place_orders<'info>(
@@ -19,8 +18,6 @@ pub fn cancel_and_place_orders<'info>(
     let open_orders_account_pk = ctx.accounts.open_orders_account.key();
 
     let clock = Clock::get()?;
-
-    let remaining_accounts = ctx.remaining_accounts;
 
     let mut market = ctx.accounts.market.load_mut()?;
     require!(
@@ -132,32 +129,20 @@ pub fn cancel_and_place_orders<'info>(
     }
 
     // Getting actual base amount to be paid
-    // let base_token_account_info = remaining_accounts[0];
-
     let base_token_fee_wrapped = {
-        get_token_fee(remaining_accounts[0].to_account_info(), ctx.accounts.token_program.to_account_info(), deposit_base_amount)
+        get_token_fee(ctx.accounts.base_mint.to_account_info(), ctx.accounts.token_program.to_account_info(), deposit_base_amount)
     };
     let base_token_fee = base_token_fee_wrapped.unwrap().unwrap();
 
     let base_amount = deposit_base_amount - base_token_fee;
 
     // Getting actual quote native amount to be paid
-    // let quote_token_account_info = remaining_accounts[1];
-
     let quote_token_fee_wrapped = {
-        get_token_fee(remaining_accounts[1].to_account_info(), ctx.accounts.token_program.to_account_info(), deposit_quote_amount)
+        get_token_fee(ctx.accounts.quote_mint.to_account_info(), ctx.accounts.token_program.to_account_info(), deposit_quote_amount)
     };
     let quote_token_fee = quote_token_fee_wrapped.unwrap().unwrap();
 
     let quote_amount = deposit_quote_amount - quote_token_fee;
-
-    let base_data = &mut &**remaining_accounts[0].try_borrow_data()?;
-    let base_mint = Mint::try_deserialize(base_data).unwrap();
-    let base_decimals = base_mint.decimals;
-
-    let quote_data = &mut &**remaining_accounts[1].try_borrow_data()?;
-    let quote_mint = Mint::try_deserialize(quote_data).unwrap();
-    let quote_decimals = quote_mint.decimals;
 
 
     token_transfer(
@@ -166,8 +151,8 @@ pub fn cancel_and_place_orders<'info>(
         &ctx.accounts.user_quote_account,
         &ctx.accounts.market_quote_vault,
         &ctx.accounts.signer,
-        remaining_accounts[0].to_account_info(),
-        base_decimals,
+        ctx.accounts.base_mint.to_account_info(),
+        market.base_decimals,
     )?;
 
     token_transfer(
@@ -176,8 +161,8 @@ pub fn cancel_and_place_orders<'info>(
         &ctx.accounts.user_base_account,
         &ctx.accounts.market_base_vault,
         &ctx.accounts.signer,
-        remaining_accounts[1].to_account_info(),
-        quote_decimals,
+        ctx.accounts.quote_mint.to_account_info(),
+        market.quote_decimals,
     )?;
 
     Ok(order_ids)

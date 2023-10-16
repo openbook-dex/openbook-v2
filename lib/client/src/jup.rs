@@ -220,6 +220,8 @@ impl Amm for OpenBookMarket {
             system_program: System::id(),
             open_orders_admin: None,
             referrer_account: None,
+            deposit_mint: todo!(),
+            withdraw_mint: todo!(),
         };
 
         let mut account_metas = accounts.to_account_metas(None);

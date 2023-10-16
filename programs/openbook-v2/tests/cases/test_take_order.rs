@@ -21,10 +21,6 @@ async fn test_take_ask_order() -> Result<(), TransportError> {
     } = TestContext::new_with_market(TestNewMarketInitialize::default()).await?;
     let solana = &context.solana.clone();
 
-    let mut vec_remainings: Vec<Pubkey> = Vec::new();
-    vec_remainings.push(mints[0].pubkey);
-    vec_remainings.push(mints[1].pubkey);
-
     // Set the initial oracle price
     set_stub_oracle_price(solana, &tokens[1], collect_fee_admin, 1000.0).await;
 
@@ -37,6 +33,7 @@ async fn test_take_ask_order() -> Result<(), TransportError> {
             signer: owner,
             user_token_account: owner_token_1,
             market_vault: market_quote_vault,
+            mint: mints[1].pubkey,
             side: Side::Bid,
             price_lots,
             max_base_lots: 1,
@@ -46,7 +43,7 @@ async fn test_take_ask_order() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings: vec![mints[0].pubkey, mints[1].pubkey],
+            remainings:vec![],
         },
     )
     .await
@@ -64,13 +61,15 @@ async fn test_take_ask_order() -> Result<(), TransportError> {
             user_quote_account: owner_token_1,
             market_base_vault,
             market_quote_vault,
+            deposit_mint: mints[0].pubkey,
+            withdraw_mint: mints[1].pubkey,
             side: Side::Ask,
             price_lots,
             max_base_lots: 1,
             max_quote_lots_including_fees: 10000,
             referrer_account: None,
             open_orders_admin: None,
-            remainings: vec![mints[0].pubkey, mints[1].pubkey],
+            remainings:vec![],
         },
     )
     .await
@@ -133,8 +132,10 @@ async fn test_take_ask_order() -> Result<(), TransportError> {
             market_quote_vault,
             user_base_account: owner_token_0,
             user_quote_account: owner_token_1,
+            base_mint: mints[0].pubkey,
+            quote_mint: mints[1].pubkey,
             referrer_account: None,
-            remainings: vec![mints[0].pubkey, mints[1].pubkey],
+            remainings:vec![],
         },
     )
     .await
@@ -190,6 +191,7 @@ async fn test_take_bid_order() -> Result<(), TransportError> {
             signer: owner,
             user_token_account: owner_token_0,
             market_vault: market_base_vault,
+            mint: mints[0].pubkey,
             side: Side::Ask,
             price_lots,
             max_base_lots: 1,
@@ -199,7 +201,7 @@ async fn test_take_bid_order() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings: vec![mints[0].pubkey, mints[1].pubkey],
+            remainings:vec![],
         },
     )
     .await
@@ -222,13 +224,15 @@ async fn test_take_bid_order() -> Result<(), TransportError> {
             user_quote_account: owner_token_1,
             market_base_vault,
             market_quote_vault,
+            deposit_mint: mints[1].pubkey,
+            withdraw_mint: mints[0].pubkey,
             side: Side::Bid,
             price_lots,
             max_base_lots: 1,
             max_quote_lots_including_fees: 10040,
             referrer_account: Some(admin_token_1),
             open_orders_admin: None,
-            remainings: vec![mints[0].pubkey, mints[1].pubkey],
+            remainings:vec![],
         },
     )
     .await
@@ -295,8 +299,10 @@ async fn test_take_bid_order() -> Result<(), TransportError> {
             market_quote_vault,
             user_base_account: owner_token_0,
             user_quote_account: owner_token_1,
+            base_mint: mints[0].pubkey,
+            quote_mint: mints[1].pubkey,
             referrer_account: None,
-            remainings: vec![mints[0].pubkey, mints[1].pubkey],
+            remainings:vec![],
         },
     )
     .await

@@ -385,6 +385,7 @@ impl OpenBookClient {
         limit: u8,
         user_token_account: Pubkey,
         market_vault: Pubkey,
+        mint: Pubkey,
         self_trade_behavior: SelfTradeBehavior,
     ) -> anyhow::Result<Signature> {
         let ix = Instruction {
@@ -403,6 +404,7 @@ impl OpenBookClient {
                         oracle_b: market.oracle_b.into(),
                         user_token_account,
                         market_vault,
+                        mint,
                         token_program: Token::id(),
                     },
                     None,
@@ -441,6 +443,7 @@ impl OpenBookClient {
         limit: u8,
         user_token_account: Pubkey,
         market_vault: Pubkey,
+        mint: Pubkey,
         self_trade_behavior: SelfTradeBehavior,
     ) -> anyhow::Result<Signature> {
         let ix = Instruction {
@@ -459,6 +462,7 @@ impl OpenBookClient {
                         oracle_b: market.oracle_b.into(),
                         user_token_account,
                         market_vault,
+                        mint,
                         token_program: Token::id(),
                     },
                     None,
@@ -492,6 +496,8 @@ impl OpenBookClient {
         user_quote_account: Pubkey,
         market_base_vault: Pubkey,
         market_quote_vault: Pubkey,
+        base_mint: Pubkey,
+        quote_mint: Pubkey,
     ) -> anyhow::Result<Signature> {
         let ix = Instruction {
             program_id: openbook_v2::id(),
@@ -507,6 +513,8 @@ impl OpenBookClient {
                         market_quote_vault,
                         base_token_program: Token::id(),
                         quote_token_program: Token::id(),
+                        base_mint,
+                        quote_mint,
                     },
                     None,
                 )
@@ -529,6 +537,8 @@ impl OpenBookClient {
         market_base_vault: Pubkey,
         market_quote_vault: Pubkey,
         referrer_account: Option<Pubkey>,
+        base_mint: Pubkey,
+        quote_mint: Pubkey,
     ) -> anyhow::Result<Signature> {
         let ix = Instruction {
             program_id: openbook_v2::id(),
@@ -544,6 +554,8 @@ impl OpenBookClient {
                         market_base_vault,
                         market_quote_vault,
                         referrer_account,
+                        base_mint,
+                        quote_mint,
                         system_program: System::id(),
                         base_token_program: Token::id(),
                         quote_token_program: Token::id(),

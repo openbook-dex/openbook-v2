@@ -46,6 +46,12 @@ pub struct SettleFundsExpired<'info> {
         token::mint = market_quote_vault.mint
     )]
     pub referrer_account: Option<Box<InterfaceAccount<'info, token_interface::TokenAccount>>>,
+
+    #[account(mut)]
+    pub base_mint: Box<InterfaceAccount<'info, token_interface::Mint>>,
+    #[account(mut)]
+    pub quote_mint: Box<InterfaceAccount<'info, token_interface::Mint>>,
+    
     pub base_token_program: Interface<'info, TokenInterface>,
     pub quote_token_program: Interface<'info, TokenInterface>,
     pub system_program: Program<'info, System>,
@@ -63,6 +69,8 @@ impl<'info> SettleFundsExpired<'info> {
             user_base_account: self.user_base_account.clone(),
             user_quote_account: self.user_quote_account.clone(),
             referrer_account: self.referrer_account.clone(),
+            base_mint: self.base_mint.clone(),
+            quote_mint: self.quote_mint.clone(),
             base_token_program: self.base_token_program.clone(),
             quote_token_program: self.quote_token_program.clone(),
             system_program: self.system_program.clone(),

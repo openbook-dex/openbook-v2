@@ -39,6 +39,7 @@ async fn test_fees_accrued() -> Result<(), TransportError> {
             signer: owner,
             user_token_account: owner_token_1,
             market_vault: market_quote_vault,
+            mint: mints[1].pubkey,
             side: Side::Bid,
             price_lots,
             max_base_lots: 1,
@@ -47,7 +48,7 @@ async fn test_fees_accrued() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings: vec![mints[0].pubkey, mints[1].pubkey],
+            remainings:vec![],
         },
     )
     .await
@@ -62,6 +63,7 @@ async fn test_fees_accrued() -> Result<(), TransportError> {
             signer: owner,
             user_token_account: owner_token_0,
             market_vault: market_base_vault,
+            mint: mints[0].pubkey,
             side: Side::Ask,
             price_lots,
             max_base_lots: 1,
@@ -70,7 +72,7 @@ async fn test_fees_accrued() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings: vec![mints[0].pubkey, mints[1].pubkey],
+            remainings:vec![],
         },
     )
     .await
@@ -129,8 +131,10 @@ async fn test_fees_accrued() -> Result<(), TransportError> {
             market_quote_vault,
             user_base_account: owner_token_0,
             user_quote_account: owner_token_1,
+            base_mint: mints[0].pubkey,
+            quote_mint: mints[1].pubkey,
             referrer_account: None,
-            remainings: vec![mints[0].pubkey, mints[1].pubkey],
+            remainings:vec![],
         },
     )
     .await
@@ -149,8 +153,9 @@ async fn test_fees_accrued() -> Result<(), TransportError> {
             collect_fee_admin,
             market,
             market_quote_vault,
+            mint: mints[1].pubkey,
             token_receiver_account: admin_token_1,
-            remainings: vec![mints[0].pubkey, mints[1].pubkey],
+            remainings:vec![],
         },
     )
     .await
@@ -204,6 +209,7 @@ async fn test_maker_fees() -> Result<(), TransportError> {
             signer: owner,
             user_token_account: owner_token_1,
             market_vault: market_quote_vault,
+            mint: mints[1].pubkey,
             side: Side::Bid,
             price_lots,
             max_base_lots: 1,
@@ -212,7 +218,7 @@ async fn test_maker_fees() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings: vec![mints[0].pubkey, mints[1].pubkey],
+            remainings:vec![],
         },
     )
     .await
@@ -248,6 +254,7 @@ async fn test_maker_fees() -> Result<(), TransportError> {
             signer: owner,
             user_token_account: owner_token_1,
             market_vault: market_quote_vault,
+            mint: mints[1].pubkey,
             side: Side::Bid,
             price_lots,
             max_base_lots: 1,
@@ -256,7 +263,7 @@ async fn test_maker_fees() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings: vec![mints[0].pubkey, mints[1].pubkey],
+            remainings:vec![],
         },
     )
     .await
@@ -280,6 +287,7 @@ async fn test_maker_fees() -> Result<(), TransportError> {
             signer: owner,
             user_token_account: owner_token_0,
             market_vault: market_base_vault,
+            mint: mints[0].pubkey,
             side: Side::Ask,
             price_lots,
             max_base_lots: 1,
@@ -288,7 +296,7 @@ async fn test_maker_fees() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings: vec![mints[0].pubkey, mints[1].pubkey],
+            remainings:vec![],
         },
     )
     .await
@@ -351,8 +359,10 @@ async fn test_maker_fees() -> Result<(), TransportError> {
             market_quote_vault,
             user_base_account: owner_token_0,
             user_quote_account: owner_token_1,
+            base_mint: mints[0].pubkey,
+            quote_mint: mints[1].pubkey,
             referrer_account: None,
-            remainings: vec![mints[0].pubkey, mints[1].pubkey],
+            remainings:vec![],
         },
     )
     .await
@@ -375,8 +385,10 @@ async fn test_maker_fees() -> Result<(), TransportError> {
             market_quote_vault,
             user_base_account: owner_token_0,
             user_quote_account: owner_token_1,
+            base_mint: mints[0].pubkey,
+            quote_mint: mints[1].pubkey,
             referrer_account: Some(owner_token_1),
-            remainings: vec![mints[0].pubkey, mints[1].pubkey],
+            remainings:vec![],
         },
     )
     .await
@@ -395,8 +407,9 @@ async fn test_maker_fees() -> Result<(), TransportError> {
             collect_fee_admin,
             market,
             market_quote_vault,
+            mint: mints[1].pubkey,
             token_receiver_account: admin_token_1,
-            remainings: vec![mints[0].pubkey, mints[1].pubkey],
+            remainings:vec![],
         },
     )
     .await
@@ -449,6 +462,7 @@ async fn test_no_maker_fees_ask() -> Result<(), TransportError> {
             signer: owner,
             user_token_account: owner_token_0,
             market_vault: market_base_vault,
+            mint: mints[0].pubkey,
             side: Side::Ask,
             price_lots,
             max_base_lots: 1,
@@ -457,7 +471,7 @@ async fn test_no_maker_fees_ask() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings: vec![mints[0].pubkey, mints[1].pubkey],
+            remainings:vec![],
         },
     )
     .await
@@ -481,6 +495,7 @@ async fn test_no_maker_fees_ask() -> Result<(), TransportError> {
             signer: owner,
             user_token_account: owner_token_1,
             market_vault: market_quote_vault,
+            mint: mints[1].pubkey,
             side: Side::Bid,
             price_lots,
             max_base_lots: 1,
@@ -489,7 +504,7 @@ async fn test_no_maker_fees_ask() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings: vec![mints[0].pubkey, mints[1].pubkey],
+            remainings:vec![],
         },
     )
     .await
@@ -548,8 +563,10 @@ async fn test_no_maker_fees_ask() -> Result<(), TransportError> {
             market_quote_vault,
             user_base_account: owner_token_0,
             user_quote_account: owner_token_1,
+            base_mint: mints[0].pubkey,
+            quote_mint: mints[1].pubkey,
             referrer_account: None,
-            remainings: vec![mints[0].pubkey, mints[1].pubkey],
+            remainings:vec![],
         },
     )
     .await
@@ -572,8 +589,10 @@ async fn test_no_maker_fees_ask() -> Result<(), TransportError> {
             market_quote_vault,
             user_base_account: owner_token_0,
             user_quote_account: owner_token_1,
+            base_mint: mints[0].pubkey,
+            quote_mint: mints[1].pubkey,
             referrer_account: Some(owner_token_1),
-            remainings: vec![mints[0].pubkey, mints[1].pubkey],
+            remainings:vec![],
         },
     )
     .await
@@ -592,8 +611,9 @@ async fn test_no_maker_fees_ask() -> Result<(), TransportError> {
             collect_fee_admin,
             market,
             market_quote_vault,
+            mint: mints[1].pubkey,
             token_receiver_account: admin_token_1,
-            remainings: vec![mints[0].pubkey, mints[1].pubkey],
+            remainings:vec![],
         },
     )
     .await
@@ -646,6 +666,7 @@ async fn test_maker_fees_ask() -> Result<(), TransportError> {
             signer: owner,
             user_token_account: owner_token_0,
             market_vault: market_base_vault,
+            mint: mints[0].pubkey,
             side: Side::Ask,
             price_lots,
             max_base_lots: 1,
@@ -654,7 +675,7 @@ async fn test_maker_fees_ask() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings: vec![mints[0].pubkey, mints[1].pubkey],
+            remainings:vec![],
         },
     )
     .await
@@ -678,6 +699,7 @@ async fn test_maker_fees_ask() -> Result<(), TransportError> {
             signer: owner,
             user_token_account: owner_token_1,
             market_vault: market_quote_vault,
+            mint: mints[1].pubkey,
             side: Side::Bid,
             price_lots,
             max_base_lots: 1,
@@ -686,7 +708,7 @@ async fn test_maker_fees_ask() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings: vec![mints[0].pubkey, mints[1].pubkey],
+            remainings:vec![],
         },
     )
     .await
@@ -745,8 +767,10 @@ async fn test_maker_fees_ask() -> Result<(), TransportError> {
             market_quote_vault,
             user_base_account: owner_token_0,
             user_quote_account: owner_token_1,
+            base_mint: mints[0].pubkey,
+            quote_mint: mints[1].pubkey,
             referrer_account: None,
-            remainings: vec![mints[0].pubkey, mints[1].pubkey],
+            remainings:vec![],
         },
     )
     .await
@@ -769,8 +793,10 @@ async fn test_maker_fees_ask() -> Result<(), TransportError> {
             market_quote_vault,
             user_base_account: owner_token_0,
             user_quote_account: owner_token_1,
+            base_mint: mints[0].pubkey,
+            quote_mint: mints[1].pubkey,
             referrer_account: Some(owner_token_1),
-            remainings: vec![mints[0].pubkey, mints[1].pubkey],
+            remainings:vec![],
         },
     )
     .await
@@ -789,8 +815,9 @@ async fn test_maker_fees_ask() -> Result<(), TransportError> {
             collect_fee_admin,
             market,
             market_quote_vault,
+            mint: mints[1].pubkey,
             token_receiver_account: admin_token_1,
-            remainings: vec![mints[0].pubkey, mints[1].pubkey],
+            remainings:vec![],
         },
     )
     .await
@@ -844,6 +871,7 @@ async fn test_fees_half() -> Result<(), TransportError> {
             signer: owner,
             user_token_account: owner_token_1,
             market_vault: market_quote_vault,
+            mint: mints[1].pubkey,
             side: Side::Bid,
             price_lots,
             max_base_lots: 1,
@@ -852,7 +880,7 @@ async fn test_fees_half() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings: vec![mints[0].pubkey, mints[1].pubkey],
+            remainings:vec![],
         },
     )
     .await
@@ -867,6 +895,7 @@ async fn test_fees_half() -> Result<(), TransportError> {
             signer: owner,
             user_token_account: owner_token_0,
             market_vault: market_base_vault,
+            mint: mints[0].pubkey,
             side: Side::Ask,
             price_lots,
             max_base_lots: 1,
@@ -875,7 +904,7 @@ async fn test_fees_half() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings: vec![mints[0].pubkey, mints[1].pubkey],
+            remainings:vec![],
         },
     )
     .await
@@ -923,8 +952,10 @@ async fn test_fees_half() -> Result<(), TransportError> {
             market_quote_vault,
             user_base_account: owner_token_0,
             user_quote_account: owner_token_1,
+            base_mint: mints[0].pubkey,
+            quote_mint: mints[1].pubkey,
             referrer_account: None,
-            remainings: vec![mints[0].pubkey, mints[1].pubkey],
+            remainings:vec![],
         },
     )
     .await
@@ -940,8 +971,10 @@ async fn test_fees_half() -> Result<(), TransportError> {
             market_quote_vault,
             user_base_account: owner_token_0,
             user_quote_account: owner_token_1,
+            base_mint: mints[0].pubkey,
+            quote_mint: mints[1].pubkey,
             referrer_account: None,
-            remainings: vec![mints[0].pubkey, mints[1].pubkey],
+            remainings:vec![],
         },
     )
     .await
@@ -958,8 +991,9 @@ async fn test_fees_half() -> Result<(), TransportError> {
             collect_fee_admin,
             market,
             market_quote_vault,
+            mint: mints[1].pubkey,
             token_receiver_account: admin_token_1,
-            remainings: vec![mints[0].pubkey, mints[1].pubkey],
+            remainings:vec![],
         },
     )
     .await
@@ -1009,6 +1043,7 @@ async fn test_fees_half() -> Result<(), TransportError> {
             signer: owner,
             user_token_account: owner_token_1,
             market_vault: market_quote_vault,
+            mint: mints[1].pubkey,
             side: Side::Bid,
             price_lots,
             max_base_lots: 1,
@@ -1017,7 +1052,7 @@ async fn test_fees_half() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings: vec![mints[0].pubkey, mints[1].pubkey],
+            remainings:vec![],
         },
     )
     .await
@@ -1032,6 +1067,7 @@ async fn test_fees_half() -> Result<(), TransportError> {
             signer: owner,
             user_token_account: owner_token_0,
             market_vault: market_base_vault,
+            mint: mints[0].pubkey,
             side: Side::Ask,
             price_lots,
             max_base_lots: 1,
@@ -1040,7 +1076,7 @@ async fn test_fees_half() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings: vec![mints[0].pubkey, mints[1].pubkey],
+            remainings:vec![],
         },
     )
     .await
@@ -1088,8 +1124,10 @@ async fn test_fees_half() -> Result<(), TransportError> {
             market_quote_vault,
             user_base_account: owner_token_0,
             user_quote_account: owner_token_1,
+            base_mint: mints[0].pubkey,
+            quote_mint: mints[1].pubkey,
             referrer_account: None,
-            remainings: vec![mints[0].pubkey, mints[1].pubkey],
+            remainings:vec![],
         },
     )
     .await
@@ -1105,8 +1143,10 @@ async fn test_fees_half() -> Result<(), TransportError> {
             market_quote_vault,
             user_base_account: owner_token_0,
             user_quote_account: owner_token_1,
+            base_mint: mints[0].pubkey,
+            quote_mint: mints[1].pubkey,
             referrer_account: None,
-            remainings: vec![mints[0].pubkey, mints[1].pubkey],
+            remainings:vec![],
         },
     )
     .await
@@ -1123,8 +1163,9 @@ async fn test_fees_half() -> Result<(), TransportError> {
             collect_fee_admin,
             market,
             market_quote_vault,
+            mint: mints[1].pubkey,
             token_receiver_account: admin_token_1,
-            remainings: vec![mints[0].pubkey, mints[1].pubkey],
+            remainings:vec![],
         },
     )
     .await
@@ -1172,6 +1213,7 @@ async fn test_locked_maker_fees() -> Result<(), TransportError> {
         signer: owner,
         user_token_account: owner_quote_ata,
         market_vault: market_quote_vault,
+        mint: mints[1].pubkey,
         side: Side::Bid,
         price_lots: 1_000,
         max_base_lots: 5,
@@ -1180,12 +1222,13 @@ async fn test_locked_maker_fees() -> Result<(), TransportError> {
         expiry_timestamp: 0,
         order_type: PlaceOrderType::Limit,
         self_trade_behavior: SelfTradeBehavior::default(),
-        remainings: vec![mints[0].pubkey, mints[1].pubkey],
+        remainings:vec![],
     };
 
     let place_taker_ask = PlaceOrderInstruction {
         side: Side::Ask,
         market_vault: market_base_vault,
+        mint: mints[0].pubkey,
         open_orders_account: taker,
         user_token_account: owner_base_ata,
         max_base_lots: 3,
@@ -1206,8 +1249,10 @@ async fn test_locked_maker_fees() -> Result<(), TransportError> {
         market_quote_vault,
         user_base_account: owner_base_ata,
         user_quote_account: owner_quote_ata,
+        base_mint: mints[0].pubkey,
+        quote_mint: mints[1].pubkey,
         referrer_account: None,
-        remainings: vec![mints[0].pubkey, mints[1].pubkey],
+        remainings:vec![],
     };
 
     send_tx(solana, place_maker_bid.clone()).await.unwrap();

@@ -51,6 +51,11 @@ pub struct CancelAndPlaceOrders<'info> {
     #[account(mut)]
     pub market_base_vault: Box<InterfaceAccount<'info, token_interface::TokenAccount>>,
 
+    #[account(mut)]
+    pub base_mint: Box<InterfaceAccount<'info, token_interface::Mint>>,
+    #[account(mut)]
+    pub quote_mint: Box<InterfaceAccount<'info, token_interface::Mint>>,
+
     /// CHECK: The oracle can be one of several different account types and the pubkey is checked above
     pub oracle_a: Option<UncheckedAccount<'info>>,
     /// CHECK: The oracle can be one of several different account types and the pubkey is checked above

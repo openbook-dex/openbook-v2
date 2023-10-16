@@ -404,6 +404,7 @@ pub struct PlaceOrderInstruction {
     pub signer: TestKeypair,
     pub market_vault: Pubkey,
     pub user_token_account: Pubkey,
+    pub mint: Pubkey,
     pub side: Side,
     pub price_lots: i64,
     pub max_base_lots: i64,
@@ -452,6 +453,7 @@ impl ClientInstruction for PlaceOrderInstruction {
             signer: self.signer.pubkey(),
             user_token_account: self.user_token_account,
             market_vault: self.market_vault,
+            mint: self.mint,
             token_program: Token::id(),
         };
         let mut instruction = make_instruction(program_id, &accounts, instruction);
@@ -484,6 +486,7 @@ pub struct PlaceOrderPeggedInstruction {
     pub signer: TestKeypair,
     pub user_token_account: Pubkey,
     pub market_vault: Pubkey,
+    pub mint: Pubkey,
     pub side: Side,
     pub price_offset: i64,
     pub max_base_lots: i64,
@@ -530,6 +533,7 @@ impl ClientInstruction for PlaceOrderPeggedInstruction {
             signer: self.signer.pubkey(),
             user_token_account: self.user_token_account,
             market_vault: self.market_vault,
+            mint: self.mint,
             token_program: Token::id(),
         };
         let mut instruction = make_instruction(program_id, &accounts, instruction);
@@ -558,6 +562,8 @@ pub struct PlaceTakeOrderInstruction {
     pub market_quote_vault: Pubkey,
     pub user_base_account: Pubkey,
     pub user_quote_account: Pubkey,
+    pub deposit_mint: Pubkey,
+    pub withdraw_mint: Pubkey,
     pub side: Side,
     pub price_lots: i64,
     pub max_base_lots: i64,
@@ -601,6 +607,8 @@ impl ClientInstruction for PlaceTakeOrderInstruction {
             user_quote_account: self.user_quote_account,
             market_base_vault: self.market_base_vault,
             market_quote_vault: self.market_quote_vault,
+            deposit_mint: self.deposit_mint,
+            withdraw_mint: self.withdraw_mint,
             referrer_account: self.referrer_account,
             token_program: Token::id(),
             system_program: System::id(),
@@ -836,6 +844,8 @@ pub struct SettleFundsInstruction {
     pub market_quote_vault: Pubkey,
     pub user_base_account: Pubkey,
     pub user_quote_account: Pubkey,
+    pub base_mint: Pubkey,
+    pub quote_mint: Pubkey,
     pub referrer_account: Option<Pubkey>,
     pub remainings: Vec<Pubkey>,
 }
@@ -860,6 +870,8 @@ impl ClientInstruction for SettleFundsInstruction {
             user_base_account: self.user_base_account,
             user_quote_account: self.user_quote_account,
             referrer_account: self.referrer_account,
+            base_mint: self.base_mint,
+            quote_mint: self.quote_mint,
             base_token_program: Token::id(),
             quote_token_program: Token::id(),
             system_program: System::id(),
@@ -894,6 +906,8 @@ pub struct SettleFundsExpiredInstruction {
     pub market_quote_vault: Pubkey,
     pub user_base_account: Pubkey,
     pub user_quote_account: Pubkey,
+    pub base_mint: Pubkey,
+    pub quote_mint: Pubkey,
     pub referrer_account: Option<Pubkey>,
     pub remainings: Vec<Pubkey>,
 }
@@ -919,6 +933,8 @@ impl ClientInstruction for SettleFundsExpiredInstruction {
             user_base_account: self.user_base_account,
             user_quote_account: self.user_quote_account,
             referrer_account: self.referrer_account,
+            base_mint: self.base_mint,
+            quote_mint: self.quote_mint,
             base_token_program: Token::id(),
             quote_token_program: Token::id(),
             system_program: System::id(),
@@ -948,6 +964,7 @@ pub struct SweepFeesInstruction {
     pub market: Pubkey,
     pub market_quote_vault: Pubkey,
     pub token_receiver_account: Pubkey,
+    pub mint: Pubkey,
     pub remainings: Vec<Pubkey>,
 }
 #[async_trait::async_trait(?Send)]
@@ -968,6 +985,7 @@ impl ClientInstruction for SweepFeesInstruction {
             market_authority: market.market_authority,
             market_quote_vault: self.market_quote_vault,
             token_receiver_account: self.token_receiver_account,
+            mint: self.mint,
             token_program: Token::id(),
         };
         let mut instruction = make_instruction(program_id, &accounts, instruction);
@@ -996,6 +1014,8 @@ pub struct DepositInstruction {
     pub market_quote_vault: Pubkey,
     pub user_base_account: Pubkey,
     pub user_quote_account: Pubkey,
+    pub base_mint: Pubkey,
+    pub quote_mint: Pubkey,
     pub owner: TestKeypair,
     pub base_amount: u64,
     pub quote_amount: u64,
@@ -1023,6 +1043,8 @@ impl ClientInstruction for DepositInstruction {
             market_quote_vault: self.market_quote_vault,
             user_base_account: self.user_base_account,
             user_quote_account: self.user_quote_account,
+            base_mint: self.base_mint,
+            quote_mint: self.quote_mint,
             base_token_program: Token::id(),
             quote_token_program: Token::id(),
         };
@@ -1312,6 +1334,7 @@ pub struct EditOrderInstruction {
     pub signer: TestKeypair,
     pub market_vault: Pubkey,
     pub user_token_account: Pubkey,
+    pub mint: Pubkey,
     pub side: Side,
     pub price_lots: i64,
     pub max_base_lots: i64,
@@ -1363,6 +1386,7 @@ impl ClientInstruction for EditOrderInstruction {
             signer: self.signer.pubkey(),
             user_token_account: self.user_token_account,
             market_vault: self.market_vault,
+            mint: self.mint,
             token_program: Token::id(),
         };
         let mut instruction = make_instruction(program_id, &accounts, instruction);

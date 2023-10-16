@@ -57,6 +57,11 @@ pub struct PlaceTakeOrder<'info> {
     /// CHECK: The oracle can be one of several different account types and the pubkey is checked above
     pub oracle_b: Option<UncheckedAccount<'info>>,
 
+    #[account(mut)]
+    pub deposit_mint: Box<InterfaceAccount<'info, token_interface::Mint>>,
+    #[account(mut)]
+    pub withdraw_mint: Box<InterfaceAccount<'info, token_interface::Mint>>,
+
     pub token_program: Interface<'info, TokenInterface>,
     pub system_program: Program<'info, System>,
     pub open_orders_admin: Option<Signer<'info>>,
