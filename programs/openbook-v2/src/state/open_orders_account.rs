@@ -14,7 +14,6 @@ pub const MAX_OPEN_ORDERS: usize = 24;
 #[account(zero_copy)]
 #[derive(Debug)]
 pub struct OpenOrdersAccount {
-    // ABI: Clients rely on this being at offset 40
     pub owner: Pubkey,
     pub market: Pubkey,
 
