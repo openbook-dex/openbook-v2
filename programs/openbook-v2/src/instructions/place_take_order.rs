@@ -114,20 +114,18 @@ pub fn place_take_order<'info>(
         ),
     };
 
-    let deposit_token_fee_wrapped = {
-        get_token_fee(ctx.accounts.deposit_mint.to_account_info(), ctx.accounts.token_program.to_account_info(), deposit_amount)
+    let deposit_amount_wrapped = {
+        calculate_amount_with_fee(ctx.accounts.deposit_mint.to_account_info(), ctx.accounts.token_program.to_account_info(), deposit_amount)
     };
-    let deposit_token_fee = deposit_token_fee_wrapped.unwrap().unwrap();
-
-    let deposit_actual_amount = deposit_amount + deposit_token_fee;
+    let deposit_actual_amount = deposit_amount_wrapped.unwrap().unwrap();
 
 
-    let withdraw_token_fee_wrapped = {
-        get_token_fee(ctx.accounts.withdraw_mint.to_account_info(), ctx.accounts.token_program.to_account_info(), withdraw_amount)
-    };
-    let withdraw_token_fee = withdraw_token_fee_wrapped.unwrap().unwrap();
+    // let withdraw_token_fee_wrapped = {
+    //     get_token_fee(ctx.accounts.withdraw_mint.to_account_info(), ctx.accounts.token_program.to_account_info(), withdraw_amount)
+    // };
+    // let withdraw_token_fee = withdraw_token_fee_wrapped.unwrap().unwrap();
 
-    let withdraw_actual_amount = withdraw_amount - withdraw_token_fee;
+    let withdraw_actual_amount = withdraw_amount;
 
     token_transfer(
         deposit_actual_amount,
@@ -155,12 +153,12 @@ pub fn place_take_order<'info>(
     if let Some(referrer_account) = &ctx.accounts.referrer_account {
 
         if referrer_account.mint == ctx.accounts.withdraw_mint.key() {
-            let referrer_token_fee_wrapped = {
-                get_token_fee(ctx.accounts.withdraw_mint.to_account_info(), ctx.accounts.token_program.to_account_info(), referrer_amount)
-            };
-            let referrer_token_fee = referrer_token_fee_wrapped.unwrap().unwrap();
+            // let referrer_token_fee_wrapped = {
+            //     get_token_fee(ctx.accounts.withdraw_mint.to_account_info(), ctx.accounts.token_program.to_account_info(), referrer_amount)
+            // };
+            // let referrer_token_fee = referrer_token_fee_wrapped.unwrap().unwrap();
     
-            let referrer_actual_amount = referrer_amount - referrer_token_fee;
+            let referrer_actual_amount = referrer_amount;
     
             token_transfer_signed(
                 referrer_actual_amount,
@@ -174,12 +172,12 @@ pub fn place_take_order<'info>(
             )?;
 
         } else if referrer_account.mint == ctx.accounts.deposit_mint.key() {
-            let referrer_token_fee_wrapped = {
-                get_token_fee(ctx.accounts.deposit_mint.to_account_info(), ctx.accounts.token_program.to_account_info(), referrer_amount)
-            };
-            let referrer_token_fee = referrer_token_fee_wrapped.unwrap().unwrap();
+            // let referrer_token_fee_wrapped = {
+            //     get_token_fee(ctx.accounts.deposit_mint.to_account_info(), ctx.accounts.token_program.to_account_info(), referrer_amount)
+            // };
+            // let referrer_token_fee = referrer_token_fee_wrapped.unwrap().unwrap();
     
-            let referrer_actual_amount = referrer_amount - referrer_token_fee;
+            let referrer_actual_amount = referrer_amount;
     
             token_transfer_signed(
                 referrer_actual_amount,

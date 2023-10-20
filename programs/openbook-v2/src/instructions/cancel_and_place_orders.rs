@@ -129,20 +129,16 @@ pub fn cancel_and_place_orders<'info>(
     }
 
     // Getting actual base amount to be paid
-    let base_token_fee_wrapped = {
-        get_token_fee(ctx.accounts.base_mint.to_account_info(), ctx.accounts.token_program.to_account_info(), deposit_base_amount)
+    let base_amount_wrapped = {
+        calculate_amount_with_fee(ctx.accounts.base_mint.to_account_info(), ctx.accounts.token_program.to_account_info(), deposit_base_amount)
     };
-    let base_token_fee = base_token_fee_wrapped.unwrap().unwrap();
-
-    let base_amount = deposit_base_amount - base_token_fee;
+    let base_amount = base_amount_wrapped.unwrap().unwrap();
 
     // Getting actual quote native amount to be paid
-    let quote_token_fee_wrapped = {
-        get_token_fee(ctx.accounts.quote_mint.to_account_info(), ctx.accounts.token_program.to_account_info(), deposit_quote_amount)
+    let quote_amount_wrapped = {
+        calculate_amount_with_fee(ctx.accounts.quote_mint.to_account_info(), ctx.accounts.token_program.to_account_info(), deposit_quote_amount)
     };
-    let quote_token_fee = quote_token_fee_wrapped.unwrap().unwrap();
-
-    let quote_amount = deposit_quote_amount - quote_token_fee;
+    let quote_amount = quote_amount_wrapped.unwrap().unwrap();
 
 
     token_transfer(

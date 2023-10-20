@@ -47,12 +47,12 @@ pub fn settle_funds<'info>(ctx: Context<'_, '_, '_, 'info, SettleFunds<'info>>) 
     if let Some(referrer_account) = &ctx.accounts.referrer_account {
 
         // Getting actual referrer amount to be paid
-        let referrer_amount_wrapped = {
-            get_token_fee(ctx.accounts.quote_mint.to_account_info(), ctx.accounts.quote_token_program.to_account_info(), referrer_rebate)
-        };
-        let referrer_amount_fee = referrer_amount_wrapped.unwrap().unwrap();
+        // let referrer_amount_wrapped = {
+        //     get_token_fee(ctx.accounts.quote_mint.to_account_info(), ctx.accounts.quote_token_program.to_account_info(), referrer_rebate)
+        // };
+        // let referrer_amount_fee = referrer_amount_wrapped.unwrap().unwrap();
 
-        let referrer_amount = referrer_rebate - referrer_amount_fee;
+        let referrer_amount = referrer_rebate;
 
         token_transfer_signed(
             referrer_amount,
@@ -68,20 +68,20 @@ pub fn settle_funds<'info>(ctx: Context<'_, '_, '_, 'info, SettleFunds<'info>>) 
 
 
     // Getting actual base amount to be paid
-    let base_token_fee_wrapped = {
-        get_token_fee(ctx.accounts.base_mint.to_account_info(), ctx.accounts.base_token_program.to_account_info(), pa.base_free_native)
-    };
-    let base_token_fee = base_token_fee_wrapped.unwrap().unwrap();
+    // let base_token_fee_wrapped = {
+    //     get_token_fee(ctx.accounts.base_mint.to_account_info(), ctx.accounts.base_token_program.to_account_info(), pa.base_free_native)
+    // };
+    // let base_token_fee = base_token_fee_wrapped.unwrap().unwrap();
 
-    let base_amount = pa.base_free_native - base_token_fee;
+    let base_amount = pa.base_free_native;
 
     // Getting actual quote native amount to be paid
-    let quote_token_fee_wrapped = {
-        get_token_fee(ctx.accounts.quote_mint.to_account_info(), ctx.accounts.quote_token_program.to_account_info(), pa.quote_free_native)
-    };
-    let quote_token_fee = quote_token_fee_wrapped.unwrap().unwrap();
+    // let quote_token_fee_wrapped = {
+    //     get_token_fee(ctx.accounts.quote_mint.to_account_info(), ctx.accounts.quote_token_program.to_account_info(), pa.quote_free_native)
+    // };
+    // let quote_token_fee = quote_token_fee_wrapped.unwrap().unwrap();
 
-    let quote_amount = pa.quote_free_native - quote_token_fee;
+    let quote_amount = pa.quote_free_native;
 
     token_transfer_signed(
         base_amount,

@@ -13,22 +13,18 @@ pub fn deposit<'info>(ctx: Context<'_, '_, '_, 'info, Deposit<'info>>, base_amou
     );
 
     // Getting base transfer details
-    let base_token_fee_wrapped = {
-        get_token_fee(ctx.accounts.base_mint.to_account_info(), ctx.accounts.base_token_program.to_account_info(), base_amount)
+    let base_amount_wrapped = {
+        calculate_amount_with_fee(ctx.accounts.base_mint.to_account_info(), ctx.accounts.base_token_program.to_account_info(), base_amount)
     };
 
-    let base_token_fee = base_token_fee_wrapped.unwrap().unwrap();
-
-    let base_actual_amount = base_amount + base_token_fee;
+    let base_actual_amount = base_amount_wrapped.unwrap().unwrap();
 
     // Getting quote transfer details
-    let quote_token_fee_wrapped = {
-        get_token_fee(ctx.accounts.quote_mint.to_account_info(), ctx.accounts.quote_token_program.to_account_info(), quote_amount)
+    let quote_amount_wrapped = {
+        calculate_amount_with_fee(ctx.accounts.quote_mint.to_account_info(), ctx.accounts.quote_token_program.to_account_info(), quote_amount)
     };
 
-    let quote_token_fee = quote_token_fee_wrapped.unwrap().unwrap();
-
-    let quote_actual_amount = quote_amount + quote_token_fee;
+    let quote_actual_amount = quote_amount_wrapped.unwrap().unwrap();
 
 
     // Should open_orders_account and market be editted with base amount or actual amount excluding fees 

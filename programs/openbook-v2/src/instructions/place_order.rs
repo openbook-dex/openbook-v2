@@ -105,12 +105,10 @@ pub fn place_order<'info>(ctx: Context<'_, '_, '_, 'info, PlaceOrder<'info>>, or
     }
 
     // Getting actual base token amount to be deposited
-    let deposit_token_fee_wrapped = {
-        get_token_fee(ctx.accounts.mint.to_account_info(), ctx.accounts.token_program.to_account_info(), deposit_amount)
+    let deposit_amount_wrapped = {
+        calculate_amount_with_fee(ctx.accounts.mint.to_account_info(), ctx.accounts.token_program.to_account_info(), deposit_amount)
     };
-    let deposit_token_fee = deposit_token_fee_wrapped.unwrap().unwrap();
-
-    let deposit_actual_amount = deposit_amount + deposit_token_fee;
+    let deposit_actual_amount = deposit_amount_wrapped.unwrap().unwrap();
 
     token_transfer(
         deposit_actual_amount,
