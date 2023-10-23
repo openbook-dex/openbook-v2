@@ -1,11 +1,11 @@
 use super::*;
-use anchor_lang::system_program::{self, Transfer};
+use anchor_lang::system_program::{self};
 use anchor_spl::token::Token;
 use anchor_spl::token_interface;
 use spl_token_2022::{
     check_spl_token_program_account,
     extension::{
-        BaseStateWithExtensions, StateWithExtensions, transfer_fee::{TransferFeeConfig, TransferFee},
+        BaseStateWithExtensions, StateWithExtensions, transfer_fee::TransferFeeConfig,
     },
     state::Mint,
 };
@@ -136,15 +136,7 @@ pub fn calculate_amount_with_fee<
             )?;
 
             if let Ok(transfer_fee_config) = source_mint.get_extension::<TransferFeeConfig>() {
-                // let transfer_fee = transfer_fee_config
-                //     .calculate_epoch_fee(Clock::get()?.epoch, amount);
-                // transfer_fee
-                let transfer_fee = TransferFee {
-                    epoch: transfer_fee_config.newer_transfer_fee.epoch,
-                    maximum_fee: transfer_fee_config.newer_transfer_fee.maximum_fee,
-                    transfer_fee_basis_points: transfer_fee_config.newer_transfer_fee.transfer_fee_basis_points,
-                };
-                let post_fee_amount = transfer_fee
+                let post_fee_amount = transfer_fee_config.newer_transfer_fee
                         .calculate_post_fee_amount(amount);
                 post_fee_amount
             } else {

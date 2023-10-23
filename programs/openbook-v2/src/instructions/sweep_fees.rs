@@ -15,16 +15,9 @@ pub fn sweep_fees<'info>(ctx: Context<'_, '_, '_, 'info, SweepFees<'info>>) -> R
     let seeds = market_seeds!(market, ctx.accounts.market.key());
     drop(market);
 
-    // Getting actual base token amount to be deposited
-    // let token_fee_wrapped = {
-    //     get_token_fee(ctx.accounts.mint.to_account_info(), ctx.accounts.token_program.to_account_info(), amount)
-    // };
-    // let token_fee = token_fee_wrapped.unwrap().unwrap();
-
-    let actual_amount = amount;
 
     token_transfer_signed(
-        actual_amount,
+        amount,
         &ctx.accounts.token_program,
         &ctx.accounts.market_quote_vault,
         &ctx.accounts.token_receiver_account,

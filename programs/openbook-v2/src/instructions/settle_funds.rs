@@ -45,17 +45,8 @@ pub fn settle_funds<'info>(ctx: Context<'_, '_, '_, 'info, SettleFunds<'info>>) 
     }
 
     if let Some(referrer_account) = &ctx.accounts.referrer_account {
-
-        // Getting actual referrer amount to be paid
-        // let referrer_amount_wrapped = {
-        //     get_token_fee(ctx.accounts.quote_mint.to_account_info(), ctx.accounts.quote_token_program.to_account_info(), referrer_rebate)
-        // };
-        // let referrer_amount_fee = referrer_amount_wrapped.unwrap().unwrap();
-
-        let referrer_amount = referrer_rebate;
-
         token_transfer_signed(
-            referrer_amount,
+            referrer_rebate,
             &ctx.accounts.quote_token_program,
             &ctx.accounts.market_quote_vault,
             referrer_account,
@@ -66,25 +57,8 @@ pub fn settle_funds<'info>(ctx: Context<'_, '_, '_, 'info, SettleFunds<'info>>) 
         )?;
     }
 
-
-    // Getting actual base amount to be paid
-    // let base_token_fee_wrapped = {
-    //     get_token_fee(ctx.accounts.base_mint.to_account_info(), ctx.accounts.base_token_program.to_account_info(), pa.base_free_native)
-    // };
-    // let base_token_fee = base_token_fee_wrapped.unwrap().unwrap();
-
-    let base_amount = pa.base_free_native;
-
-    // Getting actual quote native amount to be paid
-    // let quote_token_fee_wrapped = {
-    //     get_token_fee(ctx.accounts.quote_mint.to_account_info(), ctx.accounts.quote_token_program.to_account_info(), pa.quote_free_native)
-    // };
-    // let quote_token_fee = quote_token_fee_wrapped.unwrap().unwrap();
-
-    let quote_amount = pa.quote_free_native;
-
     token_transfer_signed(
-        base_amount,
+        pa.base_free_native,
         &ctx.accounts.base_token_program,
         &ctx.accounts.market_base_vault,
         &ctx.accounts.user_base_account,
@@ -95,7 +69,7 @@ pub fn settle_funds<'info>(ctx: Context<'_, '_, '_, 'info, SettleFunds<'info>>) 
     )?;
 
     token_transfer_signed(
-        quote_amount,
+        pa.quote_free_native,
         &ctx.accounts.quote_token_program,
         &ctx.accounts.market_quote_vault,
         &ctx.accounts.user_quote_account,
@@ -105,7 +79,6 @@ pub fn settle_funds<'info>(ctx: Context<'_, '_, '_, 'info, SettleFunds<'info>>) 
         ctx.accounts.quote_mint.decimals,
     )?;
 
-    // Should settle funds have total amount, or the actual amount paid out excluding fees ??
     emit!(SettleFundsLog {
         open_orders_account: ctx.accounts.open_orders_account.key(),
         base_native: pa.base_free_native,

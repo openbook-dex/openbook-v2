@@ -119,14 +119,6 @@ pub fn place_take_order<'info>(
     };
     let deposit_actual_amount = deposit_amount_wrapped.unwrap().unwrap();
 
-
-    // let withdraw_token_fee_wrapped = {
-    //     get_token_fee(ctx.accounts.withdraw_mint.to_account_info(), ctx.accounts.token_program.to_account_info(), withdraw_amount)
-    // };
-    // let withdraw_token_fee = withdraw_token_fee_wrapped.unwrap().unwrap();
-
-    let withdraw_actual_amount = withdraw_amount;
-
     token_transfer(
         deposit_actual_amount,
         &ctx.accounts.token_program,
@@ -138,7 +130,7 @@ pub fn place_take_order<'info>(
     )?;
 
     token_transfer_signed(
-        withdraw_actual_amount,
+        withdraw_amount,
         &ctx.accounts.token_program,
         market_withdraw_acc,
         user_withdraw_acc.as_ref(),
@@ -149,19 +141,11 @@ pub fn place_take_order<'info>(
     )?;
 
     
-// Consider using base and token mints and if/else statements for everything
     if let Some(referrer_account) = &ctx.accounts.referrer_account {
 
         if referrer_account.mint == ctx.accounts.withdraw_mint.key() {
-            // let referrer_token_fee_wrapped = {
-            //     get_token_fee(ctx.accounts.withdraw_mint.to_account_info(), ctx.accounts.token_program.to_account_info(), referrer_amount)
-            // };
-            // let referrer_token_fee = referrer_token_fee_wrapped.unwrap().unwrap();
-    
-            let referrer_actual_amount = referrer_amount;
-    
             token_transfer_signed(
-                referrer_actual_amount,
+                referrer_amount,
                 &ctx.accounts.token_program,
                 &ctx.accounts.market_quote_vault,
                 referrer_account,
@@ -172,15 +156,8 @@ pub fn place_take_order<'info>(
             )?;
 
         } else if referrer_account.mint == ctx.accounts.deposit_mint.key() {
-            // let referrer_token_fee_wrapped = {
-            //     get_token_fee(ctx.accounts.deposit_mint.to_account_info(), ctx.accounts.token_program.to_account_info(), referrer_amount)
-            // };
-            // let referrer_token_fee = referrer_token_fee_wrapped.unwrap().unwrap();
-    
-            let referrer_actual_amount = referrer_amount;
-    
             token_transfer_signed(
-                referrer_actual_amount,
+                referrer_amount,
                 &ctx.accounts.token_program,
                 &ctx.accounts.market_quote_vault,
                 referrer_account,

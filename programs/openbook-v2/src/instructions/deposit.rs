@@ -27,7 +27,6 @@ pub fn deposit<'info>(ctx: Context<'_, '_, '_, 'info, Deposit<'info>>, base_amou
     let quote_actual_amount = quote_amount_wrapped.unwrap().unwrap();
 
 
-    // Should open_orders_account and market be editted with base amount or actual amount excluding fees 
     token_transfer(
         base_actual_amount,
         &ctx.accounts.base_token_program,
