@@ -241,7 +241,9 @@ impl FuzzContext {
                 market: self.market,
                 system_program: system_program::ID,
             };
-            let data = openbook_v2::instruction::CreateOpenOrdersAccount {};
+            let data = openbook_v2::instruction::CreateOpenOrdersAccount {
+                name: "fuzz test".to_string(),
+            };
             process_instruction(&mut self.state, &data, &accounts, &[]).unwrap();
 
             UserAccounts {
@@ -472,6 +474,7 @@ impl FuzzContext {
 
         let accounts = openbook_v2::accounts::PlaceTakeOrder {
             signer: user.owner,
+            penalty_payer: user.owner,
             user_base_account: user.base_vault,
             user_quote_account: user.quote_vault,
             market: self.market,
@@ -767,6 +770,7 @@ impl FuzzContext {
 
         let accounts = openbook_v2::accounts::SettleFunds {
             owner: user.owner,
+            penalty_payer: user.owner,
             open_orders_account: user.open_orders,
             user_base_account: user.base_vault,
             user_quote_account: user.quote_vault,
