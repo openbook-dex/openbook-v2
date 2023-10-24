@@ -699,7 +699,7 @@ export class OpenBookV2Client {
   public async getAccountsToConsume(
     market: MarketAccount,
   ): Promise<PublicKey[]> {
-    const accounts: PublicKey[] = new Array<PublicKey>();
+    let accounts: PublicKey[] = new Array<PublicKey>();
     const eventHeap = await this.getEventHeap(market.eventHeap);
     if (eventHeap != null) {
       for (const node of eventHeap.nodes) {
@@ -708,7 +708,7 @@ export class OpenBookV2Client {
             'FillEvent',
             Buffer.from([0, ...node.event.padding]),
           );
-          accounts
+          accounts = accounts
             .filter((a) => a !== fillEvent.maker)
             .concat([fillEvent.maker]);
         } else {
@@ -716,7 +716,9 @@ export class OpenBookV2Client {
             'OutEvent',
             Buffer.from([0, ...node.event.padding]),
           );
-          accounts.filter((a) => a !== outEvent.owner).concat([outEvent.owner]);
+          accounts = accounts
+            .filter((a) => a !== outEvent.owner)
+            .concat([outEvent.owner]);
         }
         // Tx would be too big, do not add more accounts
         if (accounts.length > 20) return accounts;
