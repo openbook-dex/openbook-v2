@@ -45,6 +45,8 @@ export type EventHeapAccount = IdlAccounts<OpenbookV2>['eventHeap'];
 export type BookSideAccount = IdlAccounts<OpenbookV2>['bookSide'];
 export type LeafNode = IdlTypes<OpenbookV2>['LeafNode'];
 export type AnyNode = IdlTypes<OpenbookV2>['AnyNode'];
+export type FillEvent = IdlTypes<OpenbookV2>['FillEvent'];
+export type OutEvent = IdlTypes<OpenbookV2>['OutEvent'];
 
 export interface OpenBookClientOptions {
   idsSource?: IdsSource;
@@ -646,6 +648,7 @@ export class OpenBookV2Client {
     return await this.sendAndConfirmTransaction([ix], { signers });
   }
 
+  // Use getAccountsToConsume as a helper
   public async consumeEvents(
     marketPublicKey: PublicKey,
     market: MarketAccount,
@@ -669,10 +672,11 @@ export class OpenBookV2Client {
     return await this.sendAndConfirmTransaction([ix]);
   }
 
+  // In order to get slots for certain key use getSlotsToConsume and include the key in the remainingAccounts
   public async consumeGivenEvents(
     marketPublicKey: PublicKey,
     market: MarketAccount,
-    slots: [BN],
+    slots: BN[],
     remainingAccounts: PublicKey[],
   ): Promise<TransactionSignature> {
     const accountsMeta: AccountMeta[] = remainingAccounts.map((remaining) => ({
@@ -690,6 +694,62 @@ export class OpenBookV2Client {
       .remainingAccounts(accountsMeta)
       .instruction();
     return await this.sendAndConfirmTransaction([ix]);
+  }
+
+  public async getAccountsToConsume(
+    market: MarketAccount,
+  ): Promise<PublicKey[]> {
+    const accounts: PublicKey[] = new Array<PublicKey>();
+    const eventHeap = await this.getEventHeap(market.eventHeap);
+    if (eventHeap) {
+      for (const [i, node] of eventHeap.nodes.entries()) {
+        if (node.event.eventType === 0) {
+          const fillEvent: FillEvent = this.program.coder.types.decode(
+            'FillEvent',
+            Buffer.from([0, ...node.event.padding]),
+          );
+          accounts
+            .filter((a) => a !== fillEvent.maker)
+            .concat([fillEvent.maker]);
+        } else {
+          const outEvent: OutEvent = this.program.coder.types.decode(
+            'OutEvent',
+            Buffer.from([0, ...node.event.padding]),
+          );
+          accounts.filter((a) => a !== outEvent.owner).concat([outEvent.owner]);
+        }
+        // Tx would be too big, do not add more accounts
+        if (accounts.length > 20) return accounts;
+      }
+    }
+    return accounts;
+  }
+
+  public async getSlotsToConsume(
+    key: PublicKey,
+    market: MarketAccount,
+  ): Promise<BN[]> {
+    let slots: BN[] = new Array<BN>();
+
+    const eventHeap = await this.getEventHeap(market.eventHeap);
+    if (eventHeap) {
+      for (const [i, node] of eventHeap.nodes.entries()) {
+        if (node.event.eventType === 0) {
+          const fillEvent: FillEvent = this.program.coder.types.decode(
+            'FillEvent',
+            Buffer.from([0, ...node.event.padding]),
+          );
+          if (key === fillEvent.maker) slots.push(new BN(i));
+        } else {
+          const outEvent: OutEvent = this.program.coder.types.decode(
+            'OutEvent',
+            Buffer.from([0, ...node.event.padding]),
+          );
+          if (key === outEvent.owner) slots.push(new BN(i));
+        }
+      }
+    }
+    return slots;
   }
 }
 
