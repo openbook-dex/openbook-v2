@@ -223,13 +223,13 @@ export class OpenBookV2Client {
       confFilter: 0.1,
       maxStalenessSlots: 100,
     },
+    market = Keypair.generate(),
     collectFeeAdmin?: PublicKey,
-  ): Promise<string> {
+  ): Promise<PublicKey> {
     const bids = await this.createProgramAccount(payer, BooksideSpace);
     const asks = await this.createProgramAccount(payer, BooksideSpace);
     const eventHeap = await this.createProgramAccount(payer, EventHeapSpace);
 
-    const market = Keypair.generate();
     const [marketAuthority] = PublicKey.findProgramAddressSync(
       [Buffer.from('Market'), market.publicKey.toBuffer()],
       this.program.programId,
@@ -288,9 +288,11 @@ export class OpenBookV2Client {
       })
       .instruction();
 
-    return await this.sendAndConfirmTransaction([ix], {
+    await this.sendAndConfirmTransaction([ix], {
       additionalSigners: [payer, market],
     });
+
+    return market.publicKey;
   }
 
   public findOpenOrdersIndexer(): PublicKey {
@@ -334,7 +336,7 @@ export class OpenBookV2Client {
     market: PublicKey,
     accountIndex: BN,
     openOrdersIndexer?: PublicKey,
-  ): Promise<TransactionSignature> {
+  ): Promise<PublicKey> {
     if (openOrdersIndexer == null) {
       openOrdersIndexer = this.findOpenOrdersIndexer();
       try {
@@ -368,7 +370,9 @@ export class OpenBookV2Client {
       })
       .instruction();
 
-    return await this.sendAndConfirmTransaction([ix]);
+    await this.sendAndConfirmTransaction([ix]);
+
+    return openOrders;
   }
 
   public async deposit(
