@@ -27,6 +27,7 @@ import {
   type TransactionInstruction,
   type TransactionSignature,
   Transaction,
+  type AccountMeta,
 } from '@solana/web3.js';
 import { IDL, type OpenbookV2 } from './openbook_v2';
 import { sendTransaction } from './utils/rpc';
@@ -44,6 +45,8 @@ export type EventHeapAccount = IdlAccounts<OpenbookV2>['eventHeap'];
 export type BookSideAccount = IdlAccounts<OpenbookV2>['bookSide'];
 export type LeafNode = IdlTypes<OpenbookV2>['LeafNode'];
 export type AnyNode = IdlTypes<OpenbookV2>['AnyNode'];
+export type FillEvent = IdlTypes<OpenbookV2>['FillEvent'];
+export type OutEvent = IdlTypes<OpenbookV2>['OutEvent'];
 
 export interface OpenBookClientOptions {
   idsSource?: IdsSource;
@@ -471,10 +474,17 @@ export class OpenBookV2Client {
     userTokenAccount: PublicKey,
     openOrdersAdmin: PublicKey | null,
     args: PlaceOrderArgs,
+    remainingAccounts: PublicKey[],
     openOrdersDelegate?: Keypair,
   ): Promise<TransactionSignature> {
     const marketVault =
       args.side === Side.Bid ? market.marketQuoteVault : market.marketBaseVault;
+    const accountsMeta: AccountMeta[] = remainingAccounts.map((remaining) => ({
+      pubkey: remaining,
+      isSigner: false,
+      isWritable: true,
+    }));
+
     const ix = await this.program.methods
       .placeOrder(args)
       .accounts({
@@ -494,6 +504,7 @@ export class OpenBookV2Client {
         tokenProgram: TOKEN_PROGRAM_ID,
         openOrdersAdmin,
       })
+      .remainingAccounts(accountsMeta)
       .instruction();
     const signers: Signer[] = [];
     if (openOrdersDelegate != null) {
@@ -510,8 +521,14 @@ export class OpenBookV2Client {
     openOrdersAdmin: PublicKey | null,
     args: PlaceOrderArgs,
     referrerAccount: PublicKey | null,
+    remainingAccounts: PublicKey[],
     openOrdersDelegate?: Keypair,
   ): Promise<TransactionSignature> {
+    const accountsMeta: AccountMeta[] = remainingAccounts.map((remaining) => ({
+      pubkey: remaining,
+      isSigner: false,
+      isWritable: true,
+    }));
     const ix = await this.program.methods
       .placeTakeOrder(args)
       .accounts({
@@ -534,6 +551,7 @@ export class OpenBookV2Client {
         tokenProgram: TOKEN_PROGRAM_ID,
         openOrdersAdmin,
       })
+      .remainingAccounts(accountsMeta)
       .instruction();
     const signers: Signer[] = [];
     if (openOrdersDelegate != null) {
@@ -628,6 +646,112 @@ export class OpenBookV2Client {
       signers.push(openOrdersDelegate);
     }
     return await this.sendAndConfirmTransaction([ix], { signers });
+  }
+
+  // Use getAccountsToConsume as a helper
+  public async consumeEvents(
+    marketPublicKey: PublicKey,
+    market: MarketAccount,
+    limit: BN,
+    remainingAccounts: PublicKey[],
+  ): Promise<TransactionSignature> {
+    const accountsMeta: AccountMeta[] = remainingAccounts.map((remaining) => ({
+      pubkey: remaining,
+      isSigner: false,
+      isWritable: true,
+    }));
+    const ix = await this.program.methods
+      .consumeEvents(limit)
+      .accounts({
+        eventHeap: market.eventHeap,
+        market: marketPublicKey,
+        consumeEventsAdmin: market.consumeEventsAdmin.key,
+      })
+      .remainingAccounts(accountsMeta)
+      .instruction();
+    return await this.sendAndConfirmTransaction([ix]);
+  }
+
+  // In order to get slots for certain key use getSlotsToConsume and include the key in the remainingAccounts
+  public async consumeGivenEvents(
+    marketPublicKey: PublicKey,
+    market: MarketAccount,
+    slots: BN[],
+    remainingAccounts: PublicKey[],
+  ): Promise<TransactionSignature> {
+    const accountsMeta: AccountMeta[] = remainingAccounts.map((remaining) => ({
+      pubkey: remaining,
+      isSigner: false,
+      isWritable: true,
+    }));
+    const ix = await this.program.methods
+      .consumeGivenEvents(slots)
+      .accounts({
+        eventHeap: market.eventHeap,
+        market: marketPublicKey,
+        consumeEventsAdmin: market.consumeEventsAdmin.key,
+      })
+      .remainingAccounts(accountsMeta)
+      .instruction();
+    return await this.sendAndConfirmTransaction([ix]);
+  }
+
+  public async getAccountsToConsume(
+    market: MarketAccount,
+  ): Promise<PublicKey[]> {
+    let accounts: PublicKey[] = new Array<PublicKey>();
+    const eventHeap = await this.getEventHeap(market.eventHeap);
+    if (eventHeap != null) {
+      for (const node of eventHeap.nodes) {
+        if (node.event.eventType === 0) {
+          const fillEvent: FillEvent = this.program.coder.types.decode(
+            'FillEvent',
+            Buffer.from([0, ...node.event.padding]),
+          );
+          accounts = accounts
+            .filter((a) => a !== fillEvent.maker)
+            .concat([fillEvent.maker]);
+        } else {
+          const outEvent: OutEvent = this.program.coder.types.decode(
+            'OutEvent',
+            Buffer.from([0, ...node.event.padding]),
+          );
+          accounts = accounts
+            .filter((a) => a !== outEvent.owner)
+            .concat([outEvent.owner]);
+        }
+        // Tx would be too big, do not add more accounts
+        if (accounts.length > 20) return accounts;
+      }
+    }
+    return accounts;
+  }
+
+  public async getSlotsToConsume(
+    key: PublicKey,
+    market: MarketAccount,
+  ): Promise<BN[]> {
+    const slots: BN[] = new Array<BN>();
+
+    const eventHeap = await this.getEventHeap(market.eventHeap);
+    if (eventHeap != null) {
+      for (const [i, node] of eventHeap.nodes.entries()) {
+        if (node.event.eventType === 0) {
+          const fillEvent: FillEvent = this.program.coder.types.decode(
+            'FillEvent',
+            Buffer.from([0, ...node.event.padding]),
+          );
+          if (key === fillEvent.maker) slots.push(new BN(i));
+        } else {
+          const outEvent: OutEvent = this.program.coder.types.decode(
+            'OutEvent',
+            Buffer.from([0, ...node.event.padding]),
+          );
+          if (key === outEvent.owner) slots.push(new BN(i));
+        }
+      }
+    }
+    return slots;
   }
 }
 
