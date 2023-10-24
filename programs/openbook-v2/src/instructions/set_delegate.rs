@@ -18,11 +18,7 @@ pub fn set_delegate(ctx: Context<SetDelegate>) -> Result<()> {
 
     emit!(SetDelegateLog {
         open_orders_account: ctx.accounts.open_orders_account.key(),
-        delegate: ctx
-            .accounts
-            .delegate_account
-            .as_ref()
-            .map(|account| account.key()),
+        delegate: delegate_account.into()
     });
 
     Ok(())

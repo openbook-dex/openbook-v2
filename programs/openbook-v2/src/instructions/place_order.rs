@@ -86,10 +86,10 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<
         }
 
         Side::Ask => {
-            let free_assets_native = position.base_free_native;
+            let free_base = position.base_free_native;
             let max_base_native = total_base_taken_native + posted_base_native;
 
-            let free_qty_to_lock = cmp::min(max_base_native, free_assets_native);
+            let free_qty_to_lock = cmp::min(max_base_native, free_base);
             let deposit_amount = max_base_native - free_qty_to_lock;
 
             // Update market deposit total
