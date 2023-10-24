@@ -184,7 +184,9 @@ impl ClientInstruction for CreateOpenOrdersAccountInstruction {
         _account_loader: impl ClientAccountLoader + 'async_trait,
     ) -> (Self::Accounts, instruction::Instruction) {
         let program_id = openbook_v2::id();
-        let instruction = openbook_v2::instruction::CreateOpenOrdersAccount {};
+        let instruction = openbook_v2::instruction::CreateOpenOrdersAccount {
+            name: "test".to_string(),
+        };
 
         let open_orders_indexer = Pubkey::find_program_address(
             &[b"OpenOrdersIndexer".as_ref(), self.owner.pubkey().as_ref()],

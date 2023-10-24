@@ -131,9 +131,17 @@ impl OpenBookClient {
                 Some(tuple) => tuple.1.account_num + 1,
                 None => 0u32,
             };
-            Self::create_open_orders_account(client, market, owner, payer, None, account_num)
-                .await
-                .context("Failed to create account...")?;
+            Self::create_open_orders_account(
+                client,
+                market,
+                owner,
+                payer,
+                None,
+                account_num,
+                openbook_account_name,
+            )
+            .await
+            .context("Failed to create account...")?;
         }
         let openbook_account_tuples =
             fetch_openbook_accounts(&rpc, program, owner.pubkey()).await?;
@@ -191,6 +199,7 @@ impl OpenBookClient {
         payer: &Keypair, // pays the SOL for the new account
         delegate: Option<Pubkey>,
         account_num: u32,
+        name: &str,
     ) -> anyhow::Result<(Pubkey, Signature)> {
         let open_orders_indexer = Pubkey::find_program_address(
             &[
@@ -228,7 +237,9 @@ impl OpenBookClient {
                 None,
             ),
             data: anchor_lang::InstructionData::data(
-                &openbook_v2::instruction::CreateOpenOrdersAccount {},
+                &openbook_v2::instruction::CreateOpenOrdersAccount {
+                    name: name.to_string(),
+                },
             ),
         };
 
