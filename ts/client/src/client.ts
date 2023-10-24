@@ -337,6 +337,7 @@ export class OpenBookV2Client {
   public async createOpenOrders(
     market: PublicKey,
     accountIndex: BN,
+    name: string,
     openOrdersIndexer?: PublicKey,
   ): Promise<PublicKey> {
     if (openOrdersIndexer == null) {
@@ -360,7 +361,7 @@ export class OpenBookV2Client {
     const openOrders = this.findOpenOrders(market, accountIndex);
 
     const ix = await this.program.methods
-      .createOpenOrdersAccount()
+      .createOpenOrdersAccount(name)
       .accounts({
         openOrdersIndexer,
         openOrdersAccount: openOrders,
