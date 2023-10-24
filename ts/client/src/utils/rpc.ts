@@ -7,6 +7,7 @@ import {
   type Signer,
   type TransactionInstruction,
   VersionedTransaction,
+  Transaction,
 } from '@solana/web3.js';
 
 export async function sendTransaction(
@@ -16,6 +17,21 @@ export async function sendTransaction(
   opts: any = {},
 ): Promise<string> {
   const connection = provider.connection;
+  if ((connection as any).banksClient !== undefined) {
+          const tx = new Transaction();
+          for (const ix of ixs) {
+            tx.add(ix);
+          }
+          tx.feePayer = provider.wallet.publicKey;
+          [tx.recentBlockhash] = await (connection as any).banksClient.getLatestBlockhash();
+
+          for (const signer of opts?.additionalSigners) {
+            tx.partialSign(signer);
+          }
+
+          await (connection as any).banksClient.processTransaction(tx);
+          return "";
+  }
   const latestBlockhash =
     opts?.latestBlockhash ??
     (await connection.getLatestBlockhash(

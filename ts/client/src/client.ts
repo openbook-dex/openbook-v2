@@ -82,7 +82,7 @@ export class OpenBookV2Client {
     this.postSendTxCallback = opts?.postSendTxCallback;
     this.txConfirmationCommitment =
       opts?.txConfirmationCommitment ??
-      (this.program.provider as AnchorProvider).opts.commitment ??
+//      (this.program.provider as AnchorProvider).opts.commitment ??
       'processed';
     // TODO: evil side effect, but limited backtraces are a nightmare
     Error.stackTraceLimit = 1000;
