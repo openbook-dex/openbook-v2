@@ -701,8 +701,8 @@ export class OpenBookV2Client {
   ): Promise<PublicKey[]> {
     const accounts: PublicKey[] = new Array<PublicKey>();
     const eventHeap = await this.getEventHeap(market.eventHeap);
-    if (eventHeap) {
-      for (const [i, node] of eventHeap.nodes.entries()) {
+    if (eventHeap != null) {
+      for (const node of eventHeap.nodes) {
         if (node.event.eventType === 0) {
           const fillEvent: FillEvent = this.program.coder.types.decode(
             'FillEvent',
@@ -729,10 +729,10 @@ export class OpenBookV2Client {
     key: PublicKey,
     market: MarketAccount,
   ): Promise<BN[]> {
-    let slots: BN[] = new Array<BN>();
+    const slots: BN[] = new Array<BN>();
 
     const eventHeap = await this.getEventHeap(market.eventHeap);
-    if (eventHeap) {
+    if (eventHeap != null) {
       for (const [i, node] of eventHeap.nodes.entries()) {
         if (node.event.eventType === 0) {
           const fillEvent: FillEvent = this.program.coder.types.decode(
