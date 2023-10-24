@@ -327,7 +327,6 @@ export class OpenBookV2Client {
       [
         Buffer.from('OpenOrders'),
         this.walletPk.toBuffer(),
-        market.toBuffer(),
         accountIndex.toArrayLike(Buffer, 'le', 4),
       ],
       this.programId,

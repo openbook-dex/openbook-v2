@@ -48,6 +48,7 @@ pub struct CreateMarket<'info> {
     )]
     pub market_quote_vault: Account<'info, TokenAccount>,
 
+    #[account(constraint = base_mint.key() != quote_mint.key())]
     pub base_mint: Box<Account<'info, Mint>>,
     pub quote_mint: Box<Account<'info, Mint>>,
 

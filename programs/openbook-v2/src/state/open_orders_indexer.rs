@@ -1,6 +1,4 @@
 use anchor_lang::prelude::*;
-use static_assertions::const_assert_eq;
-use std::mem::size_of;
 
 #[account]
 #[derive(Default)]

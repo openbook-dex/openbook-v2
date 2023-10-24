@@ -11,7 +11,7 @@ pub struct CloseOpenOrdersAccount<'info> {
         seeds = [b"OpenOrdersIndexer".as_ref(), owner.key().as_ref()],
         bump = open_orders_indexer.bump,
         realloc = OpenOrdersIndexer::space(open_orders_indexer.addresses.len()-1),
-        realloc::payer = payer,
+        realloc::payer = sol_destination,
         realloc::zero = false,
     )]
     pub open_orders_indexer: Account<'info, OpenOrdersIndexer>,

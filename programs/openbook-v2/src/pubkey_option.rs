@@ -2,7 +2,7 @@ use anchor_lang::prelude::*;
 use bytemuck::Zeroable;
 use std::convert::From;
 
-/// Like `Option`, but implemented for `Pubkey`.
+/// Like `Option`, but implemented for `Pubkey` to be used with `zero_copy`
 #[zero_copy]
 #[derive(AnchorSerialize, AnchorDeserialize, Debug, Default, PartialEq)]
 pub struct NonZeroPubkeyOption {

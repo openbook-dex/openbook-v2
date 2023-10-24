@@ -184,7 +184,9 @@ impl ClientInstruction for CreateOpenOrdersAccountInstruction {
         _account_loader: impl ClientAccountLoader + 'async_trait,
     ) -> (Self::Accounts, instruction::Instruction) {
         let program_id = openbook_v2::id();
-        let instruction = openbook_v2::instruction::CreateOpenOrdersAccount {};
+        let instruction = openbook_v2::instruction::CreateOpenOrdersAccount {
+            name: "test".to_string(),
+        };
 
         let open_orders_indexer = Pubkey::find_program_address(
             &[b"OpenOrdersIndexer".as_ref(), self.owner.pubkey().as_ref()],
@@ -196,7 +198,6 @@ impl ClientInstruction for CreateOpenOrdersAccountInstruction {
             &[
                 b"OpenOrders".as_ref(),
                 self.owner.pubkey().as_ref(),
-                self.market.as_ref(),
                 &self.account_num.to_le_bytes(),
             ],
             &program_id,
@@ -250,7 +251,6 @@ impl ClientInstruction for CloseOpenOrdersAccountInstruction {
             &[
                 b"OpenOrders".as_ref(),
                 self.owner.pubkey().as_ref(),
-                self.market.as_ref(),
                 &self.account_num.to_le_bytes(),
             ],
             &program_id,
@@ -587,6 +587,7 @@ impl ClientInstruction for PlaceTakeOrderInstruction {
             oracle_a: market.oracle_a.into(),
             oracle_b: market.oracle_b.into(),
             signer: self.signer.pubkey(),
+            penalty_payer: self.signer.pubkey(),
             user_base_account: self.user_base_account,
             user_quote_account: self.user_quote_account,
             market_base_vault: self.market_base_vault,
@@ -831,6 +832,7 @@ impl ClientInstruction for SettleFundsInstruction {
         let market: Market = account_loader.load(&self.market).await.unwrap();
         let accounts = Self::Accounts {
             owner: self.owner.pubkey(),
+            penalty_payer: self.owner.pubkey(),
             open_orders_account: self.open_orders_account,
             market: self.market,
             market_authority: market.market_authority,
@@ -855,7 +857,7 @@ impl ClientInstruction for SettleFundsInstruction {
 #[derive(Clone)]
 pub struct SettleFundsExpiredInstruction {
     pub close_market_admin: TestKeypair,
-    pub payer: TestKeypair,
+    pub owner: TestKeypair,
     pub open_orders_account: Pubkey,
     pub market: Pubkey,
     pub market_base_vault: Pubkey,
@@ -877,7 +879,8 @@ impl ClientInstruction for SettleFundsExpiredInstruction {
         let market: Market = account_loader.load(&self.market).await.unwrap();
         let accounts = Self::Accounts {
             close_market_admin: self.close_market_admin.pubkey(),
-            payer: self.payer.pubkey(),
+            owner: self.owner.pubkey(),
+            penalty_payer: self.owner.pubkey(),
             open_orders_account: self.open_orders_account,
             market: self.market,
             market_authority: market.market_authority,
@@ -895,7 +898,7 @@ impl ClientInstruction for SettleFundsExpiredInstruction {
     }
 
     fn signers(&self) -> Vec<TestKeypair> {
-        vec![self.close_market_admin, self.payer]
+        vec![self.close_market_admin, self.owner]
     }
 }
 

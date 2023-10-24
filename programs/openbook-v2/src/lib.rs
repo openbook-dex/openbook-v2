@@ -86,9 +86,12 @@ pub mod openbook_v2 {
     }
 
     /// Create an [`OpenOrdersAccount`](crate::state::OpenOrdersAccount).
-    pub fn create_open_orders_account(ctx: Context<CreateOpenOrdersAccount>) -> Result<()> {
+    pub fn create_open_orders_account(
+        ctx: Context<CreateOpenOrdersAccount>,
+        name: String,
+    ) -> Result<()> {
         #[cfg(feature = "enable-gpl")]
-        instructions::create_open_orders_account(ctx)?;
+        instructions::create_open_orders_account(ctx, name)?;
         Ok(())
     }
 

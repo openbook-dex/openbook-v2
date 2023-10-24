@@ -10,7 +10,7 @@ test TEST_NAME:
     cargo test-sbf --features enable-gpl --  {{ TEST_NAME }}
 
 test-all:
-    (cd ./programs/openbook-v2 && RUST_LOG=ERROR cargo +1.70.0 test-sbf --features enable-gpl)
+    (cd ./programs/openbook-v2 && RUST_LOG=ERROR cargo test-sbf --features enable-gpl)
 
 test-dev:
     (find programs) | entr -s 'just test-all'
@@ -19,6 +19,7 @@ idl:
     anchor build --arch sbf -- --features enable-gpl
     bash {{ justfile_directory() }}/idl-fixup.sh
     cp -v ./target/types/openbook_v2.ts ./ts/client/src/openbook_v2.ts
+    yarn lint --fix
     yarn format
 
 fuzz:

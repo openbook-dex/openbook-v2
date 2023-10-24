@@ -375,6 +375,7 @@ impl Position {
             && self.quote_free_native == 0
             && self.locked_maker_fees == 0
             && self.referrer_rebates_available == 0
+            && self.penalty_heap_count == 0
     }
 }
 

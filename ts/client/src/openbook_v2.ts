@@ -302,7 +302,12 @@ export interface OpenbookV2 {
           isSigner: false;
         },
       ];
-      args: [];
+      args: [
+        {
+          name: 'name';
+          type: 'string';
+        },
+      ];
     },
     {
       name: 'closeOpenOrdersAccount';
@@ -811,6 +816,11 @@ export interface OpenbookV2 {
           isSigner: true;
         },
         {
+          name: 'penaltyPayer';
+          isMut: true;
+          isSigner: true;
+        },
+        {
           name: 'market';
           isMut: true;
           isSigner: false;
@@ -1247,6 +1257,11 @@ export interface OpenbookV2 {
           isSigner: true;
         },
         {
+          name: 'penaltyPayer';
+          isMut: true;
+          isSigner: true;
+        },
+        {
           name: 'openOrdersAccount';
           isMut: true;
           isSigner: false;
@@ -1313,7 +1328,12 @@ export interface OpenbookV2 {
           isSigner: true;
         },
         {
-          name: 'payer';
+          name: 'owner';
+          isMut: true;
+          isSigner: true;
+        },
+        {
+          name: 'penaltyPayer';
           isMut: true;
           isSigner: true;
         },
@@ -2006,7 +2026,9 @@ export interface OpenbookV2 {
   types: [
     {
       name: 'NonZeroPubkeyOption';
-      docs: ['Like `Option`, but implemented for `Pubkey`.'];
+      docs: [
+        'Like `Option`, but implemented for `Pubkey` to be used with `zero_copy`',
+      ];
       type: {
         kind: 'struct';
         fields: [
@@ -3818,7 +3840,12 @@ export const IDL: OpenbookV2 = {
           isSigner: false,
         },
       ],
-      args: [],
+      args: [
+        {
+          name: 'name',
+          type: 'string',
+        },
+      ],
     },
     {
       name: 'closeOpenOrdersAccount',
@@ -4327,6 +4354,11 @@ export const IDL: OpenbookV2 = {
           isSigner: true,
         },
         {
+          name: 'penaltyPayer',
+          isMut: true,
+          isSigner: true,
+        },
+        {
           name: 'market',
           isMut: true,
           isSigner: false,
@@ -4763,6 +4795,11 @@ export const IDL: OpenbookV2 = {
           isSigner: true,
         },
         {
+          name: 'penaltyPayer',
+          isMut: true,
+          isSigner: true,
+        },
+        {
           name: 'openOrdersAccount',
           isMut: true,
           isSigner: false,
@@ -4829,7 +4866,12 @@ export const IDL: OpenbookV2 = {
           isSigner: true,
         },
         {
-          name: 'payer',
+          name: 'owner',
+          isMut: true,
+          isSigner: true,
+        },
+        {
+          name: 'penaltyPayer',
           isMut: true,
           isSigner: true,
         },
@@ -5522,7 +5564,9 @@ export const IDL: OpenbookV2 = {
   types: [
     {
       name: 'NonZeroPubkeyOption',
-      docs: ['Like `Option`, but implemented for `Pubkey`.'],
+      docs: [
+        'Like `Option`, but implemented for `Pubkey` to be used with `zero_copy`',
+      ],
       type: {
         kind: 'struct',
         fields: [
