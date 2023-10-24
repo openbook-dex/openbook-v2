@@ -59,6 +59,10 @@ export function nameToString(name: number[]): string {
 const BooksideSpace = 90944 + 8;
 const EventHeapSpace = 91280 + 8;
 
+const OPENBOOK_PROGRAM_ID = new PublicKey(
+  "opnbkNkqux64GppQhwbyEVc3axhssFhVYuwar8rDHCu"
+);
+
 export class OpenBookV2Client {
   public program: Program<OpenbookV2>;
 
@@ -68,8 +72,8 @@ export class OpenBookV2Client {
   private readonly txConfirmationCommitment: Commitment;
 
   constructor(
-    public programId: PublicKey,
     public provider: AnchorProvider,
+    public programId: PublicKey = OPENBOOK_PROGRAM_ID,
     public opts: OpenBookClientOptions = {},
   ) {
     this.program = new Program<OpenbookV2>(IDL, programId, provider);
