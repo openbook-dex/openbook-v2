@@ -215,7 +215,6 @@ impl OpenBookClient {
             &[
                 b"OpenOrdersAccount".as_ref(),
                 owner.pubkey().as_ref(),
-                market.as_ref(),
                 &account_num.to_le_bytes(),
             ],
             &openbook_v2::id(),

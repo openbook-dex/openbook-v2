@@ -200,12 +200,7 @@ impl FuzzContext {
             .0;
 
             let open_orders = Pubkey::find_program_address(
-                &[
-                    b"OpenOrders".as_ref(),
-                    owner.as_ref(),
-                    self.market.as_ref(),
-                    &1_u32.to_le_bytes(),
-                ],
+                &[b"OpenOrders".as_ref(), owner.as_ref(), &1_u32.to_le_bytes()],
                 &openbook_v2::ID,
             )
             .0;

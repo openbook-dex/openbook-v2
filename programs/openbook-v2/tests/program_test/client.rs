@@ -198,7 +198,6 @@ impl ClientInstruction for CreateOpenOrdersAccountInstruction {
             &[
                 b"OpenOrders".as_ref(),
                 self.owner.pubkey().as_ref(),
-                self.market.as_ref(),
                 &self.account_num.to_le_bytes(),
             ],
             &program_id,
@@ -252,7 +251,6 @@ impl ClientInstruction for CloseOpenOrdersAccountInstruction {
             &[
                 b"OpenOrders".as_ref(),
                 self.owner.pubkey().as_ref(),
-                self.market.as_ref(),
                 &self.account_num.to_le_bytes(),
             ],
             &program_id,
