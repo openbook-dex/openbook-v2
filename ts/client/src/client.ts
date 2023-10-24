@@ -27,6 +27,7 @@ import {
   type TransactionInstruction,
   type TransactionSignature,
   Transaction,
+  type AccountMeta,
 } from '@solana/web3.js';
 import { IDL, type OpenbookV2 } from './openbook_v2';
 import { sendTransaction } from './utils/rpc';
@@ -471,10 +472,17 @@ export class OpenBookV2Client {
     userTokenAccount: PublicKey,
     openOrdersAdmin: PublicKey | null,
     args: PlaceOrderArgs,
+    remainingAccounts: PublicKey[],
     openOrdersDelegate?: Keypair,
   ): Promise<TransactionSignature> {
     const marketVault =
       args.side === Side.Bid ? market.marketQuoteVault : market.marketBaseVault;
+    const accountsMeta: AccountMeta[] = remainingAccounts.map((remaining) => ({
+      pubkey: remaining,
+      isSigner: false,
+      isWritable: true,
+    }));
+
     const ix = await this.program.methods
       .placeOrder(args)
       .accounts({
@@ -494,6 +502,7 @@ export class OpenBookV2Client {
         tokenProgram: TOKEN_PROGRAM_ID,
         openOrdersAdmin,
       })
+      .remainingAccounts(accountsMeta)
       .instruction();
     const signers: Signer[] = [];
     if (openOrdersDelegate != null) {
@@ -510,8 +519,14 @@ export class OpenBookV2Client {
     openOrdersAdmin: PublicKey | null,
     args: PlaceOrderArgs,
     referrerAccount: PublicKey | null,
+    remainingAccounts: PublicKey[],
     openOrdersDelegate?: Keypair,
   ): Promise<TransactionSignature> {
+    const accountsMeta: AccountMeta[] = remainingAccounts.map((remaining) => ({
+      pubkey: remaining,
+      isSigner: false,
+      isWritable: true,
+    }));
     const ix = await this.program.methods
       .placeTakeOrder(args)
       .accounts({
@@ -534,6 +549,7 @@ export class OpenBookV2Client {
         tokenProgram: TOKEN_PROGRAM_ID,
         openOrdersAdmin,
       })
+      .remainingAccounts(accountsMeta)
       .instruction();
     const signers: Signer[] = [];
     if (openOrdersDelegate != null) {
@@ -628,6 +644,52 @@ export class OpenBookV2Client {
       signers.push(openOrdersDelegate);
     }
     return await this.sendAndConfirmTransaction([ix], { signers });
+  }
+
+  public async consumeEvents(
+    marketPublicKey: PublicKey,
+    market: MarketAccount,
+    limit: BN,
+    remainingAccounts: PublicKey[],
+  ): Promise<TransactionSignature> {
+    const accountsMeta: AccountMeta[] = remainingAccounts.map((remaining) => ({
+      pubkey: remaining,
+      isSigner: false,
+      isWritable: true,
+    }));
+    const ix = await this.program.methods
+      .consumeEvents(limit)
+      .accounts({
+        eventHeap: market.eventHeap,
+        market: marketPublicKey,
+        consumeEventsAdmin: market.consumeEventsAdmin.key,
+      })
+      .remainingAccounts(accountsMeta)
+      .instruction();
+    return await this.sendAndConfirmTransaction([ix]);
+  }
+
+  public async consumeGivenEvents(
+    marketPublicKey: PublicKey,
+    market: MarketAccount,
+    slots: [BN],
+    remainingAccounts: PublicKey[],
+  ): Promise<TransactionSignature> {
+    const accountsMeta: AccountMeta[] = remainingAccounts.map((remaining) => ({
+      pubkey: remaining,
+      isSigner: false,
+      isWritable: true,
+    }));
+    const ix = await this.program.methods
+      .consumeGivenEvents(slots)
+      .accounts({
+        eventHeap: market.eventHeap,
+        market: marketPublicKey,
+        consumeEventsAdmin: market.consumeEventsAdmin.key,
+      })
+      .remainingAccounts(accountsMeta)
+      .instruction();
+    return await this.sendAndConfirmTransaction([ix]);
   }
 }
 
