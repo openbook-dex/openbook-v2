@@ -546,6 +546,7 @@ impl OpenBookClient {
                 anchor_lang::ToAccountMetas::to_account_metas(
                     &openbook_v2::accounts::SettleFunds {
                         owner: self.owner(),
+                        penalty_payer: self.owner(),
                         open_orders_account: self.open_orders_account,
                         market: market_address,
                         market_authority: market.market_authority,
