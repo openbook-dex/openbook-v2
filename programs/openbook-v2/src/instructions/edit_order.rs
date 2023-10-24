@@ -27,6 +27,7 @@ pub fn edit_order<'info>(
     )?;
 
     let filled_amount = expected_cancel_size - leaf_node_quantity;
+    // note that order.max_base_lots is checked to be > 0 inside `place_order`
     if order.max_base_lots > filled_amount {
         // Do not reduce max_quote_lots_including_fees as implicitly it's limited by max_base_lots.
         order.max_base_lots -= filled_amount;
