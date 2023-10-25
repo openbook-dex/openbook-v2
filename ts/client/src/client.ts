@@ -63,7 +63,7 @@ const BooksideSpace = 90944 + 8;
 const EventHeapSpace = 91280 + 8;
 
 const OPENBOOK_PROGRAM_ID = new PublicKey(
-  "opnbkNkqux64GppQhwbyEVc3axhssFhVYuwar8rDHCu"
+  "opnb2LAfJYbRMAHHvqjCwQxanZn7ReEHp1k81EohpZb"
 );
 
 export class OpenBookV2Client {
