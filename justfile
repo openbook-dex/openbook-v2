@@ -19,6 +19,7 @@ idl:
     anchor build --arch sbf -- --features enable-gpl
     bash {{ justfile_directory() }}/idl-fixup.sh
     cp -v ./target/types/openbook_v2.ts ./ts/client/src/openbook_v2.ts
+    cp -v ./target/idl/openbook_v2.json ./idl/openbook_v2.json
     yarn lint --fix
     yarn format
 
