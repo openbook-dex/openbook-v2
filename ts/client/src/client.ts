@@ -35,6 +35,7 @@ import { Side } from './utils/utils';
 
 export type IdsSource = 'api' | 'static' | 'get-program-accounts';
 export type PlaceOrderArgs = IdlTypes<OpenbookV2>['PlaceOrderArgs'];
+export type PlaceOrderPeggedArgs = IdlTypes<OpenbookV2>['PlaceOrderPeggedArgs'];
 export type OracleConfigParams = IdlTypes<OpenbookV2>['OracleConfigParams'];
 export type OracleConfig = IdlTypes<OpenbookV2>['OracleConfig'];
 export type MarketAccount = IdlAccounts<OpenbookV2>['market'];
@@ -63,7 +64,7 @@ const BooksideSpace = 90944 + 8;
 const EventHeapSpace = 91280 + 8;
 
 const OPENBOOK_PROGRAM_ID = new PublicKey(
-  "opnb2LAfJYbRMAHHvqjCwQxanZn7ReEHp1k81EohpZb"
+  'opnb2LAfJYbRMAHHvqjCwQxanZn7ReEHp1k81EohpZb',
 );
 
 export class OpenBookV2Client {
@@ -85,10 +86,10 @@ export class OpenBookV2Client {
     this.postSendTxCallback = opts?.postSendTxCallback;
     this.txConfirmationCommitment =
       opts?.txConfirmationCommitment ??
-      ((this.program.provider as AnchorProvider).opts !== undefined ?
-       (this.program.provider as AnchorProvider).opts.commitment : 
-       undefined) ??
-       'processed';
+      ((this.program.provider as AnchorProvider).opts !== undefined
+        ? (this.program.provider as AnchorProvider).opts.commitment
+        : undefined) ??
+      'processed';
     // TODO: evil side effect, but limited backtraces are a nightmare
     Error.stackTraceLimit = 1000;
   }
@@ -493,6 +494,52 @@ export class OpenBookV2Client {
 
     const ix = await this.program.methods
       .placeOrder(args)
+      .accounts({
+        signer:
+          openOrdersDelegate != null
+            ? openOrdersDelegate.publicKey
+            : this.walletPk,
+        asks: market.asks,
+        bids: market.bids,
+        marketVault,
+        eventHeap: market.eventHeap,
+        market: marketPublicKey,
+        openOrdersAccount: openOrdersPublicKey,
+        oracleA: market.oracleA.key,
+        oracleB: market.oracleB.key,
+        userTokenAccount,
+        tokenProgram: TOKEN_PROGRAM_ID,
+        openOrdersAdmin,
+      })
+      .remainingAccounts(accountsMeta)
+      .instruction();
+    const signers: Signer[] = [];
+    if (openOrdersDelegate != null) {
+      signers.push(openOrdersDelegate);
+    }
+    return await this.sendAndConfirmTransaction([ix], { signers });
+  }
+
+  public async placeOrderPegged(
+    openOrdersPublicKey: PublicKey,
+    marketPublicKey: PublicKey,
+    market: MarketAccount,
+    userTokenAccount: PublicKey,
+    openOrdersAdmin: PublicKey | null,
+    args: PlaceOrderPeggedArgs,
+    remainingAccounts: PublicKey[],
+    openOrdersDelegate?: Keypair,
+  ): Promise<TransactionSignature> {
+    const marketVault =
+      args.side === Side.Bid ? market.marketQuoteVault : market.marketBaseVault;
+    const accountsMeta: AccountMeta[] = remainingAccounts.map((remaining) => ({
+      pubkey: remaining,
+      isSigner: false,
+      isWritable: true,
+    }));
+
+    const ix = await this.program.methods
+      .placeOrderPegged(args)
       .accounts({
         signer:
           openOrdersDelegate != null
