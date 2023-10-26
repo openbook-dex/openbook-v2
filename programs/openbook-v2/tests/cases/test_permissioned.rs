@@ -381,7 +381,7 @@ async fn test_close_market_admin() -> Result<(), TransportError> {
     let settle_funds_expired_ix = SettleFundsExpiredInstruction {
         close_market_admin,
         market,
-        payer,
+        owner: payer,
         open_orders_account: account_2,
         market_base_vault,
         market_quote_vault,

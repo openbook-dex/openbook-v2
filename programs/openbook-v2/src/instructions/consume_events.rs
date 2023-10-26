@@ -14,11 +14,8 @@ pub const MAX_EVENTS_CONSUME: usize = 8;
 ///
 /// Message and return Ok() if it's missing, to lock in successful processing
 /// of previous events.
-///
-/// Special handling for testing, where events for accounts with bad
-/// owners (most likely due to force closure of the account) are being skipped.
 macro_rules! load_open_orders_account {
-    ($name:ident, $key:expr, $ais:expr, $event_heap:expr) => {
+    ($name:ident, $key:expr, $ais:expr) => {
         let loader = match $ais.iter().find(|ai| ai.key == &$key) {
             None => {
                 msg!(
@@ -30,17 +27,8 @@ macro_rules! load_open_orders_account {
             }
 
             Some(ai) => {
-                if ai.owner != &crate::id() {
-                    msg!(
-                        "OpenOrdersAccount ({}) not owned by openbook program",
-                        stringify!($name)
-                    );
-                    $event_heap.pop_front()?;
-                    continue;
-                }
-
-                let mal: AccountLoader<OpenOrdersAccount> = AccountLoader::try_from(ai)?;
-                mal
+                let ooa: AccountLoader<OpenOrdersAccount> = AccountLoader::try_from(ai)?;
+                ooa
             }
         };
         let mut $name = loader.load_mut()?;
@@ -73,12 +61,12 @@ pub fn consume_events(
         match EventType::try_from(event.event_type).map_err(|_| error!(OpenBookError::SomeError))? {
             EventType::Fill => {
                 let fill: &FillEvent = cast_ref(event);
-                load_open_orders_account!(maker, fill.maker, remaining_accs, event_heap);
+                load_open_orders_account!(maker, fill.maker, remaining_accs);
                 maker.execute_maker(&mut market, fill);
             }
             EventType::Out => {
                 let out: &OutEvent = cast_ref(event);
-                load_open_orders_account!(owner, out.owner, remaining_accs, event_heap);
+                load_open_orders_account!(owner, out.owner, remaining_accs);
                 owner.cancel_order(out.owner_slot as usize, out.quantity, *market);
             }
         }

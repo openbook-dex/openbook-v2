@@ -1,6 +1,4 @@
 use anchor_lang::prelude::*;
-use static_assertions::const_assert_eq;
-use std::mem::size_of;
 
 #[account]
 #[derive(Default)]
@@ -9,7 +7,6 @@ pub struct OpenOrdersIndexer {
     pub created_counter: u32,
     pub addresses: Vec<Pubkey>,
 }
-const_assert_eq!(size_of::<OpenOrdersIndexer>(), 32);
 
 impl OpenOrdersIndexer {
     pub fn space(len: usize) -> usize {

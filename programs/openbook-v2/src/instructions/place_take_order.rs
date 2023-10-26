@@ -93,7 +93,7 @@ pub fn place_take_order<'info>(
         system_program_transfer(
             PENALTY_EVENT_HEAP,
             &ctx.accounts.system_program,
-            &ctx.accounts.signer,
+            &ctx.accounts.penalty_payer,
             &ctx.accounts.market,
         )?;
     }

@@ -38,7 +38,7 @@ pub fn settle_funds<'info>(ctx: Context<'_, '_, '_, 'info, SettleFunds<'info>>) 
         system_program_transfer(
             pa.penalty_heap_count * PENALTY_EVENT_HEAP,
             &ctx.accounts.system_program,
-            &ctx.accounts.owner,
+            &ctx.accounts.penalty_payer,
             &ctx.accounts.market,
         )?;
         pa.penalty_heap_count = 0;

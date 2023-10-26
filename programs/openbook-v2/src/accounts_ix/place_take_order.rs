@@ -8,6 +8,8 @@ use anchor_spl::token_interface::{TokenInterface, self};
 pub struct PlaceTakeOrder<'info> {
     #[account(mut)]
     pub signer: Signer<'info>,
+    #[account(mut)]
+    pub penalty_payer: Signer<'info>,
 
     #[account(
         mut,

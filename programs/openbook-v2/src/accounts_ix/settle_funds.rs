@@ -6,6 +6,9 @@ use anchor_spl::token_interface::{TokenInterface, self};
 pub struct SettleFunds<'info> {
     #[account(mut)]
     pub owner: Signer<'info>,
+    #[account(mut)]
+    pub penalty_payer: Signer<'info>,
+
     #[account(
         mut,
         has_one = owner,

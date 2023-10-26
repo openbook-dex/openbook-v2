@@ -10,9 +10,11 @@ import {
   MintLayout,
   NATIVE_MINT,
   type RawMint,
+  ASSOCIATED_TOKEN_PROGRAM_ID,
   TOKEN_PROGRAM_ID,
   createCloseAccountInstruction,
   createInitializeAccount3Instruction,
+  getAssociatedTokenAddressSync,
 } from '@solana/spl-token';
 import {
   type AccountInfo,
@@ -25,8 +27,8 @@ import {
   type TransactionInstruction,
   type TransactionSignature,
   Transaction,
+  type AccountMeta,
 } from '@solana/web3.js';
-import * as splToken from '@solana/spl-token';
 import { IDL, type OpenbookV2 } from './openbook_v2';
 import { sendTransaction } from './utils/rpc';
 import { Side } from './utils/utils';
@@ -43,6 +45,8 @@ export type EventHeapAccount = IdlAccounts<OpenbookV2>['eventHeap'];
 export type BookSideAccount = IdlAccounts<OpenbookV2>['bookSide'];
 export type LeafNode = IdlTypes<OpenbookV2>['LeafNode'];
 export type AnyNode = IdlTypes<OpenbookV2>['AnyNode'];
+export type FillEvent = IdlTypes<OpenbookV2>['FillEvent'];
+export type OutEvent = IdlTypes<OpenbookV2>['OutEvent'];
 
 export interface OpenBookClientOptions {
   idsSource?: IdsSource;
@@ -58,6 +62,10 @@ export function nameToString(name: number[]): string {
 const BooksideSpace = 90944 + 8;
 const EventHeapSpace = 91280 + 8;
 
+const OPENBOOK_PROGRAM_ID = new PublicKey(
+  "opnb2LAfJYbRMAHHvqjCwQxanZn7ReEHp1k81EohpZb"
+);
+
 export class OpenBookV2Client {
   public program: Program<OpenbookV2>;
 
@@ -67,8 +75,8 @@ export class OpenBookV2Client {
   private readonly txConfirmationCommitment: Commitment;
 
   constructor(
-    public programId: PublicKey,
     public provider: AnchorProvider,
+    public programId: PublicKey = OPENBOOK_PROGRAM_ID,
     public opts: OpenBookClientOptions = {},
   ) {
     this.program = new Program<OpenbookV2>(IDL, programId, provider);
@@ -77,8 +85,10 @@ export class OpenBookV2Client {
     this.postSendTxCallback = opts?.postSendTxCallback;
     this.txConfirmationCommitment =
       opts?.txConfirmationCommitment ??
-      (this.program.provider as AnchorProvider).opts.commitment ??
-      'processed';
+      ((this.program.provider as AnchorProvider).opts !== undefined ?
+       (this.program.provider as AnchorProvider).opts.commitment : 
+       undefined) ??
+       'processed';
     // TODO: evil side effect, but limited backtraces are a nightmare
     Error.stackTraceLimit = 1000;
   }
@@ -222,32 +232,28 @@ export class OpenBookV2Client {
       confFilter: 0.1,
       maxStalenessSlots: 100,
     },
+    market = Keypair.generate(),
     collectFeeAdmin?: PublicKey,
-  ): Promise<string> {
+  ): Promise<PublicKey> {
     const bids = await this.createProgramAccount(payer, BooksideSpace);
     const asks = await this.createProgramAccount(payer, BooksideSpace);
     const eventHeap = await this.createProgramAccount(payer, EventHeapSpace);
 
-    const market = Keypair.generate();
     const [marketAuthority] = PublicKey.findProgramAddressSync(
       [Buffer.from('Market'), market.publicKey.toBuffer()],
       this.program.programId,
     );
 
-    const baseVault = await splToken.createAccount(
-      this.connection,
-      payer,
+    const baseVault = getAssociatedTokenAddressSync(
       baseMint,
       marketAuthority,
-      Keypair.generate(),
+      true,
     );
 
-    const quoteVault = await splToken.createAccount(
-      this.connection,
-      payer,
+    const quoteVault = getAssociatedTokenAddressSync(
       quoteMint,
       marketAuthority,
-      Keypair.generate(),
+      true,
     );
 
     const [eventAuthority] = PublicKey.findProgramAddressSync(
@@ -268,8 +274,6 @@ export class OpenBookV2Client {
       .accounts({
         market: market.publicKey,
         marketAuthority,
-        oracleA,
-        oracleB,
         bids,
         asks,
         eventHeap,
@@ -279,22 +283,28 @@ export class OpenBookV2Client {
         baseMint,
         quoteMint,
         systemProgram: SystemProgram.programId,
-        eventAuthority,
-        program: this.programId,
+        tokenProgram: TOKEN_PROGRAM_ID,
+        associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+        oracleA,
+        oracleB,
         collectFeeAdmin:
           collectFeeAdmin != null ? collectFeeAdmin : payer.publicKey,
         openOrdersAdmin,
         consumeEventsAdmin,
         closeMarketAdmin,
+        eventAuthority,
+        program: this.programId,
       })
       .instruction();
 
-    return await this.sendAndConfirmTransaction([ix], {
+    await this.sendAndConfirmTransaction([ix], {
       additionalSigners: [payer, market],
     });
+
+    return market.publicKey;
   }
 
-  public findOpenOrdersIndexer(market: PublicKey): PublicKey {
+  public findOpenOrdersIndexer(): PublicKey {
     const [openOrdersIndexer] = PublicKey.findProgramAddressSync(
       [Buffer.from('OpenOrdersIndexer'), this.walletPk.toBuffer()],
       this.programId,
@@ -303,14 +313,12 @@ export class OpenBookV2Client {
   }
 
   public async createOpenOrdersIndexer(
-    market: PublicKey,
     openOrdersIndexer: PublicKey,
   ): Promise<TransactionSignature> {
     const ix = await this.program.methods
       .createOpenOrdersIndexer()
       .accounts({
         openOrdersIndexer,
-        market,
         owner: this.walletPk,
         payer: this.walletPk,
         systemProgram: SystemProgram.programId,
@@ -325,7 +333,6 @@ export class OpenBookV2Client {
       [
         Buffer.from('OpenOrders'),
         this.walletPk.toBuffer(),
-        market.toBuffer(),
         accountIndex.toArrayLike(Buffer, 'le', 4),
       ],
       this.programId,
@@ -336,24 +343,19 @@ export class OpenBookV2Client {
   public async createOpenOrders(
     market: PublicKey,
     accountIndex: BN,
+    name: string,
     openOrdersIndexer?: PublicKey,
-  ): Promise<TransactionSignature> {
+  ): Promise<PublicKey> {
     if (openOrdersIndexer == null) {
-      openOrdersIndexer = this.findOpenOrdersIndexer(market);
+      openOrdersIndexer = this.findOpenOrdersIndexer();
       try {
         const acc = await this.connection.getAccountInfo(openOrdersIndexer);
         if (acc == null) {
-          const tx = await this.createOpenOrdersIndexer(
-            market,
-            openOrdersIndexer,
-          );
+          const tx = await this.createOpenOrdersIndexer(openOrdersIndexer);
           console.log('Created open orders indexer', tx);
         }
       } catch {
-        const tx = await this.createOpenOrdersIndexer(
-          market,
-          openOrdersIndexer,
-        );
+        const tx = await this.createOpenOrdersIndexer(openOrdersIndexer);
         console.log('Created open orders indexer', tx);
       }
     }
@@ -362,11 +364,10 @@ export class OpenBookV2Client {
         code: 403,
       });
     }
-    accountIndex = accountIndex.add(new BN(1));
     const openOrders = this.findOpenOrders(market, accountIndex);
 
     const ix = await this.program.methods
-      .createOpenOrdersAccount()
+      .createOpenOrdersAccount(name)
       .accounts({
         openOrdersIndexer,
         openOrdersAccount: openOrders,
@@ -378,7 +379,9 @@ export class OpenBookV2Client {
       })
       .instruction();
 
-    return await this.sendAndConfirmTransaction([ix]);
+    await this.sendAndConfirmTransaction([ix]);
+
+    return openOrders;
   }
 
   public async deposit(
@@ -477,10 +480,17 @@ export class OpenBookV2Client {
     userTokenAccount: PublicKey,
     openOrdersAdmin: PublicKey | null,
     args: PlaceOrderArgs,
+    remainingAccounts: PublicKey[],
     openOrdersDelegate?: Keypair,
   ): Promise<TransactionSignature> {
     const marketVault =
       args.side === Side.Bid ? market.marketQuoteVault : market.marketBaseVault;
+    const accountsMeta: AccountMeta[] = remainingAccounts.map((remaining) => ({
+      pubkey: remaining,
+      isSigner: false,
+      isWritable: true,
+    }));
+
     const ix = await this.program.methods
       .placeOrder(args)
       .accounts({
@@ -500,6 +510,7 @@ export class OpenBookV2Client {
         tokenProgram: TOKEN_PROGRAM_ID,
         openOrdersAdmin,
       })
+      .remainingAccounts(accountsMeta)
       .instruction();
     const signers: Signer[] = [];
     if (openOrdersDelegate != null) {
@@ -516,8 +527,14 @@ export class OpenBookV2Client {
     openOrdersAdmin: PublicKey | null,
     args: PlaceOrderArgs,
     referrerAccount: PublicKey | null,
+    remainingAccounts: PublicKey[],
     openOrdersDelegate?: Keypair,
   ): Promise<TransactionSignature> {
+    const accountsMeta: AccountMeta[] = remainingAccounts.map((remaining) => ({
+      pubkey: remaining,
+      isSigner: false,
+      isWritable: true,
+    }));
     const ix = await this.program.methods
       .placeTakeOrder(args)
       .accounts({
@@ -540,6 +557,7 @@ export class OpenBookV2Client {
         tokenProgram: TOKEN_PROGRAM_ID,
         openOrdersAdmin,
       })
+      .remainingAccounts(accountsMeta)
       .instruction();
     const signers: Signer[] = [];
     if (openOrdersDelegate != null) {
@@ -634,6 +652,112 @@ export class OpenBookV2Client {
       signers.push(openOrdersDelegate);
     }
     return await this.sendAndConfirmTransaction([ix], { signers });
+  }
+
+  // Use getAccountsToConsume as a helper
+  public async consumeEvents(
+    marketPublicKey: PublicKey,
+    market: MarketAccount,
+    limit: BN,
+    remainingAccounts: PublicKey[],
+  ): Promise<TransactionSignature> {
+    const accountsMeta: AccountMeta[] = remainingAccounts.map((remaining) => ({
+      pubkey: remaining,
+      isSigner: false,
+      isWritable: true,
+    }));
+    const ix = await this.program.methods
+      .consumeEvents(limit)
+      .accounts({
+        eventHeap: market.eventHeap,
+        market: marketPublicKey,
+        consumeEventsAdmin: market.consumeEventsAdmin.key,
+      })
+      .remainingAccounts(accountsMeta)
+      .instruction();
+    return await this.sendAndConfirmTransaction([ix]);
+  }
+
+  // In order to get slots for certain key use getSlotsToConsume and include the key in the remainingAccounts
+  public async consumeGivenEvents(
+    marketPublicKey: PublicKey,
+    market: MarketAccount,
+    slots: BN[],
+    remainingAccounts: PublicKey[],
+  ): Promise<TransactionSignature> {
+    const accountsMeta: AccountMeta[] = remainingAccounts.map((remaining) => ({
+      pubkey: remaining,
+      isSigner: false,
+      isWritable: true,
+    }));
+    const ix = await this.program.methods
+      .consumeGivenEvents(slots)
+      .accounts({
+        eventHeap: market.eventHeap,
+        market: marketPublicKey,
+        consumeEventsAdmin: market.consumeEventsAdmin.key,
+      })
+      .remainingAccounts(accountsMeta)
+      .instruction();
+    return await this.sendAndConfirmTransaction([ix]);
+  }
+
+  public async getAccountsToConsume(
+    market: MarketAccount,
+  ): Promise<PublicKey[]> {
+    let accounts: PublicKey[] = new Array<PublicKey>();
+    const eventHeap = await this.getEventHeap(market.eventHeap);
+    if (eventHeap != null) {
+      for (const node of eventHeap.nodes) {
+        if (node.event.eventType === 0) {
+          const fillEvent: FillEvent = this.program.coder.types.decode(
+            'FillEvent',
+            Buffer.from([0, ...node.event.padding]),
+          );
+          accounts = accounts
+            .filter((a) => a !== fillEvent.maker)
+            .concat([fillEvent.maker]);
+        } else {
+          const outEvent: OutEvent = this.program.coder.types.decode(
+            'OutEvent',
+            Buffer.from([0, ...node.event.padding]),
+          );
+          accounts = accounts
+            .filter((a) => a !== outEvent.owner)
+            .concat([outEvent.owner]);
+        }
+        // Tx would be too big, do not add more accounts
+        if (accounts.length > 20) return accounts;
+      }
+    }
+    return accounts;
+  }
+
+  public async getSlotsToConsume(
+    key: PublicKey,
+    market: MarketAccount,
+  ): Promise<BN[]> {
+    const slots: BN[] = new Array<BN>();
+
+    const eventHeap = await this.getEventHeap(market.eventHeap);
+    if (eventHeap != null) {
+      for (const [i, node] of eventHeap.nodes.entries()) {
+        if (node.event.eventType === 0) {
+          const fillEvent: FillEvent = this.program.coder.types.decode(
+            'FillEvent',
+            Buffer.from([0, ...node.event.padding]),
+          );
+          if (key === fillEvent.maker) slots.push(new BN(i));
+        } else {
+          const outEvent: OutEvent = this.program.coder.types.decode(
+            'OutEvent',
+            Buffer.from([0, ...node.event.padding]),
+          );
+          if (key === outEvent.owner) slots.push(new BN(i));
+        }
+      }
+    }
+    return slots;
   }
 }
 
