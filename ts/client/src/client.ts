@@ -713,12 +713,16 @@ export class OpenBookV2Client {
       isSigner: false,
       isWritable: true,
     }));
+    
+      const eventAdminBs58 = market.consumeEventsAdmin.key.toBase58()
+      const consumeEventsAdmin = eventAdminBs58 === PublicKey.default.toBase58() ? null : market.consumeEventsAdmin.key;
+
     const ix = await this.program.methods
       .consumeEvents(limit)
       .accounts({
         eventHeap: market.eventHeap,
         market: marketPublicKey,
-        consumeEventsAdmin: market.consumeEventsAdmin.key,
+        consumeEventsAdmin,
       })
       .remainingAccounts(accountsMeta)
       .instruction();
