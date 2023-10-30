@@ -305,7 +305,7 @@ export class OpenBookV2Client {
     return market.publicKey;
   }
 
-  public findOpenOrdersIndexer(owner: PublicKey): PublicKey {
+  public findOpenOrdersIndexer(owner: PublicKey = this.walletPk): PublicKey {
     const [openOrdersIndexer] = PublicKey.findProgramAddressSync(
       [Buffer.from('OpenOrdersIndexer'), owner.toBuffer()],
       this.programId,
