@@ -329,21 +329,25 @@ export class OpenBookV2Client {
     return await this.sendAndConfirmTransaction([ix]);
   }
 
-  public createOpenOrdersIndexerInstruction(
+  public async createOpenOrdersIndexerInstruction(
     openOrdersIndexer: PublicKey,
     owner: PublicKey = this.walletPk,
   ): Promise<TransactionInstruction> {
-    return this.program.methods
+    return await this.program.methods
       .createOpenOrdersIndexer()
       .accounts({
         openOrdersIndexer,
         owner,
         payer: this.walletPk,
       })
-      .instruction()
+      .instruction();
   }
 
-  public findOpenOrders(market: PublicKey, accountIndex: BN, owner: PublicKey): PublicKey {
+  public findOpenOrders(
+    market: PublicKey,
+    accountIndex: BN,
+    owner: PublicKey,
+  ): PublicKey {
     const [openOrders] = PublicKey.findProgramAddressSync(
       [
         Buffer.from('OpenOrders'),
@@ -362,17 +366,29 @@ export class OpenBookV2Client {
     owner: PublicKey = this.walletPk,
     openOrdersIndexer?: PublicKey,
   ): Promise<[TransactionInstruction[], PublicKey]> {
-    let ixs: TransactionInstruction[] = [];
+    const ixs: TransactionInstruction[] = [];
 
     if (openOrdersIndexer == null) {
       openOrdersIndexer = this.findOpenOrdersIndexer(owner);
       try {
-        const storedIndexer = await this.connection.getAccountInfo(openOrdersIndexer)
+        const storedIndexer = await this.connection.getAccountInfo(
+          openOrdersIndexer,
+        );
         if (storedIndexer == null) {
-          ixs.push(await this.createOpenOrdersIndexerInstruction(openOrdersIndexer, owner));
+          ixs.push(
+            await this.createOpenOrdersIndexerInstruction(
+              openOrdersIndexer,
+              owner,
+            ),
+          );
         }
       } catch {
-          ixs.push(await this.createOpenOrdersIndexerInstruction(openOrdersIndexer, owner));
+        ixs.push(
+          await this.createOpenOrdersIndexerInstruction(
+            openOrdersIndexer,
+            owner,
+          ),
+        );
       }
     }
     if (accountIndex.toNumber() === 0) {
@@ -382,18 +398,20 @@ export class OpenBookV2Client {
     }
     const openOrdersAccount = this.findOpenOrders(market, accountIndex, owner);
 
-    ixs.push(await this.program.methods
-      .createOpenOrdersAccount(name)
-      .accounts({
-        openOrdersIndexer,
-        openOrdersAccount,
-        market,
-        owner,
-        delegateAccount: null,
-        payer: this.walletPk,
-        // systemProgram: SystemProgram.programId,
-      })
-      .instruction());
+    ixs.push(
+      await this.program.methods
+        .createOpenOrdersAccount(name)
+        .accounts({
+          openOrdersIndexer,
+          openOrdersAccount,
+          market,
+          owner,
+          delegateAccount: null,
+          payer: this.walletPk,
+          // systemProgram: SystemProgram.programId,
+        })
+        .instruction(),
+    );
 
     return [ixs, openOrdersAccount];
   }
@@ -406,9 +424,15 @@ export class OpenBookV2Client {
     owner: Keypair = payer,
     openOrdersIndexer?: PublicKey,
   ): Promise<PublicKey> {
-    let [ixs, openOrdersAccount] = await this.createOpenOrdersInstruction(market, accountIndex, name, owner.publicKey, openOrdersIndexer);
-    let additionalSigners = [payer];
-    if (owner != payer) {
+    const [ixs, openOrdersAccount] = await this.createOpenOrdersInstruction(
+      market,
+      accountIndex,
+      name,
+      owner.publicKey,
+      openOrdersIndexer,
+    );
+    const additionalSigners = [payer];
+    if (owner !== payer) {
       additionalSigners.push(owner);
     }
 
@@ -747,9 +771,12 @@ export class OpenBookV2Client {
       isSigner: false,
       isWritable: true,
     }));
-    
-      const eventAdminBs58 = market.consumeEventsAdmin.key.toBase58()
-      const consumeEventsAdmin = eventAdminBs58 === PublicKey.default.toBase58() ? null : market.consumeEventsAdmin.key;
+
+    const eventAdminBs58 = market.consumeEventsAdmin.key.toBase58();
+    const consumeEventsAdmin =
+      eventAdminBs58 === PublicKey.default.toBase58()
+        ? null
+        : market.consumeEventsAdmin.key;
 
     const ix = await this.program.methods
       .consumeEvents(limit)
