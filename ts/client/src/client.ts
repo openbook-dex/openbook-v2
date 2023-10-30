@@ -329,6 +329,16 @@ export class OpenBookV2Client {
     return await this.sendAndConfirmTransaction([ix]);
   }
 
+  public async getOrCreateOpenOrders(market: PublicKey, accountIndex: BN, name: string): Promise<PublicKey> {
+    const openOrders = this.findOpenOrders(market, accountIndex);
+
+    if ((await this.connection.getAccountInfo(openOrders)) != null) {
+      return openOrders;
+    }
+
+    return await this.createOpenOrders(market, accountIndex, name);
+  }
+
   public findOpenOrders(market: PublicKey, accountIndex: BN): PublicKey {
     const [openOrders] = PublicKey.findProgramAddressSync(
       [
