@@ -305,9 +305,9 @@ export class OpenBookV2Client {
     return market.publicKey;
   }
 
-  public findOpenOrdersIndexer(): PublicKey {
+  public findOpenOrdersIndexer(owner: PublicKey): PublicKey {
     const [openOrdersIndexer] = PublicKey.findProgramAddressSync(
-      [Buffer.from('OpenOrdersIndexer'), this.walletPk.toBuffer()],
+      [Buffer.from('OpenOrdersIndexer'), owner.toBuffer()],
       this.programId,
     );
     return openOrdersIndexer;
@@ -329,11 +329,25 @@ export class OpenBookV2Client {
     return await this.sendAndConfirmTransaction([ix]);
   }
 
-  public findOpenOrders(market: PublicKey, accountIndex: BN): PublicKey {
+  public createOpenOrdersIndexerInstruction(
+    openOrdersIndexer: PublicKey,
+    owner: PublicKey = this.walletPk,
+  ): Promise<TransactionInstruction> {
+    return this.program.methods
+      .createOpenOrdersIndexer()
+      .accounts({
+        openOrdersIndexer,
+        owner,
+        payer: this.walletPk,
+      })
+      .instruction()
+  }
+
+  public findOpenOrders(market: PublicKey, accountIndex: BN, owner: PublicKey): PublicKey {
     const [openOrders] = PublicKey.findProgramAddressSync(
       [
         Buffer.from('OpenOrders'),
-        this.walletPk.toBuffer(),
+        owner.toBuffer(),
         accountIndex.toArrayLike(Buffer, 'le', 4),
       ],
       this.programId,
@@ -341,23 +355,24 @@ export class OpenBookV2Client {
     return openOrders;
   }
 
-  public async createOpenOrders(
+  public async createOpenOrdersInstruction(
     market: PublicKey,
     accountIndex: BN,
     name: string,
+    owner: PublicKey = this.walletPk,
     openOrdersIndexer?: PublicKey,
-  ): Promise<PublicKey> {
+  ): Promise<[TransactionInstruction[], PublicKey]> {
+    let ixs: TransactionInstruction[] = [];
+
     if (openOrdersIndexer == null) {
-      openOrdersIndexer = this.findOpenOrdersIndexer();
+      openOrdersIndexer = this.findOpenOrdersIndexer(owner);
       try {
-        const acc = await this.connection.getAccountInfo(openOrdersIndexer);
-        if (acc == null) {
-          const tx = await this.createOpenOrdersIndexer(openOrdersIndexer);
-          console.log('Created open orders indexer', tx);
+        const storedIndexer = await this.connection.getAccountInfo(openOrdersIndexer)
+        if (storedIndexer == null) {
+          ixs.push(await this.createOpenOrdersIndexerInstruction(openOrdersIndexer, owner));
         }
       } catch {
-        const tx = await this.createOpenOrdersIndexer(openOrdersIndexer);
-        console.log('Created open orders indexer', tx);
+          ixs.push(await this.createOpenOrdersIndexerInstruction(openOrdersIndexer, owner));
       }
     }
     if (accountIndex.toNumber() === 0) {
@@ -365,24 +380,43 @@ export class OpenBookV2Client {
         code: 403,
       });
     }
-    const openOrders = this.findOpenOrders(market, accountIndex);
+    const openOrdersAccount = this.findOpenOrders(market, accountIndex, owner);
 
-    const ix = await this.program.methods
+    ixs.push(await this.program.methods
       .createOpenOrdersAccount(name)
       .accounts({
         openOrdersIndexer,
-        openOrdersAccount: openOrders,
+        openOrdersAccount,
         market,
-        owner: this.walletPk,
+        owner,
         delegateAccount: null,
         payer: this.walletPk,
-        systemProgram: SystemProgram.programId,
+        // systemProgram: SystemProgram.programId,
       })
-      .instruction();
+      .instruction());
 
-    await this.sendAndConfirmTransaction([ix]);
+    return [ixs, openOrdersAccount];
+  }
 
-    return openOrders;
+  public async createOpenOrders(
+    payer: Keypair,
+    market: PublicKey,
+    accountIndex: BN,
+    name: string,
+    owner: Keypair = payer,
+    openOrdersIndexer?: PublicKey,
+  ): Promise<PublicKey> {
+    let [ixs, openOrdersAccount] = await this.createOpenOrdersInstruction(market, accountIndex, name, owner.publicKey, openOrdersIndexer);
+    let additionalSigners = [payer];
+    if (owner != payer) {
+      additionalSigners.push(owner);
+    }
+
+    await this.sendAndConfirmTransaction(ixs, {
+      additionalSigners,
+    });
+
+    return openOrdersAccount;
   }
 
   public async deposit(
