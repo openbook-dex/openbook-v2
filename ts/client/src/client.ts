@@ -63,7 +63,7 @@ export function nameToString(name: number[]): string {
 const BooksideSpace = 90944 + 8;
 const EventHeapSpace = 91280 + 8;
 
-const OPENBOOK_PROGRAM_ID = new PublicKey(
+export const OPENBOOK_PROGRAM_ID = new PublicKey(
   'opnb2LAfJYbRMAHHvqjCwQxanZn7ReEHp1k81EohpZb',
 );
 
