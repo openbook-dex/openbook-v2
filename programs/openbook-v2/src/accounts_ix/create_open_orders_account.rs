@@ -20,7 +20,7 @@ pub struct CreateOpenOrdersAccount<'info> {
     pub open_orders_indexer: Account<'info, OpenOrdersIndexer>,
     #[account(
         init,
-        seeds = [b"OpenOrders".as_ref(), owner.key().as_ref(), market.key().as_ref(), &(open_orders_indexer.created_counter + 1).to_le_bytes()],
+        seeds = [b"OpenOrders".as_ref(), owner.key().as_ref(), &(open_orders_indexer.created_counter + 1).to_le_bytes()],
         bump,
         payer = payer,
         space = OpenOrdersAccount::space(),

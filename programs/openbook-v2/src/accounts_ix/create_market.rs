@@ -46,6 +46,7 @@ pub struct CreateMarket<'info> {
     )]
     pub market_quote_vault: InterfaceAccount<'info, token_interface::TokenAccount>,
 
+    #[account(constraint = base_mint.key() != quote_mint.key())]
     pub base_mint: Box<InterfaceAccount<'info, token_interface::Mint>>,
     pub quote_mint: Box<InterfaceAccount<'info, token_interface::Mint>>,
 

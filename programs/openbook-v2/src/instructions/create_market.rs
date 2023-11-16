@@ -47,7 +47,7 @@ pub fn create_market(
 
     if oracle_a.is_some() && oracle_b.is_some() {
         let oracle_a = AccountInfoRef::borrow(ctx.accounts.oracle_a.as_ref().unwrap())?;
-        let oracle_b = AccountInfoRef::borrow(ctx.accounts.oracle_a.as_ref().unwrap())?;
+        let oracle_b = AccountInfoRef::borrow(ctx.accounts.oracle_b.as_ref().unwrap())?;
 
         require!(
             oracle::determine_oracle_type(&oracle_a) == oracle::determine_oracle_type(&oracle_b),
