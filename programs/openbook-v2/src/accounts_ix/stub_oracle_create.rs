@@ -1,6 +1,6 @@
 use crate::state::*;
 use anchor_lang::prelude::*;
-use anchor_spl::token::Mint;
+use anchor_spl::token_interface::{self};
 
 #[derive(Accounts)]
 pub struct StubOracleCreate<'info> {
@@ -15,6 +15,6 @@ pub struct StubOracleCreate<'info> {
         space = 8 + std::mem::size_of::<StubOracle>(),
     )]
     pub oracle: AccountLoader<'info, StubOracle>,
-    pub mint: Account<'info, Mint>,
+    pub mint: InterfaceAccount<'info, token_interface::Mint>,
     pub system_program: Program<'info, System>,
 }

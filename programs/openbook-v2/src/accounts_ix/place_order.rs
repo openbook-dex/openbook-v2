@@ -50,7 +50,7 @@ pub struct PlaceOrder<'info> {
     pub oracle_b: Option<UncheckedAccount<'info>>,
 
     #[account(mut)]
-    pub mint: Box<InterfaceAccount<'info, token_interface::Mint>>,
+    pub mint: Option<Box<InterfaceAccount<'info, token_interface::Mint>>>,
 
     pub token_program: Interface<'info, TokenInterface>,
 }

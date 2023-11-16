@@ -48,9 +48,9 @@ pub struct SettleFundsExpired<'info> {
     pub referrer_account: Option<Box<InterfaceAccount<'info, token_interface::TokenAccount>>>,
 
     #[account(mut)]
-    pub base_mint: Box<InterfaceAccount<'info, token_interface::Mint>>,
+    pub base_mint: Option<Box<InterfaceAccount<'info, token_interface::Mint>>>,
     #[account(mut)]
-    pub quote_mint: Box<InterfaceAccount<'info, token_interface::Mint>>,
+    pub quote_mint: Option<Box<InterfaceAccount<'info, token_interface::Mint>>>,
     
     pub base_token_program: Interface<'info, TokenInterface>,
     pub quote_token_program: Interface<'info, TokenInterface>,

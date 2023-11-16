@@ -128,37 +128,58 @@ pub fn cancel_and_place_orders<'info>(
         position.penalty_heap_count += 1;
     }
 
-    // Getting actual base amount to be paid
-    let base_amount_wrapped = {
-        calculate_amount_with_fee(ctx.accounts.base_mint.to_account_info(), ctx.accounts.token_program.to_account_info(), deposit_base_amount)
-    };
-    let base_amount = base_amount_wrapped.unwrap().unwrap();
+    let base_mint_acc: Option<AccountInfo<'_>>;
+    let quote_mint_acc: Option<AccountInfo<'_>>;
 
-    // Getting actual quote native amount to be paid
-    let quote_amount_wrapped = {
-        calculate_amount_with_fee(ctx.accounts.quote_mint.to_account_info(), ctx.accounts.token_program.to_account_info(), deposit_quote_amount)
-    };
-    let quote_amount = quote_amount_wrapped.unwrap().unwrap();
+    let base_actual_amount: u64;
+    let quote_actual_amount: u64;
 
+    if let Some(base_mint) = &ctx.accounts.base_mint {
+        let base_amount_wrapped = {
+            calculate_amount_with_fee(base_mint.to_account_info(), ctx.accounts.token_program.to_account_info(), deposit_base_amount)
+        };
+
+        base_actual_amount = base_amount_wrapped.unwrap().unwrap();
+
+        base_mint_acc = Some(base_mint.to_account_info());
+    } else {
+        base_actual_amount = base_amount;
+
+        base_mint_acc = None;
+    }
+
+    if let Some(quote_mint) = &ctx.accounts.quote_mint {
+        let quote_amount_wrapped = {
+            calculate_amount_with_fee(quote_mint.to_account_info(), ctx.accounts.token_program.to_account_info(), deposit_quote_amount)
+        };
+
+        quote_actual_amount = quote_amount_wrapped.unwrap().unwrap();
+
+        quote_mint_acc = Some(quote_mint.to_account_info());
+    } else {
+        quote_actual_amount = quote_amount;
+
+        quote_mint_acc = None;
+    }
 
     token_transfer(
-        base_amount,
+        base_actual_amount,
         &ctx.accounts.token_program,
         &ctx.accounts.user_quote_account,
         &ctx.accounts.market_quote_vault,
         &ctx.accounts.signer,
-        ctx.accounts.base_mint.to_account_info(),
-        market.base_decimals,
+        &base_mint_acc,
+        Some(market.base_decimals),
     )?;
 
     token_transfer(
-        quote_amount,
+        quote_actual_amount,
         &ctx.accounts.token_program,
         &ctx.accounts.user_base_account,
         &ctx.accounts.market_base_vault,
         &ctx.accounts.signer,
-        ctx.accounts.quote_mint.to_account_info(),
-        market.quote_decimals,
+        &quote_mint_acc,
+        Some(market.quote_decimals),
     )?;
 
     Ok(order_ids)

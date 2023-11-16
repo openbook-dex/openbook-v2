@@ -114,10 +114,42 @@ pub fn place_take_order<'info>(
         ),
     };
 
-    let deposit_amount_wrapped = {
-        calculate_amount_with_fee(ctx.accounts.deposit_mint.to_account_info(), ctx.accounts.token_program.to_account_info(), deposit_amount)
-    };
-    let deposit_actual_amount = deposit_amount_wrapped.unwrap().unwrap();
+    let deposit_mint_acc: Option<AccountInfo<'_>>;
+    let deposit_actual_amount: u64;
+    let deposit_decimals: Option<u8>;
+
+    let withdraw_mint_acc: Option<AccountInfo<'_>>;
+    let withdraw_decimals: Option<u8>;
+
+    if let Some(deposit_mint) = &ctx.accounts.deposit_mint {
+        let deposit_amount_wrapped = {
+            calculate_amount_with_fee(deposit_mint.to_account_info(), ctx.accounts.token_program.to_account_info(), deposit_amount)
+        };
+
+        deposit_actual_amount = deposit_amount_wrapped.unwrap().unwrap();
+
+        deposit_mint_acc = Some(deposit_mint.to_account_info());
+
+        deposit_decimals = Some(deposit_mint.decimals);
+
+    } else {
+        deposit_actual_amount = deposit_amount;
+
+        deposit_mint_acc = None;
+
+        deposit_decimals = None;
+    }
+
+    if let Some(withdraw_mint) = &ctx.accounts.withdraw_mint {
+        withdraw_mint_acc = Some(withdraw_mint.to_account_info());
+
+        withdraw_decimals = Some(withdraw_mint.decimals);
+
+    } else {
+        withdraw_mint_acc = None;
+
+        withdraw_decimals = None;
+    }
 
     token_transfer(
         deposit_actual_amount,
@@ -125,8 +157,8 @@ pub fn place_take_order<'info>(
         user_deposit_acc.as_ref(),
         market_deposit_acc,
         &ctx.accounts.signer,
-        ctx.accounts.deposit_mint.to_account_info(),
-        ctx.accounts.deposit_mint.decimals,
+        &deposit_mint_acc,
+        deposit_decimals,
     )?;
 
     token_transfer_signed(
@@ -136,14 +168,14 @@ pub fn place_take_order<'info>(
         user_withdraw_acc.as_ref(),
         &ctx.accounts.market_authority,
         seeds,
-        ctx.accounts.withdraw_mint.to_account_info(),
-        ctx.accounts.withdraw_mint.decimals,
+        &withdraw_mint_acc,
+        withdraw_decimals,
     )?;
 
     
     if let Some(referrer_account) = &ctx.accounts.referrer_account {
 
-        if referrer_account.mint == ctx.accounts.withdraw_mint.key() {
+        if referrer_account.mint == user_withdraw_acc.mint {
             token_transfer_signed(
                 referrer_amount,
                 &ctx.accounts.token_program,
@@ -151,11 +183,11 @@ pub fn place_take_order<'info>(
                 referrer_account,
                 &ctx.accounts.market_authority,
                 seeds,
-                ctx.accounts.withdraw_mint.to_account_info(),
-                ctx.accounts.withdraw_mint.decimals,
+                &withdraw_mint_acc,
+                withdraw_decimals,
             )?;
 
-        } else if referrer_account.mint == ctx.accounts.deposit_mint.key() {
+        } else if referrer_account.mint == user_deposit_acc.mint {
             token_transfer_signed(
                 referrer_amount,
                 &ctx.accounts.token_program,
@@ -163,8 +195,8 @@ pub fn place_take_order<'info>(
                 referrer_account,
                 &ctx.accounts.market_authority,
                 seeds,
-                ctx.accounts.deposit_mint.to_account_info(),
-                ctx.accounts.deposit_mint.decimals,
+                &deposit_mint_acc,
+                deposit_decimals,
             )?;
         }
     }

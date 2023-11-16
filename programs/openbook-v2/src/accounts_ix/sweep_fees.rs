@@ -19,7 +19,7 @@ pub struct SweepFees<'info> {
     pub market_quote_vault: InterfaceAccount<'info, token_interface::TokenAccount>,
 
     #[account(mut)]
-    pub mint: Box<InterfaceAccount<'info, token_interface::Mint>>,
+    pub mint: Option<Box<InterfaceAccount<'info, token_interface::Mint>>>,
 
     #[account(
         mut,

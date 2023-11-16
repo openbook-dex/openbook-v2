@@ -15,6 +15,20 @@ pub fn sweep_fees<'info>(ctx: Context<'_, '_, '_, 'info, SweepFees<'info>>) -> R
     let seeds = market_seeds!(market, ctx.accounts.market.key());
     drop(market);
 
+    let mint_acc: Option<AccountInfo<'_>>;
+
+    let mint_decimals: Option<u8>;
+
+    if let Some(mint) = &ctx.accounts.mint {
+        mint_acc = Some(mint.to_account_info());
+
+        mint_decimals = Some(mint.decimals);
+    } else {
+        mint_acc = None;
+
+        mint_decimals = None;
+    }
+
 
     token_transfer_signed(
         amount,
@@ -23,8 +37,8 @@ pub fn sweep_fees<'info>(ctx: Context<'_, '_, '_, 'info, SweepFees<'info>>) -> R
         &ctx.accounts.token_receiver_account,
         &ctx.accounts.market_authority,
         seeds,
-        ctx.accounts.mint.to_account_info(),
-        ctx.accounts.mint.decimals,
+        &mint_acc,
+        mint_decimals,
     )?;
 
     emit!(SweepFeesLog {

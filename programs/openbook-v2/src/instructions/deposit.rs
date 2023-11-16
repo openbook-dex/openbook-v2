@@ -12,20 +12,39 @@ pub fn deposit<'info>(ctx: Context<'_, '_, '_, 'info, Deposit<'info>>, base_amou
         OpenBookError::MarketHasExpired
     );
 
-    // Getting base transfer details
-    let base_amount_wrapped = {
-        calculate_amount_with_fee(ctx.accounts.base_mint.to_account_info(), ctx.accounts.base_token_program.to_account_info(), base_amount)
-    };
+    let base_mint_acc: Option<AccountInfo<'_>>;
+    let quote_mint_acc: Option<AccountInfo<'_>>;
 
-    let base_actual_amount = base_amount_wrapped.unwrap().unwrap();
+    let base_actual_amount: u64;
+    let quote_actual_amount: u64;
 
-    // Getting quote transfer details
-    let quote_amount_wrapped = {
-        calculate_amount_with_fee(ctx.accounts.quote_mint.to_account_info(), ctx.accounts.quote_token_program.to_account_info(), quote_amount)
-    };
+    if let Some(base_mint) = &ctx.accounts.base_mint {
+        let base_amount_wrapped = {
+            calculate_amount_with_fee(base_mint.to_account_info(), ctx.accounts.base_token_program.to_account_info(), base_amount)
+        };
 
-    let quote_actual_amount = quote_amount_wrapped.unwrap().unwrap();
+        base_actual_amount = base_amount_wrapped.unwrap().unwrap();
 
+        base_mint_acc = Some(base_mint.to_account_info());
+    } else {
+        base_actual_amount = base_amount;
+
+        base_mint_acc = None;
+    }
+
+    if let Some(quote_mint) = &ctx.accounts.quote_mint {
+        let quote_amount_wrapped = {
+            calculate_amount_with_fee(quote_mint.to_account_info(), ctx.accounts.quote_token_program.to_account_info(), quote_amount)
+        };
+
+        quote_actual_amount = quote_amount_wrapped.unwrap().unwrap();
+
+        quote_mint_acc = Some(quote_mint.to_account_info());
+    } else {
+        quote_actual_amount = quote_amount;
+
+        quote_mint_acc = None;
+    }
 
     token_transfer(
         base_actual_amount,
@@ -33,8 +52,8 @@ pub fn deposit<'info>(ctx: Context<'_, '_, '_, 'info, Deposit<'info>>, base_amou
         &ctx.accounts.user_base_account,
         &ctx.accounts.market_base_vault,
         &ctx.accounts.owner,
-        ctx.accounts.base_mint.to_account_info(),
-        market.base_decimals,
+        &base_mint_acc,
+        Some(market.base_decimals),
     )?;
     open_orders_account.position.base_free_native += base_amount;
     market.base_deposit_total += base_amount;
@@ -45,8 +64,8 @@ pub fn deposit<'info>(ctx: Context<'_, '_, '_, 'info, Deposit<'info>>, base_amou
         &ctx.accounts.user_quote_account,
         &ctx.accounts.market_quote_vault,
         &ctx.accounts.owner,
-        ctx.accounts.quote_mint.to_account_info(),
-        market.quote_decimals,
+        &quote_mint_acc,
+        Some(market.quote_decimals),
     )?;
     open_orders_account.position.quote_free_native += quote_amount;
     market.quote_deposit_total += quote_amount;

@@ -513,8 +513,8 @@ impl OpenBookClient {
                         market_quote_vault,
                         base_token_program: Token::id(),
                         quote_token_program: Token::id(),
-                        base_mint,
-                        quote_mint,
+                        base_mint: Some(base_mint),
+                        quote_mint: Some(quote_mint),
                     },
                     None,
                 )

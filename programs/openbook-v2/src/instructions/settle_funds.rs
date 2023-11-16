@@ -44,6 +44,32 @@ pub fn settle_funds<'info>(ctx: Context<'_, '_, '_, 'info, SettleFunds<'info>>) 
         pa.penalty_heap_count = 0;
     }
 
+    let base_mint_acc: Option<AccountInfo<'_>>;
+    let quote_mint_acc: Option<AccountInfo<'_>>;
+
+    let base_decimals: Option<u8>;
+    let quote_decimals: Option<u8>;
+
+    if let Some(base_mint) = &ctx.accounts.base_mint {
+        base_mint_acc = Some(base_mint.to_account_info());
+
+        base_decimals = Some(base_mint.decimals);
+    } else {
+        base_mint_acc = None;
+
+        base_decimals = None;
+    }
+
+    if let Some(quote_mint) = &ctx.accounts.quote_mint {
+        quote_mint_acc = Some(quote_mint.to_account_info());
+
+        quote_decimals = Some(quote_mint.decimals)
+    } else {
+        quote_mint_acc = None;
+
+        quote_decimals = None;
+    }
+
     if let Some(referrer_account) = &ctx.accounts.referrer_account {
         token_transfer_signed(
             referrer_rebate,
@@ -52,8 +78,8 @@ pub fn settle_funds<'info>(ctx: Context<'_, '_, '_, 'info, SettleFunds<'info>>) 
             referrer_account,
             &ctx.accounts.market_authority,
             seeds,
-            ctx.accounts.quote_mint.to_account_info(),
-            ctx.accounts.quote_mint.decimals,
+            &quote_mint_acc,
+            quote_decimals,
         )?;
     }
 
@@ -64,8 +90,8 @@ pub fn settle_funds<'info>(ctx: Context<'_, '_, '_, 'info, SettleFunds<'info>>) 
         &ctx.accounts.user_base_account,
         &ctx.accounts.market_authority,
         seeds,
-        ctx.accounts.base_mint.to_account_info(),
-        ctx.accounts.base_mint.decimals,
+        &base_mint_acc,
+        base_decimals,
     )?;
 
     token_transfer_signed(
@@ -75,8 +101,8 @@ pub fn settle_funds<'info>(ctx: Context<'_, '_, '_, 'info, SettleFunds<'info>>) 
         &ctx.accounts.user_quote_account,
         &ctx.accounts.market_authority,
         seeds,
-        ctx.accounts.quote_mint.to_account_info(),
-        ctx.accounts.quote_mint.decimals,
+        &quote_mint_acc,
+        quote_decimals,
     )?;
 
     emit!(SettleFundsLog {

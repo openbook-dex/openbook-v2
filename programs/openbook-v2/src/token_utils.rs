@@ -2,6 +2,7 @@ use super::*;
 use anchor_lang::system_program::{self};
 use anchor_spl::token::Token;
 use anchor_spl::token_interface;
+use anchor_spl::token;
 use spl_token_2022::{
     check_spl_token_program_account,
     extension::{
@@ -21,26 +22,41 @@ pub fn token_transfer<
     from: &A,
     to: &A,
     authority: &S,
-    mint: AccountInfo<'info>,
-    decimals: u8,
+    mint: &Option<AccountInfo<'info>>,
+    decimals: Option<u8>,
 ) -> Result<()> {
     if amount > 0 {
-        token_interface::transfer_checked(
-            CpiContext::new(
-                token_program.to_account_info(),
-                token_interface::TransferChecked {
-                    from: from.to_account_info(),
-                    to: to.to_account_info(),
-                    authority: authority.to_account_info(),
-                    mint: mint.to_account_info(),
-                },
-            ),
-            amount, decimals
-        )
+        if let Some(mint_acc) = mint {
+            token_interface::transfer_checked(
+                CpiContext::new(
+                    token_program.to_account_info(),
+                    token_interface::TransferChecked {
+                        from: from.to_account_info(),
+                        to: to.to_account_info(),
+                        authority: authority.to_account_info(),
+                        mint: mint_acc.to_account_info(),
+                    },
+                ),
+                amount, decimals.unwrap()
+            )
+        } else {
+            token::transfer(
+                CpiContext::new(
+                    token_program.to_account_info(),
+                    token::Transfer {
+                        from: from.to_account_info(),
+                        to: to.to_account_info(),
+                        authority: authority.to_account_info(),
+                    },
+                ),
+                amount,
+            )
+        }
     } else {
         Ok(())
     }
 }
+
 
 pub fn token_transfer_signed<
     'info,
@@ -54,23 +70,38 @@ pub fn token_transfer_signed<
     to: &A,
     authority: &L,
     seeds: &[&[u8]],
-    mint: AccountInfo<'info>,
-    decimals: u8,
+    mint: &Option<AccountInfo<'info>>,
+    decimals: Option<u8>,
 ) -> Result<()> {
     if amount > 0 {
-        token_interface::transfer_checked(
-            CpiContext::new_with_signer(
-                token_program.to_account_info(),
-                token_interface::TransferChecked {
-                    from: from.to_account_info(),
-                    to: to.to_account_info(),
-                    authority: authority.to_account_info(),
-                    mint: mint.to_account_info(),
-                },
-                &[seeds],
-            ),
-            amount, decimals
-        )
+        if let Some(mint_acc) = mint {
+            token_interface::transfer_checked(
+                CpiContext::new_with_signer(
+                    token_program.to_account_info(),
+                    token_interface::TransferChecked {
+                        from: from.to_account_info(),
+                        to: to.to_account_info(),
+                        authority: authority.to_account_info(),
+                        mint: mint_acc.to_account_info(),
+                    },
+                    &[seeds],
+                ),
+                amount, decimals.unwrap()
+            )
+        } else {
+            token::transfer(
+                CpiContext::new_with_signer(
+                    token_program.to_account_info(),
+                    token::Transfer {
+                        from: from.to_account_info(),
+                        to: to.to_account_info(),
+                        authority: authority.to_account_info(),
+                    },
+                    &[seeds],
+                ),
+                amount,
+            )
+        }
     } else {
         Ok(())
     }

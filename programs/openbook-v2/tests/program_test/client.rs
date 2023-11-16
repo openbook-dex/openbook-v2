@@ -453,7 +453,7 @@ impl ClientInstruction for PlaceOrderInstruction {
             signer: self.signer.pubkey(),
             user_token_account: self.user_token_account,
             market_vault: self.market_vault,
-            mint: self.mint,
+            mint: Some(self.mint),
             token_program: Token::id(),
         };
         let mut instruction = make_instruction(program_id, &accounts, instruction);
@@ -533,7 +533,7 @@ impl ClientInstruction for PlaceOrderPeggedInstruction {
             signer: self.signer.pubkey(),
             user_token_account: self.user_token_account,
             market_vault: self.market_vault,
-            mint: self.mint,
+            mint: Some(self.mint),
             token_program: Token::id(),
         };
         let mut instruction = make_instruction(program_id, &accounts, instruction);
@@ -607,8 +607,8 @@ impl ClientInstruction for PlaceTakeOrderInstruction {
             user_quote_account: self.user_quote_account,
             market_base_vault: self.market_base_vault,
             market_quote_vault: self.market_quote_vault,
-            deposit_mint: self.deposit_mint,
-            withdraw_mint: self.withdraw_mint,
+            deposit_mint: Some(self.deposit_mint),
+            withdraw_mint: Some(self.withdraw_mint),
             referrer_account: self.referrer_account,
             token_program: Token::id(),
             system_program: System::id(),
@@ -870,8 +870,8 @@ impl ClientInstruction for SettleFundsInstruction {
             user_base_account: self.user_base_account,
             user_quote_account: self.user_quote_account,
             referrer_account: self.referrer_account,
-            base_mint: self.base_mint,
-            quote_mint: self.quote_mint,
+            base_mint: Some(self.base_mint),
+            quote_mint: Some(self.quote_mint),
             base_token_program: Token::id(),
             quote_token_program: Token::id(),
             system_program: System::id(),
@@ -933,8 +933,8 @@ impl ClientInstruction for SettleFundsExpiredInstruction {
             user_base_account: self.user_base_account,
             user_quote_account: self.user_quote_account,
             referrer_account: self.referrer_account,
-            base_mint: self.base_mint,
-            quote_mint: self.quote_mint,
+            base_mint: Some(self.base_mint),
+            quote_mint: Some(self.quote_mint),
             base_token_program: Token::id(),
             quote_token_program: Token::id(),
             system_program: System::id(),
@@ -985,7 +985,7 @@ impl ClientInstruction for SweepFeesInstruction {
             market_authority: market.market_authority,
             market_quote_vault: self.market_quote_vault,
             token_receiver_account: self.token_receiver_account,
-            mint: self.mint,
+            mint: Some(self.mint),
             token_program: Token::id(),
         };
         let mut instruction = make_instruction(program_id, &accounts, instruction);
@@ -1043,8 +1043,8 @@ impl ClientInstruction for DepositInstruction {
             market_quote_vault: self.market_quote_vault,
             user_base_account: self.user_base_account,
             user_quote_account: self.user_quote_account,
-            base_mint: self.base_mint,
-            quote_mint: self.quote_mint,
+            base_mint: None,
+            quote_mint: None,
             base_token_program: Token::id(),
             quote_token_program: Token::id(),
         };
@@ -1386,7 +1386,7 @@ impl ClientInstruction for EditOrderInstruction {
             signer: self.signer.pubkey(),
             user_token_account: self.user_token_account,
             market_vault: self.market_vault,
-            mint: self.mint,
+            mint: Some(self.mint),
             token_program: Token::id(),
         };
         let mut instruction = make_instruction(program_id, &accounts, instruction);

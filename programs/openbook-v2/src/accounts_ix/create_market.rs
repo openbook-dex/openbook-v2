@@ -1,9 +1,7 @@
 use crate::state::*;
 use anchor_lang::prelude::*;
-use anchor_spl::{
-    associated_token::AssociatedToken,
-    token::{Mint, Token, TokenAccount},
-};
+use anchor_spl::associated_token::AssociatedToken;
+use anchor_spl::token_interface::{TokenInterface, self};
 
 #[event_cpi]
 #[derive(Accounts)]
@@ -39,20 +37,20 @@ pub struct CreateMarket<'info> {
         associated_token::mint = base_mint,
         associated_token::authority = market_authority,
     )]
-    pub market_base_vault: Account<'info, TokenAccount>,
+    pub market_base_vault: InterfaceAccount<'info, token_interface::TokenAccount>,
     #[account(
         init,
         payer = payer,
         associated_token::mint = quote_mint,
         associated_token::authority = market_authority,
     )]
-    pub market_quote_vault: Account<'info, TokenAccount>,
+    pub market_quote_vault: InterfaceAccount<'info, token_interface::TokenAccount>,
 
-    pub base_mint: Box<Account<'info, Mint>>,
-    pub quote_mint: Box<Account<'info, Mint>>,
+    pub base_mint: Box<InterfaceAccount<'info, token_interface::Mint>>,
+    pub quote_mint: Box<InterfaceAccount<'info, token_interface::Mint>>,
 
     pub system_program: Program<'info, System>,
-    pub token_program: Program<'info, Token>,
+    pub token_program: Interface<'info, TokenInterface>,
     pub associated_token_program: Program<'info, AssociatedToken>,
     /// CHECK: The oracle can be one of several different account types
     pub oracle_a: Option<UncheckedAccount<'info>>,

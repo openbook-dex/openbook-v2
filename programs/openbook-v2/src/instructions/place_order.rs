@@ -105,10 +105,28 @@ pub fn place_order<'info>(ctx: Context<'_, '_, '_, 'info, PlaceOrder<'info>>, or
     }
 
     // Getting actual base token amount to be deposited
-    let deposit_amount_wrapped = {
-        calculate_amount_with_fee(ctx.accounts.mint.to_account_info(), ctx.accounts.token_program.to_account_info(), deposit_amount)
-    };
-    let deposit_actual_amount = deposit_amount_wrapped.unwrap().unwrap();
+    let deposit_mint_acc: Option<AccountInfo<'_>>;
+    let deposit_actual_amount: u64;
+    let deposit_decimals: Option<u8>;
+
+    if let Some(deposit_mint) = &ctx.accounts.mint {
+        let deposit_amount_wrapped = {
+            calculate_amount_with_fee(deposit_mint.to_account_info(), ctx.accounts.token_program.to_account_info(), deposit_amount)
+        };
+
+        deposit_actual_amount = deposit_amount_wrapped.unwrap().unwrap();
+
+        deposit_mint_acc = Some(deposit_mint.to_account_info());
+
+        deposit_decimals = Some(deposit_mint.decimals);
+
+    } else {
+        deposit_actual_amount = deposit_amount;
+
+        deposit_mint_acc = None;
+
+        deposit_decimals = None;
+    }
 
     token_transfer(
         deposit_actual_amount,
@@ -116,8 +134,8 @@ pub fn place_order<'info>(ctx: Context<'_, '_, '_, 'info, PlaceOrder<'info>>, or
         &ctx.accounts.user_token_account,
         &ctx.accounts.market_vault,
         &ctx.accounts.signer,
-        ctx.accounts.mint.to_account_info(),
-        ctx.accounts.mint.decimals,
+        &deposit_mint_acc,
+        deposit_decimals,
     )?;
 
     Ok(order_id)
