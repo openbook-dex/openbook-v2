@@ -18,19 +18,21 @@ export async function sendTransaction(
 ): Promise<string> {
   const connection = provider.connection;
   if ((connection as any).banksClient !== undefined) {
-          const tx = new Transaction();
-          for (const ix of ixs) {
-            tx.add(ix);
-          }
-          tx.feePayer = provider.wallet.publicKey;
-          [tx.recentBlockhash] = await (connection as any).banksClient.getLatestBlockhash();
+    const tx = new Transaction();
+    for (const ix of ixs) {
+      tx.add(ix);
+    }
+    tx.feePayer = provider.wallet.publicKey;
+    [tx.recentBlockhash] = await (
+      connection as any
+    ).banksClient.getLatestBlockhash();
 
-          for (const signer of opts?.additionalSigners) {
-            tx.partialSign(signer);
-          }
+    for (const signer of opts?.additionalSigners) {
+      tx.partialSign(signer);
+    }
 
-          await (connection as any).banksClient.processTransaction(tx);
-          return "";
+    await (connection as any).banksClient.processTransaction(tx);
+    return '';
   }
   const latestBlockhash =
     opts?.latestBlockhash ??

@@ -4,7 +4,7 @@ import {
   type AccountInfo,
   type Message,
 } from '@solana/web3.js';
-import { getFilteredProgramAccounts } from './client';
+import { OPENBOOK_PROGRAM_ID, getFilteredProgramAccounts } from './client';
 import { utils, Program, type Provider, getProvider } from '@coral-xyz/anchor';
 
 import { IDL, type OpenbookV2 } from './openbook_v2';
@@ -41,7 +41,7 @@ interface Market {
 }
 export async function findAllMarkets(
   connection: Connection,
-  programId: PublicKey,
+  programId: PublicKey = OPENBOOK_PROGRAM_ID,
   provider?: Provider,
 ): Promise<Market[]> {
   if (provider == null) {
@@ -71,13 +71,13 @@ export async function findAllMarkets(
       if (
         tx?.meta?.innerInstructions !== null &&
         tx?.meta?.innerInstructions !== undefined
-      )
+      ) {
         for (const innerIns of tx.meta.innerInstructions) {
-          if (innerIns.instructions?.[1]?.accounts?.[0] !== undefined) {
-            console.log('err');
+          const innerIx = innerIns.instructions?.[11];
+          if (innerIx?.accounts?.[0] !== undefined) {
             // validate key and program key
-            const eventAuthorityKey = innerIns.instructions[1].accounts[0];
-            const programKey = innerIns.instructions[1].programIdIndex;
+            const eventAuthorityKey = innerIx.accounts[0];
+            const programKey = innerIx.programIdIndex;
             if (
               (tx.transaction.message as Message).staticAccountKeys[
                 eventAuthorityKey
@@ -88,9 +88,7 @@ export async function findAllMarkets(
             ) {
               continue;
             } else {
-              const ixData = utils.bytes.bs58.decode(
-                innerIns.instructions[1].data,
-              );
+              const ixData = utils.bytes.bs58.decode(innerIx.data);
               const eventData = utils.bytes.base64.encode(ixData.slice(8));
               const event = program.coder.events.decode(eventData);
 
@@ -107,6 +105,7 @@ export async function findAllMarkets(
             }
           }
         }
+      }
     }
   }
   return marketsAll;

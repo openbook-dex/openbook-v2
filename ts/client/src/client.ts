@@ -35,6 +35,7 @@ import { Side } from './utils/utils';
 
 export type IdsSource = 'api' | 'static' | 'get-program-accounts';
 export type PlaceOrderArgs = IdlTypes<OpenbookV2>['PlaceOrderArgs'];
+export type PlaceOrderPeggedArgs = IdlTypes<OpenbookV2>['PlaceOrderPeggedArgs'];
 export type OracleConfigParams = IdlTypes<OpenbookV2>['OracleConfigParams'];
 export type OracleConfig = IdlTypes<OpenbookV2>['OracleConfig'];
 export type MarketAccount = IdlAccounts<OpenbookV2>['market'];
@@ -62,8 +63,8 @@ export function nameToString(name: number[]): string {
 const BooksideSpace = 90944 + 8;
 const EventHeapSpace = 91280 + 8;
 
-const OPENBOOK_PROGRAM_ID = new PublicKey(
-  "opnb2LAfJYbRMAHHvqjCwQxanZn7ReEHp1k81EohpZb"
+export const OPENBOOK_PROGRAM_ID = new PublicKey(
+  'opnb2LAfJYbRMAHHvqjCwQxanZn7ReEHp1k81EohpZb',
 );
 
 export class OpenBookV2Client {
@@ -85,10 +86,10 @@ export class OpenBookV2Client {
     this.postSendTxCallback = opts?.postSendTxCallback;
     this.txConfirmationCommitment =
       opts?.txConfirmationCommitment ??
-      ((this.program.provider as AnchorProvider).opts !== undefined ?
-       (this.program.provider as AnchorProvider).opts.commitment : 
-       undefined) ??
-       'processed';
+      ((this.program.provider as AnchorProvider).opts !== undefined
+        ? (this.program.provider as AnchorProvider).opts.commitment
+        : undefined) ??
+      'processed';
     // TODO: evil side effect, but limited backtraces are a nightmare
     Error.stackTraceLimit = 1000;
   }
@@ -145,7 +146,10 @@ export class OpenBookV2Client {
     return address.publicKey;
   }
 
-  public async getMarket(publicKey: PublicKey): Promise<MarketAccount | null> {
+  // Get the MarketAccount from the market publicKey
+  public async getMarketAccount(
+    publicKey: PublicKey,
+  ): Promise<MarketAccount | null> {
     try {
       return await this.program.account.market.fetch(publicKey);
     } catch {
@@ -304,9 +308,40 @@ export class OpenBookV2Client {
     return market.publicKey;
   }
 
-  public findOpenOrdersIndexer(): PublicKey {
+  // Book and EventHeap must be empty before closing a market.
+  // Make sure to call consumeEvents and pruneOrders before closing the market.
+  public async closeMarket(
+    market: MarketAccount,
+    marketPublicKey: PublicKey,
+    solDestination: PublicKey,
+    closeMarketAdmin: Keypair | null = null,
+  ): Promise<TransactionSignature> {
+    const ix = await this.program.methods
+      .closeMarket()
+      .accounts({
+        closeMarketAdmin: market.closeMarketAdmin.key,
+        market: marketPublicKey,
+        asks: market.asks,
+        bids: market.bids,
+        eventHeap: market.eventHeap,
+        solDestination: solDestination,
+        tokenProgram: TOKEN_PROGRAM_ID,
+      })
+      .instruction();
+    const signers: Signer[] = [];
+    if (
+      this.walletPk !== market.closeMarketAdmin.key &&
+      closeMarketAdmin !== null
+    ) {
+      signers.push(closeMarketAdmin);
+    }
+
+    return await this.sendAndConfirmTransaction([ix], { signers });
+  }
+
+  public findOpenOrdersIndexer(owner: PublicKey = this.walletPk): PublicKey {
     const [openOrdersIndexer] = PublicKey.findProgramAddressSync(
-      [Buffer.from('OpenOrdersIndexer'), this.walletPk.toBuffer()],
+      [Buffer.from('OpenOrdersIndexer'), owner.toBuffer()],
       this.programId,
     );
     return openOrdersIndexer;
@@ -328,11 +363,29 @@ export class OpenBookV2Client {
     return await this.sendAndConfirmTransaction([ix]);
   }
 
-  public findOpenOrders(market: PublicKey, accountIndex: BN): PublicKey {
+  public async createOpenOrdersIndexerInstruction(
+    openOrdersIndexer: PublicKey,
+    owner: PublicKey = this.walletPk,
+  ): Promise<TransactionInstruction> {
+    return await this.program.methods
+      .createOpenOrdersIndexer()
+      .accounts({
+        openOrdersIndexer,
+        owner,
+        payer: this.walletPk,
+      })
+      .instruction();
+  }
+
+  public findOpenOrders(
+    market: PublicKey,
+    accountIndex: BN,
+    owner: PublicKey,
+  ): PublicKey {
     const [openOrders] = PublicKey.findProgramAddressSync(
       [
         Buffer.from('OpenOrders'),
-        this.walletPk.toBuffer(),
+        owner.toBuffer(),
         accountIndex.toArrayLike(Buffer, 'le', 4),
       ],
       this.programId,
@@ -340,23 +393,37 @@ export class OpenBookV2Client {
     return openOrders;
   }
 
-  public async createOpenOrders(
+  public async createOpenOrdersInstruction(
     market: PublicKey,
     accountIndex: BN,
     name: string,
+    owner: PublicKey = this.walletPk,
+    delegateAccount: PublicKey | null,
     openOrdersIndexer?: PublicKey,
-  ): Promise<PublicKey> {
+  ): Promise<[TransactionInstruction[], PublicKey]> {
+    const ixs: TransactionInstruction[] = [];
+
     if (openOrdersIndexer == null) {
-      openOrdersIndexer = this.findOpenOrdersIndexer();
+      openOrdersIndexer = this.findOpenOrdersIndexer(owner);
       try {
-        const acc = await this.connection.getAccountInfo(openOrdersIndexer);
-        if (acc == null) {
-          const tx = await this.createOpenOrdersIndexer(openOrdersIndexer);
-          console.log('Created open orders indexer', tx);
+        const storedIndexer = await this.connection.getAccountInfo(
+          openOrdersIndexer,
+        );
+        if (storedIndexer == null) {
+          ixs.push(
+            await this.createOpenOrdersIndexerInstruction(
+              openOrdersIndexer,
+              owner,
+            ),
+          );
         }
       } catch {
-        const tx = await this.createOpenOrdersIndexer(openOrdersIndexer);
-        console.log('Created open orders indexer', tx);
+        ixs.push(
+          await this.createOpenOrdersIndexerInstruction(
+            openOrdersIndexer,
+            owner,
+          ),
+        );
       }
     }
     if (accountIndex.toNumber() === 0) {
@@ -364,24 +431,51 @@ export class OpenBookV2Client {
         code: 403,
       });
     }
-    const openOrders = this.findOpenOrders(market, accountIndex);
+    const openOrdersAccount = this.findOpenOrders(market, accountIndex, owner);
 
-    const ix = await this.program.methods
-      .createOpenOrdersAccount(name)
-      .accounts({
-        openOrdersIndexer,
-        openOrdersAccount: openOrders,
-        market,
-        owner: this.walletPk,
-        delegateAccount: null,
-        payer: this.walletPk,
-        systemProgram: SystemProgram.programId,
-      })
-      .instruction();
+    ixs.push(
+      await this.program.methods
+        .createOpenOrdersAccount(name)
+        .accounts({
+          openOrdersIndexer,
+          openOrdersAccount,
+          market,
+          owner,
+          delegateAccount,
+          payer: this.walletPk,
+          // systemProgram: SystemProgram.programId,
+        })
+        .instruction(),
+    );
 
-    await this.sendAndConfirmTransaction([ix]);
+    return [ixs, openOrdersAccount];
+  }
 
-    return openOrders;
+  public async createOpenOrders(
+    payer: Keypair,
+    market: PublicKey,
+    accountIndex: BN,
+    name: string,
+    owner: Keypair = payer,
+    openOrdersIndexer: PublicKey | null = null,
+  ): Promise<PublicKey> {
+    const [ixs, openOrdersAccount] = await this.createOpenOrdersInstruction(
+      market,
+      accountIndex,
+      name,
+      owner.publicKey,
+      openOrdersIndexer,
+    );
+    const additionalSigners = [payer];
+    if (owner !== payer) {
+      additionalSigners.push(owner);
+    }
+
+    await this.sendAndConfirmTransaction(ixs, {
+      additionalSigners,
+    });
+
+    return openOrdersAccount;
   }
 
   public async deposit(
@@ -493,6 +587,52 @@ export class OpenBookV2Client {
 
     const ix = await this.program.methods
       .placeOrder(args)
+      .accounts({
+        signer:
+          openOrdersDelegate != null
+            ? openOrdersDelegate.publicKey
+            : this.walletPk,
+        asks: market.asks,
+        bids: market.bids,
+        marketVault,
+        eventHeap: market.eventHeap,
+        market: marketPublicKey,
+        openOrdersAccount: openOrdersPublicKey,
+        oracleA: market.oracleA.key,
+        oracleB: market.oracleB.key,
+        userTokenAccount,
+        tokenProgram: TOKEN_PROGRAM_ID,
+        openOrdersAdmin,
+      })
+      .remainingAccounts(accountsMeta)
+      .instruction();
+    const signers: Signer[] = [];
+    if (openOrdersDelegate != null) {
+      signers.push(openOrdersDelegate);
+    }
+    return await this.sendAndConfirmTransaction([ix], { signers });
+  }
+
+  public async placeOrderPegged(
+    openOrdersPublicKey: PublicKey,
+    marketPublicKey: PublicKey,
+    market: MarketAccount,
+    userTokenAccount: PublicKey,
+    openOrdersAdmin: PublicKey | null,
+    args: PlaceOrderPeggedArgs,
+    remainingAccounts: PublicKey[],
+    openOrdersDelegate?: Keypair,
+  ): Promise<TransactionSignature> {
+    const marketVault =
+      args.side === Side.Bid ? market.marketQuoteVault : market.marketBaseVault;
+    const accountsMeta: AccountMeta[] = remainingAccounts.map((remaining) => ({
+      pubkey: remaining,
+      isSigner: false,
+      isWritable: true,
+    }));
+
+    const ix = await this.program.methods
+      .placeOrderPegged(args)
       .accounts({
         signer:
           openOrdersDelegate != null
@@ -666,12 +806,19 @@ export class OpenBookV2Client {
       isSigner: false,
       isWritable: true,
     }));
+
+    const eventAdminBs58 = market.consumeEventsAdmin.key.toBase58();
+    const consumeEventsAdmin =
+      eventAdminBs58 === PublicKey.default.toBase58()
+        ? null
+        : market.consumeEventsAdmin.key;
+
     const ix = await this.program.methods
       .consumeEvents(limit)
       .accounts({
         eventHeap: market.eventHeap,
         market: marketPublicKey,
-        consumeEventsAdmin: market.consumeEventsAdmin.key,
+        consumeEventsAdmin,
       })
       .remainingAccounts(accountsMeta)
       .instruction();
@@ -700,6 +847,33 @@ export class OpenBookV2Client {
       .remainingAccounts(accountsMeta)
       .instruction();
     return await this.sendAndConfirmTransaction([ix]);
+  }
+
+  public async pruneOrders(
+    marketPublicKey: PublicKey,
+    market: MarketAccount,
+    openOrdersPublicKey: PublicKey,
+    limit: number,
+    closeMarketAdmin: Keypair | null = null,
+  ): Promise<TransactionSignature> {
+    const ix = await this.program.methods
+      .pruneOrders(limit)
+      .accounts({
+        closeMarketAdmin: market.closeMarketAdmin.key,
+        openOrdersAccount: openOrdersPublicKey,
+        market: marketPublicKey,
+        bids: market.bids,
+        asks: market.asks,
+      })
+      .instruction();
+    const signers: Signer[] = [];
+    if (
+      this.walletPk !== market.closeMarketAdmin.key &&
+      closeMarketAdmin !== null
+    ) {
+      signers.push(closeMarketAdmin);
+    }
+    return await this.sendAndConfirmTransaction([ix], { signers });
   }
 
   public async getAccountsToConsume(
