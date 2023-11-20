@@ -29,16 +29,17 @@ pub fn sweep_fees<'info>(ctx: Context<'_, '_, '_, 'info, SweepFees<'info>>) -> R
         mint_decimals = None;
     }
 
-
     token_transfer_signed(
-        amount,
         &ctx.accounts.token_program,
         &ctx.accounts.market_quote_vault,
         &ctx.accounts.token_receiver_account,
         &ctx.accounts.market_authority,
         seeds,
         &mint_acc,
-        mint_decimals,
+        AmountAndDecimals {
+            amount,
+            decimals: mint_decimals,
+        },
     )?;
 
     emit!(SweepFeesLog {

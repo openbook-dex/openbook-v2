@@ -123,7 +123,11 @@ pub fn place_take_order<'info>(
 
     if let Some(deposit_mint) = &ctx.accounts.deposit_mint {
         let deposit_amount_wrapped = {
-            calculate_amount_with_fee(deposit_mint.to_account_info(), ctx.accounts.token_program.to_account_info(), deposit_amount)
+            calculate_amount_with_fee(
+                deposit_mint.to_account_info(),
+                ctx.accounts.token_program.to_account_info(),
+                deposit_amount,
+            )
         };
 
         deposit_actual_amount = deposit_amount_wrapped.unwrap().unwrap();
@@ -131,7 +135,6 @@ pub fn place_take_order<'info>(
         deposit_mint_acc = Some(deposit_mint.to_account_info());
 
         deposit_decimals = Some(deposit_mint.decimals);
-
     } else {
         deposit_actual_amount = deposit_amount;
 
@@ -144,7 +147,6 @@ pub fn place_take_order<'info>(
         withdraw_mint_acc = Some(withdraw_mint.to_account_info());
 
         withdraw_decimals = Some(withdraw_mint.decimals);
-
     } else {
         withdraw_mint_acc = None;
 
@@ -152,51 +154,56 @@ pub fn place_take_order<'info>(
     }
 
     token_transfer(
-        deposit_actual_amount,
         &ctx.accounts.token_program,
         user_deposit_acc.as_ref(),
         market_deposit_acc,
         &ctx.accounts.signer,
         &deposit_mint_acc,
-        deposit_decimals,
+        AmountAndDecimals {
+            amount: deposit_actual_amount,
+            decimals: deposit_decimals,
+        },
     )?;
 
     token_transfer_signed(
-        withdraw_amount,
         &ctx.accounts.token_program,
         market_withdraw_acc,
         user_withdraw_acc.as_ref(),
         &ctx.accounts.market_authority,
         seeds,
         &withdraw_mint_acc,
-        withdraw_decimals,
+        AmountAndDecimals {
+            amount: withdraw_amount,
+            decimals: withdraw_decimals,
+        },
     )?;
 
-    
     if let Some(referrer_account) = &ctx.accounts.referrer_account {
-
         if referrer_account.mint == user_withdraw_acc.mint {
             token_transfer_signed(
-                referrer_amount,
                 &ctx.accounts.token_program,
                 &ctx.accounts.market_quote_vault,
                 referrer_account,
                 &ctx.accounts.market_authority,
                 seeds,
                 &withdraw_mint_acc,
-                withdraw_decimals,
+                AmountAndDecimals {
+                    amount: referrer_amount,
+                    decimals: withdraw_decimals,
+                },
             )?;
-
         } else if referrer_account.mint == user_deposit_acc.mint {
             token_transfer_signed(
-                referrer_amount,
                 &ctx.accounts.token_program,
                 &ctx.accounts.market_quote_vault,
                 referrer_account,
                 &ctx.accounts.market_authority,
                 seeds,
                 &deposit_mint_acc,
-                deposit_decimals,
+                AmountAndDecimals {
+                    amount: referrer_amount,
+                    decimals: deposit_decimals,
+                },
             )?;
         }
     }

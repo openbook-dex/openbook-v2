@@ -1,5 +1,3 @@
-cargo-features = ["workspace-inheritance"]
-
 [package]
 edition = "2021"
 name = "openbook-v2-client"

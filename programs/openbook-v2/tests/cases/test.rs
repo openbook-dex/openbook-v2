@@ -24,7 +24,7 @@ async fn test_simple_settle() -> Result<(), TransportError> {
     })
     .await?;
     let solana = &context.solana.clone();
-    
+
     //
     // TEST: Create another market
     //
@@ -73,7 +73,7 @@ async fn test_simple_settle() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings:vec![],
+            remainings: vec![],
         },
     )
     .await
@@ -98,7 +98,7 @@ async fn test_simple_settle() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings:vec![],
+            remainings: vec![],
         },
     )
     .await
@@ -156,7 +156,7 @@ async fn test_simple_settle() -> Result<(), TransportError> {
             base_mint: mints[0].pubkey,
             quote_mint: mints[1].pubkey,
             referrer_account: None,
-            remainings:vec![],
+            remainings: vec![],
         },
     )
     .await
@@ -185,7 +185,7 @@ async fn test_simple_settle() -> Result<(), TransportError> {
             base_mint: mints[0].pubkey,
             quote_mint: mints[1].pubkey,
             referrer_account: None,
-            remainings:vec![],
+            remainings: vec![],
         },
     )
     .await
@@ -246,7 +246,7 @@ async fn test_cancel_orders() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings:vec![],
+            remainings: vec![],
         },
     )
     .await
@@ -271,7 +271,7 @@ async fn test_cancel_orders() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings:vec![],
+            remainings: vec![],
         },
     )
     .await
@@ -330,7 +330,7 @@ async fn test_cancel_orders() -> Result<(), TransportError> {
             quote_mint: mints[1].pubkey,
             base_amount: 10000,
             quote_amount: 0,
-            remainings:vec![],
+            remainings: vec![],
         },
     )
     .await
@@ -364,7 +364,7 @@ async fn test_cancel_orders() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings:vec![],
+            remainings: vec![],
         },
     )
     .await
@@ -398,7 +398,7 @@ async fn test_cancel_orders() -> Result<(), TransportError> {
             base_mint: mints[0].pubkey,
             quote_mint: mints[1].pubkey,
             referrer_account: None,
-            remainings:vec![],
+            remainings: vec![],
         },
     )
     .await
@@ -461,7 +461,7 @@ async fn test_cancel_orders() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings:vec![],
+            remainings: vec![],
         },
     )
     .await
@@ -543,7 +543,7 @@ async fn test_expired_orders() -> Result<(), TransportError> {
             expiry_timestamp: now_ts + 2,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings:vec![],
+            remainings: vec![],
         },
     )
     .await
@@ -580,7 +580,7 @@ async fn test_expired_orders() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings:vec![],
+            remainings: vec![],
         },
     )
     .await

@@ -1,7 +1,7 @@
 use crate::state::*;
 use anchor_lang::prelude::*;
 use anchor_spl::associated_token::AssociatedToken;
-use anchor_spl::token_interface::{TokenInterface, self};
+use anchor_spl::token_interface::{self, TokenInterface};
 
 #[event_cpi]
 #[derive(Accounts)]

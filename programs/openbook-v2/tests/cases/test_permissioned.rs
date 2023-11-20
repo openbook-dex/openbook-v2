@@ -21,7 +21,6 @@ async fn test_permissioned_open_order() -> Result<(), TransportError> {
     .await?;
     let solana = &context.solana.clone();
 
-
     let price_lots = {
         let market = solana.get_account::<Market>(market).await;
         market.native_price_to_lot(I80F48::from(1000)).unwrap()
@@ -49,7 +48,7 @@ async fn test_permissioned_open_order() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings:vec![],
+            remainings: vec![],
         },
     )
     .await;
@@ -75,7 +74,7 @@ async fn test_permissioned_open_order() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings:vec![],
+            remainings: vec![],
         },
     )
     .await
@@ -106,7 +105,6 @@ async fn test_permissioned_open_take_order() -> Result<(), TransportError> {
     .await?;
     let solana = &context.solana.clone();
 
-
     // Set the initial oracle price
     set_stub_oracle_price(solana, &tokens[1], collect_fee_admin, 1000.0).await;
 
@@ -129,7 +127,7 @@ async fn test_permissioned_open_take_order() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings:vec![],
+            remainings: vec![],
         },
     )
     .await;
@@ -155,7 +153,7 @@ async fn test_permissioned_open_take_order() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings:vec![],
+            remainings: vec![],
         },
     )
     .await
@@ -189,7 +187,6 @@ async fn test_consume_events_admin() -> Result<(), TransportError> {
     .await?;
     let solana = &context.solana.clone();
 
-
     // Set the initial oracle price
     set_stub_oracle_price(solana, &tokens[1], collect_fee_admin, 1000.0).await;
 
@@ -212,7 +209,7 @@ async fn test_consume_events_admin() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings:vec![],
+            remainings: vec![],
         },
     )
     .await
@@ -237,7 +234,7 @@ async fn test_consume_events_admin() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings:vec![],
+            remainings: vec![],
         },
     )
     .await
@@ -316,7 +313,7 @@ async fn test_close_market_admin() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings:vec![],
+            remainings: vec![],
         },
     )
     .await
@@ -341,7 +338,7 @@ async fn test_close_market_admin() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings:vec![],
+            remainings: vec![],
         },
     )
     .await
@@ -366,7 +363,7 @@ async fn test_close_market_admin() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings:vec![],
+            remainings: vec![],
         },
     )
     .await
@@ -390,7 +387,7 @@ async fn test_close_market_admin() -> Result<(), TransportError> {
         base_mint: mints[0].pubkey,
         quote_mint: mints[1].pubkey,
         referrer_account: None,
-        remainings:vec![],
+        remainings: vec![],
     };
 
     // Can't close yet, market not market as expired
@@ -435,7 +432,7 @@ async fn test_close_market_admin() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings:vec![],
+            remainings: vec![],
         },
     )
     .await;
@@ -488,7 +485,7 @@ async fn test_close_market_admin() -> Result<(), TransportError> {
             base_mint: mints[0].pubkey,
             quote_mint: mints[1].pubkey,
             referrer_account: None,
-            remainings:vec![],
+            remainings: vec![],
         },
     )
     .await
@@ -513,7 +510,7 @@ async fn test_close_market_admin() -> Result<(), TransportError> {
             market_quote_vault,
             mint: mints[1].pubkey,
             token_receiver_account: fee_admin_ata,
-            remainings:vec![],
+            remainings: vec![],
         },
     )
     .await
@@ -577,7 +574,7 @@ async fn test_delegate() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings:vec![],
+            remainings: vec![],
         },
     )
     .await
@@ -626,7 +623,7 @@ async fn test_delegate() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings:vec![],
+            remainings: vec![],
         },
     )
     .await;

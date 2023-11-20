@@ -2,7 +2,7 @@ use crate::accounts_ix::SettleFunds;
 use crate::error::OpenBookError;
 use crate::state::*;
 use anchor_lang::prelude::*;
-use anchor_spl::token_interface::{TokenInterface, self};
+use anchor_spl::token_interface::{self, TokenInterface};
 
 #[derive(Accounts)]
 pub struct SettleFundsExpired<'info> {
@@ -53,7 +53,7 @@ pub struct SettleFundsExpired<'info> {
     pub base_mint: Option<Box<InterfaceAccount<'info, token_interface::Mint>>>,
     #[account(mut)]
     pub quote_mint: Option<Box<InterfaceAccount<'info, token_interface::Mint>>>,
-    
+
     pub base_token_program: Interface<'info, TokenInterface>,
     pub quote_token_program: Interface<'info, TokenInterface>,
     pub system_program: Program<'info, System>,

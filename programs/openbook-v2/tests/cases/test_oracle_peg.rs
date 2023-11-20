@@ -33,7 +33,7 @@ async fn test_oracle_peg_enabled() -> Result<(), TransportError> {
             max_base_lots: 1,
             max_quote_lots_including_fees: 100_000,
             client_order_id: 0,
-            remainings:vec![],
+            remainings: vec![],
         },
     )
     .await
@@ -73,7 +73,7 @@ async fn test_oracle_peg_invalid_oracle() -> Result<(), TransportError> {
             max_base_lots: 1,
             max_quote_lots_including_fees: 100_000,
             client_order_id: 0,
-            remainings:vec![],
+            remainings: vec![],
         },
     )
     .await
@@ -131,7 +131,7 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
         max_base_lots: 1,
         max_quote_lots_including_fees: 100_000,
         client_order_id: 0,
-        remainings:vec![],
+        remainings: vec![],
     };
 
     // posting invalid orderes by peg_limit are skipped
@@ -193,7 +193,7 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
             max_base_lots: 2,
             max_quote_lots_including_fees,
             client_order_id: 5,
-            remainings:vec![],
+            remainings: vec![],
         },
     )
     .await
@@ -228,7 +228,7 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings:vec![],
+            remainings: vec![],
         },
     )
     .await
@@ -249,7 +249,7 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
             max_base_lots: 1,
             max_quote_lots_including_fees: 100_000,
             client_order_id: 7,
-            remainings:vec![],
+            remainings: vec![],
         },
     )
     .await
@@ -284,7 +284,7 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
             max_base_lots: 2,
             max_quote_lots_including_fees: 100_000,
             client_order_id: 5,
-            remainings:vec![],
+            remainings: vec![],
         },
     )
     .await
@@ -310,7 +310,7 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings:vec![],
+            remainings: vec![],
         },
     )
     .await
@@ -348,7 +348,7 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings:vec![],
+            remainings: vec![],
         },
     )
     .await
@@ -384,7 +384,7 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
             max_base_lots: 2,
             max_quote_lots_including_fees: 100_000,
             client_order_id: 5,
-            remainings:vec![],
+            remainings: vec![],
         },
     )
     .await
@@ -411,7 +411,7 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings:vec![],
+            remainings: vec![],
         },
     )
     .await
@@ -449,7 +449,7 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings:vec![],
+            remainings: vec![],
         },
     )
     .await
@@ -515,7 +515,7 @@ async fn test_take_peg_invalid_oracle() -> Result<(), TransportError> {
             max_base_lots: 1,
             max_quote_lots_including_fees: 100_000,
             client_order_id: 0,
-            remainings:vec![],
+            remainings: vec![],
         },
     )
     .await
@@ -618,7 +618,7 @@ async fn test_oracle_peg_limit() -> Result<(), TransportError> {
             max_base_lots: 2,
             max_quote_lots_including_fees,
             client_order_id: 5,
-            remainings:vec![],
+            remainings: vec![],
         },
     )
     .await
@@ -643,7 +643,7 @@ async fn test_oracle_peg_limit() -> Result<(), TransportError> {
             max_base_lots: 2,
             max_quote_lots_including_fees,
             client_order_id: 5,
-            remainings:vec![],
+            remainings: vec![],
         },
     )
     .await
@@ -708,7 +708,7 @@ async fn test_locked_amounts() -> Result<(), TransportError> {
         max_base_lots: 1_000,
         max_quote_lots_including_fees: 100_000_000,
         client_order_id: 0,
-        remainings:vec![],
+        remainings: vec![],
     };
 
     let place_ask_1_ix = PlaceOrderPeggedInstruction {
@@ -732,7 +732,7 @@ async fn test_locked_amounts() -> Result<(), TransportError> {
         base_mint: mints[0].pubkey,
         quote_mint: mints[1].pubkey,
         referrer_account: None,
-        remainings:vec![],
+        remainings: vec![],
     };
 
     let settle_funds_1_ix = SettleFundsInstruction {

@@ -72,37 +72,43 @@ pub fn settle_funds<'info>(ctx: Context<'_, '_, '_, 'info, SettleFunds<'info>>) 
 
     if let Some(referrer_account) = &ctx.accounts.referrer_account {
         token_transfer_signed(
-            referrer_rebate,
             &ctx.accounts.quote_token_program,
             &ctx.accounts.market_quote_vault,
             referrer_account,
             &ctx.accounts.market_authority,
             seeds,
             &quote_mint_acc,
-            quote_decimals,
+            AmountAndDecimals {
+                amount: referrer_rebate,
+                decimals: quote_decimals,
+            },
         )?;
     }
 
     token_transfer_signed(
-        pa.base_free_native,
         &ctx.accounts.base_token_program,
         &ctx.accounts.market_base_vault,
         &ctx.accounts.user_base_account,
         &ctx.accounts.market_authority,
         seeds,
         &base_mint_acc,
-        base_decimals,
+        AmountAndDecimals {
+            amount: pa.base_free_native,
+            decimals: base_decimals,
+        },
     )?;
 
     token_transfer_signed(
-        pa.quote_free_native,
         &ctx.accounts.quote_token_program,
         &ctx.accounts.market_quote_vault,
         &ctx.accounts.user_quote_account,
         &ctx.accounts.market_authority,
         seeds,
         &quote_mint_acc,
-        quote_decimals,
+        AmountAndDecimals {
+            amount: pa.quote_free_native,
+            decimals: quote_decimals,
+        },
     )?;
 
     emit!(SettleFundsLog {

@@ -2,7 +2,7 @@ use crate::error::OpenBookError;
 use crate::pubkey_option::NonZeroKey;
 use crate::state::*;
 use anchor_lang::prelude::*;
-use anchor_spl::token_interface::{TokenInterface, self};
+use anchor_spl::token_interface::{self, TokenInterface};
 
 #[derive(Accounts)]
 pub struct PlaceTakeOrder<'info> {

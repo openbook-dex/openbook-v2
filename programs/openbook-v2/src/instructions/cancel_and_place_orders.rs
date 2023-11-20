@@ -136,7 +136,11 @@ pub fn cancel_and_place_orders<'info>(
 
     if let Some(base_mint) = &ctx.accounts.base_mint {
         let base_amount_wrapped = {
-            calculate_amount_with_fee(base_mint.to_account_info(), ctx.accounts.token_program.to_account_info(), deposit_base_amount)
+            calculate_amount_with_fee(
+                base_mint.to_account_info(),
+                ctx.accounts.token_program.to_account_info(),
+                deposit_base_amount,
+            )
         };
 
         base_actual_amount = base_amount_wrapped.unwrap().unwrap();
@@ -150,7 +154,11 @@ pub fn cancel_and_place_orders<'info>(
 
     if let Some(quote_mint) = &ctx.accounts.quote_mint {
         let quote_amount_wrapped = {
-            calculate_amount_with_fee(quote_mint.to_account_info(), ctx.accounts.token_program.to_account_info(), deposit_quote_amount)
+            calculate_amount_with_fee(
+                quote_mint.to_account_info(),
+                ctx.accounts.token_program.to_account_info(),
+                deposit_quote_amount,
+            )
         };
 
         quote_actual_amount = quote_amount_wrapped.unwrap().unwrap();
@@ -163,23 +171,27 @@ pub fn cancel_and_place_orders<'info>(
     }
 
     token_transfer(
-        base_actual_amount,
         &ctx.accounts.token_program,
         &ctx.accounts.user_quote_account,
         &ctx.accounts.market_quote_vault,
         &ctx.accounts.signer,
         &base_mint_acc,
-        Some(market.base_decimals),
+        AmountAndDecimals {
+            amount: base_actual_amount,
+            decimals: Some(market.base_decimals),
+        },
     )?;
 
     token_transfer(
-        quote_actual_amount,
         &ctx.accounts.token_program,
         &ctx.accounts.user_base_account,
         &ctx.accounts.market_base_vault,
         &ctx.accounts.signer,
         &quote_mint_acc,
-        Some(market.quote_decimals),
+        AmountAndDecimals {
+            amount: quote_actual_amount,
+            decimals: Some(market.quote_decimals),
+        },
     )?;
 
     Ok(order_ids)

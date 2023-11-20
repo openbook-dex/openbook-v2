@@ -43,7 +43,7 @@ async fn test_take_ask_order() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings:vec![],
+            remainings: vec![],
         },
     )
     .await
@@ -69,7 +69,7 @@ async fn test_take_ask_order() -> Result<(), TransportError> {
             max_quote_lots_including_fees: 10000,
             referrer_account: None,
             open_orders_admin: None,
-            remainings:vec![],
+            remainings: vec![],
         },
     )
     .await
@@ -135,7 +135,7 @@ async fn test_take_ask_order() -> Result<(), TransportError> {
             base_mint: mints[0].pubkey,
             quote_mint: mints[1].pubkey,
             referrer_account: None,
-            remainings:vec![],
+            remainings: vec![],
         },
     )
     .await
@@ -175,10 +175,6 @@ async fn test_take_bid_order() -> Result<(), TransportError> {
     } = TestContext::new_with_market(TestNewMarketInitialize::default()).await?;
     let solana = &context.solana.clone();
 
-    let mut vec_remainings: Vec<Pubkey> = Vec::new();
-    vec_remainings.push(mints[0].pubkey);
-    vec_remainings.push(mints[1].pubkey);
-
     // Set the initial oracle price
     set_stub_oracle_price(solana, &tokens[1], collect_fee_admin, 1000.0).await;
 
@@ -201,7 +197,7 @@ async fn test_take_bid_order() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings:vec![],
+            remainings: vec![],
         },
     )
     .await
@@ -232,7 +228,7 @@ async fn test_take_bid_order() -> Result<(), TransportError> {
             max_quote_lots_including_fees: 10040,
             referrer_account: Some(admin_token_1),
             open_orders_admin: None,
-            remainings:vec![],
+            remainings: vec![],
         },
     )
     .await
@@ -302,7 +298,7 @@ async fn test_take_bid_order() -> Result<(), TransportError> {
             base_mint: mints[0].pubkey,
             quote_mint: mints[1].pubkey,
             referrer_account: None,
-            remainings:vec![],
+            remainings: vec![],
         },
     )
     .await

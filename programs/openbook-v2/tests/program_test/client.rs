@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 
 use anchor_lang::prelude::*;
-use anchor_spl::{associated_token::AssociatedToken, token::Token, token_interface::Token2022};
+use anchor_spl::{associated_token::AssociatedToken, token::Token};
 use solana_program::instruction::Instruction;
 use solana_program_test::BanksClientError;
 use solana_sdk::instruction;

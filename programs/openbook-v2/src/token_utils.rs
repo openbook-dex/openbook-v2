@@ -1,13 +1,11 @@
 use super::*;
 use anchor_lang::system_program::{self};
+use anchor_spl::token;
 use anchor_spl::token::Token;
 use anchor_spl::token_interface;
-use anchor_spl::token;
 use spl_token_2022::{
     check_spl_token_program_account,
-    extension::{
-        BaseStateWithExtensions, StateWithExtensions, transfer_fee::TransferFeeConfig,
-    },
+    extension::{transfer_fee::TransferFeeConfig, BaseStateWithExtensions, StateWithExtensions},
     state::Mint,
 };
 
@@ -17,15 +15,14 @@ pub fn token_transfer<
     A: ToAccountInfo<'info>,
     S: ToAccountInfo<'info>,
 >(
-    amount: u64,
     token_program: &P,
     from: &A,
     to: &A,
     authority: &S,
     mint: &Option<AccountInfo<'info>>,
-    decimals: Option<u8>,
+    amount_and_decimals: AmountAndDecimals,
 ) -> Result<()> {
-    if amount > 0 {
+    if amount_and_decimals.amount > 0 {
         if let Some(mint_acc) = mint {
             token_interface::transfer_checked(
                 CpiContext::new(
@@ -37,7 +34,8 @@ pub fn token_transfer<
                         mint: mint_acc.to_account_info(),
                     },
                 ),
-                amount, decimals.unwrap()
+                amount_and_decimals.amount,
+                amount_and_decimals.decimals.unwrap(),
             )
         } else {
             token::transfer(
@@ -49,7 +47,7 @@ pub fn token_transfer<
                         authority: authority.to_account_info(),
                     },
                 ),
-                amount,
+                amount_and_decimals.amount,
             )
         }
     } else {
@@ -57,23 +55,21 @@ pub fn token_transfer<
     }
 }
 
-
 pub fn token_transfer_signed<
     'info,
     P: ToAccountInfo<'info>,
     A: ToAccountInfo<'info>,
     L: ToAccountInfo<'info>,
 >(
-    amount: u64,
     token_program: &P,
     from: &A,
     to: &A,
     authority: &L,
     seeds: &[&[u8]],
     mint: &Option<AccountInfo<'info>>,
-    decimals: Option<u8>,
+    amount_and_decimals: AmountAndDecimals,
 ) -> Result<()> {
-    if amount > 0 {
+    if amount_and_decimals.amount > 0 {
         if let Some(mint_acc) = mint {
             token_interface::transfer_checked(
                 CpiContext::new_with_signer(
@@ -86,7 +82,8 @@ pub fn token_transfer_signed<
                     },
                     &[seeds],
                 ),
-                amount, decimals.unwrap()
+                amount_and_decimals.amount,
+                amount_and_decimals.decimals.unwrap(),
             )
         } else {
             token::transfer(
@@ -99,7 +96,7 @@ pub fn token_transfer_signed<
                     },
                     &[seeds],
                 ),
-                amount,
+                amount_and_decimals.amount,
             )
         }
     } else {
@@ -143,14 +140,13 @@ pub fn unpack_mint_with_extensions<'info>(
     if owner != token_program_id && check_spl_token_program_account(owner).is_err() {
         Err(OpenBookError::SomeError.into())
     } else {
-        StateWithExtensions::<Mint>::unpack(account_data).map_err(|_| anchor_lang::error::Error::from(OpenBookError::SomeError))
+        StateWithExtensions::<Mint>::unpack(account_data)
+            .map_err(|_| anchor_lang::error::Error::from(OpenBookError::SomeError))
     }
 }
 
 // pub fn get_token_fee
-pub fn calculate_amount_with_fee<
-    'info,
->(
+pub fn calculate_amount_with_fee(
     account_info: AccountInfo<'_>,
     token_program: AccountInfo<'_>,
     amount: u64,
@@ -160,21 +156,22 @@ pub fn calculate_amount_with_fee<
             Some(amount)
         } else {
             let source_data = account_info.data.borrow();
-            let source_mint = unpack_mint_with_extensions(
-                &source_data,
-                account_info.owner,
-                token_program.key,
-            )?;
+            let source_mint =
+                unpack_mint_with_extensions(&source_data, account_info.owner, token_program.key)?;
 
             if let Ok(transfer_fee_config) = source_mint.get_extension::<TransferFeeConfig>() {
-                let post_fee_amount = transfer_fee_config.newer_transfer_fee
-                        .calculate_post_fee_amount(amount);
-                post_fee_amount
+                transfer_fee_config
+                    .newer_transfer_fee
+                    .calculate_post_fee_amount(amount)
             } else {
                 Some(amount)
             }
-
         }
     };
     Ok(token_fee)
+}
+
+pub struct AmountAndDecimals {
+    pub amount: u64,
+    pub decimals: Option<u8>,
 }

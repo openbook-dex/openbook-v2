@@ -8,7 +8,11 @@ use crate::state::*;
 use crate::token_utils::*;
 
 #[allow(clippy::too_many_arguments)]
-pub fn place_order<'info>(ctx: Context<'_, '_, '_, 'info, PlaceOrder<'info>>, order: Order, limit: u8) -> Result<Option<u128>> {
+pub fn place_order<'info>(
+    ctx: Context<'_, '_, '_, 'info, PlaceOrder<'info>>,
+    order: Order,
+    limit: u8,
+) -> Result<Option<u128>> {
     require_gte!(order.max_base_lots, 0, OpenBookError::InvalidInputLots);
     require_gte!(
         order.max_quote_lots_including_fees,
@@ -111,7 +115,11 @@ pub fn place_order<'info>(ctx: Context<'_, '_, '_, 'info, PlaceOrder<'info>>, or
 
     if let Some(deposit_mint) = &ctx.accounts.mint {
         let deposit_amount_wrapped = {
-            calculate_amount_with_fee(deposit_mint.to_account_info(), ctx.accounts.token_program.to_account_info(), deposit_amount)
+            calculate_amount_with_fee(
+                deposit_mint.to_account_info(),
+                ctx.accounts.token_program.to_account_info(),
+                deposit_amount,
+            )
         };
 
         deposit_actual_amount = deposit_amount_wrapped.unwrap().unwrap();
@@ -119,7 +127,6 @@ pub fn place_order<'info>(ctx: Context<'_, '_, '_, 'info, PlaceOrder<'info>>, or
         deposit_mint_acc = Some(deposit_mint.to_account_info());
 
         deposit_decimals = Some(deposit_mint.decimals);
-
     } else {
         deposit_actual_amount = deposit_amount;
 
@@ -129,13 +136,15 @@ pub fn place_order<'info>(ctx: Context<'_, '_, '_, 'info, PlaceOrder<'info>>, or
     }
 
     token_transfer(
-        deposit_actual_amount,
         &ctx.accounts.token_program,
         &ctx.accounts.user_token_account,
         &ctx.accounts.market_vault,
         &ctx.accounts.signer,
         &deposit_mint_acc,
-        deposit_decimals,
+        AmountAndDecimals {
+            amount: deposit_actual_amount,
+            decimals: deposit_decimals,
+        },
     )?;
 
     Ok(order_id)

@@ -118,7 +118,10 @@ pub mod openbook_v2 {
     /// `limit` determines the maximum number of orders from the book to fill,
     /// and can be used to limit CU spent. When the limit is reached, processing
     /// stops and the instruction succeeds.
-    pub fn place_order<'info>(ctx: Context<'_, '_, '_, 'info, PlaceOrder<'info>>, args: PlaceOrderArgs) -> Result<Option<u128>> {
+    pub fn place_order<'info>(
+        ctx: Context<'_, '_, '_, 'info, PlaceOrder<'info>>,
+        args: PlaceOrderArgs,
+    ) -> Result<Option<u128>> {
         require_gte!(args.price_lots, 1, OpenBookError::InvalidInputPriceLots);
 
         let time_in_force = match Order::tif_from_expiry(args.expiry_timestamp) {
@@ -464,7 +467,11 @@ pub mod openbook_v2 {
     ///
     /// Makers might wish to `deposit`, rather than have actual tokens moved for
     /// each trade, in order to reduce CUs.
-    pub fn deposit<'info>(ctx: Context<'_, '_, '_, 'info, Deposit<'info>>, base_amount: u64, quote_amount: u64) -> Result<()> {
+    pub fn deposit<'info>(
+        ctx: Context<'_, '_, '_, 'info, Deposit<'info>>,
+        base_amount: u64,
+        quote_amount: u64,
+    ) -> Result<()> {
         #[cfg(feature = "enable-gpl")]
         instructions::deposit(ctx, base_amount, quote_amount)?;
         Ok(())
@@ -475,7 +482,11 @@ pub mod openbook_v2 {
     ///
     /// Makers might wish to `refill`, rather than have actual tokens moved for
     /// each trade, in order to reduce CUs.
-    pub fn refill<'info>(ctx: Context<'_, '_, '_, 'info, Deposit<'info>>, base_amount: u64, quote_amount: u64) -> Result<()> {
+    pub fn refill<'info>(
+        ctx: Context<'_, '_, '_, 'info, Deposit<'info>>,
+        base_amount: u64,
+        quote_amount: u64,
+    ) -> Result<()> {
         let (quote_amount, base_amount) = {
             let open_orders_account = ctx.accounts.open_orders_account.load()?;
             (

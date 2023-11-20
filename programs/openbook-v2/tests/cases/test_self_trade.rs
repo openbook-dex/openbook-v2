@@ -20,10 +20,6 @@ async fn test_self_trade_decrement_take() -> Result<(), TransportError> {
     let owner_quote_ata = context.users[0].token_accounts[1];
     let owner_base_ata = context.users[0].token_accounts[0];
 
-    let mut vec_remainings: Vec<Pubkey> = Vec::new();
-    vec_remainings.push(mints[0].pubkey);
-    vec_remainings.push(mints[1].pubkey);
-
     // maker (which will be the taker) limit order
     send_tx(
         solana,
@@ -43,7 +39,7 @@ async fn test_self_trade_decrement_take() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings:vec![],
+            remainings: vec![],
         },
     )
     .await
@@ -68,7 +64,7 @@ async fn test_self_trade_decrement_take() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings:vec![],
+            remainings: vec![],
         },
     )
     .await
@@ -93,7 +89,7 @@ async fn test_self_trade_decrement_take() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::ImmediateOrCancel,
             self_trade_behavior: SelfTradeBehavior::DecrementTake,
-            remainings:vec![],
+            remainings: vec![],
         },
     )
     .await
@@ -127,7 +123,7 @@ async fn test_self_trade_decrement_take() -> Result<(), TransportError> {
             base_mint: mints[0].pubkey,
             quote_mint: mints[1].pubkey,
             referrer_account: None,
-            remainings:vec![],
+            remainings: vec![],
         },
     )
     .await
@@ -161,7 +157,7 @@ async fn test_self_trade_decrement_take() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::DecrementTake,
-            remainings:vec![],
+            remainings: vec![],
         },
     )
     .await
@@ -272,7 +268,7 @@ async fn test_self_trade_cancel_provide() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings:vec![],
+            remainings: vec![],
         },
     )
     .await
@@ -312,7 +308,7 @@ async fn test_self_trade_cancel_provide() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::ImmediateOrCancel,
             self_trade_behavior: SelfTradeBehavior::CancelProvide,
-            remainings:vec![],
+            remainings: vec![],
         },
     )
     .await
@@ -352,7 +348,7 @@ async fn test_self_trade_cancel_provide() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::DecrementTake,
-            remainings:vec![],
+            remainings: vec![],
         },
     )
     .await
@@ -437,7 +433,7 @@ async fn test_self_abort_transaction() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings:vec![],
+            remainings: vec![],
         },
     )
     .await
@@ -462,7 +458,7 @@ async fn test_self_abort_transaction() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::AbortTransaction,
-            remainings:vec![],
+            remainings: vec![],
         },
     )
     .await
@@ -488,11 +484,6 @@ async fn test_self_trade_no_fees() -> Result<(), TransportError> {
     } = TestContext::new_with_market(TestNewMarketInitialize::default()).await?;
     let solana = &context.solana.clone();
 
-    let mut vec_remainings: Vec<Pubkey> = Vec::new();
-    vec_remainings.push(mints[0].pubkey);
-    vec_remainings.push(mints[1].pubkey);
-
-
     let place_bid_ix = PlaceOrderInstruction {
         open_orders_account,
         open_orders_admin: None,
@@ -509,7 +500,7 @@ async fn test_self_trade_no_fees() -> Result<(), TransportError> {
         expiry_timestamp: 0,
         order_type: PlaceOrderType::Limit,
         self_trade_behavior: SelfTradeBehavior::default(),
-        remainings:vec![],
+        remainings: vec![],
     };
 
     let place_ask_ix = PlaceOrderInstruction {
@@ -537,7 +528,7 @@ async fn test_self_trade_no_fees() -> Result<(), TransportError> {
         base_mint: mints[0].pubkey,
         quote_mint: mints[1].pubkey,
         referrer_account: None,
-        remainings:vec![],
+        remainings: vec![],
     };
 
     let balances_before = (

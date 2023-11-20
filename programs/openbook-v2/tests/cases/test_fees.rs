@@ -26,7 +26,6 @@ async fn test_fees_accrued() -> Result<(), TransportError> {
     .await?;
     let solana = &context.solana.clone();
 
-
     // Set the initial oracle price
     set_stub_oracle_price(solana, &tokens[1], collect_fee_admin, 1000.0).await;
 
@@ -48,7 +47,7 @@ async fn test_fees_accrued() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings:vec![],
+            remainings: vec![],
         },
     )
     .await
@@ -72,7 +71,7 @@ async fn test_fees_accrued() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings:vec![],
+            remainings: vec![],
         },
     )
     .await
@@ -134,7 +133,7 @@ async fn test_fees_accrued() -> Result<(), TransportError> {
             base_mint: mints[0].pubkey,
             quote_mint: mints[1].pubkey,
             referrer_account: None,
-            remainings:vec![],
+            remainings: vec![],
         },
     )
     .await
@@ -155,7 +154,7 @@ async fn test_fees_accrued() -> Result<(), TransportError> {
             market_quote_vault,
             mint: mints[1].pubkey,
             token_receiver_account: admin_token_1,
-            remainings:vec![],
+            remainings: vec![],
         },
     )
     .await
@@ -218,7 +217,7 @@ async fn test_maker_fees() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings:vec![],
+            remainings: vec![],
         },
     )
     .await
@@ -263,7 +262,7 @@ async fn test_maker_fees() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings:vec![],
+            remainings: vec![],
         },
     )
     .await
@@ -296,7 +295,7 @@ async fn test_maker_fees() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings:vec![],
+            remainings: vec![],
         },
     )
     .await
@@ -362,7 +361,7 @@ async fn test_maker_fees() -> Result<(), TransportError> {
             base_mint: mints[0].pubkey,
             quote_mint: mints[1].pubkey,
             referrer_account: None,
-            remainings:vec![],
+            remainings: vec![],
         },
     )
     .await
@@ -388,7 +387,7 @@ async fn test_maker_fees() -> Result<(), TransportError> {
             base_mint: mints[0].pubkey,
             quote_mint: mints[1].pubkey,
             referrer_account: Some(owner_token_1),
-            remainings:vec![],
+            remainings: vec![],
         },
     )
     .await
@@ -409,7 +408,7 @@ async fn test_maker_fees() -> Result<(), TransportError> {
             market_quote_vault,
             mint: mints[1].pubkey,
             token_receiver_account: admin_token_1,
-            remainings:vec![],
+            remainings: vec![],
         },
     )
     .await
@@ -452,7 +451,6 @@ async fn test_no_maker_fees_ask() -> Result<(), TransportError> {
     // Set the initial oracle price
     set_stub_oracle_price(solana, &tokens[1], collect_fee_admin, 1000.0).await;
 
-
     send_tx(
         solana,
         PlaceOrderInstruction {
@@ -471,7 +469,7 @@ async fn test_no_maker_fees_ask() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings:vec![],
+            remainings: vec![],
         },
     )
     .await
@@ -504,7 +502,7 @@ async fn test_no_maker_fees_ask() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings:vec![],
+            remainings: vec![],
         },
     )
     .await
@@ -566,7 +564,7 @@ async fn test_no_maker_fees_ask() -> Result<(), TransportError> {
             base_mint: mints[0].pubkey,
             quote_mint: mints[1].pubkey,
             referrer_account: None,
-            remainings:vec![],
+            remainings: vec![],
         },
     )
     .await
@@ -592,7 +590,7 @@ async fn test_no_maker_fees_ask() -> Result<(), TransportError> {
             base_mint: mints[0].pubkey,
             quote_mint: mints[1].pubkey,
             referrer_account: Some(owner_token_1),
-            remainings:vec![],
+            remainings: vec![],
         },
     )
     .await
@@ -613,7 +611,7 @@ async fn test_no_maker_fees_ask() -> Result<(), TransportError> {
             market_quote_vault,
             mint: mints[1].pubkey,
             token_receiver_account: admin_token_1,
-            remainings:vec![],
+            remainings: vec![],
         },
     )
     .await
@@ -653,7 +651,6 @@ async fn test_maker_fees_ask() -> Result<(), TransportError> {
     .await?;
     let solana = &context.solana.clone();
 
-
     // Set the initial oracle price
     set_stub_oracle_price(solana, &tokens[1], collect_fee_admin, 1000.0).await;
 
@@ -675,7 +672,7 @@ async fn test_maker_fees_ask() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings:vec![],
+            remainings: vec![],
         },
     )
     .await
@@ -708,7 +705,7 @@ async fn test_maker_fees_ask() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings:vec![],
+            remainings: vec![],
         },
     )
     .await
@@ -770,7 +767,7 @@ async fn test_maker_fees_ask() -> Result<(), TransportError> {
             base_mint: mints[0].pubkey,
             quote_mint: mints[1].pubkey,
             referrer_account: None,
-            remainings:vec![],
+            remainings: vec![],
         },
     )
     .await
@@ -796,7 +793,7 @@ async fn test_maker_fees_ask() -> Result<(), TransportError> {
             base_mint: mints[0].pubkey,
             quote_mint: mints[1].pubkey,
             referrer_account: Some(owner_token_1),
-            remainings:vec![],
+            remainings: vec![],
         },
     )
     .await
@@ -817,7 +814,7 @@ async fn test_maker_fees_ask() -> Result<(), TransportError> {
             market_quote_vault,
             mint: mints[1].pubkey,
             token_receiver_account: admin_token_1,
-            remainings:vec![],
+            remainings: vec![],
         },
     )
     .await
@@ -857,7 +854,6 @@ async fn test_fees_half() -> Result<(), TransportError> {
     .await?;
     let solana = &context.solana.clone();
 
-
     // Set the initial oracle price
     set_stub_oracle_price(solana, &tokens[1], collect_fee_admin, 1000.0).await;
     let initial_quote_amount = 10000;
@@ -880,7 +876,7 @@ async fn test_fees_half() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings:vec![],
+            remainings: vec![],
         },
     )
     .await
@@ -904,7 +900,7 @@ async fn test_fees_half() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings:vec![],
+            remainings: vec![],
         },
     )
     .await
@@ -955,7 +951,7 @@ async fn test_fees_half() -> Result<(), TransportError> {
             base_mint: mints[0].pubkey,
             quote_mint: mints[1].pubkey,
             referrer_account: None,
-            remainings:vec![],
+            remainings: vec![],
         },
     )
     .await
@@ -974,7 +970,7 @@ async fn test_fees_half() -> Result<(), TransportError> {
             base_mint: mints[0].pubkey,
             quote_mint: mints[1].pubkey,
             referrer_account: None,
-            remainings:vec![],
+            remainings: vec![],
         },
     )
     .await
@@ -993,7 +989,7 @@ async fn test_fees_half() -> Result<(), TransportError> {
             market_quote_vault,
             mint: mints[1].pubkey,
             token_receiver_account: admin_token_1,
-            remainings:vec![],
+            remainings: vec![],
         },
     )
     .await
@@ -1052,7 +1048,7 @@ async fn test_fees_half() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings:vec![],
+            remainings: vec![],
         },
     )
     .await
@@ -1076,7 +1072,7 @@ async fn test_fees_half() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
-            remainings:vec![],
+            remainings: vec![],
         },
     )
     .await
@@ -1127,7 +1123,7 @@ async fn test_fees_half() -> Result<(), TransportError> {
             base_mint: mints[0].pubkey,
             quote_mint: mints[1].pubkey,
             referrer_account: None,
-            remainings:vec![],
+            remainings: vec![],
         },
     )
     .await
@@ -1146,7 +1142,7 @@ async fn test_fees_half() -> Result<(), TransportError> {
             base_mint: mints[0].pubkey,
             quote_mint: mints[1].pubkey,
             referrer_account: None,
-            remainings:vec![],
+            remainings: vec![],
         },
     )
     .await
@@ -1165,7 +1161,7 @@ async fn test_fees_half() -> Result<(), TransportError> {
             market_quote_vault,
             mint: mints[1].pubkey,
             token_receiver_account: admin_token_1,
-            remainings:vec![],
+            remainings: vec![],
         },
     )
     .await
@@ -1205,7 +1201,6 @@ async fn test_locked_maker_fees() -> Result<(), TransportError> {
     .await?;
     let solana = &context.solana.clone();
 
-
     let place_maker_bid = PlaceOrderInstruction {
         open_orders_account: maker,
         open_orders_admin: None,
@@ -1222,7 +1217,7 @@ async fn test_locked_maker_fees() -> Result<(), TransportError> {
         expiry_timestamp: 0,
         order_type: PlaceOrderType::Limit,
         self_trade_behavior: SelfTradeBehavior::default(),
-        remainings:vec![],
+        remainings: vec![],
     };
 
     let place_taker_ask = PlaceOrderInstruction {
@@ -1252,7 +1247,7 @@ async fn test_locked_maker_fees() -> Result<(), TransportError> {
         base_mint: mints[0].pubkey,
         quote_mint: mints[1].pubkey,
         referrer_account: None,
-        remainings:vec![],
+        remainings: vec![],
     };
 
     send_tx(solana, place_maker_bid.clone()).await.unwrap();
