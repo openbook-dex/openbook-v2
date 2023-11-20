@@ -6,13 +6,24 @@ on:
         'programs/**',
         'lib/client/**',
         'Cargo.lock',
-        '.github/workflows/ci-code-review-rust.yml',
+        '.github/workflows/ci-code-review-ts.yml',
       ]
-  workflow_dispatch: # Pick branch manually
+  
+  pull_request:
+    branches: ['master']
+    paths:
+      [
+        'programs/**',
+        'lib/client/**',
+        'Cargo.lock',
+      ]
+
+  workflow_dispatch:
 
 env:
   CARGO_TERM_COLOR: always
   SOLANA_VERSION: '1.16.1'
+  RUST_TOOLCHAIN: '1.70.0'
 
 jobs:
   format:
@@ -21,19 +32,32 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-        with:
-          submodules: recursive
 
       - name: Install Rust toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          profile: minimal
-          components: rustfmt
-          override: true
+        run: rustup toolchain install ${{ env.RUST_TOOLCHAIN }} --component rustfmt
 
       - name: Run fmt
         run: cargo fmt -- --check
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
+      - name: Cache dependencies
+        uses: Swatinem/rust-cache@v2
+        with:
+          env-vars: 'SOLANA_VERSION'
+
+      - name: Install Rust toolchain
+        run: rustup toolchain install ${{ env.RUST_TOOLCHAIN }} --component clippy
+
+      - name: Run Clippy
+        run: cargo clippy -- -D warnings
 
   test:
     name: Test
@@ -48,13 +72,7 @@ jobs:
         uses: extractions/setup-just@v1
 
       - name: Install Rust toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: 1.70.0
-          profile: minimal
-          components: rustc
-          override: true
-          default: true
+        run: rustup toolchain install ${{ env.RUST_TOOLCHAIN }}
 
       - name: Cache dependencies
         uses: Swatinem/rust-cache@v2
@@ -73,3 +91,10 @@ jobs:
       - name: Run tests all deps
         run: just test-all
         shell: bash
+
+  all-pass:
+    name: All tests pass 📖
+    needs: ['format', 'lint', 'test']
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo ok
