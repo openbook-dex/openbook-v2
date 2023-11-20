@@ -56,25 +56,24 @@ jobs:
         run: yarn lint
 
   sast:
-    name: Security Scan
+    name: Static security scan
     runs-on: ubuntu-latest
-    container:
-      image: returntocorp/semgrep
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
 
     steps:
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Run semgrep
-        run: semgrep ci --sarif --output=semgrep-results.sarif
-        env:
-          SEMGREP_RULES: p/typescript
-
-      - name: Upload output
-        uses: github/codeql-action/upload-sarif@v2
-        if: always()
+      - name: Initialise CodeQL
+        uses: github/codeql-action/init@v2
         with:
-          sarif_file: semgrep-results.sarif
+          languages: 'javascript'
+
+      - name: Run CodeQL
+        uses: github/codeql-action/analyze@v2
 
   all-pass:
     name: All tests pass 📖

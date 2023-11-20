@@ -6,7 +6,7 @@ on:
         'programs/**',
         'lib/client/**',
         'Cargo.lock',
-        '.github/workflows/ci-code-review-ts.yml',
+        '.github/workflows/ci-code-review-rust.yml',
       ]
   
   pull_request:
@@ -55,7 +55,7 @@ jobs:
         run: rustup toolchain install ${{ env.RUST_TOOLCHAIN }} --component clippy
 
       - name: Run Clippy
-        run: cargo clippy -- -D warnings --no-deps --features enable-gpl --allow=clippy::result-large-err
+        run: cargo clippy --features enable-gpl -- --no-deps -D warnings --allow=clippy::result-large-err
 
   test:
     name: Test
