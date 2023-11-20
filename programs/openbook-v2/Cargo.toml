@@ -10,6 +10,7 @@ name = "openbook_v2"
 
 [features]
 cpi = ["no-entrypoint"]
+default = []
 no-entrypoint = []
 no-idl = []
 no-log-ix-name = []
@@ -32,7 +33,7 @@ itertools = "0.10.3"
 num_enum = "0.5.1"
 pyth-sdk-solana = { workspace = true }
 solana-program = { workspace = true }
-solana-sdk = { workspace = true, default-features = false, optional = true }
+solana-sdk = { workspace = true, optional = true }
 static_assertions = "1.1"
 switchboard-program = ">=0.2.0"
 switchboard-v2 = "0.4.0"
