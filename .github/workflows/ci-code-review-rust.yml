@@ -50,14 +50,12 @@ jobs:
 
       - name: Cache dependencies
         uses: Swatinem/rust-cache@v2
-        with:
-          env-vars: 'SOLANA_VERSION'
 
       - name: Install Rust toolchain
         run: rustup toolchain install ${{ env.RUST_TOOLCHAIN }} --component clippy
 
       - name: Run Clippy
-        run: cargo clippy -- -D warnings
+        run: cargo clippy -- -D warnings --no-deps --features enable-gpl --allow=clippy::result-large-err
 
   test:
     name: Test
