@@ -14,6 +14,7 @@ on:
         'ts/**',
         'yarn.lock'
       ]
+  workflow_dispatch:
 
 jobs:
   format:
