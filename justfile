@@ -28,3 +28,6 @@ fuzz:
 
 fuzz-reproduce CASE:
   cd ./programs/openbook-v2/fuzz && RUST_LOG=debug cargo {{ fuzz-toolchain }} fuzz run --strip-dead-code multiple_orders {{ CASE }}
+
+inspect-event B64_STRING:
+  cd ./ts/inspector && npx ts-node eventParser.ts {{ B64_STRING }}
