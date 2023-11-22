@@ -621,3 +621,19 @@ pub struct PlaceTakeOrderArgs {
     // When the limit is reached, processing stops and the instruction succeeds.
     pub limit: u8,
 }
+
+// Add security details to explorer.solana.com
+#[cfg(not(feature = "no-entrypoint"))]
+
+use {default_env::default_env, solana_security_txt::security_txt};
+
+#[cfg(not(feature = "no-entrypoint"))]
+security_txt! {
+    name: "Openbook V2",
+    project_url: "https://www.openbook-solana.com/",
+    contacts: "email:contact@openbook-solana.com,discord:https://discord.com/invite/pX3n5Sercb",
+    policy: "https://github.com/openbook-dex/openbook-v2/blob/master/SECURITY.md",
+    preferred_languages: "en",
+    source_code: "https://github.com/openbook-dex/openbook-v2",
+    auditors: "https://github.com/openbook-dex/openbook-v2/blob/master/audit/openbook_audit.pdf"
+}
