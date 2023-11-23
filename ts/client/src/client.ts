@@ -794,6 +794,71 @@ export class OpenBookV2Client {
     return await this.sendAndConfirmTransaction([ix], { signers });
   }
 
+  public async closeOpenOrdersIndexer(
+    owner: Keypair,
+    market: MarketAccount,
+    openOrdersIndexer?: PublicKey,
+  ): Promise<TransactionSignature> {
+    if (openOrdersIndexer == null) {
+      openOrdersIndexer = this.findOpenOrdersIndexer(owner.publicKey);
+    }
+    if (openOrdersIndexer !== null) {
+      const ix = await this.program.methods
+        .closeOpenOrdersIndexer()
+        .accounts({
+          owner: owner.publicKey,
+          openOrdersIndexer: market.asks,
+          solDestination: market.bids,
+          tokenProgram: TOKEN_PROGRAM_ID,
+        })
+        .instruction();
+
+      const additionalSigners: Signer[] = [];
+      if (owner.publicKey !== this.walletPk) {
+        additionalSigners.push(owner);
+      }
+
+      return await this.sendAndConfirmTransaction([ix], {
+        additionalSigners,
+      });
+    }
+    throw new Error('No open order indexer for the specified owner');
+  }
+
+  public async closeOpenOrdersAccount(
+    payer: Keypair,
+    owner: Keypair = payer,
+    openOrdersPublicKey: PublicKey,
+    market: MarketAccount,
+    solDestination: PublicKey = this.walletPk,
+    openOrdersIndexer?: PublicKey,
+  ): Promise<TransactionSignature> {
+    if (openOrdersIndexer == null) {
+      openOrdersIndexer = this.findOpenOrdersIndexer(owner.publicKey);
+    }
+    if (openOrdersIndexer !== null) {
+      const ix = await this.program.methods
+        .closeOpenOrdersAccount()
+        .accounts({
+          payer: payer.publicKey,
+          owner: owner.publicKey,
+          openOrdersIndexer,
+          openOrdersAccount: openOrdersPublicKey,
+          solDestination,
+          systemProgram: SystemProgram.programId,
+        })
+        .instruction();
+      const additionalSigners = [payer];
+      if (owner !== payer) {
+        additionalSigners.push(owner);
+      }
+      return await this.sendAndConfirmTransaction([ix], {
+        additionalSigners,
+      });
+    }
+    throw new Error('No open order indexer for the specified owner');
+  }
+
   // Use getAccountsToConsume as a helper
   public async consumeEvents(
     marketPublicKey: PublicKey,

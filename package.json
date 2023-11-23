@@ -1,6 +1,6 @@
 {
   "name": "@openbook-dex/openbook-v2",
-  "version": "0.0.14",
+  "version": "0.0.15",
   "description": "Typescript Client for openbook-v2 program.",
   "repository": "https://github.com/openbook-dex/openbook-v2/",
   "author": {
@@ -32,21 +32,22 @@
   "dependencies": {
     "@coral-xyz/anchor": "^0.28.0",
     "@solana/spl-token": "0.3.8",
-    "@solana/web3.js": "^1.77.3"
+    "@solana/web3.js": "^1.77.3",
+    "big.js": "^6.2.1"
   },
   "devDependencies": {
-    "eslint-config-prettier": "^8.10.0",
-    "fs": "^0.0.1-security",
     "@types/bn.js": "^5.1.0",
     "@types/chai": "^4.3.0",
     "@types/mocha": "^9.0.0",
     "@typescript-eslint/eslint-plugin": "^5.52.0",
     "chai": "^4.3.4",
     "eslint": "^8.0.1",
+    "eslint-config-prettier": "^8.10.0",
     "eslint-config-standard-with-typescript": "^37.0.0",
     "eslint-plugin-import": "^2.25.2",
     "eslint-plugin-n": "^15.0.0 || ^16.0.0 ",
     "eslint-plugin-promise": "^6.0.0",
+    "fs": "^0.0.1-security",
     "mocha": "^9.0.3",
     "prettier": "^2.6.2",
     "ts-mocha": "^10.0.0",

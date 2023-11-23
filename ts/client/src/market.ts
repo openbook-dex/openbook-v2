@@ -4,9 +4,20 @@ import {
   type AccountInfo,
   type Message,
 } from '@solana/web3.js';
-import { OPENBOOK_PROGRAM_ID, getFilteredProgramAccounts } from './client';
-import { utils, Program, type Provider, getProvider } from '@coral-xyz/anchor';
-
+import {
+  type MarketAccount,
+  OPENBOOK_PROGRAM_ID,
+  getFilteredProgramAccounts,
+} from './client';
+import {
+  utils,
+  Program,
+  type Provider,
+  getProvider,
+  BN,
+} from '@coral-xyz/anchor';
+import { QUOTE_DECIMALS, toNative, toUiDecimals } from './utils/utils';
+import Big from 'big.js';
 import { IDL, type OpenbookV2 } from './openbook_v2';
 const BATCH_TX_SIZE = 50;
 
@@ -109,4 +120,57 @@ export async function findAllMarkets(
     }
   }
   return marketsAll;
+}
+
+function priceLotsToUiConverter(market: MarketAccount): number {
+  return new Big(10)
+    .pow(market.baseDecimals - QUOTE_DECIMALS)
+    .mul(new Big(this.quoteLotSize.toString()))
+    .div(new Big(this.baseLotSize.toString()))
+    .toNumber();
+}
+
+function baseLotsToUiConverter(market: MarketAccount): number {
+  return new Big(this.baseLotSize.toString())
+    .div(new Big(10).pow(market.baseDecimals))
+    .toNumber();
+}
+function quoteLotsToUiConverter(): number {
+  return new Big(this.quoteLotSize.toString())
+    .div(new Big(10).pow(QUOTE_DECIMALS))
+    .toNumber();
+}
+
+export function uiPriceToLots(market: MarketAccount, price: number): BN {
+  return toNative(price, QUOTE_DECIMALS)
+    .mul(market.baseLotSize)
+    .div(market.quoteLotSize.mul(new BN(Math.pow(10, market.baseDecimals))));
+}
+
+export function uiBaseToLots(market: MarketAccount, quantity: number): BN {
+  return toNative(quantity, market.baseDecimals).div(market.baseLotSize);
+}
+
+export function uiQuoteToLots(market: MarketAccount, uiQuote: number): BN {
+  return toNative(uiQuote, QUOTE_DECIMALS).div(market.quoteLotSize);
+}
+
+export function priceLotsToNative(market: MarketAccount, price: BN): BN {
+  return price.mul(market.quoteLotSize).div(market.baseLotSize);
+}
+
+export function priceLotsToUi(market: MarketAccount, price: BN): number {
+  return parseFloat(price.toString()) * priceLotsToUiConverter(market);
+}
+
+export function priceNativeToUi(market: MarketAccount, price: number): number {
+  return toUiDecimals(price, QUOTE_DECIMALS - market.baseDecimals);
+}
+
+export function baseLotsToUi(market: MarketAccount, quantity: BN): number {
+  return parseFloat(quantity.toString()) * baseLotsToUiConverter(market);
+}
+
+export function quoteLotsToUi(quantity: BN): number {
+  return parseFloat(quantity.toString()) * quoteLotsToUiConverter();
 }
