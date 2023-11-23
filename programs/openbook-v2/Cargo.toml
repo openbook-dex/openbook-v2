@@ -1,3 +1,5 @@
+cargo-features = ["workspace-inheritance"]
+
 [package]
 description = "Created with Anchor"
 edition = "2021"
@@ -32,6 +34,7 @@ fixed = { workspace = true, features = ["serde", "borsh", "debug-assert-in-relea
 itertools = "0.10.3"
 num_enum = "0.5.1"
 pyth-sdk-solana = { workspace = true }
+solana-security-txt = "1.1.1"
 solana-program = { workspace = true }
 solana-sdk = { workspace = true, optional = true }
 static_assertions = "1.1"
