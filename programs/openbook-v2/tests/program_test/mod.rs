@@ -10,7 +10,13 @@ use solana_program::{program_option::COption, program_pack::Pack};
 use solana_program_test::*;
 use solana_sdk::pubkey::Pubkey;
 pub use solana_sdk::transport::TransportError;
-use spl_token::{state::*, *};
+use spl_token_2022::extension::Extension;
+// use spl_token::{state::*, *};
+use spl_token_2022::{state::*, *};
+use spl_token_2022::extension::transfer_fee::TransferFeeConfig;
+use spl_token_2022::extension::transfer_fee::instruction::{TransferFeeInstruction, initialize_transfer_fee_config};
+// use anchor_spl::token_2022::Token2022;
+// use anchor_spl::token_interface::{self, TokenInterface};
 
 use crate::program_test::setup::{create_open_orders_account, create_open_orders_indexer, Token};
 
@@ -178,16 +184,38 @@ impl TestContextBuilder {
             };
             mint.pubkey = mint_pk;
 
+            // let mint_extension = TransferFeeInstruction::InitializeTransferFeeConfig { 
+            //     transfer_fee_config_authority: Some(TestKeypair::new().pubkey()).into(), 
+            //     withdraw_withheld_authority: Some(TestKeypair::new().pubkey()).into(), 
+            //     transfer_fee_basis_points: 100, 
+            //     maximum_fee: 600000 
+            // };
+
+            let data =  &Mint {
+                is_initialized: true,
+                mint_authority: COption::Some(mint.authority.pubkey()),
+                decimals: mint.decimals,
+                ..Mint::default()
+            };
+
+            // let dt = data::extension::transfer_fee::instruction::TransferFeeInstruction;
+            let _ = initialize_transfer_fee_config(
+                &spl_token_2022::id(), 
+                &mint_pk, 
+                Some(&TestKeypair::new().pubkey()), 
+                Some(&TestKeypair::new().pubkey()), 
+                100, 
+                600000
+            );
+
+            println!("Transfer fee config Initialized");
+            
+
             self.test.add_packable_account(
                 mint_pk,
                 u32::MAX as u64,
-                &Mint {
-                    is_initialized: true,
-                    mint_authority: COption::Some(mint.authority.pubkey()),
-                    decimals: mint.decimals,
-                    ..Mint::default()
-                },
-                &spl_token::id(),
+                data,
+                &spl_token_2022::id(),
             );
         }
 
@@ -216,14 +244,14 @@ impl TestContextBuilder {
                 self.test.add_packable_account(
                     token_key,
                     u32::MAX as u64,
-                    &spl_token::state::Account {
+                    &spl_token_2022::state::Account {
                         mint: mint.pubkey,
                         owner: user_key.pubkey(),
                         amount: 1_000_000_000_000_000_000,
-                        state: spl_token::state::AccountState::Initialized,
-                        ..spl_token::state::Account::default()
+                        state: spl_token_2022::state::AccountState::Initialized,
+                        ..spl_token_2022::state::Account::default()
                     },
-                    &spl_token::id(),
+                    &spl_token_2022::id(),
                 );
 
                 token_accounts.push(token_key);
@@ -348,6 +376,18 @@ impl TestContext {
         } else {
             None
         };
+
+        // println!("Logging");
+
+        // println!("{:?}", collect_fee_admin_acc.pubkey());
+        // println!("{:?}", open_orders_admin);
+        // println!("{:?}", close_market_admin);
+        // println!("{:?}", consume_events_admin);
+        // println!("{:?}", payer);
+        // println!("{:?}", market);
+        // println!("{:?}", mints[0].pubkey);
+        // println!("{:?}", mints[1].pubkey);
+        // println!("{:?}", oracle);
 
         let openbook_v2::accounts::CreateMarket {
             market,

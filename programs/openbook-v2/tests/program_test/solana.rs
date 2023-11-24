@@ -6,7 +6,8 @@ use std::sync::{Arc, RwLock};
 
 use super::utils::TestKeypair;
 use anchor_lang::AccountDeserialize;
-use anchor_spl::token::TokenAccount;
+// use anchor_spl::token::TokenAccount;
+use anchor_spl::token_interface::TokenAccount;
 use solana_program::{program_pack::Pack, rent::*, system_instruction};
 use solana_program_test::*;
 use solana_sdk::{
@@ -16,7 +17,7 @@ use solana_sdk::{
     signature::{Keypair, Signer},
     transaction::Transaction,
 };
-use spl_token::*;
+use spl_token_2022::*;
 
 pub struct SolanaCookie {
     pub context: RefCell<ProgramTestContext>,
@@ -170,18 +171,18 @@ impl SolanaCookie {
 
     pub async fn create_token_account(&self, owner: &Pubkey, mint: Pubkey) -> Pubkey {
         let keypair = TestKeypair::new();
-        let rent = self.rent.minimum_balance(spl_token::state::Account::LEN);
+        let rent = self.rent.minimum_balance(spl_token_2022::state::Account::LEN);
 
         let instructions = [
             system_instruction::create_account(
                 &self.context.borrow().payer.pubkey(),
                 &keypair.pubkey(),
                 rent,
-                spl_token::state::Account::LEN as u64,
-                &spl_token::id(),
+                spl_token_2022::state::Account::LEN as u64,
+                &spl_token_2022::id(),
             ),
-            spl_token::instruction::initialize_account(
-                &spl_token::id(),
+            spl_token_2022::instruction::initialize_account(
+                &spl_token_2022::id(),
                 &keypair.pubkey(),
                 &mint,
                 owner,
@@ -201,14 +202,14 @@ impl SolanaCookie {
                 &self.context.borrow().payer.pubkey(),
                 owner,
                 &mint,
-                &spl_token::id(),
+                &spl_token_2022::id(),
             );
 
         self.process_transaction(&[instruction], None)
             .await
             .unwrap();
 
-        spl_associated_token_account::get_associated_token_address(owner, &mint)
+        spl_associated_token_account::get_associated_token_address_with_program_id(owner, &mint, &spl_token_2022::id())
     }
 
     // Note: Only one table can be created per authority per slot!

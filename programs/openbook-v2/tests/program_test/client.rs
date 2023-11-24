@@ -1,7 +1,8 @@
 #![allow(dead_code)]
 
 use anchor_lang::prelude::*;
-use anchor_spl::{associated_token::AssociatedToken, token::Token};
+// use anchor_spl::{associated_token::AssociatedToken, token::Token, token_2022::Token2022};
+use anchor_spl::{associated_token::AssociatedToken, token_2022::Token2022};
 use solana_program::instruction::Instruction;
 use solana_program_test::BanksClientError;
 use solana_sdk::instruction;
@@ -354,13 +355,15 @@ impl ClientInstruction for CreateMarketInstruction {
         )
         .0;
 
-        let market_base_vault = spl_associated_token_account::get_associated_token_address(
+        let market_base_vault = spl_associated_token_account::get_associated_token_address_with_program_id(
             &market_authority,
             &self.base_mint,
+            &Token2022::id(),
         );
-        let market_quote_vault = spl_associated_token_account::get_associated_token_address(
+        let market_quote_vault = spl_associated_token_account::get_associated_token_address_with_program_id(
             &market_authority,
             &self.quote_mint,
+            &Token2022::id(),
         );
 
         let accounts = Self::Accounts {
@@ -375,7 +378,7 @@ impl ClientInstruction for CreateMarketInstruction {
             quote_mint: self.quote_mint,
             base_mint: self.base_mint,
             system_program: System::id(),
-            token_program: Token::id(),
+            token_program: Token2022::id(),
             associated_token_program: AssociatedToken::id(),
             collect_fee_admin: self.collect_fee_admin,
             open_orders_admin: self.open_orders_admin,
@@ -454,7 +457,7 @@ impl ClientInstruction for PlaceOrderInstruction {
             user_token_account: self.user_token_account,
             market_vault: self.market_vault,
             mint: Some(self.mint),
-            token_program: Token::id(),
+            token_program: Token2022::id(),
         };
         let mut instruction = make_instruction(program_id, &accounts, instruction);
         let mut vec_remainings: Vec<AccountMeta> = Vec::new();
@@ -534,7 +537,7 @@ impl ClientInstruction for PlaceOrderPeggedInstruction {
             user_token_account: self.user_token_account,
             market_vault: self.market_vault,
             mint: Some(self.mint),
-            token_program: Token::id(),
+            token_program: Token2022::id(),
         };
         let mut instruction = make_instruction(program_id, &accounts, instruction);
         let mut vec_remainings: Vec<AccountMeta> = Vec::new();
@@ -611,7 +614,7 @@ impl ClientInstruction for PlaceTakeOrderInstruction {
             deposit_mint: Some(self.deposit_mint),
             withdraw_mint: Some(self.withdraw_mint),
             referrer_account: self.referrer_account,
-            token_program: Token::id(),
+            token_program: Token2022::id(),
             system_program: System::id(),
         };
 
@@ -874,8 +877,8 @@ impl ClientInstruction for SettleFundsInstruction {
             referrer_account: self.referrer_account,
             base_mint: Some(self.base_mint),
             quote_mint: Some(self.quote_mint),
-            base_token_program: Token::id(),
-            quote_token_program: Token::id(),
+            base_token_program: Token2022::id(),
+            quote_token_program: Token2022::id(),
             system_program: System::id(),
         };
 
@@ -938,8 +941,8 @@ impl ClientInstruction for SettleFundsExpiredInstruction {
             referrer_account: self.referrer_account,
             base_mint: Some(self.base_mint),
             quote_mint: Some(self.quote_mint),
-            base_token_program: Token::id(),
-            quote_token_program: Token::id(),
+            base_token_program: Token2022::id(),
+            quote_token_program: Token2022::id(),
             system_program: System::id(),
         };
 
@@ -989,7 +992,7 @@ impl ClientInstruction for SweepFeesInstruction {
             market_quote_vault: self.market_quote_vault,
             token_receiver_account: self.token_receiver_account,
             mint: Some(self.mint),
-            token_program: Token::id(),
+            token_program: Token2022::id(),
         };
         let mut instruction = make_instruction(program_id, &accounts, instruction);
 
@@ -1002,6 +1005,9 @@ impl ClientInstruction for SweepFeesInstruction {
             })
         }
         instruction.accounts.append(&mut vec_remainings);
+        // println!("side sweep");
+        // println!("side sweep");
+        // println!("side sweep");
         (accounts, instruction)
     }
 
@@ -1046,10 +1052,10 @@ impl ClientInstruction for DepositInstruction {
             market_quote_vault: self.market_quote_vault,
             user_base_account: self.user_base_account,
             user_quote_account: self.user_quote_account,
-            base_mint: None,
-            quote_mint: None,
-            base_token_program: Token::id(),
-            quote_token_program: Token::id(),
+            base_mint: Some(self.base_mint),
+            quote_mint: Some(self.quote_mint),
+            base_token_program: Token2022::id(),
+            quote_token_program: Token2022::id(),
         };
         let mut instruction = make_instruction(program_id, &accounts, instruction);
 
@@ -1186,7 +1192,7 @@ impl ClientInstruction for StubOracleCloseInstruction {
             owner: self.owner.pubkey(),
             oracle,
             sol_destination: self.sol_destination,
-            token_program: Token::id(),
+            token_program: Token2022::id(),
         };
 
         let instruction = make_instruction(program_id, &accounts, instruction);
@@ -1222,7 +1228,7 @@ impl ClientInstruction for CloseMarketInstruction {
             bids: market.bids,
             asks: market.asks,
             event_heap: market.event_heap,
-            token_program: Token::id(),
+            token_program: Token2022::id(),
             sol_destination: self.sol_destination,
         };
 
@@ -1390,7 +1396,7 @@ impl ClientInstruction for EditOrderInstruction {
             user_token_account: self.user_token_account,
             market_vault: self.market_vault,
             mint: Some(self.mint),
-            token_program: Token::id(),
+            token_program: Token2022::id(),
         };
         let mut instruction = make_instruction(program_id, &accounts, instruction);
         let mut vec_remainings: Vec<AccountMeta> = Vec::new();

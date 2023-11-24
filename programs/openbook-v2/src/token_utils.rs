@@ -151,7 +151,7 @@ pub fn calculate_amount_with_fee(
     token_program: AccountInfo<'_>,
     amount: u64,
 ) -> Result<Option<u64>> {
-    let token_fee = {
+    let final_amount = {
         if token_program.key() == Token::id() {
             Some(amount)
         } else {
@@ -168,7 +168,7 @@ pub fn calculate_amount_with_fee(
             }
         }
     };
-    Ok(token_fee)
+    Ok(final_amount)
 }
 
 pub struct AmountAndDecimals {

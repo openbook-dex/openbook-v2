@@ -152,8 +152,8 @@ async fn test_fees_accrued() -> Result<(), TransportError> {
             collect_fee_admin,
             market,
             market_quote_vault,
-            mint: mints[1].pubkey,
             token_receiver_account: admin_token_1,
+            mint: mints[1].pubkey,
             remainings: vec![],
         },
     )
@@ -343,10 +343,6 @@ async fn test_maker_fees() -> Result<(), TransportError> {
     let admin_token_1 = solana
         .create_associated_token_account(&collect_fee_admin.pubkey(), mints[1].pubkey)
         .await;
-
-    // let mut vec_remainings: Vec<Pubkey> = Vec::new();
-    // vec_remainings.push(mints[0].pubkey);
-    // vec_remainings.push(mints[1].pubkey);
 
     send_tx(
         solana,

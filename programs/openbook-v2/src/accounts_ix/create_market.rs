@@ -36,6 +36,7 @@ pub struct CreateMarket<'info> {
         payer = payer,
         associated_token::mint = base_mint,
         associated_token::authority = market_authority,
+        associated_token::token_program = token_program,
     )]
     pub market_base_vault: InterfaceAccount<'info, token_interface::TokenAccount>,
     #[account(
@@ -43,6 +44,7 @@ pub struct CreateMarket<'info> {
         payer = payer,
         associated_token::mint = quote_mint,
         associated_token::authority = market_authority,
+        associated_token::token_program = token_program,
     )]
     pub market_quote_vault: InterfaceAccount<'info, token_interface::TokenAccount>,
 
