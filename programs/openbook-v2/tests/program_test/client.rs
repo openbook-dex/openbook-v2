@@ -1325,3 +1325,61 @@ impl ClientInstruction for EditOrderInstruction {
         signers
     }
 }
+
+#[derive(Clone)]
+pub struct CancelAndPlaceOrdersInstruction {
+    pub open_orders_account: Pubkey,
+    pub open_orders_admin: Option<TestKeypair>,
+    pub market: Pubkey,
+    pub signer: TestKeypair,
+    pub user_base_account: Pubkey,
+    pub user_quote_account: Pubkey,
+    pub cancel_client_orders_ids: Vec<u64>,
+    pub place_orders: Vec<PlaceOrderArgs>,
+}
+
+#[async_trait::async_trait(?Send)]
+impl ClientInstruction for CancelAndPlaceOrdersInstruction {
+    type Accounts = openbook_v2::accounts::CancelAndPlaceOrders;
+    type Instruction = openbook_v2::instruction::CancelAndPlaceOrders;
+    async fn to_instruction(
+        &self,
+        account_loader: impl ClientAccountLoader + 'async_trait,
+    ) -> (Self::Accounts, instruction::Instruction) {
+        let program_id = openbook_v2::id();
+        let instruction = Self::Instruction {
+            cancel_client_orders_ids: self.cancel_client_orders_ids.clone(),
+            place_orders: self.place_orders.clone(),
+        };
+
+        let market: Market = account_loader.load(&self.market).await.unwrap();
+
+        let accounts = Self::Accounts {
+            open_orders_account: self.open_orders_account,
+            open_orders_admin: self.open_orders_admin.map(|kp| kp.pubkey()),
+            market: self.market,
+            bids: market.bids,
+            asks: market.asks,
+            event_heap: market.event_heap,
+            oracle_a: market.oracle_a.into(),
+            oracle_b: market.oracle_b.into(),
+            signer: self.signer.pubkey(),
+            user_base_account: self.user_base_account,
+            user_quote_account: self.user_quote_account,
+            market_base_vault: market.market_base_vault,
+            market_quote_vault: market.market_quote_vault,
+            token_program: Token::id(),
+        };
+        let instruction = make_instruction(program_id, &accounts, instruction);
+        (accounts, instruction)
+    }
+
+    fn signers(&self) -> Vec<TestKeypair> {
+        let mut signers = vec![self.signer];
+        if let Some(open_orders_admin) = self.open_orders_admin {
+            signers.push(open_orders_admin);
+        }
+
+        signers
+    }
+}
