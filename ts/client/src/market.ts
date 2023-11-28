@@ -125,18 +125,18 @@ export async function findAllMarkets(
 function priceLotsToUiConverter(market: MarketAccount): number {
   return new Big(10)
     .pow(market.baseDecimals - QUOTE_DECIMALS)
-    .mul(new Big(this.quoteLotSize.toString()))
-    .div(new Big(this.baseLotSize.toString()))
+    .mul(new Big(market.quoteLotSize.toString()))
+    .div(new Big(market.baseLotSize.toString()))
     .toNumber();
 }
 
 function baseLotsToUiConverter(market: MarketAccount): number {
-  return new Big(this.baseLotSize.toString())
+  return new Big(market.baseLotSize.toString())
     .div(new Big(10).pow(market.baseDecimals))
     .toNumber();
 }
-function quoteLotsToUiConverter(): number {
-  return new Big(this.quoteLotSize.toString())
+function quoteLotsToUiConverter(market: MarketAccount): number {
+  return new Big(market.quoteLotSize.toString())
     .div(new Big(10).pow(QUOTE_DECIMALS))
     .toNumber();
 }
@@ -171,6 +171,6 @@ export function baseLotsToUi(market: MarketAccount, quantity: BN): number {
   return parseFloat(quantity.toString()) * baseLotsToUiConverter(market);
 }
 
-export function quoteLotsToUi(quantity: BN): number {
-  return parseFloat(quantity.toString()) * quoteLotsToUiConverter();
+export function quoteLotsToUi(market: MarketAccount, quantity: BN): number {
+  return parseFloat(quantity.toString()) * quoteLotsToUiConverter(market);
 }

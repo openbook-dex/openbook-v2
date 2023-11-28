@@ -311,8 +311,8 @@ export class OpenBookV2Client {
   // Book and EventHeap must be empty before closing a market.
   // Make sure to call consumeEvents and pruneOrders before closing the market.
   public async closeMarket(
-    market: MarketAccount,
     marketPublicKey: PublicKey,
+    market: MarketAccount,
     solDestination: PublicKey,
     closeMarketAdmin: Keypair | null = null,
   ): Promise<TransactionSignature> {
