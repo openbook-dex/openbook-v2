@@ -1,5 +1,5 @@
 use super::*;
-use anchor_spl::token::ID;
+use anchor_spl::token_2022::ID;
 
 #[tokio::test]
 async fn test_self_trade_decrement_take() -> Result<(), TransportError> {
@@ -16,7 +16,7 @@ async fn test_self_trade_decrement_take() -> Result<(), TransportError> {
         account_1,
         account_2,
         ..
-    } = TestContext::new_with_market(TestNewMarketInitialize::default()).await?;
+    } = TestContext::new_with_market_v2(TestNewMarketInitialize::default()).await?;
     let solana = &context.solana.clone();
     let owner_quote_ata = context.users[0].token_accounts[1];
     let owner_base_ata = context.users[0].token_accounts[0];
@@ -225,7 +225,7 @@ async fn test_self_trade_cancel_provide() -> Result<(), TransportError> {
         account_1,
         account_2,
         ..
-    } = TestContext::new_with_market(TestNewMarketInitialize::default()).await?;
+    } = TestContext::new_with_market_v2(TestNewMarketInitialize::default()).await?;
     let solana = &context.solana.clone();
     let owner_quote_ata = context.users[0].token_accounts[1];
     let owner_base_ata = context.users[0].token_accounts[0];
@@ -419,7 +419,7 @@ async fn test_self_abort_transaction() -> Result<(), TransportError> {
         market_quote_vault,
         account_1,
         ..
-    } = TestContext::new_with_market(TestNewMarketInitialize::default()).await?;
+    } = TestContext::new_with_market_v2(TestNewMarketInitialize::default()).await?;
     let solana = &context.solana.clone();
     let owner_quote_ata = context.users[0].token_accounts[1];
     let owner_base_ata = context.users[0].token_accounts[0];
@@ -493,7 +493,7 @@ async fn test_self_trade_no_fees() -> Result<(), TransportError> {
         market_quote_vault,
         account_1: open_orders_account,
         ..
-    } = TestContext::new_with_market(TestNewMarketInitialize::default()).await?;
+    } = TestContext::new_with_market_v2(TestNewMarketInitialize::default()).await?;
     let solana = &context.solana.clone();
 
     let place_bid_ix = PlaceOrderInstruction {

@@ -1,5 +1,5 @@
 use super::*;
-use anchor_spl::token::ID;
+use anchor_spl::token_2022::ID;
 
 #[tokio::test]
 async fn test_permissioned_open_order() -> Result<(), TransportError> {
@@ -15,7 +15,7 @@ async fn test_permissioned_open_order() -> Result<(), TransportError> {
         account_1,
         open_orders_admin,
         ..
-    } = TestContext::new_with_market(TestNewMarketInitialize {
+    } = TestContext::new_with_market_v2(TestNewMarketInitialize {
         open_orders_admin_bool: true,
         ..TestNewMarketInitialize::default()
     })
@@ -101,7 +101,7 @@ async fn test_permissioned_open_take_order() -> Result<(), TransportError> {
         tokens,
         account_1,
         ..
-    } = TestContext::new_with_market(TestNewMarketInitialize {
+    } = TestContext::new_with_market_v2(TestNewMarketInitialize {
         open_orders_admin_bool: true,
         ..TestNewMarketInitialize::default()
     })
@@ -185,7 +185,7 @@ async fn test_consume_events_admin() -> Result<(), TransportError> {
         account_1,
         account_2,
         ..
-    } = TestContext::new_with_market(TestNewMarketInitialize {
+    } = TestContext::new_with_market_v2(TestNewMarketInitialize {
         consume_events_admin_bool: true,
         ..TestNewMarketInitialize::default()
     })
@@ -291,7 +291,7 @@ async fn test_close_market_admin() -> Result<(), TransportError> {
         account_2,
         payer,
         ..
-    } = TestContext::new_with_market(TestNewMarketInitialize {
+    } = TestContext::new_with_market_v2(TestNewMarketInitialize {
         close_market_admin_bool: true,
         ..TestNewMarketInitialize::default()
     })
@@ -299,7 +299,7 @@ async fn test_close_market_admin() -> Result<(), TransportError> {
     let solana = &context.solana.clone();
 
     let fee_admin_ata = solana
-        .create_associated_token_account(&collect_fee_admin.pubkey(), mints[1].pubkey, false)
+        .create_associated_token_account(&collect_fee_admin.pubkey(), mints[1].pubkey, true)
         .await;
 
     send_tx(
@@ -549,7 +549,7 @@ async fn test_delegate() -> Result<(), TransportError> {
         price_lots,
         tokens,
         ..
-    } = TestContext::new_with_market(TestNewMarketInitialize {
+    } = TestContext::new_with_market_v2(TestNewMarketInitialize {
         ..TestNewMarketInitialize::default()
     })
     .await?;

@@ -1,9 +1,9 @@
 use super::*;
-use anchor_spl::token::ID;
+use anchor_spl::token_2022::ID;
 
 #[tokio::test]
 async fn test_indexer() -> Result<(), TransportError> {
-    let context = TestContext::new(false).await;
+    let context = TestContext::new(true).await;
     let solana = &context.solana.clone();
 
     let collect_fee_admin = TestKeypair::new();
@@ -104,7 +104,7 @@ async fn test_indexer() -> Result<(), TransportError> {
 
 #[tokio::test]
 async fn test_size_vector() -> Result<(), TransportError> {
-    let context = TestContext::new(false).await;
+    let context = TestContext::new(true).await;
     let solana = &context.solana.clone();
 
     let collect_fee_admin = TestKeypair::new();

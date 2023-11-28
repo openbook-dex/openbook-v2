@@ -1,5 +1,5 @@
 use super::*;
-use anchor_spl::token::ID;
+use anchor_spl::token_2022::ID;
 
 #[tokio::test]
 async fn test_inmediate_order() -> Result<(), TransportError> {
@@ -19,7 +19,7 @@ async fn test_inmediate_order() -> Result<(), TransportError> {
         account_1,
         account_2,
         ..
-    } = TestContext::new_with_market(TestNewMarketInitialize::default()).await?;
+    } = TestContext::new_with_market_v2(TestNewMarketInitialize::default()).await?;
     let solana = &context.solana.clone();
 
     // Set the initial oracle price

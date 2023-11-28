@@ -1,5 +1,5 @@
 use super::*;
-use anchor_spl::token::ID;
+use anchor_spl::token_2022::ID;
 
 #[tokio::test]
 async fn test_fees_accrued() -> Result<(), TransportError> {
@@ -19,7 +19,7 @@ async fn test_fees_accrued() -> Result<(), TransportError> {
         account_1,
         account_2,
         ..
-    } = TestContext::new_with_market(TestNewMarketInitialize {
+    } = TestContext::new_with_market_v2(TestNewMarketInitialize {
         maker_fee: -100,
         taker_fee: 200,
         ..TestNewMarketInitialize::default()
@@ -120,7 +120,7 @@ async fn test_fees_accrued() -> Result<(), TransportError> {
     }
 
     let admin_token_1 = solana
-        .create_associated_token_account(&collect_fee_admin.pubkey(), mints[1].pubkey, false)
+        .create_associated_token_account(&collect_fee_admin.pubkey(), mints[1].pubkey, true)
         .await;
 
     send_tx(
@@ -193,7 +193,7 @@ async fn test_maker_fees() -> Result<(), TransportError> {
         account_1,
         account_2,
         ..
-    } = TestContext::new_with_market(TestNewMarketInitialize {
+    } = TestContext::new_with_market_v2(TestNewMarketInitialize {
         maker_fee: 200,
         taker_fee: 400,
         ..TestNewMarketInitialize::default()
@@ -349,7 +349,7 @@ async fn test_maker_fees() -> Result<(), TransportError> {
     }
 
     let admin_token_1 = solana
-        .create_associated_token_account(&collect_fee_admin.pubkey(), mints[1].pubkey, false)
+        .create_associated_token_account(&collect_fee_admin.pubkey(), mints[1].pubkey, true)
         .await;
 
     send_tx(
@@ -447,7 +447,7 @@ async fn test_no_maker_fees_ask() -> Result<(), TransportError> {
         account_1,
         account_2,
         ..
-    } = TestContext::new_with_market(TestNewMarketInitialize {
+    } = TestContext::new_with_market_v2(TestNewMarketInitialize {
         maker_fee: -200,
         taker_fee: 400,
         ..TestNewMarketInitialize::default()
@@ -557,7 +557,7 @@ async fn test_no_maker_fees_ask() -> Result<(), TransportError> {
     }
 
     let admin_token_1 = solana
-        .create_associated_token_account(&collect_fee_admin.pubkey(), mints[1].pubkey, false)
+        .create_associated_token_account(&collect_fee_admin.pubkey(), mints[1].pubkey, true)
         .await;
 
     send_tx(
@@ -655,7 +655,7 @@ async fn test_maker_fees_ask() -> Result<(), TransportError> {
         account_1,
         account_2,
         ..
-    } = TestContext::new_with_market(TestNewMarketInitialize {
+    } = TestContext::new_with_market_v2(TestNewMarketInitialize {
         maker_fee: 200,
         taker_fee: 400,
         ..TestNewMarketInitialize::default()
@@ -765,7 +765,7 @@ async fn test_maker_fees_ask() -> Result<(), TransportError> {
     }
 
     let admin_token_1 = solana
-        .create_associated_token_account(&collect_fee_admin.pubkey(), mints[1].pubkey, false)
+        .create_associated_token_account(&collect_fee_admin.pubkey(), mints[1].pubkey, true)
         .await;
 
     send_tx(
@@ -863,7 +863,7 @@ async fn test_fees_half() -> Result<(), TransportError> {
         account_1,
         account_2,
         ..
-    } = TestContext::new_with_market(TestNewMarketInitialize {
+    } = TestContext::new_with_market_v2(TestNewMarketInitialize {
         maker_fee: -3700,
         taker_fee: 7400,
         ..TestNewMarketInitialize::default()
@@ -954,7 +954,7 @@ async fn test_fees_half() -> Result<(), TransportError> {
     }
 
     let admin_token_1 = solana
-        .create_associated_token_account(&collect_fee_admin.pubkey(), mints[1].pubkey, false)
+        .create_associated_token_account(&collect_fee_admin.pubkey(), mints[1].pubkey, true)
         .await;
 
     send_tx(
@@ -1040,7 +1040,7 @@ async fn test_fees_half() -> Result<(), TransportError> {
         account_1,
         account_2,
         ..
-    } = TestContext::new_with_market(TestNewMarketInitialize {
+    } = TestContext::new_with_market_v2(TestNewMarketInitialize {
         maker_fee: -3200,
         taker_fee: 6400,
         ..TestNewMarketInitialize::default()
@@ -1131,7 +1131,7 @@ async fn test_fees_half() -> Result<(), TransportError> {
     }
 
     let admin_token_1 = solana
-        .create_associated_token_account(&collect_fee_admin.pubkey(), mints[1].pubkey, false)
+        .create_associated_token_account(&collect_fee_admin.pubkey(), mints[1].pubkey, true)
         .await;
 
     send_tx(
@@ -1220,7 +1220,7 @@ async fn test_locked_maker_fees() -> Result<(), TransportError> {
         account_1: maker,
         account_2: taker,
         ..
-    } = TestContext::new_with_market(TestNewMarketInitialize {
+    } = TestContext::new_with_market_v2(TestNewMarketInitialize {
         maker_fee,
         taker_fee,
         ..TestNewMarketInitialize::default()

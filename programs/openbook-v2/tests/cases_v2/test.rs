@@ -1,5 +1,5 @@
 use super::*;
-use anchor_spl::token::ID;
+use anchor_spl::token_2022::ID;
 
 #[tokio::test]
 async fn test_simple_settle() -> Result<(), TransportError> {
@@ -19,7 +19,7 @@ async fn test_simple_settle() -> Result<(), TransportError> {
         account_1,
         account_2,
         ..
-    } = TestContext::new_with_market(TestNewMarketInitialize {
+    } = TestContext::new_with_market_v2(TestNewMarketInitialize {
         close_market_admin_bool: true,
         ..TestNewMarketInitialize::default()
     })
@@ -226,7 +226,7 @@ async fn test_cancel_orders() -> Result<(), TransportError> {
         account_1,
         account_2,
         ..
-    } = TestContext::new_with_market(TestNewMarketInitialize {
+    } = TestContext::new_with_market_v2(TestNewMarketInitialize {
         maker_fee: -100,
         ..TestNewMarketInitialize::default()
     })
@@ -531,7 +531,7 @@ async fn test_expired_orders() -> Result<(), TransportError> {
         account_1,
         account_2,
         ..
-    } = TestContext::new_with_market(TestNewMarketInitialize::default()).await?;
+    } = TestContext::new_with_market_v2(TestNewMarketInitialize::default()).await?;
     let solana = &context.solana.clone();
 
     // Order with expiry time of 2s

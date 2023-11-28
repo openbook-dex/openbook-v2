@@ -6,7 +6,6 @@ use std::sync::{Arc, RwLock};
 
 use super::utils::TestKeypair;
 use anchor_lang::AccountDeserialize;
-// use anchor_spl::token::TokenAccount;
 use anchor_spl::token_interface::TokenAccount;
 use solana_program::{program_pack::Pack, rent::*, system_instruction};
 use solana_program_test::*;
@@ -169,26 +168,52 @@ impl SolanaCookie {
         key.pubkey()
     }
 
-    pub async fn create_token_account(&self, owner: &Pubkey, mint: Pubkey) -> Pubkey {
+    pub async fn create_token_account(&self, owner: &Pubkey, mint: Pubkey, is_v2: bool) -> Pubkey {
         let keypair = TestKeypair::new();
-        let rent = self.rent.minimum_balance(spl_token_2022::state::Account::LEN);
 
-        let instructions = [
-            system_instruction::create_account(
-                &self.context.borrow().payer.pubkey(),
-                &keypair.pubkey(),
-                rent,
-                spl_token_2022::state::Account::LEN as u64,
-                &spl_token_2022::id(),
-            ),
-            spl_token_2022::instruction::initialize_account(
-                &spl_token_2022::id(),
-                &keypair.pubkey(),
-                &mint,
-                owner,
-            )
-            .unwrap(),
-        ];
+        // let instructions;
+
+        let instructions = if is_v2 {
+            let rent = self
+                .rent
+                .minimum_balance(spl_token_2022::state::Account::LEN);
+
+            [
+                system_instruction::create_account(
+                    &self.context.borrow().payer.pubkey(),
+                    &keypair.pubkey(),
+                    rent,
+                    spl_token_2022::state::Account::LEN as u64,
+                    &spl_token_2022::id(),
+                ),
+                spl_token_2022::instruction::initialize_account(
+                    &spl_token_2022::id(),
+                    &keypair.pubkey(),
+                    &mint,
+                    owner,
+                )
+                .unwrap(),
+            ]
+        } else {
+            let rent = self.rent.minimum_balance(spl_token::state::Account::LEN);
+
+            [
+                system_instruction::create_account(
+                    &self.context.borrow().payer.pubkey(),
+                    &keypair.pubkey(),
+                    rent,
+                    spl_token::state::Account::LEN as u64,
+                    &spl_token::id(),
+                ),
+                spl_token::instruction::initialize_account(
+                    &spl_token::id(),
+                    &keypair.pubkey(),
+                    &mint,
+                    owner,
+                )
+                .unwrap(),
+            ]
+        };
 
         self.process_transaction(&instructions, Some(&[keypair]))
             .await
@@ -196,20 +221,49 @@ impl SolanaCookie {
         keypair.pubkey()
     }
 
-    pub async fn create_associated_token_account(&self, owner: &Pubkey, mint: Pubkey) -> Pubkey {
-        let instruction =
-            spl_associated_token_account::instruction::create_associated_token_account(
-                &self.context.borrow().payer.pubkey(),
+    pub async fn create_associated_token_account(
+        &self,
+        owner: &Pubkey,
+        mint: Pubkey,
+        is_v2: bool,
+    ) -> Pubkey {
+        if is_v2 {
+            let instruction =
+                spl_associated_token_account::instruction::create_associated_token_account(
+                    &self.context.borrow().payer.pubkey(),
+                    owner,
+                    &mint,
+                    &spl_token_2022::id(),
+                );
+
+            self.process_transaction(&[instruction], None)
+                .await
+                .unwrap();
+
+            spl_associated_token_account::get_associated_token_address_with_program_id(
                 owner,
                 &mint,
                 &spl_token_2022::id(),
-            );
+            )
+        } else {
+            let instruction =
+                spl_associated_token_account::instruction::create_associated_token_account(
+                    &self.context.borrow().payer.pubkey(),
+                    owner,
+                    &mint,
+                    &spl_token::id(),
+                );
 
-        self.process_transaction(&[instruction], None)
-            .await
-            .unwrap();
+            self.process_transaction(&[instruction], None)
+                .await
+                .unwrap();
 
-        spl_associated_token_account::get_associated_token_address_with_program_id(owner, &mint, &spl_token_2022::id())
+            spl_associated_token_account::get_associated_token_address_with_program_id(
+                owner,
+                &mint,
+                &spl_token::id(),
+            )
+        }
     }
 
     // Note: Only one table can be created per authority per slot!

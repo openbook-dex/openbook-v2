@@ -1,10 +1,10 @@
 use super::*;
-use anchor_spl::token::ID;
+use anchor_spl::token_2022::ID;
 use bytemuck::cast_ref;
 
 #[tokio::test]
 async fn test_skip_missing_accounts() -> Result<(), TransportError> {
-    let context = TestContext::new(false).await;
+    let context = TestContext::new(true).await;
     let solana = &context.solana.clone();
 
     let collect_fee_admin = TestKeypair::new();
@@ -193,7 +193,7 @@ async fn test_skip_missing_accounts() -> Result<(), TransportError> {
 
 #[tokio::test]
 async fn test_crank_given_events() -> Result<(), TransportError> {
-    let context = TestContext::new(false).await;
+    let context = TestContext::new(true).await;
     let solana = &context.solana.clone();
 
     let collect_fee_admin = TestKeypair::new();

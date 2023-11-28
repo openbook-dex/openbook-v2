@@ -1,5 +1,5 @@
 use super::*;
-use anchor_spl::token::ID;
+use anchor_spl::token_2022::ID;
 
 #[tokio::test]
 async fn test_ioc() -> Result<(), TransportError> {
@@ -19,7 +19,7 @@ async fn test_ioc() -> Result<(), TransportError> {
         account_1,
         account_2,
         ..
-    } = TestContext::new_with_market(TestNewMarketInitialize {
+    } = TestContext::new_with_market_v2(TestNewMarketInitialize {
         maker_fee: 200,
         taker_fee: 200,
         ..TestNewMarketInitialize::default()
@@ -44,7 +44,6 @@ async fn test_ioc() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             self_trade_behavior: SelfTradeBehavior::default(),
             remainings: vec![],
-            token_program: ID,
         },
     )
     .await
@@ -67,7 +66,6 @@ async fn test_ioc() -> Result<(), TransportError> {
             expiry_timestamp: 0,
             self_trade_behavior: SelfTradeBehavior::default(),
             remainings: vec![],
-            token_program: ID,
         },
     )
     .await

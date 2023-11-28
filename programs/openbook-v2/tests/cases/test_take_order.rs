@@ -1,4 +1,5 @@
 use super::*;
+use anchor_spl::token::ID;
 
 #[tokio::test]
 async fn test_take_ask_order() -> Result<(), TransportError> {
@@ -44,6 +45,7 @@ async fn test_take_ask_order() -> Result<(), TransportError> {
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
             remainings: vec![],
+            token_program: ID,
         },
     )
     .await
@@ -70,6 +72,7 @@ async fn test_take_ask_order() -> Result<(), TransportError> {
             referrer_account: None,
             open_orders_admin: None,
             remainings: vec![],
+            token_program: ID,
         },
     )
     .await
@@ -136,6 +139,7 @@ async fn test_take_ask_order() -> Result<(), TransportError> {
             quote_mint: mints[1].pubkey,
             referrer_account: None,
             remainings: vec![],
+            token_program: ID,
         },
     )
     .await
@@ -198,6 +202,7 @@ async fn test_take_bid_order() -> Result<(), TransportError> {
             order_type: PlaceOrderType::Limit,
             self_trade_behavior: SelfTradeBehavior::default(),
             remainings: vec![],
+            token_program: ID,
         },
     )
     .await
@@ -207,7 +212,7 @@ async fn test_take_bid_order() -> Result<(), TransportError> {
     let balance_quote = solana.token_account_balance(owner_token_1).await;
 
     let admin_token_1 = solana
-        .create_associated_token_account(&collect_fee_admin.pubkey(), mints[1].pubkey)
+        .create_associated_token_account(&collect_fee_admin.pubkey(), mints[1].pubkey, false)
         .await;
     let balance_referral = solana.token_account_balance(admin_token_1).await;
 
@@ -229,6 +234,7 @@ async fn test_take_bid_order() -> Result<(), TransportError> {
             referrer_account: Some(admin_token_1),
             open_orders_admin: None,
             remainings: vec![],
+            token_program: ID,
         },
     )
     .await
@@ -299,6 +305,7 @@ async fn test_take_bid_order() -> Result<(), TransportError> {
             quote_mint: mints[1].pubkey,
             referrer_account: None,
             remainings: vec![],
+            token_program: ID,
         },
     )
     .await

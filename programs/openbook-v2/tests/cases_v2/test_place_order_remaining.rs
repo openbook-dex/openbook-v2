@@ -1,5 +1,5 @@
 use super::*;
-use anchor_spl::token::ID;
+use anchor_spl::token_2022::ID;
 
 #[tokio::test]
 async fn test_place_cancel_order_remaining() -> Result<(), TransportError> {
@@ -19,7 +19,7 @@ async fn test_place_cancel_order_remaining() -> Result<(), TransportError> {
         account_2,
         bids,
         ..
-    } = TestContext::new_with_market(TestNewMarketInitialize::default()).await?;
+    } = TestContext::new_with_market_v2(TestNewMarketInitialize::default()).await?;
     let solana = &context.solana.clone();
 
     // Set the initial oracle price
@@ -215,7 +215,7 @@ async fn test_cancel_order_yourself() -> Result<(), TransportError> {
         account_2,
         bids,
         ..
-    } = TestContext::new_with_market(TestNewMarketInitialize::default()).await?;
+    } = TestContext::new_with_market_v2(TestNewMarketInitialize::default()).await?;
     let solana = &context.solana.clone();
 
     // Set the initial oracle price

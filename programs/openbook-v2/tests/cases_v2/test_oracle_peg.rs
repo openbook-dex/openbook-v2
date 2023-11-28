@@ -1,5 +1,5 @@
 use super::*;
-use anchor_spl::token::ID;
+use anchor_spl::token_2022::ID;
 
 #[tokio::test]
 async fn test_oracle_peg_enabled() -> Result<(), TransportError> {
@@ -12,7 +12,7 @@ async fn test_oracle_peg_enabled() -> Result<(), TransportError> {
         market_quote_vault,
         account_1,
         ..
-    } = TestContext::new_with_market(TestNewMarketInitialize {
+    } = TestContext::new_with_market_v2(TestNewMarketInitialize {
         with_oracle: false,
         ..TestNewMarketInitialize::default()
     })
@@ -55,7 +55,7 @@ async fn test_oracle_peg_invalid_oracle() -> Result<(), TransportError> {
         market_quote_vault,
         account_1,
         ..
-    } = TestContext::new_with_market(TestNewMarketInitialize::default()).await?;
+    } = TestContext::new_with_market_v2(TestNewMarketInitialize::default()).await?;
     let solana = &context.solana.clone();
 
     solana.advance_clock(200).await;
@@ -105,7 +105,7 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
         collect_fee_admin,
         bids,
         ..
-    } = TestContext::new_with_market(TestNewMarketInitialize {
+    } = TestContext::new_with_market_v2(TestNewMarketInitialize {
         quote_lot_size: market_quote_lot_size,
         base_lot_size: market_base_lot_size,
         maker_fee: -0,
@@ -510,7 +510,7 @@ async fn test_take_peg_invalid_oracle() -> Result<(), TransportError> {
         tokens,
         collect_fee_admin,
         ..
-    } = TestContext::new_with_market(TestNewMarketInitialize::default()).await?;
+    } = TestContext::new_with_market_v2(TestNewMarketInitialize::default()).await?;
     let solana = &context.solana.clone();
 
     send_tx(
@@ -598,7 +598,7 @@ async fn test_oracle_peg_limit() -> Result<(), TransportError> {
         account_1,
         bids,
         ..
-    } = TestContext::new_with_market(TestNewMarketInitialize {
+    } = TestContext::new_with_market_v2(TestNewMarketInitialize {
         quote_lot_size: market_quote_lot_size,
         base_lot_size: market_base_lot_size,
         maker_fee: -0,
@@ -702,7 +702,7 @@ async fn test_locked_amounts() -> Result<(), TransportError> {
         account_1,
         account_2,
         ..
-    } = TestContext::new_with_market(TestNewMarketInitialize {
+    } = TestContext::new_with_market_v2(TestNewMarketInitialize {
         quote_lot_size,
         base_lot_size,
         maker_fee,

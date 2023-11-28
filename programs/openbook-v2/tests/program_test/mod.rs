@@ -10,13 +10,8 @@ use solana_program::{program_option::COption, program_pack::Pack};
 use solana_program_test::*;
 use solana_sdk::pubkey::Pubkey;
 pub use solana_sdk::transport::TransportError;
-use spl_token_2022::extension::Extension;
-// use spl_token::{state::*, *};
-use spl_token_2022::{state::*, *};
-use spl_token_2022::extension::transfer_fee::TransferFeeConfig;
-use spl_token_2022::extension::transfer_fee::instruction::{TransferFeeInstruction, initialize_transfer_fee_config};
-// use anchor_spl::token_2022::Token2022;
-// use anchor_spl::token_interface::{self, TokenInterface};
+use spl_token::*;
+use spl_token_2022::extension::transfer_fee::instruction::initialize_transfer_fee_config;
 
 use crate::program_test::setup::{create_open_orders_account, create_open_orders_indexer, Token};
 
@@ -152,7 +147,7 @@ impl TestContextBuilder {
         &mut self.test
     }
 
-    pub fn create_mints(&mut self) -> Vec<MintCookie> {
+    pub fn create_mints(&mut self, is_v2: bool) -> Vec<MintCookie> {
         let mut mints: Vec<MintCookie> = vec![
             MintCookie {
                 index: 0,
@@ -175,6 +170,7 @@ impl TestContextBuilder {
                 authority: TestKeypair::new(),
             });
         }
+
         // Add mints in loop
         for mint in &mut mints {
             let mint_pk = if mint.pubkey == Pubkey::default() {
@@ -184,45 +180,44 @@ impl TestContextBuilder {
             };
             mint.pubkey = mint_pk;
 
-            // let mint_extension = TransferFeeInstruction::InitializeTransferFeeConfig { 
-            //     transfer_fee_config_authority: Some(TestKeypair::new().pubkey()).into(), 
-            //     withdraw_withheld_authority: Some(TestKeypair::new().pubkey()).into(), 
-            //     transfer_fee_basis_points: 100, 
-            //     maximum_fee: 600000 
-            // };
+            if is_v2 {
+                let token_program_id = &spl_token_2022::id();
+                let data = &spl_token_2022::state::Mint {
+                    is_initialized: true,
+                    mint_authority: COption::Some(mint.authority.pubkey()),
+                    decimals: mint.decimals,
+                    ..spl_token_2022::state::Mint::default()
+                };
 
-            let data =  &Mint {
-                is_initialized: true,
-                mint_authority: COption::Some(mint.authority.pubkey()),
-                decimals: mint.decimals,
-                ..Mint::default()
-            };
+                let _ = initialize_transfer_fee_config(
+                    token_program_id,
+                    &mint_pk,
+                    Some(&TestKeypair::new().pubkey()),
+                    Some(&TestKeypair::new().pubkey()),
+                    100,
+                    600000,
+                );
 
-            // let dt = data::extension::transfer_fee::instruction::TransferFeeInstruction;
-            let _ = initialize_transfer_fee_config(
-                &spl_token_2022::id(), 
-                &mint_pk, 
-                Some(&TestKeypair::new().pubkey()), 
-                Some(&TestKeypair::new().pubkey()), 
-                100, 
-                600000
-            );
+                self.test
+                    .add_packable_account(mint_pk, u32::MAX as u64, data, token_program_id);
+            } else {
+                let token_program_id = &spl_token::id();
+                let data = &spl_token::state::Mint {
+                    is_initialized: true,
+                    mint_authority: COption::Some(mint.authority.pubkey()),
+                    decimals: mint.decimals,
+                    ..spl_token::state::Mint::default()
+                };
 
-            println!("Transfer fee config Initialized");
-            
-
-            self.test.add_packable_account(
-                mint_pk,
-                u32::MAX as u64,
-                data,
-                &spl_token_2022::id(),
-            );
+                self.test
+                    .add_packable_account(mint_pk, u32::MAX as u64, data, token_program_id);
+            }
         }
 
         mints
     }
 
-    pub fn create_users(&mut self, mints: &[MintCookie]) -> Vec<UserCookie> {
+    pub fn create_users(&mut self, mints: &[MintCookie], is_v2: bool) -> Vec<UserCookie> {
         let num_users = 4;
         let mut users = Vec::new();
         for _ in 0..num_users {
@@ -239,23 +234,44 @@ impl TestContextBuilder {
             // give every user 10^18 (< 2^60) of every token
             // ~~ 1 trillion in case of 6 decimals
             let mut token_accounts = Vec::new();
-            for mint in mints {
-                let token_key = Pubkey::new_unique();
-                self.test.add_packable_account(
-                    token_key,
-                    u32::MAX as u64,
-                    &spl_token_2022::state::Account {
-                        mint: mint.pubkey,
-                        owner: user_key.pubkey(),
-                        amount: 1_000_000_000_000_000_000,
-                        state: spl_token_2022::state::AccountState::Initialized,
-                        ..spl_token_2022::state::Account::default()
-                    },
-                    &spl_token_2022::id(),
-                );
+            if is_v2 {
+                for mint in mints {
+                    let token_key = Pubkey::new_unique();
+                    self.test.add_packable_account(
+                        token_key,
+                        u32::MAX as u64,
+                        &spl_token_2022::state::Account {
+                            mint: mint.pubkey,
+                            owner: user_key.pubkey(),
+                            amount: 1_000_000_000_000_000_000,
+                            state: spl_token_2022::state::AccountState::Initialized,
+                            ..spl_token_2022::state::Account::default()
+                        },
+                        &spl_token_2022::id(),
+                    );
 
-                token_accounts.push(token_key);
+                    token_accounts.push(token_key);
+                }
+            } else {
+                for mint in mints {
+                    let token_key = Pubkey::new_unique();
+                    self.test.add_packable_account(
+                        token_key,
+                        u32::MAX as u64,
+                        &spl_token::state::Account {
+                            mint: mint.pubkey,
+                            owner: user_key.pubkey(),
+                            amount: 1_000_000_000_000_000_000,
+                            state: spl_token::state::AccountState::Initialized,
+                            ..spl_token::state::Account::default()
+                        },
+                        &spl_token::id(),
+                    );
+
+                    token_accounts.push(token_key);
+                }
             }
+
             users.push(UserCookie {
                 key: user_key,
                 token_accounts,
@@ -265,9 +281,17 @@ impl TestContextBuilder {
         users
     }
 
-    pub async fn start_default(mut self) -> TestContext {
-        let mints = self.create_mints();
-        let users = self.create_users(&mints);
+    pub async fn start_default(mut self, is_v2: bool) -> TestContext {
+        let mints: Vec<MintCookie>;
+        let users: Vec<UserCookie>;
+
+        if is_v2 {
+            mints = self.create_mints(true);
+            users = self.create_users(&mints, true);
+        } else {
+            mints = self.create_mints(false);
+            users = self.create_users(&mints, false);
+        }
 
         let solana = self.start().await;
 
@@ -328,14 +352,18 @@ impl Default for TestNewMarketInitialize {
     }
 }
 impl TestContext {
-    pub async fn new() -> Self {
-        TestContextBuilder::new().start_default().await
+    pub async fn new(is_v2: bool) -> Self {
+        if is_v2 {
+            TestContextBuilder::new().start_default(true).await
+        } else {
+            TestContextBuilder::new().start_default(false).await
+        }
     }
 
     pub async fn new_with_market(
         args: TestNewMarketInitialize,
     ) -> Result<TestInitialize, TransportError> {
-        let context = TestContextBuilder::new().start_default().await;
+        let context = TestContextBuilder::new().start_default(false).await;
         let solana = &context.solana.clone();
 
         let collect_fee_admin_acc = TestKeypair::new();
@@ -377,17 +405,117 @@ impl TestContext {
             None
         };
 
-        // println!("Logging");
+        let openbook_v2::accounts::CreateMarket {
+            market,
+            market_base_vault,
+            market_quote_vault,
+            bids,
+            ..
+        } = send_tx(
+            solana,
+            CreateMarketInstruction {
+                collect_fee_admin: collect_fee_admin_acc.pubkey(),
+                open_orders_admin,
+                close_market_admin,
+                consume_events_admin,
+                payer,
+                market,
+                quote_lot_size: args.quote_lot_size,
+                base_lot_size: args.base_lot_size,
+                maker_fee: args.maker_fee,
+                taker_fee: args.taker_fee,
+                base_mint: mints[0].pubkey,
+                quote_mint: mints[1].pubkey,
+                fee_penalty: args.fee_penalty,
+                time_expiry: args.time_expiry,
+                token_program: spl_token::id(),
+                ..CreateMarketInstruction::with_new_book_and_heap(solana, oracle, None).await
+            },
+        )
+        .await
+        .unwrap();
 
-        // println!("{:?}", collect_fee_admin_acc.pubkey());
-        // println!("{:?}", open_orders_admin);
-        // println!("{:?}", close_market_admin);
-        // println!("{:?}", consume_events_admin);
-        // println!("{:?}", payer);
-        // println!("{:?}", market);
-        // println!("{:?}", mints[0].pubkey);
-        // println!("{:?}", mints[1].pubkey);
-        // println!("{:?}", oracle);
+        let _indexer = create_open_orders_indexer(solana, &context.users[1], owner, market).await;
+
+        let account_1 =
+            create_open_orders_account(solana, owner, market, 1, &context.users[1], None).await;
+        let account_2 =
+            create_open_orders_account(solana, owner, market, 2, &context.users[1], None).await;
+
+        let price_lots = {
+            let market = solana.get_account::<Market>(market).await;
+            market.native_price_to_lot(I80F48::from(1000)).unwrap()
+        };
+
+        let mints = mints.to_vec();
+
+        Ok(TestInitialize {
+            context,
+            collect_fee_admin: collect_fee_admin_acc,
+            open_orders_admin: open_orders_admin_acc,
+            close_market_admin: close_market_admin_acc,
+            consume_events_admin: consume_events_admin_acc,
+            owner,
+            payer,
+            mints,
+            owner_token_0,
+            owner_token_1,
+            market,
+
+            market_base_vault,
+            market_quote_vault,
+            price_lots,
+            tokens,
+            account_1,
+            account_2,
+            bids,
+        })
+    }
+
+    pub async fn new_with_market_v2(
+        args: TestNewMarketInitialize,
+    ) -> Result<TestInitialize, TransportError> {
+        let context = TestContextBuilder::new().start_default(true).await;
+        let solana = &context.solana.clone();
+
+        let collect_fee_admin_acc = TestKeypair::new();
+        let open_orders_admin_acc = TestKeypair::new();
+        let open_orders_admin = if args.open_orders_admin_bool {
+            Some(open_orders_admin_acc.pubkey())
+        } else {
+            None
+        };
+        let close_market_admin_acc = TestKeypair::new();
+        let close_market_admin = if args.close_market_admin_bool {
+            Some(close_market_admin_acc.pubkey())
+        } else {
+            None
+        };
+        let consume_events_admin_acc = TestKeypair::new();
+        let consume_events_admin = if args.consume_events_admin_bool {
+            Some(consume_events_admin_acc.pubkey())
+        } else {
+            None
+        };
+
+        let owner = context.users[0].key;
+        let payer = context.users[1].key;
+        let mints = &context.mints[0..=2];
+
+        let owner_token_0 = context.users[0].token_accounts[0];
+        let owner_token_1 = context.users[0].token_accounts[1];
+
+        let tokens = Token::create(mints.to_vec(), solana, collect_fee_admin_acc, payer).await;
+
+        // Create a market
+
+        let market = TestKeypair::new();
+
+        let oracle = if args.with_oracle {
+            Some(tokens[0].oracle)
+        } else {
+            None
+        };
 
         let openbook_v2::accounts::CreateMarket {
             market,
@@ -412,6 +540,7 @@ impl TestContext {
                 quote_mint: mints[1].pubkey,
                 fee_penalty: args.fee_penalty,
                 time_expiry: args.time_expiry,
+                token_program: spl_token_2022::id(),
                 ..CreateMarketInstruction::with_new_book_and_heap(solana, oracle, None).await
             },
         )

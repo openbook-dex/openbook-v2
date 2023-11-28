@@ -1,8 +1,7 @@
 #![allow(dead_code)]
 
 use anchor_lang::prelude::*;
-// use anchor_spl::{associated_token::AssociatedToken, token::Token, token_2022::Token2022};
-use anchor_spl::{associated_token::AssociatedToken, token_2022::Token2022};
+use anchor_spl::associated_token::AssociatedToken;
 use solana_program::instruction::Instruction;
 use solana_program_test::BanksClientError;
 use solana_sdk::instruction;
@@ -300,6 +299,7 @@ pub struct CreateMarketInstruction {
     pub settle_fee_flat: f32,
     pub settle_fee_amount_threshold: f32,
     pub time_expiry: i64,
+    pub token_program: Pubkey,
 }
 impl CreateMarketInstruction {
     pub async fn with_new_book_and_heap(
@@ -355,16 +355,18 @@ impl ClientInstruction for CreateMarketInstruction {
         )
         .0;
 
-        let market_base_vault = spl_associated_token_account::get_associated_token_address_with_program_id(
-            &market_authority,
-            &self.base_mint,
-            &Token2022::id(),
-        );
-        let market_quote_vault = spl_associated_token_account::get_associated_token_address_with_program_id(
-            &market_authority,
-            &self.quote_mint,
-            &Token2022::id(),
-        );
+        let market_base_vault =
+            spl_associated_token_account::get_associated_token_address_with_program_id(
+                &market_authority,
+                &self.base_mint,
+                &self.token_program,
+            );
+        let market_quote_vault =
+            spl_associated_token_account::get_associated_token_address_with_program_id(
+                &market_authority,
+                &self.quote_mint,
+                &self.token_program,
+            );
 
         let accounts = Self::Accounts {
             market: self.market.pubkey(),
@@ -378,7 +380,7 @@ impl ClientInstruction for CreateMarketInstruction {
             quote_mint: self.quote_mint,
             base_mint: self.base_mint,
             system_program: System::id(),
-            token_program: Token2022::id(),
+            token_program: self.token_program,
             associated_token_program: AssociatedToken::id(),
             collect_fee_admin: self.collect_fee_admin,
             open_orders_admin: self.open_orders_admin,
@@ -417,6 +419,7 @@ pub struct PlaceOrderInstruction {
     pub order_type: PlaceOrderType,
     pub self_trade_behavior: SelfTradeBehavior,
     pub remainings: Vec<Pubkey>,
+    pub token_program: Pubkey,
 }
 
 #[async_trait::async_trait(?Send)]
@@ -457,7 +460,7 @@ impl ClientInstruction for PlaceOrderInstruction {
             user_token_account: self.user_token_account,
             market_vault: self.market_vault,
             mint: Some(self.mint),
-            token_program: Token2022::id(),
+            token_program: self.token_program,
         };
         let mut instruction = make_instruction(program_id, &accounts, instruction);
         let mut vec_remainings: Vec<AccountMeta> = Vec::new();
@@ -497,6 +500,7 @@ pub struct PlaceOrderPeggedInstruction {
     pub client_order_id: u64,
     pub peg_limit: i64,
     pub remainings: Vec<Pubkey>,
+    pub token_program: Pubkey,
 }
 #[async_trait::async_trait(?Send)]
 impl ClientInstruction for PlaceOrderPeggedInstruction {
@@ -537,7 +541,7 @@ impl ClientInstruction for PlaceOrderPeggedInstruction {
             user_token_account: self.user_token_account,
             market_vault: self.market_vault,
             mint: Some(self.mint),
-            token_program: Token2022::id(),
+            token_program: self.token_program,
         };
         let mut instruction = make_instruction(program_id, &accounts, instruction);
         let mut vec_remainings: Vec<AccountMeta> = Vec::new();
@@ -573,6 +577,7 @@ pub struct PlaceTakeOrderInstruction {
     pub max_quote_lots_including_fees: i64,
     pub referrer_account: Option<Pubkey>,
     pub remainings: Vec<Pubkey>,
+    pub token_program: Pubkey,
 }
 #[async_trait::async_trait(?Send)]
 impl ClientInstruction for PlaceTakeOrderInstruction {
@@ -614,7 +619,7 @@ impl ClientInstruction for PlaceTakeOrderInstruction {
             deposit_mint: Some(self.deposit_mint),
             withdraw_mint: Some(self.withdraw_mint),
             referrer_account: self.referrer_account,
-            token_program: Token2022::id(),
+            token_program: self.token_program,
             system_program: System::id(),
         };
 
@@ -852,6 +857,7 @@ pub struct SettleFundsInstruction {
     pub quote_mint: Pubkey,
     pub referrer_account: Option<Pubkey>,
     pub remainings: Vec<Pubkey>,
+    pub token_program: Pubkey,
 }
 #[async_trait::async_trait(?Send)]
 impl ClientInstruction for SettleFundsInstruction {
@@ -877,8 +883,8 @@ impl ClientInstruction for SettleFundsInstruction {
             referrer_account: self.referrer_account,
             base_mint: Some(self.base_mint),
             quote_mint: Some(self.quote_mint),
-            base_token_program: Token2022::id(),
-            quote_token_program: Token2022::id(),
+            base_token_program: self.token_program,
+            quote_token_program: self.token_program,
             system_program: System::id(),
         };
 
@@ -915,6 +921,7 @@ pub struct SettleFundsExpiredInstruction {
     pub quote_mint: Pubkey,
     pub referrer_account: Option<Pubkey>,
     pub remainings: Vec<Pubkey>,
+    pub token_program: Pubkey,
 }
 #[async_trait::async_trait(?Send)]
 impl ClientInstruction for SettleFundsExpiredInstruction {
@@ -941,8 +948,8 @@ impl ClientInstruction for SettleFundsExpiredInstruction {
             referrer_account: self.referrer_account,
             base_mint: Some(self.base_mint),
             quote_mint: Some(self.quote_mint),
-            base_token_program: Token2022::id(),
-            quote_token_program: Token2022::id(),
+            base_token_program: self.token_program,
+            quote_token_program: self.token_program,
             system_program: System::id(),
         };
 
@@ -972,6 +979,7 @@ pub struct SweepFeesInstruction {
     pub token_receiver_account: Pubkey,
     pub mint: Pubkey,
     pub remainings: Vec<Pubkey>,
+    pub token_program: Pubkey,
 }
 #[async_trait::async_trait(?Send)]
 impl ClientInstruction for SweepFeesInstruction {
@@ -992,7 +1000,7 @@ impl ClientInstruction for SweepFeesInstruction {
             market_quote_vault: self.market_quote_vault,
             token_receiver_account: self.token_receiver_account,
             mint: Some(self.mint),
-            token_program: Token2022::id(),
+            token_program: self.token_program,
         };
         let mut instruction = make_instruction(program_id, &accounts, instruction);
 
@@ -1005,9 +1013,6 @@ impl ClientInstruction for SweepFeesInstruction {
             })
         }
         instruction.accounts.append(&mut vec_remainings);
-        // println!("side sweep");
-        // println!("side sweep");
-        // println!("side sweep");
         (accounts, instruction)
     }
 
@@ -1029,6 +1034,7 @@ pub struct DepositInstruction {
     pub base_amount: u64,
     pub quote_amount: u64,
     pub remainings: Vec<Pubkey>,
+    pub token_program: Pubkey,
 }
 #[async_trait::async_trait(?Send)]
 impl ClientInstruction for DepositInstruction {
@@ -1054,8 +1060,8 @@ impl ClientInstruction for DepositInstruction {
             user_quote_account: self.user_quote_account,
             base_mint: Some(self.base_mint),
             quote_mint: Some(self.quote_mint),
-            base_token_program: Token2022::id(),
-            quote_token_program: Token2022::id(),
+            base_token_program: self.token_program,
+            quote_token_program: self.token_program,
         };
         let mut instruction = make_instruction(program_id, &accounts, instruction);
 
@@ -1165,6 +1171,7 @@ pub struct StubOracleCloseInstruction {
     pub mint: Pubkey,
     pub owner: TestKeypair,
     pub sol_destination: Pubkey,
+    pub token_program: Pubkey,
 }
 #[async_trait::async_trait(?Send)]
 impl ClientInstruction for StubOracleCloseInstruction {
@@ -1192,7 +1199,7 @@ impl ClientInstruction for StubOracleCloseInstruction {
             owner: self.owner.pubkey(),
             oracle,
             sol_destination: self.sol_destination,
-            token_program: Token2022::id(),
+            token_program: self.token_program,
         };
 
         let instruction = make_instruction(program_id, &accounts, instruction);
@@ -1209,6 +1216,7 @@ pub struct CloseMarketInstruction {
     pub close_market_admin: TestKeypair,
     pub market: Pubkey,
     pub sol_destination: Pubkey,
+    pub token_program: Pubkey,
 }
 #[async_trait::async_trait(?Send)]
 impl ClientInstruction for CloseMarketInstruction {
@@ -1228,7 +1236,7 @@ impl ClientInstruction for CloseMarketInstruction {
             bids: market.bids,
             asks: market.asks,
             event_heap: market.event_heap,
-            token_program: Token2022::id(),
+            token_program: self.token_program,
             sol_destination: self.sol_destination,
         };
 
@@ -1354,6 +1362,7 @@ pub struct EditOrderInstruction {
     pub self_trade_behavior: SelfTradeBehavior,
     pub remainings: Vec<Pubkey>,
     pub expected_cancel_size: i64,
+    pub token_program: Pubkey,
 }
 
 #[async_trait::async_trait(?Send)]
@@ -1396,7 +1405,7 @@ impl ClientInstruction for EditOrderInstruction {
             user_token_account: self.user_token_account,
             market_vault: self.market_vault,
             mint: Some(self.mint),
-            token_program: Token2022::id(),
+            token_program: self.token_program,
         };
         let mut instruction = make_instruction(program_id, &accounts, instruction);
         let mut vec_remainings: Vec<AccountMeta> = Vec::new();
