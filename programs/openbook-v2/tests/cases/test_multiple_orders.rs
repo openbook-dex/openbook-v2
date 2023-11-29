@@ -125,8 +125,12 @@ async fn insufficient_funds() -> Result<(), TransportError> {
 
     assert_eq!(position.asks_base_lots, 35);
     assert_eq!(position.bids_base_lots, 0);
+
     assert_eq!(position.base_free_native, 0);
     assert_eq!(position.quote_free_native, 0);
+
+    assert_eq!(solana.token_account_balance(owner_token_0).await, 0);
+    assert_eq!(solana.token_account_balance(owner_token_1).await, 0);
 
     Ok(())
 }
