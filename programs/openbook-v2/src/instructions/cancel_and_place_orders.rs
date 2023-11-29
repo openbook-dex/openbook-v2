@@ -11,7 +11,7 @@ use crate::token_utils::*;
 pub fn cancel_and_place_orders(
     ctx: Context<CancelAndPlaceOrders>,
     cancel_client_orders_ids: Vec<u64>,
-    orders: Vec<Order>,
+    mut orders: Vec<Order>,
     limits: Vec<u8>,
 ) -> Result<Vec<Option<u128>>> {
     let mut open_orders_account = ctx.accounts.open_orders_account.load_mut()?;
@@ -63,12 +63,37 @@ pub fn cancel_and_place_orders(
     let mut base_amount = 0_u64;
     let mut quote_amount = 0_u64;
     let mut order_ids = Vec::new();
-    for (order, limit) in orders.iter().zip(limits) {
+    for (order, limit) in orders.iter_mut().zip(limits) {
         require_gte!(order.max_base_lots, 0, OpenBookError::InvalidInputLots);
         require_gte!(
             order.max_quote_lots_including_fees,
             0,
             OpenBookError::InvalidInputLots
+        );
+
+        let max_available_base = ctx.accounts.user_base_account.amount
+            + open_orders_account.position.base_free_native
+            - base_amount;
+
+        let max_available_quote = ctx.accounts.user_quote_account.amount
+            + open_orders_account.position.quote_free_native
+            - quote_amount;
+
+        order.max_base_lots = std::cmp::min(
+            order.max_base_lots,
+            market.max_base_lots_from_lamports(max_available_base),
+        );
+
+        order.max_quote_lots_including_fees = std::cmp::min(
+            order.max_quote_lots_including_fees,
+            market.max_quote_lots_from_lamports(max_available_quote, order.side),
+        );
+
+        msg!("LOOP {} {}", max_available_base, max_available_quote);
+        msg!(
+            "LOOP {} {}",
+            order.max_base_lots,
+            order.max_quote_lots_including_fees
         );
 
         let OrderWithAmounts {
