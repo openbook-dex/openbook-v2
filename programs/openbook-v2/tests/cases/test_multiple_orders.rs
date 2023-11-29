@@ -50,6 +50,7 @@ async fn insufficient_funds() -> Result<(), TransportError> {
     .unwrap();
 
     solana.set_account_balance(owner_token_0, 2_500).await;
+    solana.set_account_balance(owner_token_1, 101).await;
 
     // some lamports are already deposited
     send_tx(

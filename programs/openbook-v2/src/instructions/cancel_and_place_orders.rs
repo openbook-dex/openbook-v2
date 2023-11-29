@@ -71,30 +71,26 @@ pub fn cancel_and_place_orders(
             OpenBookError::InvalidInputLots
         );
 
-        let max_available_base = ctx.accounts.user_base_account.amount
-            + open_orders_account.position.base_free_native
-            - base_amount;
-
-        let max_available_quote = ctx.accounts.user_quote_account.amount
-            + open_orders_account.position.quote_free_native
-            - quote_amount;
-
-        order.max_base_lots = std::cmp::min(
-            order.max_base_lots,
-            market.max_base_lots_from_lamports(max_available_base),
-        );
-
-        order.max_quote_lots_including_fees = std::cmp::min(
-            order.max_quote_lots_including_fees,
-            market.max_quote_lots_from_lamports(max_available_quote, order.side),
-        );
-
-        msg!("LOOP {} {}", max_available_base, max_available_quote);
-        msg!(
-            "LOOP {} {}",
-            order.max_base_lots,
-            order.max_quote_lots_including_fees
-        );
+        match order.side {
+            Side::Ask => {
+                let max_available_base = ctx.accounts.user_base_account.amount
+                    + open_orders_account.position.base_free_native
+                    - base_amount;
+                order.max_base_lots = std::cmp::min(
+                    order.max_base_lots,
+                    market.max_base_lots_from_lamports(max_available_base),
+                );
+            }
+            Side::Bid => {
+                let max_available_quote = ctx.accounts.user_quote_account.amount
+                    + open_orders_account.position.quote_free_native
+                    - quote_amount;
+                order.max_quote_lots_including_fees = std::cmp::min(
+                    order.max_quote_lots_including_fees,
+                    market.max_quote_lots_from_lamports(max_available_quote, order.side),
+                );
+            }
+        }
 
         let OrderWithAmounts {
             order_id,
