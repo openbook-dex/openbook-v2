@@ -1,26 +1,4 @@
 use super::*;
-use solana_program::program_pack::Pack;
-
-#[allow(clippy::await_holding_refcell_ref)]
-async fn set_balance(solana: &SolanaCookie, pubkey: Pubkey, amount: u64) {
-    let mut account = solana
-        .context
-        .borrow_mut()
-        .banks_client
-        .get_account(pubkey)
-        .await
-        .unwrap()
-        .unwrap();
-
-    let mut account_data = spl_token::state::Account::unpack(&account.data).unwrap();
-    account_data.amount = amount;
-    spl_token::state::Account::pack(account_data, &mut account.data).unwrap();
-
-    solana
-        .context
-        .borrow_mut()
-        .set_account(&pubkey, &account.into());
-}
 
 #[tokio::test]
 async fn insufficient_funds() -> Result<(), TransportError> {
@@ -71,7 +49,7 @@ async fn insufficient_funds() -> Result<(), TransportError> {
     .await
     .unwrap();
 
-    set_balance(solana, owner_token_0, 2_500).await;
+    solana.set_account_balance(owner_token_0, 2_500).await;
 
     // some lamports are already deposited
     send_tx(
