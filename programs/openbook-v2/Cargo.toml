@@ -54,3 +54,5 @@ solana-program-test = { workspace = true }
 solana-logger = { workspace = true }
 spl-token = { version = "^3.5.0", features = ["no-entrypoint"] }
 spl-associated-token-account = { workspace = true, features = ["no-entrypoint"] }
+proptest = "1.4.0"
+proptest-derive = "0.4.0"
