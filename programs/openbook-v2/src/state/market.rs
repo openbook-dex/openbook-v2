@@ -196,6 +196,24 @@ impl Market {
         i64::MAX / self.quote_lot_size
     }
 
+    pub fn max_base_lots_from_lamports(&self, lamports: u64) -> i64 {
+        (lamports / self.base_lot_size as u64) as i64
+    }
+
+    pub fn max_quote_lots_from_lamports(&self, lamports: u64, side: Side) -> i64 {
+        let mut quote_lots = lamports / self.quote_lot_size as u64;
+
+        if side == Side::Bid {
+            let dust = lamports - quote_lots * self.quote_lot_size as u64;
+
+            if dust >= self.taker_fees_ceil(quote_lots + 1) {
+                quote_lots += 1;
+            }
+        };
+
+        quote_lots as i64
+    }
+
     /// Convert from the price stored on the book to the price used in value calculations
     pub fn lot_to_native_price(&self, price: i64) -> I80F48 {
         I80F48::from_num(price) * I80F48::from_num(self.quote_lot_size)
