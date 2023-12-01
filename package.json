@@ -1,6 +1,6 @@
 {
   "name": "@openbook-dex/openbook-v2",
-  "version": "0.0.15",
+  "version": "0.0.17",
   "description": "Typescript Client for openbook-v2 program.",
   "repository": "https://github.com/openbook-dex/openbook-v2/",
   "author": {
@@ -30,7 +30,7 @@
     "trailingComma": "all"
   },
   "dependencies": {
-    "@coral-xyz/anchor": "^0.28.0",
+    "@coral-xyz/anchor": "^0.28.1-beta.2",
     "@solana/spl-token": "0.3.8",
     "@solana/web3.js": "^1.77.3",
     "big.js": "^6.2.1"

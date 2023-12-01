@@ -94,9 +94,10 @@ impl<'a> Orderbook<'a> {
         // matched_changes/matched_deletes and then applied after this loop.
 
         let order_max_base_lots = order.max_base_lots;
-        let order_max_quote_lots = match side {
-            Side::Bid => market.subtract_taker_fees(order.max_quote_lots_including_fees),
-            Side::Ask => order.max_quote_lots_including_fees,
+        let order_max_quote_lots = if side == Side::Bid && !post_only {
+            market.subtract_taker_fees(order.max_quote_lots_including_fees)
+        } else {
+            order.max_quote_lots_including_fees
         };
 
         require_gte!(
