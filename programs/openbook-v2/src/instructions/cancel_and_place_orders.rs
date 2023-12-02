@@ -87,7 +87,7 @@ pub fn cancel_and_place_orders(
                     - quote_amount;
                 order.max_quote_lots_including_fees = std::cmp::min(
                     order.max_quote_lots_including_fees,
-                    market.max_quote_lots_from_lamports(max_available_quote, order.side),
+                    market.max_quote_lots_from_lamports(max_available_quote),
                 );
             }
         }

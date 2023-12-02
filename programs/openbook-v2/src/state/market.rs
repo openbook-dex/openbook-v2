@@ -203,17 +203,8 @@ impl Market {
             .unwrap()
     }
 
-    pub fn max_quote_lots_from_lamports(&self, lamports: u64, side: Side) -> i64 {
-        let mut quote_lots = lamports / self.quote_lot_size as u64;
-
-        if side == Side::Bid {
-            let dust = lamports - quote_lots * self.quote_lot_size as u64;
-
-            if dust >= self.taker_fees_ceil(quote_lots + 1) {
-                quote_lots += 1;
-            }
-        };
-
+    pub fn max_quote_lots_from_lamports(&self, lamports: u64) -> i64 {
+        let quote_lots = lamports / self.quote_lot_size as u64;
         std::cmp::min(self.max_quote_lots() as u64, quote_lots)
             .try_into()
             .unwrap()
@@ -356,45 +347,3 @@ macro_rules! market_seeds {
     };
 }
 pub(crate) use market_seeds;
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use bytemuck::Zeroable;
-    use proptest::prelude::*;
-    use proptest_derive::Arbitrary;
-
-    #[derive(Debug, Arbitrary)]
-    struct TestMarket {
-        #[proptest(strategy = "(1i64..=i64::MAX)")]
-        quote_lot_size: i64,
-        #[proptest(strategy = "(1i64..=FEES_SCALE_FACTOR as i64)")]
-        taker_fee: i64,
-    }
-
-    impl From<TestMarket> for Market {
-        fn from(tm: TestMarket) -> Self {
-            Self {
-                quote_lot_size: tm.quote_lot_size,
-                taker_fee: tm.taker_fee,
-                ..Self::zeroed()
-            }
-        }
-    }
-
-    proptest! {
-        #[test]
-        fn lamports_to_quote_in_bid(tm: TestMarket, lamports: u64) {
-            let market = Market::from(tm);
-
-            let user_max_quote_lots = market.max_quote_lots_from_lamports(lamports, Side::Bid);
-            let order_max_quote_lots = market.subtract_taker_fees(user_max_quote_lots);
-
-            let max_taker_fees = market.taker_fees_ceil(order_max_quote_lots);
-            let max_lamports_to_pay =
-                (order_max_quote_lots * market.quote_lot_size) + max_taker_fees;
-
-            assert!(lamports >= max_lamports_to_pay as u64);
-        }
-    }
-}

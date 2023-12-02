@@ -50,7 +50,7 @@ async fn insufficient_funds() -> Result<(), TransportError> {
     .unwrap();
 
     solana.set_account_balance(owner_token_0, 2_500).await;
-    solana.set_account_balance(owner_token_1, 101).await;
+    solana.set_account_balance(owner_token_1, 110).await;
 
     // some lamports are already deposited
     send_tx(
@@ -129,8 +129,9 @@ async fn insufficient_funds() -> Result<(), TransportError> {
     assert_eq!(position.base_free_native, 0);
     assert_eq!(position.quote_free_native, 0);
 
+    assert_eq!(position.referrer_rebates_available, 1);
+    assert_eq!(solana.token_account_balance(owner_token_1).await, 9);
     assert_eq!(solana.token_account_balance(owner_token_0).await, 0);
-    assert_eq!(solana.token_account_balance(owner_token_1).await, 0);
 
     Ok(())
 }
