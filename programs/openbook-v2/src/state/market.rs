@@ -196,6 +196,20 @@ impl Market {
         i64::MAX / self.quote_lot_size
     }
 
+    pub fn max_base_lots_from_lamports(&self, lamports: u64) -> i64 {
+        let base_lots = lamports / self.base_lot_size as u64;
+        std::cmp::min(self.max_base_lots() as u64, base_lots)
+            .try_into()
+            .unwrap()
+    }
+
+    pub fn max_quote_lots_from_lamports(&self, lamports: u64) -> i64 {
+        let quote_lots = lamports / self.quote_lot_size as u64;
+        std::cmp::min(self.max_quote_lots() as u64, quote_lots)
+            .try_into()
+            .unwrap()
+    }
+
     /// Convert from the price stored on the book to the price used in value calculations
     pub fn lot_to_native_price(&self, price: i64) -> I80F48 {
         I80F48::from_num(price) * I80F48::from_num(self.quote_lot_size)

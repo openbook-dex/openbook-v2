@@ -263,6 +263,25 @@ impl SolanaCookie {
         self.get_account::<TokenAccount>(address).await.amount
     }
 
+    pub async fn set_account_balance(&self, address: Pubkey, amount: u64) {
+        let mut account = self
+            .context
+            .borrow_mut()
+            .banks_client
+            .get_account(address)
+            .await
+            .unwrap()
+            .unwrap();
+
+        let mut account_data = spl_token::state::Account::unpack(&account.data).unwrap();
+        account_data.amount = amount;
+        spl_token::state::Account::pack(account_data, &mut account.data).unwrap();
+
+        self.context
+            .borrow_mut()
+            .set_account(&address, &account.into());
+    }
+
     pub fn program_log(&self) -> Vec<String> {
         self.last_transaction_log.borrow().clone()
     }
