@@ -146,6 +146,25 @@ export class OpenBookV2Client {
     return address.publicKey;
   }
 
+  public async createProgramAccountIx(
+    authority: PublicKey,
+    size: number,
+  ): Promise<[TransactionInstruction, Signer]> {
+    const lamports = await this.connection.getMinimumBalanceForRentExemption(
+      size,
+    );
+    const address = Keypair.generate();
+
+    const ix = SystemProgram.createAccount({
+      fromPubkey: authority,
+      newAccountPubkey: address.publicKey,
+      lamports,
+      space: size,
+      programId: this.programId,
+    });
+    return [ix, address];
+  }
+
   // Get the MarketAccount from the market publicKey
   public async getMarketAccount(
     publicKey: PublicKey,
@@ -218,7 +237,7 @@ export class OpenBookV2Client {
   }
 
   public async createMarket(
-    payer: Keypair,
+    payer: PublicKey,
     name: string,
     quoteMint: PublicKey,
     baseMint: PublicKey,
@@ -238,10 +257,19 @@ export class OpenBookV2Client {
     },
     market = Keypair.generate(),
     collectFeeAdmin?: PublicKey,
-  ): Promise<PublicKey> {
-    const bids = await this.createProgramAccount(payer, BooksideSpace);
-    const asks = await this.createProgramAccount(payer, BooksideSpace);
-    const eventHeap = await this.createProgramAccount(payer, EventHeapSpace);
+  ): Promise<[TransactionInstruction[], Signer[]]> {
+    const [bidIx, bidsKeypair] = await this.createProgramAccountIx(
+      payer,
+      BooksideSpace,
+    );
+    const [askIx, askKeypair] = await this.createProgramAccountIx(
+      payer,
+      BooksideSpace,
+    );
+    const [eventHeapIx, eventHeapKeypair] = await this.createProgramAccountIx(
+      payer,
+      EventHeapSpace,
+    );
 
     const [marketAuthority] = PublicKey.findProgramAddressSync(
       [Buffer.from('Market'), market.publicKey.toBuffer()],
@@ -278,10 +306,10 @@ export class OpenBookV2Client {
       .accounts({
         market: market.publicKey,
         marketAuthority,
-        bids,
-        asks,
-        eventHeap,
-        payer: payer.publicKey,
+        bids: bidsKeypair.publicKey,
+        asks: askKeypair.publicKey,
+        eventHeap: eventHeapKeypair.publicKey,
+        payer,
         marketBaseVault: baseVault,
         marketQuoteVault: quoteVault,
         baseMint,
@@ -291,8 +319,7 @@ export class OpenBookV2Client {
         associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
         oracleA,
         oracleB,
-        collectFeeAdmin:
-          collectFeeAdmin != null ? collectFeeAdmin : payer.publicKey,
+        collectFeeAdmin: collectFeeAdmin != null ? collectFeeAdmin : payer,
         openOrdersAdmin,
         consumeEventsAdmin,
         closeMarketAdmin,
@@ -301,11 +328,10 @@ export class OpenBookV2Client {
       })
       .instruction();
 
-    await this.sendAndConfirmTransaction([ix], {
-      additionalSigners: [payer, market],
-    });
-
-    return market.publicKey;
+    return [
+      [bidIx, askIx, eventHeapIx, ix],
+      [market, bidsKeypair, askKeypair, eventHeapKeypair],
+    ];
   }
 
   // Book and EventHeap must be empty before closing a market.
