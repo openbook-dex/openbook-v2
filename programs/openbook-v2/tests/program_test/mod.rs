@@ -11,7 +11,6 @@ use solana_program_test::*;
 use solana_sdk::pubkey::Pubkey;
 pub use solana_sdk::transport::TransportError;
 use spl_token::*;
-use spl_token_2022::extension::transfer_fee::instruction::initialize_transfer_fee_config;
 
 use crate::program_test::setup::{create_open_orders_account, create_open_orders_indexer, Token};
 
@@ -181,25 +180,31 @@ impl TestContextBuilder {
             mint.pubkey = mint_pk;
 
             if is_v2 {
+                // // let data = &spl_token_2022::state::Mint {
+                // //     is_initialized: true,
+                // //     mint_authority: COption::Some(mint.authority.pubkey()),
+                // //     decimals: mint.decimals,
+                // //     ..spl_token_2022::state::Mint::default()
+                // // };
+
                 let token_program_id = &spl_token_2022::id();
-                let data = &spl_token_2022::state::Mint {
-                    is_initialized: true,
-                    mint_authority: COption::Some(mint.authority.pubkey()),
-                    decimals: mint.decimals,
-                    ..spl_token_2022::state::Mint::default()
-                };
 
-                let _ = initialize_transfer_fee_config(
-                    token_program_id,
-                    &mint_pk,
-                    Some(&TestKeypair::new().pubkey()),
-                    Some(&TestKeypair::new().pubkey()),
-                    100,
-                    600000,
-                );
 
-                self.test
-                    .add_packable_account(mint_pk, u32::MAX as u64, data, token_program_id);
+                let mt = &mut [
+                    0, 0, 0, 0, 4, 247, 47, 57, 209, 110, 157, 109, 160, 121, 171, 208, 200, 239, 213, 176, 99, 115, 170, 18, 174, 216, 161, 129, 11, 191, 60, 109, 18, 186, 124, 250, 35, 93, 42, 136, 121, 45,
+                    0, 0, 5, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0
+                    , 108, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 247, 47, 57, 209, 110, 157, 109, 160, 121, 171, 208, 200, 239, 213, 176, 99, 115,
+                    170, 18, 174, 216, 161, 129, 11, 191, 60, 109, 18, 186, 124, 250, 175, 243, 74, 214, 1, 0, 0, 0, 18, 2, 0, 0, 0, 0, 0, 0, 0, 32, 61, 136, 121, 45, 0, 0, 44, 1, 18, 2, 0, 0, 0, 0, 0, 0, 0, 32,
+                    61, 136, 121, 45, 0, 0, 44, 1
+                ];
+
+
+                let mut account = solana_sdk::account::Account::new(u32::MAX as u64, mt.len(), token_program_id);
+                account.data = mt.to_vec();
+                self.test.add_account(mint_pk, account);
+                
+
             } else {
                 let token_program_id = &spl_token::id();
                 let data = &spl_token::state::Mint {
