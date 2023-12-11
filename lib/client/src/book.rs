@@ -132,6 +132,7 @@ pub fn iterate_book(
                 accounts.push(best_opposing.node.owner);
                 number_of_dropped_expired_orders += 1;
             }
+            continue;
         }
 
         if remaining_base_lots == 0 || remaining_quote_lots == 0 || limit == 0 {
