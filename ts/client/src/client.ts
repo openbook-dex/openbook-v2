@@ -916,6 +916,37 @@ export class OpenBookV2Client {
     return await this.sendAndConfirmTransaction([ix]);
   }
 
+  // Consume events for one specific account. Add other extra accounts as it's "free".
+  public async consumeEventsForAccount(
+    marketPublicKey: PublicKey,
+    market: MarketAccount,
+    openOrdersAccount: PublicKey,
+  ): Promise<TransactionSignature> {
+    const slots = await this.getSlotsToConsume(openOrdersAccount, market);
+
+    const allAccounts = await this.getAccountsToConsume(market);
+    // Create a set to remove duplicates
+    const uniqueAccounts = new Set([openOrdersAccount, ...allAccounts]);
+    // Limit extra accounts to 10 due tx limit and add openOrdersAccount
+    const remainingAccounts = [...uniqueAccounts].slice(0, 10);
+    const accountsMeta: AccountMeta[] = remainingAccounts.map((remaining) => ({
+      pubkey: remaining,
+      isSigner: false,
+      isWritable: true,
+    }));
+
+    const ix = await this.program.methods
+      .consumeGivenEvents(slots)
+      .accounts({
+        eventHeap: market.eventHeap,
+        market: marketPublicKey,
+        consumeEventsAdmin: market.consumeEventsAdmin.key,
+      })
+      .remainingAccounts(accountsMeta)
+      .instruction();
+    return await this.sendAndConfirmTransaction([ix]);
+  }
+
   // In order to get slots for certain key use getSlotsToConsume and include the key in the remainingAccounts
   public async consumeGivenEvents(
     marketPublicKey: PublicKey,
