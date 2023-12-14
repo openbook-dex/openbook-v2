@@ -403,10 +403,17 @@ export class OpenBookV2Client {
       .instruction();
   }
 
-  public findOpenOrders(
-    market: PublicKey,
+  public async findAllOpenOrders(
+    owner: PublicKey = this.walletPk,
+  ): Promise<PublicKey[]> {
+    const indexer = this.findOpenOrdersIndexer(owner);
+    const indexerAccount = await this.getOpenOrdersIndexer(indexer);
+    return indexerAccount?.addresses ?? [];
+  }
+
+  public findOpenOrderAtIndex(
+    owner: PublicKey = this.walletPk,
     accountIndex: BN,
-    owner: PublicKey,
   ): PublicKey {
     const [openOrders] = PublicKey.findProgramAddressSync(
       [
@@ -417,6 +424,21 @@ export class OpenBookV2Client {
       this.programId,
     );
     return openOrders;
+  }
+
+  public async findOpenOrdersForMarket(
+    owner: PublicKey = this.walletPk,
+    market: PublicKey,
+  ): Promise<PublicKey[]> {
+    const openOrdersForMarket: PublicKey[] = [];
+    const allOpenOrders = await this.findAllOpenOrders(owner);
+    allOpenOrders.filter(async (x) => {
+      const openOrdersAccount = await this.getOpenOrders(x);
+      if (openOrdersAccount?.market === market) {
+        openOrdersForMarket.push(x);
+      }
+    });
+    return allOpenOrders;
   }
 
   public async createOpenOrdersInstruction(
