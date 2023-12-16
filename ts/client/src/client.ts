@@ -103,6 +103,10 @@ export class OpenBookV2Client {
     return (this.program.provider as AnchorProvider).wallet.publicKey;
   }
 
+  public setProvider(provider: AnchorProvider): void {
+    this.program = new Program<OpenbookV2>(IDL, this.programId, provider);
+  }
+
   /// Transactions
   public async sendAndConfirmTransaction(
     ixs: TransactionInstruction[],
@@ -432,13 +436,14 @@ export class OpenBookV2Client {
   ): Promise<PublicKey[]> {
     const openOrdersForMarket: PublicKey[] = [];
     const allOpenOrders = await this.findAllOpenOrders(owner);
-    allOpenOrders.filter(async (x) => {
-      const openOrdersAccount = await this.getOpenOrders(x);
-      if (openOrdersAccount?.market === market) {
-        openOrdersForMarket.push(x);
+
+    for await (const openOrders of allOpenOrders) {
+      const openOrdersAccount = await this.getOpenOrders(openOrders);
+      if (openOrdersAccount?.market.toString() === market.toString()) {
+        openOrdersForMarket.push(openOrders);
       }
-    });
-    return allOpenOrders;
+    }
+    return openOrdersForMarket;
   }
 
   public async createOpenOrdersInstruction(
@@ -479,7 +484,7 @@ export class OpenBookV2Client {
         code: 403,
       });
     }
-    const openOrdersAccount = this.findOpenOrders(market, accountIndex, owner);
+    const openOrdersAccount = this.findOpenOrderAtIndex(owner, accountIndex);
 
     ixs.push(
       await this.program.methods
