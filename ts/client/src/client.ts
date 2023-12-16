@@ -510,6 +510,7 @@ export class OpenBookV2Client {
     accountIndex: BN,
     name: string,
     owner: Keypair = payer,
+    delegateAccount: PublicKey | null = null,
     openOrdersIndexer: PublicKey | null = null,
   ): Promise<PublicKey> {
     const [ixs, openOrdersAccount] = await this.createOpenOrdersInstruction(
@@ -517,6 +518,7 @@ export class OpenBookV2Client {
       accountIndex,
       name,
       owner.publicKey,
+      delegateAccount,
       openOrdersIndexer,
     );
     const additionalSigners = [payer];
