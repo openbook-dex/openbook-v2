@@ -452,7 +452,7 @@ export class OpenBookV2Client {
     name: string,
     owner: PublicKey = this.walletPk,
     delegateAccount: PublicKey | null,
-    openOrdersIndexer?: PublicKey,
+    openOrdersIndexer?: PublicKey | null,
   ): Promise<[TransactionInstruction[], PublicKey]> {
     const ixs: TransactionInstruction[] = [];
 

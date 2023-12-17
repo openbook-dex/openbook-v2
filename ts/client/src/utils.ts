@@ -13,6 +13,7 @@ import {
 ///
 export const U64_MAX_BN = new BN('18446744073709551615');
 export const I64_MAX_BN = new BN('9223372036854775807').toTwos(64);
+export const QUOTE_DECIMALS = 6;
 
 export function bpsToDecimal(bps: number): number {
   return bps / 10000;
@@ -30,11 +31,20 @@ export function toUiDecimals(nativeAmount: number, decimals: number): number {
   return nativeAmount / Math.pow(10, decimals);
 }
 
-export const QUOTE_DECIMALS = 6;
-
-export function toUiDecimalsForQuote(nativeAmount: number): number {
+export function nativeToUiDecimalsForQuote(
+  nativeAmount: number,
+  quoteDecimals = QUOTE_DECIMALS,
+): number {
   return toUiDecimals(nativeAmount, QUOTE_DECIMALS);
 }
+
+export function nativeToUiDecimalsForBase(
+  nativeAmount: number,
+  baseDecimals: number,
+): number {
+  return toUiDecimals(nativeAmount, baseDecimals);
+}
+
 
 export function roundTo5(number): number {
   if (number < 1) {
