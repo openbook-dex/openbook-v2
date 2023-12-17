@@ -174,3 +174,11 @@ export function baseLotsToUi(market: MarketAccount, quantity: BN): number {
 export function quoteLotsToUi(market: MarketAccount, quantity: BN): number {
   return parseFloat(quantity.toString()) * quoteLotsToUiConverter(market);
 }
+
+export function quantityToUiBase(
+  market: MarketAccount,
+  quantity: BN,
+  decimals: number,
+): number {
+  return toUiDecimals(quantity.mul(market.baseLotSize).toNumber(), decimals);
+}
