@@ -202,18 +202,14 @@ impl OpenBookClient {
         name: &str,
     ) -> anyhow::Result<(Pubkey, Signature)> {
         let open_orders_indexer = Pubkey::find_program_address(
-            &[
-                b"OpenOrdersIndexer".as_ref(),
-                owner.pubkey().as_ref(),
-                market.as_ref(),
-            ],
+            &[b"OpenOrdersIndexer".as_ref(), owner.pubkey().as_ref()],
             &openbook_v2::id(),
         )
         .0;
 
         let account = Pubkey::find_program_address(
             &[
-                b"OpenOrdersAccount".as_ref(),
+                b"OpenOrders".as_ref(),
                 owner.pubkey().as_ref(),
                 &account_num.to_le_bytes(),
             ],
