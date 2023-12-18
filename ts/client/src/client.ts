@@ -873,6 +873,32 @@ export class OpenBookV2Client {
     throw new Error('No open order indexer for the specified owner');
   }
 
+  public async settleFundsIx(
+    openOrdersPublicKey: PublicKey,
+    openOrdersAccount: OpenOrdersAccount,
+    marketPublicKey: PublicKey,
+    market: MarketAccount,
+    openOrdersDelegate?: Keypair,
+  ): Promise<[TransactionInstruction, Signer[]]> {
+    const ix = await this.program.methods
+      .settleFunds()
+      .accounts({
+        owner: openOrdersDelegate?.publicKey ?? openOrdersAccount.owner,
+        market: marketPublicKey,
+        openOrdersAccount: openOrdersPublicKey,
+        marketAuthority: market.marketAuthority,
+        marketBaseVault: market.marketBaseVault,
+        marketQuoteVault: market.marketQuoteVault,
+        tokenProgram: TOKEN_PROGRAM_ID,
+      })
+      .instruction();
+    const signers: Signer[] = [];
+    if (openOrdersDelegate != null) {
+      signers.push(openOrdersDelegate);
+    }
+    return [ix, signers];
+  }
+
   public async closeOpenOrdersAccountIx(
     payer: Keypair,
     owner: Keypair = payer,
