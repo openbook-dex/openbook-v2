@@ -81,10 +81,6 @@ impl OpenOrdersAccount {
         self.owner == ix_signer
     }
 
-    pub fn check_owner_only_if_delegate(&self, owner: Pubkey) -> bool {
-        self.delegate.is_none() || self.owner == owner
-    }
-
     pub fn all_orders(&self) -> impl Iterator<Item = &OpenOrder> {
         self.open_orders.iter()
     }

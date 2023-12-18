@@ -32,13 +32,13 @@ pub struct SettleFunds<'info> {
     #[account(
         mut,
         token::mint = market_base_vault.mint,
-        constraint = open_orders_account.load()?.check_owner_only_if_delegate(user_base_account.owner)
+        constraint = user_base_account.owner == open_orders_account.load()?.owner
     )]
     pub user_base_account: Account<'info, TokenAccount>,
     #[account(
         mut,
         token::mint = market_quote_vault.mint,
-        constraint = open_orders_account.load()?.check_owner_only_if_delegate(user_quote_account.owner)
+        constraint = user_quote_account.owner == open_orders_account.load()?.owner
     )]
     pub user_quote_account: Account<'info, TokenAccount>,
     #[account(
