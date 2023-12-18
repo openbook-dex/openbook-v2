@@ -83,6 +83,8 @@ pub struct OpenOrdersPositionLog {
     pub market: Pubkey,
     /// Base lots in open bids
     pub bids_base_lots: i64,
+    /// Quote lots in open bids
+    pub bids_quote_lots: i64,
     /// Base lots in open asks
     pub asks_base_lots: i64,
     pub base_free_native: u64,

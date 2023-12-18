@@ -168,10 +168,13 @@ impl OpenOrdersAccount {
             market.fees_accrued += maker_fees as u128;
 
             if fill.maker_out() {
-                self.remove_order(fill.maker_slot as usize, fill.quantity);
+                self.remove_order(fill.maker_slot as usize, fill.quantity, fill.price);
             } else {
                 match side {
-                    Side::Bid => pa.bids_base_lots -= fill.quantity,
+                    Side::Bid => {
+                        pa.bids_base_lots -= fill.quantity;
+                        pa.bids_quote_lots -= fill.quantity * fill.price;
+                    }
                     Side::Ask => pa.asks_base_lots -= fill.quantity,
                 };
             }
@@ -201,6 +204,7 @@ impl OpenOrdersAccount {
             open_orders_account_num: self.account_num,
             market: self.market,
             bids_base_lots: pa.bids_base_lots,
+            bids_quote_lots: pa.bids_quote_lots,
             asks_base_lots: pa.asks_base_lots,
             base_free_native: pa.base_free_native,
             quote_free_native: pa.quote_free_native,
@@ -236,6 +240,7 @@ impl OpenOrdersAccount {
             open_orders_account_num: self.account_num,
             market: self.market,
             bids_base_lots: pa.bids_base_lots,
+            bids_quote_lots: pa.bids_quote_lots,
             asks_base_lots: pa.asks_base_lots,
             base_free_native: pa.base_free_native,
             quote_free_native: pa.quote_free_native,
@@ -256,7 +261,10 @@ impl OpenOrdersAccount {
     ) {
         let position = &mut self.position;
         match side {
-            Side::Bid => position.bids_base_lots += order.quantity,
+            Side::Bid => {
+                position.bids_base_lots += order.quantity;
+                position.bids_quote_lots += order.quantity * locked_price;
+            }
             Side::Ask => position.asks_base_lots += order.quantity,
         };
         let slot = order.owner_slot as usize;
@@ -269,7 +277,7 @@ impl OpenOrdersAccount {
         oo.locked_price = locked_price;
     }
 
-    pub fn remove_order(&mut self, slot: usize, base_quantity: i64) {
+    pub fn remove_order(&mut self, slot: usize, base_quantity: i64, price: i64) {
         let oo = self.open_order_by_raw_index(slot);
         assert!(!oo.is_free());
 
@@ -278,7 +286,10 @@ impl OpenOrdersAccount {
 
         // accounting
         match order_side {
-            Side::Bid => position.bids_base_lots -= base_quantity,
+            Side::Bid => {
+                position.bids_base_lots -= base_quantity;
+                position.bids_quote_lots -= base_quantity * price;
+            }
             Side::Ask => position.asks_base_lots -= base_quantity,
         }
 
@@ -304,7 +315,7 @@ impl OpenOrdersAccount {
             Side::Ask => position.base_free_native += base_quantity_native,
         }
 
-        self.remove_order(slot, base_quantity);
+        self.remove_order(slot, base_quantity, price);
     }
 }
 
@@ -331,8 +342,11 @@ pub struct Position {
     /// Cumulative taker volume in quote native units (display only)
     pub taker_volume: u128,
 
+    /// Quote lots in open bids
+    pub bids_quote_lots: i64,
+
     #[derivative(Debug = "ignore")]
-    pub reserved: [u8; 72],
+    pub reserved: [u8; 64],
 }
 
 const_assert_eq!(
@@ -354,7 +368,8 @@ impl Default for Position {
             penalty_heap_count: 0,
             maker_volume: 0,
             taker_volume: 0,
-            reserved: [0; 72],
+            bids_quote_lots: 0,
+            reserved: [0; 64],
         }
     }
 }
@@ -376,6 +391,7 @@ impl Position {
             && self.locked_maker_fees == 0
             && self.referrer_rebates_available == 0
             && self.penalty_heap_count == 0
+            && self.bids_quote_lots == 0
     }
 }
 
