@@ -5,7 +5,9 @@ import {
 } from '@solana/web3.js';
 import BN from 'bn.js';
 import {
+  MintLayout,
   ASSOCIATED_TOKEN_PROGRAM_ID,
+  type RawMint,
   TOKEN_PROGRAM_ID,
 } from '@solana/spl-token';
 ///
@@ -44,7 +46,6 @@ export function nativeToUiDecimalsForBase(
 ): number {
   return toUiDecimals(nativeAmount, baseDecimals);
 }
-
 
 export function roundTo5(number): number {
   if (number < 1) {
@@ -135,4 +136,8 @@ export async function createAssociatedTokenAccountIdempotentInstruction(
     programId: ASSOCIATED_TOKEN_PROGRAM_ID,
     data: Buffer.from([0x1]),
   });
+}
+
+export function decodeMint(data: Buffer): RawMint {
+  return MintLayout.decode(data);
 }
