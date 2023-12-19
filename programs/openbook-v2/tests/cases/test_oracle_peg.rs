@@ -211,7 +211,7 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
             side: Side::Ask,
             price_lots,
             max_base_lots: 1,
-            max_quote_lots_including_fees: 100_000,
+            max_quote_lots_including_fees,
             client_order_id: 6,
             expiry_timestamp: 0,
             order_type: PlaceOrderType::Limit,
@@ -234,12 +234,17 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
             price_offset: 0,
             peg_limit: price_lots,
             max_base_lots: 1,
-            max_quote_lots_including_fees: 100_000,
+            max_quote_lots_including_fees,
             client_order_id: 7,
         },
     )
     .await
     .unwrap();
+
+    // Order has been taken
+    let open_order = solana.get_account::<OpenOrdersAccount>(account_1).await;
+    assert_eq!(open_order.version, 1);
+    assert_eq!(open_order.position.bids_quote_lots, 0);
 
     send_tx(
         solana,
@@ -335,6 +340,11 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
     )
     .await
     .unwrap();
+
+    // Order has been taken
+    let open_order = solana.get_account::<OpenOrdersAccount>(account_1).await;
+    assert_eq!(open_order.position.bids_quote_lots, 0);
+
     send_tx(
         solana,
         ConsumeEventsInstruction {
@@ -443,6 +453,11 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
     )
     .await
     .unwrap();
+
+    // Order has been taken
+    let open_order = solana.get_account::<OpenOrdersAccount>(account_1).await;
+    assert_eq!(open_order.position.bids_quote_lots, 0);
+
     send_tx(
         solana,
         ConsumeEventsInstruction {
@@ -476,6 +491,7 @@ async fn test_take_peg_invalid_oracle() -> Result<(), TransportError> {
         ..
     } = TestContext::new_with_market(TestNewMarketInitialize::default()).await?;
     let solana = &context.solana.clone();
+    let peg_limit = 100;
 
     send_tx(
         solana,
@@ -487,7 +503,7 @@ async fn test_take_peg_invalid_oracle() -> Result<(), TransportError> {
             market_vault: market_quote_vault,
             side: Side::Bid,
             price_offset: -1,
-            peg_limit: 100,
+            peg_limit,
             max_base_lots: 1,
             max_quote_lots_including_fees: 100_000,
             client_order_id: 0,
@@ -528,7 +544,9 @@ async fn test_take_peg_invalid_oracle() -> Result<(), TransportError> {
         let oo_1 = solana.get_account::<OpenOrdersAccount>(account_1).await;
         let oo_2 = solana.get_account::<OpenOrdersAccount>(account_2).await;
         assert_eq!(oo_1.position.bids_base_lots, 1);
+        assert_eq!(oo_1.position.bids_quote_lots, 1 * peg_limit);
         assert_eq!(oo_2.position.asks_base_lots, 1);
+        assert_eq!(oo_2.position.bids_quote_lots, 0);
     }
 
     // but once the oracle is back, the match will be made

@@ -21,6 +21,7 @@ pub fn create_open_orders_account(
     account.bump = *ctx.bumps.get("open_orders_account").unwrap();
     account.owner = ctx.accounts.owner.key();
     account.delegate = ctx.accounts.delegate_account.non_zero_key();
+    account.version = 1;
     account.open_orders = [OpenOrder::default(); MAX_OPEN_ORDERS];
 
     Ok(())

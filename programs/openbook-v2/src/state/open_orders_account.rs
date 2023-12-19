@@ -138,7 +138,7 @@ impl OpenOrdersAccount {
         let mut locked_maker_fees = maker_fees;
         let mut locked_amount_above_fill_price = 0;
 
-        if fill.peg_limit != -1 && side == Side::Bid {
+        let locked_price = if fill.peg_limit != -1 && side == Side::Bid {
             let quote_at_lock_price =
                 (fill.quantity * fill.peg_limit * market.quote_lot_size) as u64;
             let quote_to_free = quote_at_lock_price - quote_native;
@@ -149,7 +149,10 @@ impl OpenOrdersAccount {
 
             locked_maker_fees = fees_at_lock_price;
             locked_amount_above_fill_price = quote_to_free + maker_fees_to_free;
-        }
+            fill.peg_limit
+        } else {
+            fill.price
+        };
 
         {
             let pa = &mut self.position;
@@ -172,12 +175,12 @@ impl OpenOrdersAccount {
             market.fees_accrued += maker_fees as u128;
 
             if fill.maker_out() {
-                self.remove_order(fill.maker_slot as usize, fill.quantity, fill.price);
+                self.remove_order(fill.maker_slot as usize, fill.quantity, locked_price);
             } else {
                 match side {
                     Side::Bid => {
                         pa.bids_base_lots -= fill.quantity;
-                        pa.bids_quote_lots -= fill.quantity * fill.price;
+                        pa.bids_quote_lots -= fill.quantity * locked_price;
                     }
                     Side::Ask => pa.asks_base_lots -= fill.quantity,
                 };
@@ -281,7 +284,7 @@ impl OpenOrdersAccount {
         oo.locked_price = locked_price;
     }
 
-    pub fn remove_order(&mut self, slot: usize, base_quantity: i64, price: i64) {
+    pub fn remove_order(&mut self, slot: usize, base_quantity: i64, locked_price: i64) {
         let oo = self.open_order_by_raw_index(slot);
         assert!(!oo.is_free());
 
@@ -292,7 +295,7 @@ impl OpenOrdersAccount {
         match order_side {
             Side::Bid => {
                 position.bids_base_lots -= base_quantity;
-                position.bids_quote_lots -= base_quantity * price;
+                position.bids_quote_lots -= base_quantity * locked_price;
             }
             Side::Ask => position.asks_base_lots -= base_quantity,
         }
