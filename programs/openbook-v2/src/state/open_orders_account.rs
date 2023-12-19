@@ -345,13 +345,16 @@ pub struct Position {
     /// Quote lots in open bids
     pub bids_quote_lots: i64,
 
+    // Introducing a version as we are adding a new field bids_quote_lots
+    pub version: u8,
+
     #[derivative(Debug = "ignore")]
-    pub reserved: [u8; 64],
+    pub reserved: [u8; 63],
 }
 
 const_assert_eq!(
     size_of::<Position>(),
-    8 + 8 + 8 + 8 + 8 + 8 + 8 + 16 + 16 + 72
+    8 + 8 + 8 + 8 + 8 + 8 + 8 + 16 + 16 + 8 + 1 + 63
 );
 const_assert_eq!(size_of::<Position>(), 160);
 const_assert_eq!(size_of::<Position>() % 8, 0);
@@ -369,7 +372,8 @@ impl Default for Position {
             maker_volume: 0,
             taker_volume: 0,
             bids_quote_lots: 0,
-            reserved: [0; 64],
+            version: 1,
+            reserved: [0; 63],
         }
     }
 }
@@ -391,7 +395,8 @@ impl Position {
             && self.locked_maker_fees == 0
             && self.referrer_rebates_available == 0
             && self.penalty_heap_count == 0
-            && self.bids_quote_lots == 0
+            // For version 0, bids_quote_lots was not properly tracked
+            && (self.version == 0 || self.bids_quote_lots == 0)
     }
 }
 
