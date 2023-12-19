@@ -26,7 +26,10 @@ pub struct OpenOrdersAccount {
 
     pub bump: u8,
 
-    pub padding: [u8; 3],
+    // Introducing a version as we are adding a new field bids_quote_lots
+    pub version: u8,
+
+    pub padding: [u8; 2],
 
     pub position: Position,
 
@@ -67,7 +70,8 @@ impl OpenOrdersAccount {
             delegate: NonZeroPubkeyOption::default(),
             account_num: 0,
             bump: 0,
-            padding: [0; 3],
+            version: 1,
+            padding: [0; 2],
             position: Position::default(),
             open_orders: [OpenOrder::default(); MAX_OPEN_ORDERS],
         })
@@ -345,16 +349,13 @@ pub struct Position {
     /// Quote lots in open bids
     pub bids_quote_lots: i64,
 
-    // Introducing a version as we are adding a new field bids_quote_lots
-    pub version: u8,
-
     #[derivative(Debug = "ignore")]
-    pub reserved: [u8; 63],
+    pub reserved: [u8; 64],
 }
 
 const_assert_eq!(
     size_of::<Position>(),
-    8 + 8 + 8 + 8 + 8 + 8 + 8 + 16 + 16 + 8 + 1 + 63
+    8 + 8 + 8 + 8 + 8 + 8 + 8 + 16 + 16 + 8 + 64
 );
 const_assert_eq!(size_of::<Position>(), 160);
 const_assert_eq!(size_of::<Position>() % 8, 0);
@@ -372,8 +373,7 @@ impl Default for Position {
             maker_volume: 0,
             taker_volume: 0,
             bids_quote_lots: 0,
-            version: 1,
-            reserved: [0; 63],
+            reserved: [0; 64],
         }
     }
 }
@@ -387,7 +387,7 @@ impl Position {
         self.asks_base_lots != 0 || self.bids_base_lots != 0
     }
 
-    pub fn is_empty(&self) -> bool {
+    pub fn is_empty(&self, version: u8) -> bool {
         self.bids_base_lots == 0
             && self.asks_base_lots == 0
             && self.base_free_native == 0
@@ -396,7 +396,7 @@ impl Position {
             && self.referrer_rebates_available == 0
             && self.penalty_heap_count == 0
             // For version 0, bids_quote_lots was not properly tracked
-            && (self.version == 0 || self.bids_quote_lots == 0)
+            && (version == 0 || self.bids_quote_lots == 0)
     }
 }
 
