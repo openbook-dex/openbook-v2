@@ -2246,6 +2246,7 @@ dependencies = [
  "pyth-sdk-solana",
  "raydium-amm-v3",
  "solana-program",
+ "solana-security-txt",
  "static_assertions",
  "switchboard-program",
  "switchboard-v2",
@@ -3557,6 +3558,12 @@ dependencies = [
  "rustversion",
  "syn 2.0.31",
 ]
+
+[[package]]
+name = "solana-security-txt"
+version = "1.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "468aa43b7edb1f9b7b7b686d5c3aeb6630dc1708e86e31343499dd5c4d775183"
 
 [[package]]
 name = "solana-stake-program"
