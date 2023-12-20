@@ -1857,9 +1857,13 @@ export interface OpenbookV2 {
             type: 'u8';
           },
           {
+            name: 'version';
+            type: 'u8';
+          },
+          {
             name: 'padding';
             type: {
-              array: ['u8', 3];
+              array: ['u8', 2];
             };
           },
           {
@@ -2093,9 +2097,14 @@ export interface OpenbookV2 {
             type: 'u128';
           },
           {
+            name: 'bidsQuoteLots';
+            docs: ['Quote lots in open bids'];
+            type: 'i64';
+          },
+          {
             name: 'reserved';
             type: {
-              array: ['u8', 72];
+              array: ['u8', 64];
             };
           },
         ];
@@ -3276,6 +3285,11 @@ export interface OpenbookV2 {
         },
         {
           name: 'bidsBaseLots';
+          type: 'i64';
+          index: false;
+        },
+        {
+          name: 'bidsQuoteLots';
           type: 'i64';
           index: false;
         },
@@ -5395,9 +5409,13 @@ export const IDL: OpenbookV2 = {
             type: 'u8',
           },
           {
+            name: 'version',
+            type: 'u8',
+          },
+          {
             name: 'padding',
             type: {
-              array: ['u8', 3],
+              array: ['u8', 2],
             },
           },
           {
@@ -5631,9 +5649,14 @@ export const IDL: OpenbookV2 = {
             type: 'u128',
           },
           {
+            name: 'bidsQuoteLots',
+            docs: ['Quote lots in open bids'],
+            type: 'i64',
+          },
+          {
             name: 'reserved',
             type: {
-              array: ['u8', 72],
+              array: ['u8', 64],
             },
           },
         ],
@@ -6814,6 +6837,11 @@ export const IDL: OpenbookV2 = {
         },
         {
           name: 'bidsBaseLots',
+          type: 'i64',
+          index: false,
+        },
+        {
+          name: 'bidsQuoteLots',
           type: 'i64',
           index: false,
         },
