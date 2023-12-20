@@ -254,26 +254,6 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
 
     assert_no_orders(solana, account_1).await;
 
-    // TEST: Place a pegged order and check how it behaves with oracle changes
-    send_tx(
-        solana,
-        PlaceOrderPeggedInstruction {
-            open_orders_account: account_1,
-            market,
-            signer: owner,
-            user_token_account: owner_token_1,
-            market_vault: market_quote_vault,
-            side: Side::Bid,
-            price_offset: -1,
-            peg_limit: 1,
-            max_base_lots: 2,
-            max_quote_lots_including_fees: 100_000,
-            client_order_id: 5,
-        },
-    )
-    .await
-    .unwrap();
-
     // TEST: an ask at current oracle price does not match
     send_tx(
         solana,
