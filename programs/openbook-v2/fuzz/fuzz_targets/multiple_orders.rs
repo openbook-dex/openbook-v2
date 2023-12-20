@@ -368,6 +368,7 @@ fn run_fuzz(fuzz_data: FuzzData) -> Corpus {
             };
 
             assert_eq!(position.bids_base_lots, 0);
+            assert_eq!(position.bids_quote_lots, 0);
             assert_eq!(position.asks_base_lots, 0);
             assert_eq!(position.base_free_native, 0);
             assert_eq!(position.quote_free_native, 0);
