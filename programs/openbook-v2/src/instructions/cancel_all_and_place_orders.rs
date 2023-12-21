@@ -8,11 +8,11 @@ use crate::state::*;
 use crate::token_utils::*;
 
 #[allow(clippy::too_many_arguments)]
-pub fn cancel_and_place_orders(
-    ctx: Context<CancelAndPlaceOrders>,
+pub fn cancel_all_and_place_orders(
+    ctx: Context<CancelAllAndPlaceOrders>,
     cancel_client_orders_ids: Vec<u64>,
     mut orders: Vec<Order>,
-    limits: Vec<u8>,
+    limit: u8,
 ) -> Result<Vec<Option<u128>>> {
     let mut open_orders_account = ctx.accounts.open_orders_account.load_mut()?;
     let open_orders_account_pk = ctx.accounts.open_orders_account.key();
@@ -40,25 +40,7 @@ pub fn cancel_and_place_orders(
         clock.slot,
     )?;
 
-    for client_order_id in cancel_client_orders_ids {
-        let oo = open_orders_account.find_order_with_client_order_id(client_order_id);
-        if let Some(oo) = oo {
-            let order_id = oo.id;
-            let order_side_and_tree = oo.side_and_tree();
-
-            let cancel_result = book.cancel_order(
-                &mut open_orders_account,
-                order_id,
-                order_side_and_tree,
-                *market,
-                Some(ctx.accounts.open_orders_account.key()),
-            );
-            // Allow cancel fails due order ID not found. Otherwise propagates error
-            if !cancel_result.is_anchor_error_with_code(OpenBookError::OrderIdNotFound.into()) {
-                cancel_result?;
-            }
-        };
-    }
+    book.cancel_all_orders(&mut open_orders_account, *market, limit, None)?;
 
     let mut base_amount = 0_u64;
     let mut quote_amount = 0_u64;

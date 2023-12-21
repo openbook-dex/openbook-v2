@@ -257,14 +257,16 @@ pub mod openbook_v2 {
     }
 
     /// Cancel orders and place multiple orders.
-    pub fn cancel_and_place_orders(
-        ctx: Context<CancelAndPlaceOrders>,
-        cancel_client_orders_ids: Vec<u64>,
-        place_orders: Vec<PlaceOrderArgs>,
+    pub fn cancel_all_and_place_orders(
+        ctx: Context<CancelAllAndPlaceOrders>,
+        orders_type: PlaceOrderType,
+        bids: Vec<PlaceMultipleOrdersArgs>,
+        asks: Vec<PlaceMultipleOrdersArgs>,
+        limit: u8,
     ) -> Result<Vec<Option<u128>>> {
         let mut orders = Vec::new();
         let mut limits = Vec::new();
-        for place_order in place_orders.iter() {
+        for (i, place_order) in bids.iter().enumerate() {
             require_gte!(
                 place_order.price_lots,
                 1,
@@ -279,32 +281,61 @@ pub mod openbook_v2 {
                 }
             };
             orders.push(Order {
-                side: place_order.side,
-                max_base_lots: place_order.max_base_lots,
+                side: Side::Bid,
+                max_base_lots: i64::MAX,
                 max_quote_lots_including_fees: place_order.max_quote_lots_including_fees,
-                client_order_id: place_order.client_order_id,
+                client_order_id: i as u64,
                 time_in_force,
-                self_trade_behavior: place_order.self_trade_behavior,
-                params: match place_order.order_type {
+                self_trade_behavior: SelfTradeBehavior::CancelProvide,
+                params: match orders_type {
                     PlaceOrderType::Market => OrderParams::Market,
                     PlaceOrderType::ImmediateOrCancel => OrderParams::ImmediateOrCancel {
                         price_lots: place_order.price_lots,
                     },
                     _ => OrderParams::Fixed {
                         price_lots: place_order.price_lots,
-                        order_type: place_order.order_type.to_post_order_type()?,
+                        order_type: orders_type.to_post_order_type()?,
                     },
                 },
             });
-            limits.push(place_order.limit);
+            limits.push(limit);
+        }
+        for (i, place_order) in asks.iter().enumerate() {
+            require_gte!(
+                place_order.price_lots,
+                1,
+                OpenBookError::InvalidInputPriceLots
+            );
+
+            let time_in_force = match Order::tif_from_expiry(place_order.expiry_timestamp) {
+                Some(t) => t,
+                None => {
+                    msg!("Order is already expired");
+                    continue;
+                }
+            };
+            orders.push(Order {
+                side: Side::Ask,
+                max_base_lots: i64::MAX,
+                max_quote_lots_including_fees: place_order.max_quote_lots_including_fees,
+                client_order_id: (i + bids.len()) as u64,
+                time_in_force,
+                self_trade_behavior: SelfTradeBehavior::CancelProvide,
+                params: match orders_type {
+                    PlaceOrderType::Market => OrderParams::Market,
+                    PlaceOrderType::ImmediateOrCancel => OrderParams::ImmediateOrCancel {
+                        price_lots: place_order.price_lots,
+                    },
+                    _ => OrderParams::Fixed {
+                        price_lots: place_order.price_lots,
+                        order_type: orders_type.to_post_order_type()?,
+                    },
+                },
+            });
+            limits.push(limit);
         }
         #[cfg(feature = "enable-gpl")]
-        return instructions::cancel_and_place_orders(
-            ctx,
-            cancel_client_orders_ids,
-            orders,
-            limits,
-        );
+        return instructions::cancel_all_and_place_orders(ctx, orders, limits);
 
         #[cfg(not(feature = "enable-gpl"))]
         Ok(vec![])
@@ -571,6 +602,14 @@ pub struct PlaceOrderArgs {
     // Use this to limit compute used during order matching.
     // When the limit is reached, processing stops and the instruction succeeds.
     pub limit: u8,
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize, Debug, Copy, Clone)]
+#[cfg_attr(feature = "arbitrary", derive(arbitrary::Arbitrary))]
+pub struct PlaceMultipleOrdersArgs {
+    pub price_lots: i64,
+    pub max_quote_lots_including_fees: i64,
+    pub expiry_timestamp: u64,
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Debug, Copy, Clone)]
