@@ -28,7 +28,7 @@ jobs:
 
       - name: Verifiable Build
         run: |
-          anchor build --verifiable --docker-image backpackapp/build:v${{ env.ANCHOR_VERSION }} --solana-version ${{ env.SOLANA_VERSION }} --arch sbf -- --features enable-gpl
+          anchor build --verifiable --docker-image backpackapp/build:v${{ env.ANCHOR_VERSION }} --solana-version ${{ env.SOLANA_VERSION }} -- --features enable-gpl
 
       - name: Generate Checksum
         run: |
