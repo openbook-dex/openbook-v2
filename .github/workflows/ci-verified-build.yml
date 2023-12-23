@@ -5,7 +5,7 @@ on:
       ['v*']
 
 env:
-  APP_NAME: 'openbook-v2'
+  APP_NAME: 'openbook_v2'
   SOLANA_VERSION: '1.16.1'
   ANCHOR_VERSION: '0.28.0'
 
