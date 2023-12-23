@@ -19,12 +19,12 @@ jobs:
         with:
           submodules: 'recursive'
 
+      - name: Cache dependencies
+        uses: Swatinem/rust-cache@v2
+
       - name: Setup Anchor
         run: |
           cargo install --git https://github.com/coral-xyz/anchor --rev 4e5280be46d859ba1c57fabe4c3916bec742fd69 anchor-cli --locked --force
-
-      - name: Cache dependencies
-        uses: Swatinem/rust-cache@v2
 
       - name: Verifiable Build
         run: |
