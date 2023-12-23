@@ -6,6 +6,8 @@ on:
 
 env:
   APP_NAME: openbook-v2
+  SOLANA_VERSION: '1.16.1'
+  ANCHOR_VERSION: '0.29.0'
 
 jobs:
   build:
@@ -17,13 +19,16 @@ jobs:
         with:
           submodules: 'recursive'
 
-      - name: Setup Anchor
-        run: |
-          cargo install --git https://github.com/coral-xyz/anchor --rev 4e5280be46d859ba1c57fabe4c3916bec742fd69 anchor-cli --locked --force
+    #   - name: Setup Anchor
+    #     run: |
+    #       cargo install --git https://github.com/coral-xyz/anchor --rev 4e5280be46d859ba1c57fabe4c3916bec742fd69 anchor-cli --locked --force
+
+      - name: Cache dependencies
+        uses: Swatinem/rust-cache@v2
 
       - name: Verifiable Build
         run: |
-          anchor build --verifiable --docker-image backpackapp/build:v0.28.0 --solana-version 1.16.14 -- --features enable-gpl
+          anchor build --verifiable --docker-image backpackapp/build:v${{ env.ANCHOR_VERSION }} --solana-version ${{ env.SOLANA_VERSION }} -- --features enable-gpl
 
       - name: Generate Checksum
         run: |
