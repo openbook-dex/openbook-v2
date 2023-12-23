@@ -5,7 +5,7 @@ on:
       ['v*']
 
 env:
-  APP_NAME: openbook-v2
+  APP_NAME: 'openbook-v2'
   SOLANA_VERSION: '1.16.1'
   ANCHOR_VERSION: '0.28.0'
 
@@ -24,11 +24,11 @@ jobs:
 
       - name: Setup Anchor
         run: |
-          cargo install --git https://github.com/coral-xyz/anchor --rev 4e5280be46d859ba1c57fabe4c3916bec742fd69 anchor-cli --locked --force
+          cargo install --git https://github.com/coral-xyz/anchor/releases/tag/v${{ env.ANCHOR_VERSION }} anchor-cli --locked --force
 
       - name: Verifiable Build
         run: |
-          anchor build --verifiable --docker-image backpackapp/build:v${{ env.ANCHOR_VERSION }} --solana-version ${{ env.SOLANA_VERSION }} -- --features enable-gpl
+          anchor build --verifiable --docker-image backpackapp/build:v${{ env.ANCHOR_VERSION }} --solana-version ${{ env.SOLANA_VERSION }} --arch sbf -- --features enable-gpl
 
       - name: Generate Checksum
         run: |
@@ -49,7 +49,7 @@ jobs:
           name: ${{ github.ref_name }}
           body: |
             sha256 checksum: ${{ env.CHECKSUM }}
-            github commit: ${{ github.sha }}
+            GitHub commit: ${{ github.sha }}
           files: |
-            ./target/verifiable/${{ env.APP_NAME }}-${{ github.ref_name }}-.so
+            ./target/verifiable/${{ env.APP_NAME }}.so
             ./${{ env.APP_NAME }}-${{ github.ref_name }}-sbom.json
