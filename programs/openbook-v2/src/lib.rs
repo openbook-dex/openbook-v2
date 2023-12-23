@@ -624,7 +624,7 @@ pub struct PlaceTakeOrderArgs {
 
 // Add security details to explorer.solana.com
 #[cfg(not(feature = "no-entrypoint"))]
-use solana_security_txt::security_txt;
+use {default_env::default_env, solana_security_txt::security_txt};
 
 #[cfg(not(feature = "no-entrypoint"))]
 security_txt! {
@@ -634,5 +634,7 @@ security_txt! {
     policy: "https://github.com/openbook-dex/openbook-v2/blob/master/SECURITY.md",
     preferred_languages: "en",
     source_code: "https://github.com/openbook-dex/openbook-v2",
-    auditors: "https://github.com/openbook-dex/openbook-v2/blob/master/audit/openbook_audit.pdf"
+    auditors: "https://github.com/openbook-dex/openbook-v2/blob/master/audit/openbook_audit.pdf",
+    source_revision: default_env!("GITHUB_SHA", "Unknown source revision"),
+    source_release: default_env!("GITHUB_REF_NAME", "Unknown source release")
 }
