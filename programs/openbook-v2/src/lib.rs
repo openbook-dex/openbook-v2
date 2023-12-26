@@ -264,16 +264,13 @@ pub mod openbook_v2 {
         asks: Vec<PlaceMultipleOrdersArgs>,
         limit: u8,
     ) -> Result<Vec<Option<u128>>> {
-        let mut orders = Vec::new();
-        let mut limits = Vec::new();
-        for (i, place_order) in bids.iter().enumerate() {
-            require_gte!(
-                place_order.price_lots,
-                1,
-                OpenBookError::InvalidInputPriceLots
-            );
+        let n_bids = bids.len();
 
-            let time_in_force = match Order::tif_from_expiry(place_order.expiry_timestamp) {
+        let mut orders = vec![];
+        for (i, order) in bids.into_iter().chain(asks).enumerate() {
+            require_gte!(order.price_lots, 1, OpenBookError::InvalidInputPriceLots);
+
+            let time_in_force = match Order::tif_from_expiry(order.expiry_timestamp) {
                 Some(t) => t,
                 None => {
                     msg!("Order is already expired");
@@ -281,61 +278,27 @@ pub mod openbook_v2 {
                 }
             };
             orders.push(Order {
-                side: Side::Bid,
-                max_base_lots: i64::MAX,
-                max_quote_lots_including_fees: place_order.max_quote_lots_including_fees,
+                side: if i < n_bids { Side::Bid } else { Side::Ask },
+                max_base_lots: i64::MIN, // this will be overriden to max_base_lots
+                max_quote_lots_including_fees: order.max_quote_lots_including_fees,
                 client_order_id: i as u64,
                 time_in_force,
                 self_trade_behavior: SelfTradeBehavior::CancelProvide,
                 params: match orders_type {
                     PlaceOrderType::Market => OrderParams::Market,
                     PlaceOrderType::ImmediateOrCancel => OrderParams::ImmediateOrCancel {
-                        price_lots: place_order.price_lots,
+                        price_lots: order.price_lots,
                     },
                     _ => OrderParams::Fixed {
-                        price_lots: place_order.price_lots,
+                        price_lots: order.price_lots,
                         order_type: orders_type.to_post_order_type()?,
                     },
                 },
             });
-            limits.push(limit);
         }
-        for (i, place_order) in asks.iter().enumerate() {
-            require_gte!(
-                place_order.price_lots,
-                1,
-                OpenBookError::InvalidInputPriceLots
-            );
 
-            let time_in_force = match Order::tif_from_expiry(place_order.expiry_timestamp) {
-                Some(t) => t,
-                None => {
-                    msg!("Order is already expired");
-                    continue;
-                }
-            };
-            orders.push(Order {
-                side: Side::Ask,
-                max_base_lots: 0, // Setting 0 now. Will be set to max_base_lot later
-                max_quote_lots_including_fees: place_order.max_quote_lots_including_fees,
-                client_order_id: (i + bids.len()) as u64,
-                time_in_force,
-                self_trade_behavior: SelfTradeBehavior::CancelProvide,
-                params: match orders_type {
-                    PlaceOrderType::Market => OrderParams::Market,
-                    PlaceOrderType::ImmediateOrCancel => OrderParams::ImmediateOrCancel {
-                        price_lots: place_order.price_lots,
-                    },
-                    _ => OrderParams::Fixed {
-                        price_lots: place_order.price_lots,
-                        order_type: orders_type.to_post_order_type()?,
-                    },
-                },
-            });
-            limits.push(limit);
-        }
         #[cfg(feature = "enable-gpl")]
-        return instructions::cancel_all_and_place_orders(ctx, orders, limits);
+        return instructions::cancel_all_and_place_orders(ctx, orders, limit);
 
         #[cfg(not(feature = "enable-gpl"))]
         Ok(vec![])

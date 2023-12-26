@@ -10,7 +10,6 @@ use crate::token_utils::*;
 #[allow(clippy::too_many_arguments)]
 pub fn cancel_all_and_place_orders(
     ctx: Context<CancelAllAndPlaceOrders>,
-    cancel_client_orders_ids: Vec<u64>,
     mut orders: Vec<Order>,
     limit: u8,
 ) -> Result<Vec<Option<u128>>> {
@@ -40,12 +39,12 @@ pub fn cancel_all_and_place_orders(
         clock.slot,
     )?;
 
-    book.cancel_all_orders(&mut open_orders_account, *market, limit, None)?;
+    book.cancel_all_orders(&mut open_orders_account, *market, u8::MAX, None)?;
 
     let mut base_amount = 0_u64;
     let mut quote_amount = 0_u64;
     let mut order_ids = Vec::new();
-    for (order, limit) in orders.iter_mut().zip(limits) {
+    for order in orders.iter_mut() {
         order.max_base_lots = market.max_base_lots();
         require_gte!(
             order.max_quote_lots_including_fees,
