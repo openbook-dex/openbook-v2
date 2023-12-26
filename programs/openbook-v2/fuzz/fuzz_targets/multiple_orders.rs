@@ -31,7 +31,7 @@ impl FuzzData {
                 FuzzInstruction::PlaceOrder { .. }
                     | FuzzInstruction::PlaceOrderPegged { .. }
                     | FuzzInstruction::PlaceTakeOrder { .. }
-                    | FuzzInstruction::CancelAndPlaceOrders { .. }
+                    | FuzzInstruction::CancelAllAndPlaceOrders { .. }
             )
         })
     }
@@ -73,9 +73,9 @@ enum FuzzInstruction {
         data: openbook_v2::instruction::EditOrderPegged,
         makers: Option<HashSet<UserId>>,
     },
-    CancelAndPlaceOrders {
+    CancelAllAndPlaceOrders {
         user_id: UserId,
-        data: openbook_v2::instruction::CancelAndPlaceOrders,
+        data: openbook_v2::instruction::CancelAllAndPlaceOrders,
         makers: Option<HashSet<UserId>>,
     },
     CancelOrder {
@@ -171,13 +171,13 @@ impl FuzzRunner for FuzzContext {
                 .edit_order_pegged(user_id, data, makers.as_ref())
                 .map_or_else(error_parser::edit_order_pegged, keep),
 
-            FuzzInstruction::CancelAndPlaceOrders {
+            FuzzInstruction::CancelAllAndPlaceOrders {
                 user_id,
                 data,
                 makers,
             } => self
-                .cancel_and_place_orders(user_id, data, makers.as_ref())
-                .map_or_else(error_parser::cancel_and_place_orders, keep),
+                .cancel_all_and_place_orders(user_id, data, makers.as_ref())
+                .map_or_else(error_parser::cancel_all_and_place_orders, keep),
 
             FuzzInstruction::CancelOrder { user_id, data } => self
                 .cancel_order(user_id, data)
@@ -534,7 +534,7 @@ mod error_parser {
         }
     }
 
-    pub fn cancel_and_place_orders(err: ProgramError) -> Corpus {
+    pub fn cancel_all_and_place_orders(err: ProgramError) -> Corpus {
         match err {
             e if e == OpenBookError::InvalidInputLots.into() => Corpus::Reject,
             e if e == OpenBookError::InvalidInputLotsSize.into() => Corpus::Reject,
