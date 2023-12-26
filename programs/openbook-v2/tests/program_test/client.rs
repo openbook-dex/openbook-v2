@@ -10,7 +10,9 @@ use std::sync::Arc;
 
 use super::solana::SolanaCookie;
 use super::utils::TestKeypair;
-use openbook_v2::{state::*, PlaceOrderArgs, PlaceOrderPeggedArgs, PlaceTakeOrderArgs};
+use openbook_v2::{
+    state::*, PlaceMultipleOrdersArgs, PlaceOrderArgs, PlaceOrderPeggedArgs, PlaceTakeOrderArgs,
+};
 
 #[async_trait::async_trait(?Send)]
 pub trait ClientAccountLoader {
@@ -1327,29 +1329,32 @@ impl ClientInstruction for EditOrderInstruction {
 }
 
 #[derive(Clone)]
-pub struct CancelAndPlaceOrdersInstruction {
+pub struct CancelAllAndPlaceOrdersInstruction {
     pub open_orders_account: Pubkey,
     pub open_orders_admin: Option<TestKeypair>,
     pub market: Pubkey,
     pub signer: TestKeypair,
     pub user_base_account: Pubkey,
     pub user_quote_account: Pubkey,
-    pub cancel_client_orders_ids: Vec<u64>,
-    pub place_orders: Vec<PlaceOrderArgs>,
+    pub orders_type: PlaceOrderType,
+    pub bids: Vec<PlaceMultipleOrdersArgs>,
+    pub asks: Vec<PlaceMultipleOrdersArgs>,
 }
 
 #[async_trait::async_trait(?Send)]
-impl ClientInstruction for CancelAndPlaceOrdersInstruction {
-    type Accounts = openbook_v2::accounts::CancelAndPlaceOrders;
-    type Instruction = openbook_v2::instruction::CancelAndPlaceOrders;
+impl ClientInstruction for CancelAllAndPlaceOrdersInstruction {
+    type Accounts = openbook_v2::accounts::CancelAllAndPlaceOrders;
+    type Instruction = openbook_v2::instruction::CancelAllAndPlaceOrders;
     async fn to_instruction(
         &self,
         account_loader: impl ClientAccountLoader + 'async_trait,
     ) -> (Self::Accounts, instruction::Instruction) {
         let program_id = openbook_v2::id();
         let instruction = Self::Instruction {
-            cancel_client_orders_ids: self.cancel_client_orders_ids.clone(),
-            place_orders: self.place_orders.clone(),
+            orders_type: self.orders_type,
+            bids: self.bids.clone(),
+            asks: self.asks.clone(),
+            limit: 10,
         };
 
         let market: Market = account_loader.load(&self.market).await.unwrap();
