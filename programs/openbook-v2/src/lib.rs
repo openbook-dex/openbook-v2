@@ -316,7 +316,7 @@ pub mod openbook_v2 {
             };
             orders.push(Order {
                 side: Side::Ask,
-                max_base_lots: i64::MAX,
+                max_base_lots: 0, // Setting 0 now. Will be set to max_base_lot later
                 max_quote_lots_including_fees: place_order.max_quote_lots_including_fees,
                 client_order_id: (i + bids.len()) as u64,
                 time_in_force,

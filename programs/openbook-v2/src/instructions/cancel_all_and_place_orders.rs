@@ -46,7 +46,7 @@ pub fn cancel_all_and_place_orders(
     let mut quote_amount = 0_u64;
     let mut order_ids = Vec::new();
     for (order, limit) in orders.iter_mut().zip(limits) {
-        require_gte!(order.max_base_lots, 0, OpenBookError::InvalidInputLots);
+        order.max_base_lots = market.max_base_lots();
         require_gte!(
             order.max_quote_lots_including_fees,
             0,
