@@ -622,7 +622,7 @@ export interface OpenbookV2 {
       };
     },
     {
-      name: 'cancelAndPlaceOrders';
+      name: 'cancelAllAndPlaceOrders';
       docs: ['Cancel orders and place multiple orders.'];
       accounts: [
         {
@@ -701,18 +701,30 @@ export interface OpenbookV2 {
       ];
       args: [
         {
-          name: 'cancelClientOrdersIds';
+          name: 'ordersType';
           type: {
-            vec: 'u64';
+            defined: 'PlaceOrderType';
           };
         },
         {
-          name: 'placeOrders';
+          name: 'bids';
           type: {
             vec: {
-              defined: 'PlaceOrderArgs';
+              defined: 'PlaceMultipleOrdersArgs';
             };
           };
+        },
+        {
+          name: 'asks';
+          type: {
+            vec: {
+              defined: 'PlaceMultipleOrdersArgs';
+            };
+          };
+        },
+        {
+          name: 'limit';
+          type: 'u8';
         },
       ];
       returns: {
@@ -2667,6 +2679,26 @@ export interface OpenbookV2 {
       };
     },
     {
+      name: 'PlaceMultipleOrdersArgs';
+      type: {
+        kind: 'struct';
+        fields: [
+          {
+            name: 'priceLots';
+            type: 'i64';
+          },
+          {
+            name: 'maxQuoteLotsIncludingFees';
+            type: 'i64';
+          },
+          {
+            name: 'expiryTimestamp';
+            type: 'u64';
+          },
+        ];
+      };
+    },
+    {
       name: 'PlaceOrderPeggedArgs';
       type: {
         kind: 'struct';
@@ -4174,7 +4206,7 @@ export const IDL: OpenbookV2 = {
       },
     },
     {
-      name: 'cancelAndPlaceOrders',
+      name: 'cancelAllAndPlaceOrders',
       docs: ['Cancel orders and place multiple orders.'],
       accounts: [
         {
@@ -4253,18 +4285,30 @@ export const IDL: OpenbookV2 = {
       ],
       args: [
         {
-          name: 'cancelClientOrdersIds',
+          name: 'ordersType',
           type: {
-            vec: 'u64',
+            defined: 'PlaceOrderType',
           },
         },
         {
-          name: 'placeOrders',
+          name: 'bids',
           type: {
             vec: {
-              defined: 'PlaceOrderArgs',
+              defined: 'PlaceMultipleOrdersArgs',
             },
           },
+        },
+        {
+          name: 'asks',
+          type: {
+            vec: {
+              defined: 'PlaceMultipleOrdersArgs',
+            },
+          },
+        },
+        {
+          name: 'limit',
+          type: 'u8',
         },
       ],
       returns: {
@@ -6214,6 +6258,26 @@ export const IDL: OpenbookV2 = {
           {
             name: 'limit',
             type: 'u8',
+          },
+        ],
+      },
+    },
+    {
+      name: 'PlaceMultipleOrdersArgs',
+      type: {
+        kind: 'struct',
+        fields: [
+          {
+            name: 'priceLots',
+            type: 'i64',
+          },
+          {
+            name: 'maxQuoteLotsIncludingFees',
+            type: 'i64',
+          },
+          {
+            name: 'expiryTimestamp',
+            type: 'u64',
           },
         ],
       },

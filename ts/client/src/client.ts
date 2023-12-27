@@ -33,7 +33,10 @@ import { Side } from './utils/utils';
 
 export type IdsSource = 'api' | 'static' | 'get-program-accounts';
 export type PlaceOrderArgs = IdlTypes<OpenbookV2>['PlaceOrderArgs'];
+export type PlaceOrderType = IdlTypes<OpenbookV2>['PlaceOrderType'];
 export type PlaceOrderPeggedArgs = IdlTypes<OpenbookV2>['PlaceOrderPeggedArgs'];
+export type PlaceMultipleOrdersArgs =
+  IdlTypes<OpenbookV2>['PlaceMultipleOrdersArgs'];
 export type OracleConfigParams = IdlTypes<OpenbookV2>['OracleConfigParams'];
 export type OracleConfig = IdlTypes<OpenbookV2>['OracleConfig'];
 export type MarketAccount = IdlAccounts<OpenbookV2>['market'];
@@ -756,19 +759,22 @@ export class OpenBookV2Client {
     return [ix, signers];
   }
 
-  public async cancelAndPlaceOrdersIx(
+  // Use OrderType from './utils/utils' for orderType
+  public async cancelAllAndPlaceOrdersIx(
     openOrdersPublicKey: PublicKey,
     marketPublicKey: PublicKey,
     market: MarketAccount,
     userBaseAccount: PublicKey,
     userQuoteAccount: PublicKey,
     openOrdersAdmin: PublicKey | null,
-    cancelClientOrdersIds: BN[],
-    placeOrders: PlaceOrderArgs[],
+    orderType: PlaceOrderType,
+    bids: PlaceMultipleOrdersArgs[],
+    asks: PlaceMultipleOrdersArgs[],
+    limit: number = 12,
     openOrdersDelegate?: Keypair,
   ): Promise<[TransactionInstruction, Signer[]]> {
     const ix = await this.program.methods
-      .cancelAndPlaceOrders(cancelClientOrdersIds, placeOrders)
+      .cancelAllAndPlaceOrders(orderType, bids, asks, limit)
       .accounts({
         signer:
           openOrdersDelegate != null
