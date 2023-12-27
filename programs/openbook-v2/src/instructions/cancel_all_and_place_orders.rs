@@ -29,6 +29,7 @@ pub fn cancel_all_and_place_orders(
         asks: ctx.accounts.asks.load_mut()?,
     };
     let mut event_heap = ctx.accounts.event_heap.load_mut()?;
+    let event_heap_size_before = event_heap.len();
 
     let now_ts: u64 = clock.unix_timestamp.try_into().unwrap();
 
@@ -124,6 +125,10 @@ pub fn cancel_all_and_place_orders(
 
     market.base_deposit_total += deposit_base_amount;
     market.quote_deposit_total += deposit_quote_amount;
+
+    if event_heap.len() > event_heap_size_before {
+        position.penalty_heap_count += 1;
+    }
 
     token_transfer(
         deposit_quote_amount,

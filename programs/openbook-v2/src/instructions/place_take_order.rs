@@ -33,6 +33,7 @@ pub fn place_take_order<'info>(
     };
 
     let mut event_heap = ctx.accounts.event_heap.load_mut()?;
+    let event_heap_size_before = event_heap.len();
 
     let now_ts: u64 = clock.unix_timestamp.try_into().unwrap();
 
@@ -87,6 +88,15 @@ pub fn place_take_order<'info>(
     let seeds = market_seeds!(market, ctx.accounts.market.key());
 
     drop(market);
+
+    if event_heap.len() > event_heap_size_before {
+        system_program_transfer(
+            PENALTY_EVENT_HEAP,
+            &ctx.accounts.system_program,
+            &ctx.accounts.penalty_payer,
+            &ctx.accounts.market,
+        )?;
+    }
 
     let (user_deposit_acc, user_withdraw_acc, market_deposit_acc, market_withdraw_acc) = match side
     {

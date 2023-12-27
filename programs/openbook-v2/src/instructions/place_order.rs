@@ -37,6 +37,7 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<
         asks: ctx.accounts.asks.load_mut()?,
     };
     let mut event_heap = ctx.accounts.event_heap.load_mut()?;
+    let event_heap_size_before = event_heap.len();
 
     let now_ts: u64 = clock.unix_timestamp.try_into().unwrap();
 
@@ -98,6 +99,10 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<
             deposit_amount
         }
     };
+
+    if event_heap.len() > event_heap_size_before {
+        position.penalty_heap_count += 1;
+    }
 
     token_transfer(
         deposit_amount,
