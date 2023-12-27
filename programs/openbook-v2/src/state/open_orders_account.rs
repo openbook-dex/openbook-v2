@@ -340,7 +340,8 @@ pub struct Position {
 
     pub locked_maker_fees: u64,
     pub referrer_rebates_available: u64,
-    /// Not implemented at the moment
+    /// Count of ixs when events are added to the heap
+    /// To avoid this, send remaining accounts in order to process the events
     pub penalty_heap_count: u64,
 
     /// Cumulative maker volume in quote native units (display only)

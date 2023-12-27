@@ -7,6 +7,8 @@ use anchor_spl::token::{Token, TokenAccount};
 pub struct SettleFunds<'info> {
     #[account(mut)]
     pub owner: Signer<'info>,
+    #[account(mut)]
+    pub penalty_payer: Signer<'info>,
 
     #[account(
         mut,

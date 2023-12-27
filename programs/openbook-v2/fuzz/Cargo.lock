@@ -1006,17 +1006,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "default-env"
-version = "0.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f753eb82d29277e79efc625e84aecacfd4851ee50e05a8573a4740239a77bfd3"
-dependencies = [
- "proc-macro2 0.4.30",
- "quote 0.6.13",
- "syn 0.15.44",
-]
-
-[[package]]
 name = "derivation-path"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2250,7 +2239,6 @@ dependencies = [
  "arbitrary",
  "arrayref",
  "bytemuck",
- "default-env",
  "derivative",
  "fixed",
  "itertools 0.10.5",

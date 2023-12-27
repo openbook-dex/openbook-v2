@@ -589,6 +589,7 @@ impl ClientInstruction for PlaceTakeOrderInstruction {
             oracle_a: market.oracle_a.into(),
             oracle_b: market.oracle_b.into(),
             signer: self.signer.pubkey(),
+            penalty_payer: self.signer.pubkey(),
             user_base_account: self.user_base_account,
             user_quote_account: self.user_quote_account,
             market_base_vault: self.market_base_vault,
@@ -833,6 +834,7 @@ impl ClientInstruction for SettleFundsInstruction {
         let market: Market = account_loader.load(&self.market).await.unwrap();
         let accounts = Self::Accounts {
             owner: self.owner.pubkey(),
+            penalty_payer: self.owner.pubkey(),
             open_orders_account: self.open_orders_account,
             market: self.market,
             market_authority: market.market_authority,
@@ -880,6 +882,7 @@ impl ClientInstruction for SettleFundsExpiredInstruction {
         let accounts = Self::Accounts {
             close_market_admin: self.close_market_admin.pubkey(),
             owner: self.owner.pubkey(),
+            penalty_payer: self.owner.pubkey(),
             open_orders_account: self.open_orders_account,
             market: self.market,
             market_authority: market.market_authority,

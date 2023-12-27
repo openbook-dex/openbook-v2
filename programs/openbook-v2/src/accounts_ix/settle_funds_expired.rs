@@ -9,6 +9,8 @@ pub struct SettleFundsExpired<'info> {
     pub close_market_admin: Signer<'info>,
     #[account(mut)]
     pub owner: Signer<'info>,
+    #[account(mut)]
+    pub penalty_payer: Signer<'info>,
     #[account(
         mut,
         has_one = market,
@@ -54,6 +56,7 @@ impl<'info> SettleFundsExpired<'info> {
     pub fn to_settle_funds_accounts(&self) -> SettleFunds<'info> {
         SettleFunds {
             owner: self.owner.clone(),
+            penalty_payer: self.penalty_payer.clone(),
             open_orders_account: self.open_orders_account.clone(),
             market: self.market.clone(),
             market_authority: self.market_authority.clone(),
