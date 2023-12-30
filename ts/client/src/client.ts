@@ -884,6 +884,10 @@ export class OpenBookV2Client {
     openOrdersAccount: OpenOrdersAccount,
     marketPublicKey: PublicKey,
     market: MarketAccount,
+    userBaseAccount: PublicKey,
+    userQuoteAccount: PublicKey,
+    referrerAccount: PublicKey | null,
+    penaltyPayer: PublicKey | null,
     openOrdersDelegate?: Keypair,
   ): Promise<[TransactionInstruction, Signer[]]> {
     const ix = await this.program.methods
@@ -896,8 +900,14 @@ export class OpenBookV2Client {
         marketBaseVault: market.marketBaseVault,
         marketQuoteVault: market.marketQuoteVault,
         tokenProgram: TOKEN_PROGRAM_ID,
+        SystemProgram: SystemProgram.programId,
+        userBaseAccount: userBaseAccount,
+        userQuoteAccount: userQuoteAccount,
+        referrerAccount: referrerAccount,
+        penaltyPayer: penaltyPayer
       })
       .instruction();
+
     const signers: Signer[] = [];
     if (openOrdersDelegate != null) {
       signers.push(openOrdersDelegate);
