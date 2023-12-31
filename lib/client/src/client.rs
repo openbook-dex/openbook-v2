@@ -489,6 +489,64 @@ impl OpenBookClient {
     }
 
     #[allow(clippy::too_many_arguments)]
+    pub async fn cancel_order(
+        &self,
+        market: Market,
+        market_address: Pubkey,
+        order_id: u128,
+    ) -> anyhow::Result<Signature> {
+        let ix = Instruction {
+            program_id: openbook_v2::id(),
+            accounts: {
+                anchor_lang::ToAccountMetas::to_account_metas(
+                    &openbook_v2::accounts::CancelOrder {
+                        open_orders_account: self.open_orders_account,
+                        signer: self.owner(),
+                        market: market_address,
+                        bids: market.bids,
+                        asks: market.asks,
+                    },
+                    None,
+                )
+            },
+            data: anchor_lang::InstructionData::data(&openbook_v2::instruction::CancelOrder {
+                order_id,
+            }),
+        };
+        self.send_and_confirm_owner_tx(vec![ix]).await
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    pub async fn cancel_all_orders(
+        &self,
+        market: Market,
+        market_address: Pubkey,
+        side_option: Option<Side>,
+        limit: u8,
+    ) -> anyhow::Result<Signature> {
+        let ix = Instruction {
+            program_id: openbook_v2::id(),
+            accounts: {
+                anchor_lang::ToAccountMetas::to_account_metas(
+                    &openbook_v2::accounts::CancelOrder {
+                        open_orders_account: self.open_orders_account,
+                        signer: self.owner(),
+                        market: market_address,
+                        bids: market.bids,
+                        asks: market.asks,
+                    },
+                    None,
+                )
+            },
+            data: anchor_lang::InstructionData::data(&openbook_v2::instruction::CancelAllOrders {
+                side_option,
+                limit,
+            }),
+        };
+        self.send_and_confirm_owner_tx(vec![ix]).await
+    }
+
+    #[allow(clippy::too_many_arguments)]
     pub async fn deposit(
         &self,
         market_address: Pubkey,
@@ -557,6 +615,32 @@ impl OpenBookClient {
                 )
             },
             data: anchor_lang::InstructionData::data(&openbook_v2::instruction::SettleFunds {}),
+        };
+        self.send_and_confirm_owner_tx(vec![ix]).await
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    pub async fn consume_events(
+        &self,
+        market: Market,
+        market_address: Pubkey,
+        limit: usize,
+    ) -> anyhow::Result<Signature> {
+        let ix = Instruction {
+            program_id: openbook_v2::id(),
+            accounts: {
+                anchor_lang::ToAccountMetas::to_account_metas(
+                    &openbook_v2::accounts::ConsumeEvents {
+                        consume_events_admin: market.consume_events_admin.into(),
+                        market: market_address,
+                        event_heap: market.event_heap,
+                    },
+                    None,
+                )
+            },
+            data: anchor_lang::InstructionData::data(&openbook_v2::instruction::ConsumeEvents {
+                limit,
+            }),
         };
         self.send_and_confirm_owner_tx(vec![ix]).await
     }
