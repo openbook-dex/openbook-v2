@@ -1,5 +1,4 @@
 use anchor_lang::prelude::*;
-use num::complex::ComplexFloat;
 
 use crate::accounts_ix::*;
 use crate::accounts_zerocopy::AccountInfoRef;
@@ -66,13 +65,15 @@ pub fn place_take_order<'info>(
 
     let (deposit_amount, withdraw_amount) = match side {
         Side::Bid => {
-            let total_quote_including_fees = total_quote_taken_native + taker_fees - referrer_amount;
+            let total_quote_including_fees =
+                total_quote_taken_native + taker_fees - referrer_amount;
             market.base_deposit_total -= total_base_taken_native;
             market.quote_deposit_total += total_quote_including_fees;
             (total_quote_including_fees, total_base_taken_native)
         }
         Side::Ask => {
-            let total_quote_discounting_fees = total_quote_taken_native - taker_fees + referrer_amount;
+            let total_quote_discounting_fees =
+                total_quote_taken_native - taker_fees + referrer_amount;
             market.base_deposit_total += total_base_taken_native;
             market.quote_deposit_total -= total_quote_discounting_fees;
             (total_base_taken_native, total_quote_discounting_fees)
