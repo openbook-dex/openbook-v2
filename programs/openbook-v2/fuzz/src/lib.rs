@@ -464,7 +464,6 @@ impl FuzzContext {
         referrer_id: Option<&ReferrerId>,
         makers: Option<&HashSet<UserId>>,
     ) -> ProgramResult {
-        let referrer_account = referrer_id.map(|id| *self.get_or_create_new_referrer(id));
         let user = self.get_or_create_new_user(user_id);
 
         let accounts = openbook_v2::accounts::PlaceTakeOrder {
@@ -484,7 +483,6 @@ impl FuzzContext {
             token_program: spl_token::ID,
             system_program: system_program::ID,
             open_orders_admin: None,
-            referrer_account,
         };
 
         let remaining = makers.map_or_else(Vec::new, |makers| {

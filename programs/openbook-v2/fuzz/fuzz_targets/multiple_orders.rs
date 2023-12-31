@@ -60,7 +60,6 @@ enum FuzzInstruction {
     PlaceTakeOrder {
         user_id: UserId,
         data: openbook_v2::instruction::PlaceTakeOrder,
-        referrer_id: Option<ReferrerId>,
         makers: Option<HashSet<UserId>>,
     },
     EditOrder {
@@ -149,10 +148,9 @@ impl FuzzRunner for FuzzContext {
             FuzzInstruction::PlaceTakeOrder {
                 user_id,
                 data,
-                referrer_id,
                 makers,
             } => self
-                .place_take_order(user_id, data, referrer_id.as_ref(), makers.as_ref())
+                .place_take_order(user_id, data, makers.as_ref())
                 .map_or_else(error_parser::place_take_order, keep),
 
             FuzzInstruction::EditOrder {

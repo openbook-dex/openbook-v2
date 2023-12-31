@@ -8,7 +8,7 @@ use crate::token_utils::*;
 
 #[allow(clippy::too_many_arguments)]
 pub fn place_take_order<'info>(
-    ctx: Context<'_, '_, '_, 'info, PlaceTakeOrder<'info>>,
+    ctx: Context<'_, '_, '_, 'info, <'info>>,
     order: Order,
     limit: u8,
 ) -> Result<()> {
