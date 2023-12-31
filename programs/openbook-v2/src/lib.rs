@@ -354,10 +354,7 @@ pub mod openbook_v2 {
     /// add a new order off the book.
     ///
     /// This type of order allows for instant token settlement for the taker.
-    pub fn place_take_order<'info>(
-        ctx: Context<'_, '_, '_, 'info, PlaceTakeOrder<'info>>,
-        args: PlaceTakeOrderArgs,
-    ) -> Result<()> {
+    pub fn place_take_order(ctx: Context<PlaceTakeOrder>, args: PlaceTakeOrderArgs) -> Result<()> {
         require_gte!(args.price_lots, 1, OpenBookError::InvalidInputPriceLots);
 
         let order = Order {
