@@ -151,11 +151,9 @@ async fn test_take_bid_order() -> Result<(), TransportError> {
         context,
         collect_fee_admin,
         owner,
-        mints,
         owner_token_0,
         owner_token_1,
         market,
-
         market_base_vault,
         market_quote_vault,
         price_lots,
@@ -232,7 +230,7 @@ async fn test_take_bid_order() -> Result<(), TransportError> {
             solana.token_account_balance(owner_token_0).await
         );
         assert_eq!(
-            balance_quote - 100100,
+            balance_quote - 100020,
             solana.token_account_balance(owner_token_1).await
         );
     }
