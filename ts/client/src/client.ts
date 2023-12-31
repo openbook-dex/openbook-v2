@@ -900,11 +900,11 @@ export class OpenBookV2Client {
         marketBaseVault: market.marketBaseVault,
         marketQuoteVault: market.marketQuoteVault,
         tokenProgram: TOKEN_PROGRAM_ID,
-        SystemProgram: SystemProgram.programId,
+        systemProgram: SystemProgram.programId,
         userBaseAccount: userBaseAccount,
         userQuoteAccount: userQuoteAccount,
         referrerAccount: referrerAccount,
-        penaltyPayer: penaltyPayer
+        penaltyPayer: penaltyPayer ?? PublicKey.default,
       })
       .instruction();
 
