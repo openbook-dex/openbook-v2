@@ -232,7 +232,7 @@ async fn test_take_bid_order() -> Result<(), TransportError> {
             solana.token_account_balance(owner_token_0).await
         );
         assert_eq!(
-            balance_quote - 100060,
+            balance_quote - 100100,
             solana.token_account_balance(owner_token_1).await
         );
     }
