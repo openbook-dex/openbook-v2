@@ -461,7 +461,6 @@ impl FuzzContext {
         &mut self,
         user_id: &UserId,
         data: &openbook_v2::instruction::PlaceTakeOrder,
-        referrer_id: Option<&ReferrerId>,
         makers: Option<&HashSet<UserId>>,
     ) -> ProgramResult {
         let user = self.get_or_create_new_user(user_id);
