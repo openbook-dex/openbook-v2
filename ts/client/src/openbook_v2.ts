@@ -878,12 +878,6 @@ export interface OpenbookV2 {
           isSigner: false;
         },
         {
-          name: 'referrerAccount';
-          isMut: true;
-          isSigner: false;
-          isOptional: true;
-        },
-        {
           name: 'oracleA';
           isMut: false;
           isSigner: false;
@@ -4460,12 +4454,6 @@ export const IDL: OpenbookV2 = {
           name: 'userQuoteAccount',
           isMut: true,
           isSigner: false,
-        },
-        {
-          name: 'referrerAccount',
-          isMut: true,
-          isSigner: false,
-          isOptional: true,
         },
         {
           name: 'oracleA',

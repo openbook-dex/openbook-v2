@@ -63,7 +63,6 @@ async fn test_take_ask_order() -> Result<(), TransportError> {
             price_lots,
             max_base_lots: 1,
             max_quote_lots_including_fees: 10000,
-            referrer_account: None,
             open_orders_admin: None,
         },
     )
@@ -87,7 +86,7 @@ async fn test_take_ask_order() -> Result<(), TransportError> {
             solana.token_account_balance(owner_token_0).await
         );
         assert_eq!(
-            balance_quote + 99960,
+            balance_quote + 99980,
             solana.token_account_balance(owner_token_1).await
         );
     }
@@ -152,11 +151,9 @@ async fn test_take_bid_order() -> Result<(), TransportError> {
         context,
         collect_fee_admin,
         owner,
-        mints,
         owner_token_0,
         owner_token_1,
         market,
-
         market_base_vault,
         market_quote_vault,
         price_lots,
@@ -197,11 +194,6 @@ async fn test_take_bid_order() -> Result<(), TransportError> {
     let balance_base = solana.token_account_balance(owner_token_0).await;
     let balance_quote = solana.token_account_balance(owner_token_1).await;
 
-    let admin_token_1 = solana
-        .create_associated_token_account(&collect_fee_admin.pubkey(), mints[1].pubkey)
-        .await;
-    let balance_referral = solana.token_account_balance(admin_token_1).await;
-
     send_tx(
         solana,
         PlaceTakeOrderInstruction {
@@ -215,7 +207,6 @@ async fn test_take_bid_order() -> Result<(), TransportError> {
             price_lots,
             max_base_lots: 1,
             max_quote_lots_including_fees: 10040,
-            referrer_account: Some(admin_token_1),
             open_orders_admin: None,
         },
     )
@@ -239,12 +230,8 @@ async fn test_take_bid_order() -> Result<(), TransportError> {
             solana.token_account_balance(owner_token_0).await
         );
         assert_eq!(
-            balance_quote - 100040,
+            balance_quote - 100020,
             solana.token_account_balance(owner_token_1).await
-        );
-        assert_eq!(
-            balance_referral + 20,
-            solana.token_account_balance(admin_token_1).await
         );
     }
 

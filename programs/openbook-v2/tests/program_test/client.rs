@@ -555,7 +555,6 @@ pub struct PlaceTakeOrderInstruction {
     pub price_lots: i64,
     pub max_base_lots: i64,
     pub max_quote_lots_including_fees: i64,
-    pub referrer_account: Option<Pubkey>,
 }
 #[async_trait::async_trait(?Send)]
 impl ClientInstruction for PlaceTakeOrderInstruction {
@@ -594,7 +593,6 @@ impl ClientInstruction for PlaceTakeOrderInstruction {
             user_quote_account: self.user_quote_account,
             market_base_vault: self.market_base_vault,
             market_quote_vault: self.market_quote_vault,
-            referrer_account: self.referrer_account,
             token_program: Token::id(),
             system_program: System::id(),
         };

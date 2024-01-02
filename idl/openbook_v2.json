@@ -886,12 +886,6 @@
           "isSigner": false
         },
         {
-          "name": "referrerAccount",
-          "isMut": true,
-          "isSigner": false,
-          "isOptional": true
-        },
-        {
           "name": "oracleA",
           "isMut": false,
           "isSigner": false,
