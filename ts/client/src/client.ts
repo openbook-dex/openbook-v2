@@ -715,7 +715,6 @@ export class OpenBookV2Client {
     userQuoteAccount: PublicKey,
     openOrdersAdmin: PublicKey | null,
     args: PlaceOrderArgs,
-    referrerAccount: PublicKey | null,
     remainingAccounts: PublicKey[],
     openOrdersDelegate?: Keypair,
   ): Promise<[TransactionInstruction, Signer[]]> {
@@ -742,7 +741,6 @@ export class OpenBookV2Client {
         marketBaseVault: market.marketBaseVault,
         marketQuoteVault: market.marketQuoteVault,
         marketAuthority: market.marketAuthority,
-        referrerAccount,
         tokenProgram: TOKEN_PROGRAM_ID,
         openOrdersAdmin,
       })
