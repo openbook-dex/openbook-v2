@@ -453,26 +453,30 @@ export class OpenBookV2Client {
     return openOrdersForMarket;
   }
 
+  // If the owner doesn't have an open order indexer, this ix will also add the creation of it.
+  // An open order indexer is needed before creating an open orders account.
   public async createOpenOrdersIx(
     market: PublicKey,
-    accountIndex: BN,
     name: string,
     owner: PublicKey = this.walletPk,
     delegateAccount: PublicKey | null,
     openOrdersIndexer?: PublicKey | null,
   ): Promise<[TransactionInstruction[], PublicKey]> {
     const ixs: TransactionInstruction[] = [];
+    let accountIndex = new BN(1);
 
     if (openOrdersIndexer == null) {
       openOrdersIndexer = this.findOpenOrdersIndexer(owner);
       try {
-        const storedIndexer = await this.connection.getAccountInfo(
+        const storedIndexer = await this.deserializeOpenOrdersIndexerAccount(
           openOrdersIndexer,
         );
         if (storedIndexer == null) {
           ixs.push(
             await this.createOpenOrdersIndexerIx(openOrdersIndexer, owner),
           );
+        } else {
+          accountIndex = new BN(storedIndexer.createdCounter + 1);
         }
       } catch {
         ixs.push(
@@ -480,11 +484,7 @@ export class OpenBookV2Client {
         );
       }
     }
-    if (accountIndex.toNumber() === 0) {
-      throw Object.assign(new Error('accountIndex can not be 0'), {
-        code: 403,
-      });
-    }
+
     const openOrdersAccount = this.findOpenOrderAtIndex(owner, accountIndex);
 
     ixs.push(
@@ -508,19 +508,15 @@ export class OpenBookV2Client {
   public async createOpenOrders(
     payer: Keypair,
     market: PublicKey,
-    accountIndex: BN,
     name: string,
     owner: Keypair = payer,
     delegateAccount: PublicKey | null = null,
-    openOrdersIndexer: PublicKey | null = null,
   ): Promise<PublicKey> {
     const [ixs, openOrdersAccount] = await this.createOpenOrdersIx(
       market,
-      accountIndex,
       name,
       owner.publicKey,
       delegateAccount,
-      openOrdersIndexer,
     );
     const additionalSigners = [payer];
     if (owner !== payer) {
