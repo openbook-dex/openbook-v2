@@ -496,7 +496,7 @@ async fn test_market_maker_fees() -> Result<(), TransportError> {
         let balance_jup_1_after = solana.token_account_balance(jup_user_token_1).await;
         assert_eq!(
             balance_jup_0_before,
-            balance_jup_0_after + 1 * (market_base_lot_size as u64)
+            balance_jup_0_after + (market_base_lot_size as u64)
         );
         assert_eq!(
             balance_jup_1_before + 10000 * (market_quote_lot_size as u64),
@@ -535,7 +535,7 @@ async fn test_market_maker_fees() -> Result<(), TransportError> {
         let balance_owner_0_after = solana.token_account_balance(owner_token_0).await;
         let balance_owner_1_after = solana.token_account_balance(owner_token_1).await;
         assert_eq!(
-            balance_owner_0_before + 1 * (market_base_lot_size as u64),
+            balance_owner_0_before + (market_base_lot_size as u64),
             balance_owner_0_after
         );
         assert_eq!(
