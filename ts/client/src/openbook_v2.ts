@@ -316,11 +316,6 @@ export interface OpenbookV2 {
       ];
       accounts: [
         {
-          name: 'payer';
-          isMut: true;
-          isSigner: true;
-        },
-        {
           name: 'owner';
           isMut: false;
           isSigner: true;
@@ -3893,11 +3888,6 @@ export const IDL: OpenbookV2 = {
         'Close an [`OpenOrdersAccount`](crate::state::OpenOrdersAccount).',
       ],
       accounts: [
-        {
-          name: 'payer',
-          isMut: true,
-          isSigner: true,
-        },
         {
           name: 'owner',
           isMut: false,
