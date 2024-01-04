@@ -271,7 +271,7 @@ impl ClientInstruction for CloseOpenOrdersAccountInstruction {
     }
 
     fn signers(&self) -> Vec<TestKeypair> {
-        vec![self.owner, self.payer]
+        vec![self.owner]
     }
 }
 
