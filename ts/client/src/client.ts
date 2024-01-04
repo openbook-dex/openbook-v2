@@ -910,10 +910,8 @@ export class OpenBookV2Client {
   }
 
   public async closeOpenOrdersAccountIx(
-    payer: Keypair,
     owner: Keypair = payer,
     openOrdersPublicKey: PublicKey,
-    market: MarketAccount,
     solDestination: PublicKey = this.walletPk,
     openOrdersIndexer?: PublicKey,
   ): Promise<[TransactionInstruction, Signer[]]> {
@@ -924,7 +922,6 @@ export class OpenBookV2Client {
       const ix = await this.program.methods
         .closeOpenOrdersAccount()
         .accounts({
-          payer: payer.publicKey,
           owner: owner.publicKey,
           openOrdersIndexer,
           openOrdersAccount: openOrdersPublicKey,

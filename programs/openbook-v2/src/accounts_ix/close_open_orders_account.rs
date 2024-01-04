@@ -3,8 +3,6 @@ use anchor_lang::prelude::*;
 
 #[derive(Accounts)]
 pub struct CloseOpenOrdersAccount<'info> {
-    #[account(mut)]
-    pub payer: Signer<'info>,
     pub owner: Signer<'info>,
     #[account(
         mut,

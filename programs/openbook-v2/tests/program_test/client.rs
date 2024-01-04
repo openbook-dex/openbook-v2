@@ -229,7 +229,6 @@ pub struct CloseOpenOrdersAccountInstruction {
     pub account_num: u32,
     pub market: Pubkey,
     pub owner: TestKeypair,
-    pub payer: TestKeypair,
     pub sol_destination: Pubkey,
 }
 #[async_trait::async_trait(?Send)]
@@ -261,7 +260,6 @@ impl ClientInstruction for CloseOpenOrdersAccountInstruction {
 
         let accounts = openbook_v2::accounts::CloseOpenOrdersAccount {
             owner: self.owner.pubkey(),
-            payer: self.payer.pubkey(),
             open_orders_indexer,
             open_orders_account,
             sol_destination: self.sol_destination,
