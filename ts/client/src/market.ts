@@ -137,7 +137,7 @@ function baseLotsToUiConverter(market: MarketAccount): number {
 }
 function quoteLotsToUiConverter(market: MarketAccount): number {
   return new Big(market.quoteLotSize.toString())
-    .div(new Big(10).pow(QUOTE_DECIMALS))
+    .div(new Big(10).pow(market.quoteDecimals))
     .toNumber();
 }
 
