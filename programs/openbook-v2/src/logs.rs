@@ -27,7 +27,7 @@ pub struct FillLog {
 
     pub taker: Pubkey,
     pub taker_client_order_id: u64,
-    pub taker_fee: u64, // native quote
+    pub taker_fee_ceil: u64, // native quote
 
     pub price: i64,
     pub quantity: i64, // number of base lots
