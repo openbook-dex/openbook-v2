@@ -187,6 +187,13 @@ impl OpenOrdersAccount {
             }
         }
 
+        // Calculate taker fee, ignoring self trades
+        let taker_fee_ceil = if quote_native > 0 && fill.maker != fill.taker {
+            market.taker_fees_ceil(quote_native)
+        } else {
+            0
+        };
+
         emit!(FillLog {
             market: self.market,
             taker_side: fill.taker_side,
@@ -196,11 +203,11 @@ impl OpenOrdersAccount {
             seq_num: fill.seq_num,
             maker: fill.maker,
             maker_client_order_id: fill.maker_client_order_id,
-            maker_fee: market.maker_fee,
+            maker_fee: maker_fees,
             maker_timestamp: fill.maker_timestamp,
             taker: fill.taker,
             taker_client_order_id: fill.taker_client_order_id,
-            taker_fee: market.taker_fee,
+            taker_fee_ceil,
             price: fill.price,
             quantity: fill.quantity,
         });

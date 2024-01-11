@@ -255,7 +255,7 @@ pub struct FillEvent {
 
     pub price: i64,
     pub peg_limit: i64,
-    pub quantity: i64, // number of quote lots
+    pub quantity: i64, // number of base lots
     pub maker_client_order_id: u64,
     pub reserved: [u8; 8],
 }
