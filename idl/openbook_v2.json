@@ -3263,7 +3263,7 @@
         },
         {
           "name": "makerFee",
-          "type": "i64",
+          "type": "u64",
           "index": false
         },
         {
@@ -3282,8 +3282,8 @@
           "index": false
         },
         {
-          "name": "takerFee",
-          "type": "i64",
+          "name": "takerFeeCeil",
+          "type": "u64",
           "index": false
         },
         {

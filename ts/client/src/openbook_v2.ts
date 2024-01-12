@@ -3112,7 +3112,7 @@ export interface OpenbookV2 {
         },
         {
           name: 'makerFee';
-          type: 'i64';
+          type: 'u64';
           index: false;
         },
         {
@@ -3131,8 +3131,8 @@ export interface OpenbookV2 {
           index: false;
         },
         {
-          name: 'takerFee';
-          type: 'i64';
+          name: 'takerFeeCeil';
+          type: 'u64';
           index: false;
         },
         {
@@ -6690,7 +6690,7 @@ export const IDL: OpenbookV2 = {
         },
         {
           name: 'makerFee',
-          type: 'i64',
+          type: 'u64',
           index: false,
         },
         {
@@ -6709,8 +6709,8 @@ export const IDL: OpenbookV2 = {
           index: false,
         },
         {
-          name: 'takerFee',
-          type: 'i64',
+          name: 'takerFeeCeil',
+          type: 'u64',
           index: false,
         },
         {
