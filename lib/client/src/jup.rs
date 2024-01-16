@@ -300,7 +300,7 @@ mod test {
     use std::str::FromStr;
 
     #[tokio::test]
-    // TODO replace std::env by mainnet market after audit deploy
+    // TODO replace with local accounts
     async fn test_jupiter_local() -> Result<()> {
         let market = match std::env::var("MARKET_PUBKEY") {
             Ok(key) => Pubkey::from_str(&key)?,
