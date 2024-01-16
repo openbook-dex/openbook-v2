@@ -115,6 +115,8 @@ impl Amm for OpenBookMarket {
             clock.slot,
         )?;
 
+        self.timestamp = clock.unix_timestamp.try_into().unwrap();
+
         Ok(())
     }
 
@@ -321,13 +323,13 @@ mod test {
         let mut openbook = OpenBookMarket::from_keyed_account(&market_account).unwrap();
 
         let pubkeys = openbook.get_accounts_to_update();
-        let accounts: AccountMap = pubkeys
+        let accounts_map: AccountMap = pubkeys
             .iter()
             .zip(rpc.get_multiple_accounts(&pubkeys).await?)
             .map(|(key, acc)| (*key, acc.unwrap()))
             .collect();
 
-        openbook.update(&accounts)?;
+        openbook.update(&accounts_map)?;
 
         let (base_mint, quote_mint) = {
             let reserves = openbook.get_reserve_mints();
@@ -360,7 +362,7 @@ mod test {
         );
 
         pt.add_account(market, market_account.account.clone());
-        for (pubkey, account) in accounts.into_iter() {
+        for (pubkey, account) in accounts_map.into_iter() {
             pt.add_account(pubkey, account);
         }
 
@@ -413,7 +415,7 @@ mod test {
                 &openbook_v2::accounts::PlaceTakeOrder {
                     signer: user.pubkey(),
                     penalty_payer: user.pubkey(),
-                    market: market,
+                    market,
                     user_base_account,
                     user_quote_account,
                     market_authority: market_data.market_authority,
