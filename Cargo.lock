@@ -3534,6 +3534,7 @@ dependencies = [
  "shellexpand",
  "solana-account-decoder",
  "solana-client",
+ "solana-program-test",
  "solana-rpc",
  "solana-rpc-client",
  "solana-rpc-client-api",

@@ -115,6 +115,8 @@ impl Amm for OpenBookMarket {
             clock.slot,
         )?;
 
+        self.timestamp = clock.unix_timestamp.try_into().unwrap();
+
         Ok(())
     }
 
@@ -132,8 +134,7 @@ impl Amm for OpenBookMarket {
         let (max_base_lots, max_quote_lots_including_fees) = match side {
             Side::Bid => (
                 self.market.max_base_lots(),
-                input_amount / self.market.quote_lot_size
-                    + input_amount % self.market.quote_lot_size,
+                input_amount / self.market.quote_lot_size,
             ),
             Side::Ask => (
                 input_amount / self.market.base_lot_size,
@@ -281,12 +282,26 @@ impl Amm for OpenBookMarket {
 #[cfg(test)]
 mod test {
     use super::*;
-    use solana_client::rpc_client::RpcClient;
+    use anchor_spl::token::spl_token::{
+        self,
+        state::{Account as TokenAccount, AccountState},
+    };
+    use solana_client::nonblocking::rpc_client::RpcClient;
+    use solana_program_test::{processor, ProgramTest};
+    use solana_sdk::{
+        account::{Account, WritableAccount},
+        instruction::Instruction,
+        program_pack::Pack,
+        signature::Signer,
+        signer::keypair::Keypair,
+        stake_history::Epoch,
+        transaction::Transaction,
+    };
     use std::str::FromStr;
 
-    #[test]
-    // TODO replace std::env by mainnet market after audit deploy
-    fn test_jupiter_local() -> Result<()> {
+    #[tokio::test]
+    // TODO replace with local accounts
+    async fn test_jupiter_local() -> Result<()> {
         let market = match std::env::var("MARKET_PUBKEY") {
             Ok(key) => Pubkey::from_str(&key)?,
             Err(_) => {
@@ -295,8 +310,8 @@ mod test {
             }
         };
 
-        let rpc = RpcClient::new("http://127.0.0.1:8899");
-        let account = rpc.get_account(&market)?;
+        let rpc = RpcClient::new("http://127.0.0.1:8899".to_string());
+        let account = rpc.get_account(&market).await?;
 
         let market_account = KeyedAccount {
             key: market,
@@ -307,21 +322,23 @@ mod test {
         let mut openbook = OpenBookMarket::from_keyed_account(&market_account).unwrap();
 
         let pubkeys = openbook.get_accounts_to_update();
-        let accounts: AccountMap = pubkeys
+        let accounts_map: AccountMap = pubkeys
             .iter()
-            .zip(rpc.get_multiple_accounts(&pubkeys)?)
+            .zip(rpc.get_multiple_accounts(&pubkeys).await?)
             .map(|(key, acc)| (*key, acc.unwrap()))
             .collect();
 
-        openbook.update(&accounts)?;
+        openbook.update(&accounts_map)?;
 
         let (base_mint, quote_mint) = {
             let reserves = openbook.get_reserve_mints();
             (reserves[0], reserves[1])
         };
 
+        let in_amount = 1_000_000_000;
+
         let quote_params = QuoteParams {
-            in_amount: 80,
+            in_amount,
             input_mint: base_mint,
             output_mint: quote_mint,
         };
@@ -336,6 +353,125 @@ mod test {
         );
         println!("{:#?}", quote_params);
         println!("{:#?}", quote);
+
+        let mut pt = ProgramTest::new(
+            "openbook_v2",
+            openbook_v2::id(),
+            processor!(openbook_v2::entry),
+        );
+
+        pt.add_account(market, market_account.account.clone());
+        for (pubkey, account) in accounts_map.into_iter() {
+            pt.add_account(pubkey, account);
+        }
+
+        let initial_amount = 1_000_000_000_000_000;
+
+        let mut add_token_account = |pubkey, owner, mint| {
+            let mut data = vec![0_u8; TokenAccount::LEN];
+            let account = TokenAccount {
+                state: AccountState::Initialized,
+                mint,
+                owner,
+                amount: initial_amount,
+                ..TokenAccount::default()
+            };
+            TokenAccount::pack(account, &mut data).unwrap();
+            pt.add_account(
+                pubkey,
+                Account::create(
+                    Rent::default().minimum_balance(data.len()),
+                    data,
+                    spl_token::ID,
+                    false,
+                    Epoch::default(),
+                ),
+            );
+        };
+
+        let user = Keypair::new();
+        let user_base_account = Pubkey::new_unique();
+        let user_quote_account = Pubkey::new_unique();
+
+        let market_data = Market::try_deserialize(&mut market_account.account.data.as_slice())?;
+
+        add_token_account(user_base_account, user.pubkey(), market_data.base_mint);
+        add_token_account(user_quote_account, user.pubkey(), market_data.quote_mint);
+
+        let (mut banks_client, payer, recent_blockhash) = pt.start().await;
+
+        // This replicates the above logic in quote() so the asme amounts are used
+        let (max_base_lots, max_quote_lots_including_fees) = {
+            (
+                i64::try_from(in_amount).unwrap() / market_data.base_lot_size,
+                market_data.max_quote_lots(),
+            )
+        };
+
+        let ix = Instruction {
+            program_id: openbook_v2::id(),
+            accounts: anchor_lang::ToAccountMetas::to_account_metas(
+                &openbook_v2::accounts::PlaceTakeOrder {
+                    signer: user.pubkey(),
+                    penalty_payer: user.pubkey(),
+                    market,
+                    user_base_account,
+                    user_quote_account,
+                    market_authority: market_data.market_authority,
+                    bids: market_data.bids,
+                    asks: market_data.asks,
+                    market_base_vault: market_data.market_base_vault,
+                    market_quote_vault: market_data.market_quote_vault,
+                    event_heap: market_data.event_heap,
+                    oracle_a: Option::from(market_data.oracle_a),
+                    oracle_b: Option::from(market_data.oracle_b),
+                    token_program: Token::id(),
+                    system_program: System::id(),
+                    open_orders_admin: None,
+                },
+                None,
+            ),
+            data: anchor_lang::InstructionData::data(&openbook_v2::instruction::PlaceTakeOrder {
+                args: openbook_v2::PlaceTakeOrderArgs {
+                    side: openbook_v2::state::Side::Ask,
+                    price_lots: i64::MAX,
+                    max_base_lots,
+                    max_quote_lots_including_fees,
+                    order_type: openbook_v2::state::PlaceOrderType::Market,
+                    limit: u8::MAX,
+                },
+            }),
+        };
+
+        let tx = Transaction::new_signed_with_payer(
+            &[ix],
+            Some(&payer.pubkey()),
+            &[&payer, &user],
+            recent_blockhash,
+        );
+        banks_client.process_transaction(tx).await.unwrap();
+
+        let base_account = banks_client
+            .get_account(user_base_account)
+            .await
+            .unwrap()
+            .unwrap();
+
+        let quote_account = banks_client
+            .get_account(user_quote_account)
+            .await
+            .unwrap()
+            .unwrap();
+
+        let get_amount =
+            |account: Account| -> u64 { TokenAccount::unpack(&account.data).unwrap().amount };
+
+        let base_amount = get_amount(base_account);
+        let quote_amount = get_amount(quote_account);
+        println!("{}", base_amount);
+        println!("{}", quote_amount);
+
+        assert_eq!(quote_amount - initial_amount, quote.out_amount);
 
         Ok(())
     }
