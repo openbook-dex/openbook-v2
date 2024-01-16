@@ -730,6 +730,7 @@ export class OpenBookV2Client {
           openOrdersDelegate != null
             ? openOrdersDelegate.publicKey
             : this.walletPk,
+        penaltyPayer: this.walletPk,
         asks: market.asks,
         bids: market.bids,
         eventHeap: market.eventHeap,
@@ -743,6 +744,7 @@ export class OpenBookV2Client {
         marketAuthority: market.marketAuthority,
         tokenProgram: TOKEN_PROGRAM_ID,
         openOrdersAdmin,
+        systemProgram: SystemProgram.programId,
       })
       .remainingAccounts(accountsMeta)
       .instruction();
