@@ -134,8 +134,7 @@ impl Amm for OpenBookMarket {
         let (max_base_lots, max_quote_lots_including_fees) = match side {
             Side::Bid => (
                 self.market.max_base_lots(),
-                input_amount / self.market.quote_lot_size
-                    + input_amount % self.market.quote_lot_size,
+                input_amount / self.market.quote_lot_size,
             ),
             Side::Ask => (
                 input_amount / self.market.base_lot_size,
