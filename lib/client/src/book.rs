@@ -8,7 +8,7 @@ use openbook_v2::state::{
 };
 
 // TODO Adjust this number after doing some calculations
-const MAXIMUM_TAKEN_ORDERS: u8 = 8;
+pub const MAXIMUM_TAKEN_ORDERS: u8 = 8;
 const MAXIMUM_REMAINING_ACCOUNTS: usize = 4;
 
 pub struct Amounts {

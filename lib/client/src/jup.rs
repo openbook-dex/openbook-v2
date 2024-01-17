@@ -279,9 +279,10 @@ impl Amm for OpenBookMarket {
     }
 }
 
-#[cfg(test)]
+#[cfg(all(test, feature = "enable-gpl"))]
 mod test {
     use super::*;
+    use crate::book::MAXIMUM_TAKEN_ORDERS;
     use anchor_spl::token::spl_token::{
         self,
         state::{Account as TokenAccount, AccountState},
@@ -456,7 +457,7 @@ mod test {
                             max_base_lots,
                             max_quote_lots_including_fees,
                             order_type: openbook_v2::state::PlaceOrderType::Market,
-                            limit: u8::MAX,
+                            limit: MAXIMUM_TAKEN_ORDERS,
                         },
                     },
                 ),
