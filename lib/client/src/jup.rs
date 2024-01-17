@@ -310,7 +310,7 @@ mod test {
             }
         };
 
-        let rpc = RpcClient::new("http://127.0.0.1:8899".to_string());
+        let rpc = RpcClient::new("http://localhost:8899".to_string());
         let account = rpc.get_account(&market).await?;
 
         let market_account = KeyedAccount {
@@ -335,144 +335,159 @@ mod test {
             (reserves[0], reserves[1])
         };
 
-        let in_amount = 1_000_000_000;
-
-        let quote_params = QuoteParams {
-            in_amount,
-            input_mint: base_mint,
-            output_mint: quote_mint,
-        };
-
-        let quote = openbook.quote(&quote_params)?;
-
-        println!(
-            "Market with base_lot_size = {}, quote_lot_size = {}, taker_fee = {}",
-            openbook.market.base_lot_size,
-            openbook.market.quote_lot_size,
-            openbook.market.taker_fee
-        );
-        println!("{:#?}", quote_params);
-        println!("{:#?}", quote);
-
-        let mut pt = ProgramTest::new(
-            "openbook_v2",
-            openbook_v2::id(),
-            processor!(openbook_v2::entry),
-        );
-
-        pt.add_account(market, market_account.account.clone());
-        for (pubkey, account) in accounts_map.into_iter() {
-            pt.add_account(pubkey, account);
-        }
-
-        let initial_amount = 1_000_000_000_000_000;
-
-        let mut add_token_account = |pubkey, owner, mint| {
-            let mut data = vec![0_u8; TokenAccount::LEN];
-            let account = TokenAccount {
-                state: AccountState::Initialized,
-                mint,
-                owner,
-                amount: initial_amount,
-                ..TokenAccount::default()
+        for (side, in_amount) in [
+            (openbook_v2::state::Side::Ask, 1_000_000_000),
+            (openbook_v2::state::Side::Bid, 120_456_000),
+        ] {
+            let (input_mint, output_mint) = match side {
+                openbook_v2::state::Side::Ask => (base_mint, quote_mint),
+                openbook_v2::state::Side::Bid => (quote_mint, base_mint),
             };
-            TokenAccount::pack(account, &mut data).unwrap();
-            pt.add_account(
-                pubkey,
-                Account::create(
-                    Rent::default().minimum_balance(data.len()),
-                    data,
-                    spl_token::ID,
-                    false,
-                    Epoch::default(),
-                ),
+
+            let quote_params = QuoteParams {
+                in_amount,
+                input_mint,
+                output_mint,
+            };
+
+            let quote = openbook.quote(&quote_params)?;
+
+            println!(
+                "Market with base_lot_size = {}, quote_lot_size = {}, taker_fee = {}",
+                openbook.market.base_lot_size,
+                openbook.market.quote_lot_size,
+                openbook.market.taker_fee
             );
-        };
+            println!("{:#?}", quote_params);
+            println!("{:#?}", quote);
 
-        let user = Keypair::new();
-        let user_base_account = Pubkey::new_unique();
-        let user_quote_account = Pubkey::new_unique();
+            let mut pt = ProgramTest::new(
+                "openbook_v2",
+                openbook_v2::id(),
+                processor!(openbook_v2::entry),
+            );
 
-        let market_data = Market::try_deserialize(&mut market_account.account.data.as_slice())?;
+            pt.add_account(market, market_account.account.clone());
+            for (pubkey, account) in accounts_map.iter() {
+                pt.add_account(*pubkey, account.clone());
+            }
 
-        add_token_account(user_base_account, user.pubkey(), market_data.base_mint);
-        add_token_account(user_quote_account, user.pubkey(), market_data.quote_mint);
+            let initial_amount = 1_000_000_000_000_000;
 
-        let (mut banks_client, payer, recent_blockhash) = pt.start().await;
+            let mut add_token_account = |pubkey, owner, mint| {
+                let mut data = vec![0_u8; TokenAccount::LEN];
+                let account = TokenAccount {
+                    state: AccountState::Initialized,
+                    mint,
+                    owner,
+                    amount: initial_amount,
+                    ..TokenAccount::default()
+                };
+                TokenAccount::pack(account, &mut data).unwrap();
+                pt.add_account(
+                    pubkey,
+                    Account::create(
+                        Rent::default().minimum_balance(data.len()),
+                        data,
+                        spl_token::ID,
+                        false,
+                        Epoch::default(),
+                    ),
+                );
+            };
 
-        // This replicates the above logic in quote() so the asme amounts are used
-        let (max_base_lots, max_quote_lots_including_fees) = {
-            (
-                i64::try_from(in_amount).unwrap() / market_data.base_lot_size,
-                market_data.max_quote_lots(),
-            )
-        };
+            let user = Keypair::new();
+            let user_input_account = Pubkey::new_unique();
+            let user_output_account = Pubkey::new_unique();
 
-        let ix = Instruction {
-            program_id: openbook_v2::id(),
-            accounts: anchor_lang::ToAccountMetas::to_account_metas(
-                &openbook_v2::accounts::PlaceTakeOrder {
-                    signer: user.pubkey(),
-                    penalty_payer: user.pubkey(),
-                    market,
-                    user_base_account,
-                    user_quote_account,
-                    market_authority: market_data.market_authority,
-                    bids: market_data.bids,
-                    asks: market_data.asks,
-                    market_base_vault: market_data.market_base_vault,
-                    market_quote_vault: market_data.market_quote_vault,
-                    event_heap: market_data.event_heap,
-                    oracle_a: Option::from(market_data.oracle_a),
-                    oracle_b: Option::from(market_data.oracle_b),
-                    token_program: Token::id(),
-                    system_program: System::id(),
-                    open_orders_admin: None,
-                },
-                None,
-            ),
-            data: anchor_lang::InstructionData::data(&openbook_v2::instruction::PlaceTakeOrder {
-                args: openbook_v2::PlaceTakeOrderArgs {
-                    side: openbook_v2::state::Side::Ask,
-                    price_lots: i64::MAX,
-                    max_base_lots,
-                    max_quote_lots_including_fees,
-                    order_type: openbook_v2::state::PlaceOrderType::Market,
-                    limit: u8::MAX,
-                },
-            }),
-        };
+            let market_data = Market::try_deserialize(&mut market_account.account.data.as_slice())?;
 
-        let tx = Transaction::new_signed_with_payer(
-            &[ix],
-            Some(&payer.pubkey()),
-            &[&payer, &user],
-            recent_blockhash,
-        );
-        banks_client.process_transaction(tx).await.unwrap();
+            add_token_account(user_input_account, user.pubkey(), input_mint);
+            add_token_account(user_output_account, user.pubkey(), output_mint);
 
-        let base_account = banks_client
-            .get_account(user_base_account)
-            .await
-            .unwrap()
-            .unwrap();
+            let (mut banks_client, payer, recent_blockhash) = pt.start().await;
 
-        let quote_account = banks_client
-            .get_account(user_quote_account)
-            .await
-            .unwrap()
-            .unwrap();
+            // This replicates the above logic in quote() so the asme amounts are used
+            let input_amount = i64::try_from(in_amount).unwrap();
+            let (max_base_lots, max_quote_lots_including_fees) = match side {
+                Side::Bid => (
+                    market_data.max_base_lots(),
+                    input_amount / market_data.quote_lot_size,
+                ),
+                Side::Ask => (
+                    input_amount / market_data.base_lot_size,
+                    market_data.max_quote_lots(),
+                ),
+            };
 
-        let get_amount =
-            |account: Account| -> u64 { TokenAccount::unpack(&account.data).unwrap().amount };
+            let (user_base_account, user_quote_account) = match side {
+                openbook_v2::state::Side::Ask => (user_input_account, user_output_account),
+                openbook_v2::state::Side::Bid => (user_output_account, user_input_account),
+            };
 
-        let base_amount = get_amount(base_account);
-        let quote_amount = get_amount(quote_account);
-        println!("{}", base_amount);
-        println!("{}", quote_amount);
+            let ix = Instruction {
+                program_id: openbook_v2::id(),
+                accounts: anchor_lang::ToAccountMetas::to_account_metas(
+                    &openbook_v2::accounts::PlaceTakeOrder {
+                        signer: user.pubkey(),
+                        penalty_payer: user.pubkey(),
+                        market,
+                        user_base_account,
+                        user_quote_account,
+                        market_authority: market_data.market_authority,
+                        bids: market_data.bids,
+                        asks: market_data.asks,
+                        market_base_vault: market_data.market_base_vault,
+                        market_quote_vault: market_data.market_quote_vault,
+                        event_heap: market_data.event_heap,
+                        oracle_a: Option::from(market_data.oracle_a),
+                        oracle_b: Option::from(market_data.oracle_b),
+                        token_program: Token::id(),
+                        system_program: System::id(),
+                        open_orders_admin: None,
+                    },
+                    None,
+                ),
+                data: anchor_lang::InstructionData::data(
+                    &openbook_v2::instruction::PlaceTakeOrder {
+                        args: openbook_v2::PlaceTakeOrderArgs {
+                            side,
+                            price_lots: i64::MAX,
+                            max_base_lots,
+                            max_quote_lots_including_fees,
+                            order_type: openbook_v2::state::PlaceOrderType::Market,
+                            limit: u8::MAX,
+                        },
+                    },
+                ),
+            };
 
-        assert_eq!(quote_amount - initial_amount, quote.out_amount);
+            let tx = Transaction::new_signed_with_payer(
+                &[ix],
+                Some(&payer.pubkey()),
+                &[&payer, &user],
+                recent_blockhash,
+            );
+            banks_client.process_transaction(tx).await.unwrap();
 
+            // let input_account = banks_client.get_account(user).await.unwrap().unwrap();
+
+            let output_account = banks_client
+                .get_account(user_output_account)
+                .await
+                .unwrap()
+                .unwrap();
+
+            let get_amount =
+                |account: Account| -> u64 { TokenAccount::unpack(&account.data).unwrap().amount };
+
+            // let input_amount = get_amount(input_account);
+            let output_amount = get_amount(output_account);
+            // println!("{}", input_amount);
+            println!("{}", output_amount);
+
+            assert_eq!(output_amount - initial_amount, quote.out_amount);
+        }
         Ok(())
     }
 }
