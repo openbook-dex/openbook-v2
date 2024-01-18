@@ -76,10 +76,9 @@ impl<'a> Orderbook<'a> {
     ) -> std::result::Result<OrderWithAmounts, Error> {
         let mut loaded_accounts = LoadedAccounts { accounts: vec![] };
         for acc in remaining_accs.iter().take(MAXIMUM_REMAINING_ACCOUNTS) {
-            let ooa: AccountLoader<OpenOrdersAccount> = AccountLoader::try_from(acc)?;
             loaded_accounts.accounts.push(LoadedAccount {
                 key: acc.key,
-                ooa: ooa,
+                ooa: AccountLoader::try_from(acc)?,
             })
         }
 
