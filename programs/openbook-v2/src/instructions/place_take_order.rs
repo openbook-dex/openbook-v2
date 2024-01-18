@@ -41,6 +41,13 @@ pub fn place_take_order(ctx: Context<PlaceTakeOrder>, order: Order, limit: u8) -
 
     let side = order.side;
 
+    let mut loaded_accounts = LoadedAccounts { accounts: vec![] };
+    for acc in ctx.remaining_accounts.iter() {
+        loaded_accounts.accounts.push(LoadedAccount {
+            key: acc.key,
+            ooa: AccountLoader::try_from(acc)?,
+        })
+    }
     let OrderWithAmounts {
         total_base_taken_native,
         total_quote_taken_native,
@@ -56,7 +63,7 @@ pub fn place_take_order(ctx: Context<PlaceTakeOrder>, order: Order, limit: u8) -
         &ctx.accounts.signer.key(),
         now_ts,
         limit,
-        ctx.remaining_accounts,
+        loaded_accounts,
     )?;
 
     // place_take_orders doesnt pay to referrers

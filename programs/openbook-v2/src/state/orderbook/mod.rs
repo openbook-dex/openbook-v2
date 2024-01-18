@@ -124,7 +124,7 @@ mod tests {
                     &Pubkey::new_unique(),
                     now_ts,
                     u8::MAX,
-                    &[],
+                    LoadedAccounts { accounts: vec![] },
                 )
                 .unwrap();
                 account.open_order_by_raw_index(0).id
@@ -265,7 +265,7 @@ mod tests {
             &maker_pk,
             now_ts,
             u8::MAX,
-            &[],
+            LoadedAccounts { accounts: vec![] },
         )
         .unwrap();
         let order =
@@ -311,7 +311,7 @@ mod tests {
             &taker_pk,
             now_ts,
             u8::MAX,
-            &[],
+            LoadedAccounts { accounts: vec![] },
         )
         .unwrap();
         // the remainder of the maker order is still on the book
@@ -398,7 +398,7 @@ mod tests {
                 &Pubkey::default(),
                 0, // now_ts
                 u8::MAX,
-                &[],
+                LoadedAccounts { accounts: vec![] },
             )
             .unwrap();
             account.open_order_by_raw_index(0).id

@@ -47,6 +47,13 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<
         clock.slot,
     )?;
 
+    let mut loaded_accounts = LoadedAccounts { accounts: vec![] };
+    for acc in ctx.remaining_accounts.iter() {
+        loaded_accounts.accounts.push(LoadedAccount {
+            key: acc.key,
+            ooa: AccountLoader::try_from(acc)?,
+        })
+    }
     let OrderWithAmounts {
         order_id,
         total_base_taken_native,
@@ -65,7 +72,7 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<
         &open_orders_account_pk,
         now_ts,
         limit,
-        ctx.remaining_accounts,
+        loaded_accounts,
     )?;
 
     let position = &mut open_orders_account.position;

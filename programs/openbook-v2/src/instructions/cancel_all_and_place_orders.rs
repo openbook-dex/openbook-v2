@@ -41,6 +41,14 @@ pub fn cancel_all_and_place_orders(
 
     book.cancel_all_orders(&mut open_orders_account, *market, u8::MAX, None)?;
 
+    let mut loaded_accounts = LoadedAccounts { accounts: vec![] };
+    for acc in ctx.remaining_accounts.iter() {
+        loaded_accounts.accounts.push(LoadedAccount {
+            key: acc.key,
+            ooa: AccountLoader::try_from(acc)?,
+        })
+    }
+
     let mut base_amount = 0_u64;
     let mut quote_amount = 0_u64;
     let mut order_ids = Vec::new();
@@ -91,7 +99,7 @@ pub fn cancel_all_and_place_orders(
             &open_orders_account_pk,
             now_ts,
             limit,
-            ctx.remaining_accounts,
+            loaded_accounts,
         )?;
 
         match order.side {

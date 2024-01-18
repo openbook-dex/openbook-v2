@@ -18,9 +18,6 @@ pub const DROP_EXPIRED_ORDER_LIMIT: usize = 5;
 /// Process up to this remaining accounts in the fill event
 pub const FILL_EVENT_REMAINING_LIMIT: usize = 15;
 
-/// Maximum remaining accounts that can be loaded due heap memory issues
-pub const MAXIMUM_REMAINING_ACCOUNTS: usize = 4;
-
 pub struct Orderbook<'a> {
     pub bids: RefMut<'a, BookSide>,
     pub asks: RefMut<'a, BookSide>,
@@ -72,16 +69,8 @@ impl<'a> Orderbook<'a> {
         owner: &Pubkey,
         now_ts: u64,
         mut limit: u8,
-        remaining_accs: &[AccountInfo],
+        mut loaded_accounts: LoadedAccounts<'a>,
     ) -> std::result::Result<OrderWithAmounts, Error> {
-        let mut loaded_accounts = LoadedAccounts { accounts: vec![] };
-        for acc in remaining_accs.iter().take(MAXIMUM_REMAINING_ACCOUNTS) {
-            loaded_accounts.accounts.push(LoadedAccount {
-                key: acc.key,
-                ooa: AccountLoader::try_from(acc)?,
-            })
-        }
-
         let market = open_book_market;
 
         let side = order.side;
