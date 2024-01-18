@@ -18,6 +18,9 @@ pub const DROP_EXPIRED_ORDER_LIMIT: usize = 5;
 /// Process up to this remaining accounts in the fill event
 pub const FILL_EVENT_REMAINING_LIMIT: usize = 15;
 
+/// Maximum remaining accounts that can be loaded due heap memory issues
+pub const MAXIMUM_REMAINING_ACCOUNTS: usize = 4;
+
 pub struct Orderbook<'a> {
     pub bids: RefMut<'a, BookSide>,
     pub asks: RefMut<'a, BookSide>,
@@ -71,6 +74,15 @@ impl<'a> Orderbook<'a> {
         mut limit: u8,
         remaining_accs: &[AccountInfo],
     ) -> std::result::Result<OrderWithAmounts, Error> {
+        let mut loaded_accounts = LoadedAccounts { accounts: vec![] };
+        for acc in remaining_accs.iter().take(MAXIMUM_REMAINING_ACCOUNTS) {
+            let ooa: AccountLoader<OpenOrdersAccount> = AccountLoader::try_from(acc)?;
+            loaded_accounts.accounts.push(LoadedAccount {
+                key: acc.key,
+                ooa: ooa,
+            })
+        }
+
         let market = open_book_market;
 
         let side = order.side;
@@ -144,13 +156,12 @@ impl<'a> Orderbook<'a> {
                         best_opposing.node.quantity,
                     );
 
-                    process_out_event(
+                    loaded_accounts.process_out_event(
                         event,
                         market,
                         event_heap,
                         open_orders_account.as_deref_mut(),
                         owner,
-                        remaining_accs,
                     )?;
                     matched_order_deletes
                         .push((best_opposing.handle.order_tree, best_opposing.node.key));
@@ -241,11 +252,10 @@ impl<'a> Orderbook<'a> {
                 match_base_lots,
             );
 
-            process_fill_event(
+            loaded_accounts.process_fill_event(
                 fill,
                 market,
                 event_heap,
-                remaining_accs,
                 &mut number_of_processed_fill_events,
             )?;
 
@@ -395,13 +405,12 @@ impl<'a> Orderbook<'a> {
                     expired_order.owner,
                     expired_order.quantity,
                 );
-                process_out_event(
+                loaded_accounts.process_out_event(
                     event,
                     market,
                     event_heap,
                     Some(open_orders),
                     owner,
-                    remaining_accs,
                 )?;
             }
 
@@ -422,13 +431,12 @@ impl<'a> Orderbook<'a> {
                     worst_order.owner,
                     worst_order.quantity,
                 );
-                process_out_event(
+                loaded_accounts.process_out_event(
                     event,
                     market,
                     event_heap,
                     Some(open_orders),
                     owner,
-                    remaining_accs,
                 )?;
             }
 
@@ -552,53 +560,62 @@ impl<'a> Orderbook<'a> {
     }
 }
 
-pub fn process_out_event(
-    event: OutEvent,
-    market: &Market,
-    event_heap: &mut EventHeap,
-    open_orders_account: Option<&mut OpenOrdersAccount>,
-    owner: &Pubkey,
-    remaining_accs: &[AccountInfo],
-) -> Result<()> {
-    if let Some(acc) = open_orders_account {
-        if owner == &event.owner {
-            acc.cancel_order(event.owner_slot as usize, event.quantity, *market);
-            return Ok(());
-        }
-    }
-
-    if let Some(acc) = remaining_accs.iter().find(|ai| ai.key == &event.owner) {
-        let ooa: AccountLoader<OpenOrdersAccount> = AccountLoader::try_from(acc)?;
-        let mut acc = ooa.load_mut()?;
-        acc.cancel_order(event.owner_slot as usize, event.quantity, *market);
-    } else {
-        event_heap.push_back(cast(event));
-    }
-
-    Ok(())
+pub struct LoadedAccount<'a> {
+    pub key: &'a Pubkey,
+    pub ooa: AccountLoader<'a, OpenOrdersAccount>,
 }
 
-pub fn process_fill_event(
-    event: FillEvent,
-    market: &mut Market,
-    event_heap: &mut EventHeap,
-    remaining_accs: &[AccountInfo],
-    number_of_processed_fill_events: &mut usize,
-) -> Result<()> {
-    let mut is_processed = false;
-    if *number_of_processed_fill_events < FILL_EVENT_REMAINING_LIMIT {
-        if let Some(acc) = remaining_accs.iter().find(|ai| ai.key == &event.maker) {
-            let ooa: AccountLoader<OpenOrdersAccount> = AccountLoader::try_from(acc)?;
-            let mut maker = ooa.load_mut()?;
-            maker.execute_maker(market, &event);
-            is_processed = true;
-            *number_of_processed_fill_events += 1;
+pub struct LoadedAccounts<'a> {
+    pub accounts: Vec<LoadedAccount<'a>>, // Vector of LoadedAccount objects
+}
+
+impl<'a> LoadedAccounts<'a> {
+    pub fn process_out_event(
+        &self,
+        event: OutEvent,
+        market: &Market,
+        event_heap: &mut EventHeap,
+        open_orders_account: Option<&mut OpenOrdersAccount>,
+        owner: &Pubkey,
+    ) -> Result<()> {
+        if let Some(acc) = open_orders_account {
+            if owner == &event.owner {
+                acc.cancel_order(event.owner_slot as usize, event.quantity, *market);
+                return Ok(());
+            }
         }
+
+        if let Some(acc) = self.accounts.iter().find(|ai| ai.key == &event.owner) {
+            let mut ooa: RefMut<'_, OpenOrdersAccount> = acc.ooa.load_mut()?;
+            ooa.cancel_order(event.owner_slot as usize, event.quantity, *market);
+        } else {
+            event_heap.push_back(cast(event));
+        }
+
+        Ok(())
     }
 
-    if !is_processed {
-        event_heap.push_back(cast(event));
-    }
+    pub fn process_fill_event(
+        &self,
+        event: FillEvent,
+        market: &mut Market,
+        event_heap: &mut EventHeap,
+        number_of_processed_fill_events: &mut usize,
+    ) -> Result<()> {
+        let mut is_processed = false;
+        if *number_of_processed_fill_events < FILL_EVENT_REMAINING_LIMIT {
+            if let Some(acc) = self.accounts.iter().find(|ai| ai.key == &event.maker) {
+                let mut ooa: RefMut<'_, OpenOrdersAccount> = acc.ooa.load_mut()?;
+                ooa.execute_maker(market, &event);
+                is_processed = true;
+                *number_of_processed_fill_events += 1;
+            }
+        }
 
-    Ok(())
+        if !is_processed {
+            event_heap.push_back(cast(event));
+        }
+
+        Ok(())
+    }
 }
