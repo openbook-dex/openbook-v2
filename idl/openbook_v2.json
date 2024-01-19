@@ -316,11 +316,6 @@
       ],
       "accounts": [
         {
-          "name": "payer",
-          "isMut": true,
-          "isSigner": true
-        },
-        {
           "name": "owner",
           "isMut": false,
           "isSigner": true

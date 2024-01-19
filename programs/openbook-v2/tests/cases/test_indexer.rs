@@ -69,7 +69,6 @@ async fn test_indexer() -> Result<(), TransportError> {
             account_num: 2,
             market,
             owner,
-            payer,
             sol_destination: owner.pubkey(),
         },
     )
