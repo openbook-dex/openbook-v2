@@ -912,7 +912,7 @@ export class OpenBookV2Client {
   }
 
   public async closeOpenOrdersAccountIx(
-    owner: Keypair = payer,
+    owner: Keypair,
     openOrdersPublicKey: PublicKey,
     solDestination: PublicKey = this.walletPk,
     openOrdersIndexer?: PublicKey,
@@ -931,8 +931,8 @@ export class OpenBookV2Client {
           systemProgram: SystemProgram.programId,
         })
         .instruction();
-      const additionalSigners = [payer];
-      if (owner !== payer) {
+      const additionalSigners: Keypair[] = [];
+      if (owner.publicKey !== this.walletPk) {
         additionalSigners.push(owner);
       }
       return [ix, additionalSigners];
