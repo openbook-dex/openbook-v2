@@ -139,14 +139,14 @@ pub trait Contextable {
 impl Contextable for Error {
     fn context(self, c: impl Display) -> Self {
         match self {
-            Error::AnchorError(err) => Error::AnchorError(AnchorError {
+            Error::AnchorError(err) => Error::AnchorError(Box::new(AnchorError {
                 error_msg: if err.error_msg.is_empty() {
                     format!("{}", c)
                 } else {
                     format!("{}; {}", err.error_msg, c)
                 },
-                ..err
-            }),
+                ..*err
+            })),
             // Maybe wrap somehow?
             Error::ProgramError(err) => Error::ProgramError(err),
         }

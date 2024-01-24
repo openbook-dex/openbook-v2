@@ -21,7 +21,7 @@ pub fn edit_order<'info>(
             ctx.program_id,
             &mut ctx.accounts.to_cancel_order(),
             ctx.remaining_accounts,
-            ctx.bumps.clone(),
+            ctx.bumps.to_cancel_order(),
         ),
         cancel_client_order_id,
     )?;
