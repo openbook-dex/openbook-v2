@@ -118,7 +118,10 @@ pub mod openbook_v2 {
     /// `limit` determines the maximum number of orders from the book to fill,
     /// and can be used to limit CU spent. When the limit is reached, processing
     /// stops and the instruction succeeds.
-    pub fn place_order(ctx: Context<PlaceOrder>, args: PlaceOrderArgs) -> Result<Option<u128>> {
+    pub fn place_order<'c: 'info, 'info>(
+        ctx: Context<'_, '_, 'c, 'info, PlaceOrder<'info>>,
+        args: PlaceOrderArgs,
+    ) -> Result<Option<u128>> {
         require_gte!(args.price_lots, 1, OpenBookError::InvalidInputPriceLots);
 
         let time_in_force = match Order::tif_from_expiry(args.expiry_timestamp) {
@@ -154,8 +157,8 @@ pub mod openbook_v2 {
     }
 
     /// Edit an order.
-    pub fn edit_order<'info>(
-        ctx: Context<'_, '_, '_, 'info, PlaceOrder<'info>>,
+    pub fn edit_order<'c: 'info, 'info>(
+        ctx: Context<'_, '_, 'c, 'info, PlaceOrder<'info>>,
         client_order_id: u64,
         expected_cancel_size: i64,
         place_order: PlaceOrderArgs,
@@ -205,8 +208,8 @@ pub mod openbook_v2 {
     }
 
     /// Edit an order pegged.
-    pub fn edit_order_pegged<'info>(
-        ctx: Context<'_, '_, '_, 'info, PlaceOrder<'info>>,
+    pub fn edit_order_pegged<'c: 'info, 'info>(
+        ctx: Context<'_, '_, 'c, 'info, PlaceOrder<'info>>,
         client_order_id: u64,
         expected_cancel_size: i64,
         place_order: PlaceOrderPeggedArgs,
@@ -257,8 +260,8 @@ pub mod openbook_v2 {
     }
 
     /// Cancel orders and place multiple orders.
-    pub fn cancel_all_and_place_orders(
-        ctx: Context<CancelAllAndPlaceOrders>,
+    pub fn cancel_all_and_place_orders<'c: 'info, 'info>(
+        ctx: Context<'_, '_, 'c, 'info, CancelAllAndPlaceOrders<'info>>,
         orders_type: PlaceOrderType,
         bids: Vec<PlaceMultipleOrdersArgs>,
         asks: Vec<PlaceMultipleOrdersArgs>,
@@ -305,8 +308,8 @@ pub mod openbook_v2 {
     }
 
     /// Place an oracle-peg order.
-    pub fn place_order_pegged(
-        ctx: Context<PlaceOrder>,
+    pub fn place_order_pegged<'c: 'info, 'info>(
+        ctx: Context<'_, '_, 'c, 'info, PlaceOrder<'info>>,
         args: PlaceOrderPeggedArgs,
     ) -> Result<Option<u128>> {
         require!(
@@ -348,7 +351,10 @@ pub mod openbook_v2 {
     /// add a new order off the book.
     ///
     /// This type of order allows for instant token settlement for the taker.
-    pub fn place_take_order(ctx: Context<PlaceTakeOrder>, args: PlaceTakeOrderArgs) -> Result<()> {
+    pub fn place_take_order<'c: 'info, 'info>(
+        ctx: Context<'_, '_, 'c, 'info, PlaceTakeOrder<'info>>,
+        args: PlaceTakeOrderArgs,
+    ) -> Result<()> {
         require_gte!(args.price_lots, 1, OpenBookError::InvalidInputPriceLots);
 
         let order = Order {
@@ -395,14 +401,20 @@ pub mod openbook_v2 {
     /// the book during a `place_order` invocation, and it is handled by
     /// crediting whatever the maker would have sold (quote token in a bid,
     /// base token in an ask) back to the maker.
-    pub fn consume_events(ctx: Context<ConsumeEvents>, limit: usize) -> Result<()> {
+    pub fn consume_events<'c: 'info, 'info>(
+        ctx: Context<'_, '_, 'c, 'info, ConsumeEvents>,
+        limit: usize,
+    ) -> Result<()> {
         #[cfg(feature = "enable-gpl")]
         instructions::consume_events(ctx, limit, None)?;
         Ok(())
     }
 
     /// Process the [events](crate::state::AnyEvent) at the given positions.
-    pub fn consume_given_events(ctx: Context<ConsumeEvents>, slots: Vec<usize>) -> Result<()> {
+    pub fn consume_given_events<'c: 'info, 'info>(
+        ctx: Context<'_, '_, 'c, 'info, ConsumeEvents>,
+        slots: Vec<usize>,
+    ) -> Result<()> {
         require!(
             slots
                 .iter()
