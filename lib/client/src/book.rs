@@ -2,7 +2,6 @@ use std::collections::HashMap;
 
 use anchor_lang::prelude::Pubkey;
 use anyhow::Result;
-use fixed::types::I80F48;
 use openbook_v2::state::{
     Market, Orderbook, Side, DROP_EXPIRED_ORDER_LIMIT, FILL_EVENT_REMAINING_LIMIT,
 };
@@ -24,14 +23,8 @@ pub fn remaining_accounts_to_crank(
     max_base_lots: i64,
     max_quote_lots_including_fees: i64,
     market: &Market,
-    oracle_price: Option<I80F48>,
     now_ts: u64,
 ) -> Result<Vec<Pubkey>> {
-    let oracle_price_lots = if let Some(oracle_price) = oracle_price {
-        Some(market.native_price_to_lot(oracle_price)?)
-    } else {
-        None
-    };
     let mut accounts = Vec::new();
 
     iterate_book(
@@ -40,7 +33,6 @@ pub fn remaining_accounts_to_crank(
         max_base_lots,
         max_quote_lots_including_fees,
         market,
-        oracle_price_lots,
         now_ts,
         &mut accounts,
     );
@@ -69,14 +61,8 @@ pub fn amounts_from_book(
     max_base_lots: i64,
     max_quote_lots_including_fees: i64,
     market: &Market,
-    oracle_price: Option<I80F48>,
     now_ts: u64,
 ) -> Result<Amounts> {
-    let oracle_price_lots = if let Some(oracle_price) = oracle_price {
-        Some(market.native_price_to_lot(oracle_price)?)
-    } else {
-        None
-    };
     let mut accounts = Vec::new();
     let (total_base_lots_taken, total_quote_lots_taken, makers_rebates, not_enough_liquidity) =
         iterate_book(
@@ -85,7 +71,6 @@ pub fn amounts_from_book(
             max_base_lots,
             max_quote_lots_including_fees,
             market,
-            oracle_price_lots,
             now_ts,
             &mut accounts,
         );
@@ -108,7 +93,6 @@ pub fn iterate_book(
     max_base_lots: i64,
     max_quote_lots_including_fees: i64,
     market: &Market,
-    oracle_price_lots: Option<i64>,
     now_ts: u64,
     accounts: &mut Vec<Pubkey>,
 ) -> (i64, i64, u64, bool) {
@@ -127,7 +111,7 @@ pub fn iterate_book(
     let mut remaining_quote_lots = order_max_quote_lots;
 
     let opposing_bookside = book.bookside(side.invert_side());
-    for best_opposing in opposing_bookside.iter_all_including_invalid(now_ts, oracle_price_lots) {
+    for best_opposing in opposing_bookside.iter_all_including_invalid(now_ts, None) {
         if !best_opposing.is_valid() {
             // Remove the order from the book unless we've done that enough
             if number_of_dropped_expired_orders < DROP_EXPIRED_ORDER_LIMIT {

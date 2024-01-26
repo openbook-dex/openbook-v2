@@ -3,11 +3,8 @@ use anchor_lang::__private::bytemuck::Zeroable;
 use anchor_lang::prelude::*;
 use anchor_spl::token::Token;
 use anyhow::Result;
-use fixed::types::I80F48;
 use openbook_v2::{
     accounts::PlaceTakeOrder,
-    accounts_zerocopy,
-    pubkey_option::NonZeroPubkeyOption,
     state::{BookSide, EventHeap, Market, Orderbook, Side},
 };
 
@@ -34,7 +31,6 @@ pub struct OpenBookMarket {
     label: String,
     related_accounts: Vec<Pubkey>,
     reserve_mints: [Pubkey; 2],
-    oracle_price: Option<I80F48>,
 }
 
 impl Amm for OpenBookMarket {
@@ -60,7 +56,7 @@ impl Amm for OpenBookMarket {
 
     fn from_keyed_account(keyed_account: &KeyedAccount) -> Result<Self> {
         let market = Market::try_deserialize(&mut keyed_account.account.data.as_slice())?;
-        let mut related_accounts = vec![
+        let related_accounts = vec![
             market.bids,
             market.asks,
             market.event_heap,
@@ -68,12 +64,6 @@ impl Amm for OpenBookMarket {
             market.market_quote_vault,
             clock::ID,
         ];
-
-        related_accounts.extend(
-            [market.oracle_a, market.oracle_b]
-                .into_iter()
-                .filter_map(Option::<Pubkey>::from),
-        );
 
         Ok(OpenBookMarket {
             market,
@@ -84,7 +74,6 @@ impl Amm for OpenBookMarket {
             event_heap: EventHeap::zeroed(),
             bids: BookSide::zeroed(),
             asks: BookSide::zeroed(),
-            oracle_price: None,
             timestamp: 0,
         })
     }
@@ -101,19 +90,6 @@ impl Amm for OpenBookMarket {
 
         let clock_data = account_map.get(&clock::ID).unwrap();
         let clock: Clock = bincode::deserialize(clock_data.data.as_slice())?;
-
-        let oracle_acc =
-            |nonzero_pubkey: NonZeroPubkeyOption| -> Option<accounts_zerocopy::KeyedAccount> {
-                let key = Option::from(nonzero_pubkey)?;
-                let account = account_map.get(&key).unwrap().clone();
-                Some(accounts_zerocopy::KeyedAccount { key, account })
-            };
-
-        self.oracle_price = self.market.oracle_price(
-            oracle_acc(self.market.oracle_a).as_ref(),
-            oracle_acc(self.market.oracle_b).as_ref(),
-            clock.slot,
-        )?;
 
         self.timestamp = clock.unix_timestamp.try_into().unwrap();
 
@@ -155,7 +131,6 @@ impl Amm for OpenBookMarket {
             max_base_lots,
             max_quote_lots_including_fees,
             &self.market,
-            self.oracle_price,
             self.timestamp,
         )?;
 
@@ -216,8 +191,8 @@ impl Amm for OpenBookMarket {
             market_base_vault: self.market.market_base_vault,
             market_quote_vault: self.market.market_quote_vault,
             event_heap: self.market.event_heap,
-            oracle_a: Option::from(self.market.oracle_a),
-            oracle_b: Option::from(self.market.oracle_b),
+            oracle_a: None,
+            oracle_b: None,
             token_program: Token::id(),
             system_program: System::id(),
             open_orders_admin: None,
@@ -252,7 +227,6 @@ impl Amm for OpenBookMarket {
             max_base_lots,
             max_quote_lots_including_fees,
             &self.market,
-            self.oracle_price,
             self.timestamp,
         )?;
 
@@ -441,8 +415,8 @@ mod test {
                         market_base_vault: market_data.market_base_vault,
                         market_quote_vault: market_data.market_quote_vault,
                         event_heap: market_data.event_heap,
-                        oracle_a: Option::from(market_data.oracle_a),
-                        oracle_b: Option::from(market_data.oracle_b),
+                        oracle_a: None,
+                        oracle_b: None,
                         token_program: Token::id(),
                         system_program: System::id(),
                         open_orders_admin: None,
