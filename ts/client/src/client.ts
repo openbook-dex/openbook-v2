@@ -735,8 +735,6 @@ export class OpenBookV2Client {
         bids: market.bids,
         eventHeap: market.eventHeap,
         market: marketPublicKey,
-        oracleA: market.oracleA.key,
-        oracleB: market.oracleB.key,
         userBaseAccount,
         userQuoteAccount,
         marketBaseVault: market.marketBaseVault,

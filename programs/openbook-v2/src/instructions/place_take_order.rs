@@ -1,7 +1,6 @@
 use anchor_lang::prelude::*;
 
 use crate::accounts_ix::*;
-use crate::accounts_zerocopy::AccountInfoRef;
 use crate::error::*;
 use crate::state::*;
 use crate::token_utils::*;
@@ -33,12 +32,6 @@ pub fn place_take_order(ctx: Context<PlaceTakeOrder>, order: Order, limit: u8) -
 
     let now_ts: u64 = clock.unix_timestamp.try_into().unwrap();
 
-    let oracle_price = market.oracle_price(
-        AccountInfoRef::borrow_some(ctx.accounts.oracle_a.as_ref())?.as_ref(),
-        AccountInfoRef::borrow_some(ctx.accounts.oracle_b.as_ref())?.as_ref(),
-        clock.slot,
-    )?;
-
     let side = order.side;
 
     let OrderWithAmounts {
@@ -51,7 +44,7 @@ pub fn place_take_order(ctx: Context<PlaceTakeOrder>, order: Order, limit: u8) -
         &order,
         &mut market,
         &mut event_heap,
-        oracle_price,
+        None,
         None,
         &ctx.accounts.signer.key(),
         now_ts,

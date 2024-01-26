@@ -477,8 +477,6 @@ impl FuzzContext {
             market_base_vault: self.market_base_vault,
             market_quote_vault: self.market_quote_vault,
             event_heap: self.event_heap,
-            oracle_a: self.oracle_a,
-            oracle_b: self.oracle_b,
             token_program: spl_token::ID,
             system_program: system_program::ID,
             open_orders_admin: None,

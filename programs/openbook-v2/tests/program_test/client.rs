@@ -583,8 +583,6 @@ impl ClientInstruction for PlaceTakeOrderInstruction {
             bids: market.bids,
             asks: market.asks,
             event_heap: market.event_heap,
-            oracle_a: market.oracle_a.into(),
-            oracle_b: market.oracle_b.into(),
             signer: self.signer.pubkey(),
             penalty_payer: self.signer.pubkey(),
             user_base_account: self.user_base_account,
