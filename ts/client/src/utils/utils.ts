@@ -50,8 +50,6 @@ export function toUiDecimals(nativeAmount: number, decimals: number): number {
   return nativeAmount / Math.pow(10, decimals);
 }
 
-export const QUOTE_DECIMALS = 6;
-
 ///
 
 ///
