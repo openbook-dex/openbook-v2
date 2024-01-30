@@ -9,7 +9,7 @@ import {
   TOKEN_PROGRAM_ID,
 } from '@solana/spl-token';
 
-export const Side = {
+export const SideUtils = {
   Bid: { bid: {} },
   Ask: { ask: {} },
 };
