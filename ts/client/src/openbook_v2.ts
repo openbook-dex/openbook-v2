@@ -617,6 +617,118 @@ export interface OpenbookV2 {
       };
     },
     {
+      name: 'placeOrders';
+      docs: ['Place multiple orders'];
+      accounts: [
+        {
+          name: 'signer';
+          isMut: false;
+          isSigner: true;
+        },
+        {
+          name: 'openOrdersAccount';
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: 'openOrdersAdmin';
+          isMut: false;
+          isSigner: true;
+          isOptional: true;
+        },
+        {
+          name: 'userQuoteAccount';
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: 'userBaseAccount';
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: 'market';
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: 'bids';
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: 'asks';
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: 'eventHeap';
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: 'marketQuoteVault';
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: 'marketBaseVault';
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: 'oracleA';
+          isMut: false;
+          isSigner: false;
+          isOptional: true;
+        },
+        {
+          name: 'oracleB';
+          isMut: false;
+          isSigner: false;
+          isOptional: true;
+        },
+        {
+          name: 'tokenProgram';
+          isMut: false;
+          isSigner: false;
+        },
+      ];
+      args: [
+        {
+          name: 'ordersType';
+          type: {
+            defined: 'PlaceOrderType';
+          };
+        },
+        {
+          name: 'bids';
+          type: {
+            vec: {
+              defined: 'PlaceMultipleOrdersArgs';
+            };
+          };
+        },
+        {
+          name: 'asks';
+          type: {
+            vec: {
+              defined: 'PlaceMultipleOrdersArgs';
+            };
+          };
+        },
+        {
+          name: 'limit';
+          type: 'u8';
+        },
+      ];
+      returns: {
+        vec: {
+          option: 'u128';
+        };
+      };
+    },
+    {
       name: 'cancelAllAndPlaceOrders';
       docs: ['Cancel orders and place multiple orders.'];
       accounts: [
@@ -4187,6 +4299,118 @@ export const IDL: OpenbookV2 = {
       ],
       returns: {
         option: 'u128',
+      },
+    },
+    {
+      name: 'placeOrders',
+      docs: ['Place multiple orders'],
+      accounts: [
+        {
+          name: 'signer',
+          isMut: false,
+          isSigner: true,
+        },
+        {
+          name: 'openOrdersAccount',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'openOrdersAdmin',
+          isMut: false,
+          isSigner: true,
+          isOptional: true,
+        },
+        {
+          name: 'userQuoteAccount',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'userBaseAccount',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'market',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'bids',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'asks',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'eventHeap',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'marketQuoteVault',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'marketBaseVault',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'oracleA',
+          isMut: false,
+          isSigner: false,
+          isOptional: true,
+        },
+        {
+          name: 'oracleB',
+          isMut: false,
+          isSigner: false,
+          isOptional: true,
+        },
+        {
+          name: 'tokenProgram',
+          isMut: false,
+          isSigner: false,
+        },
+      ],
+      args: [
+        {
+          name: 'ordersType',
+          type: {
+            defined: 'PlaceOrderType',
+          },
+        },
+        {
+          name: 'bids',
+          type: {
+            vec: {
+              defined: 'PlaceMultipleOrdersArgs',
+            },
+          },
+        },
+        {
+          name: 'asks',
+          type: {
+            vec: {
+              defined: 'PlaceMultipleOrdersArgs',
+            },
+          },
+        },
+        {
+          name: 'limit',
+          type: 'u8',
+        },
+      ],
+      returns: {
+        vec: {
+          option: 'u128',
+        },
       },
     },
     {

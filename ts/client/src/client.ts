@@ -803,6 +803,49 @@ export class OpenBookV2Client {
     return [ix, signers];
   }
 
+  // Use OrderType from './utils/utils' for orderType
+  public async placeOrdersIx(
+    openOrdersPublicKey: PublicKey,
+    marketPublicKey: PublicKey,
+    market: MarketAccount,
+    userBaseAccount: PublicKey,
+    userQuoteAccount: PublicKey,
+    openOrdersAdmin: PublicKey | null,
+    orderType: PlaceOrderType,
+    bids: PlaceMultipleOrdersArgs[],
+    asks: PlaceMultipleOrdersArgs[],
+    limit: number = 12,
+    openOrdersDelegate?: Keypair,
+  ): Promise<[TransactionInstruction, Signer[]]> {
+    const ix = await this.program.methods
+      .placeOrders(orderType, bids, asks, limit)
+      .accounts({
+        signer:
+          openOrdersDelegate != null
+            ? openOrdersDelegate.publicKey
+            : this.walletPk,
+        asks: market.asks,
+        bids: market.bids,
+        marketQuoteVault: market.marketQuoteVault,
+        marketBaseVault: market.marketBaseVault,
+        eventHeap: market.eventHeap,
+        market: marketPublicKey,
+        openOrdersAccount: openOrdersPublicKey,
+        oracleA: market.oracleA.key,
+        oracleB: market.oracleB.key,
+        userBaseAccount,
+        userQuoteAccount,
+        tokenProgram: TOKEN_PROGRAM_ID,
+        openOrdersAdmin,
+      })
+      .instruction();
+    const signers: Signer[] = [];
+    if (openOrdersDelegate != null) {
+      signers.push(openOrdersDelegate);
+    }
+    return [ix, signers];
+  }
+
   public async cancelOrderById(
     openOrdersPublicKey: PublicKey,
     openOrdersAccount: OpenOrdersAccount,
