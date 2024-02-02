@@ -256,6 +256,54 @@ pub mod openbook_v2 {
         Ok(None)
     }
 
+    /// Place multiple orders
+    pub fn place_orders(
+        ctx: Context<CancelAllAndPlaceOrders>,
+        orders_type: PlaceOrderType,
+        bids: Vec<PlaceMultipleOrdersArgs>,
+        asks: Vec<PlaceMultipleOrdersArgs>,
+        limit: u8,
+    ) -> Result<Vec<Option<u128>>> {
+        let n_bids = bids.len();
+
+        let mut orders = vec![];
+        for (i, order) in bids.into_iter().chain(asks).enumerate() {
+            require_gte!(order.price_lots, 1, OpenBookError::InvalidInputPriceLots);
+
+            let time_in_force = match Order::tif_from_expiry(order.expiry_timestamp) {
+                Some(t) => t,
+                None => {
+                    msg!("Order is already expired");
+                    continue;
+                }
+            };
+            orders.push(Order {
+                side: if i < n_bids { Side::Bid } else { Side::Ask },
+                max_base_lots: i64::MIN, // this will be overriden to max_base_lots
+                max_quote_lots_including_fees: order.max_quote_lots_including_fees,
+                client_order_id: i as u64,
+                time_in_force,
+                self_trade_behavior: SelfTradeBehavior::CancelProvide,
+                params: match orders_type {
+                    PlaceOrderType::Market => OrderParams::Market,
+                    PlaceOrderType::ImmediateOrCancel => OrderParams::ImmediateOrCancel {
+                        price_lots: order.price_lots,
+                    },
+                    _ => OrderParams::Fixed {
+                        price_lots: order.price_lots,
+                        order_type: orders_type.to_post_order_type()?,
+                    },
+                },
+            });
+        }
+
+        #[cfg(feature = "enable-gpl")]
+        return instructions::cancel_all_and_place_orders(ctx, false, orders, limit);
+
+        #[cfg(not(feature = "enable-gpl"))]
+        Ok(vec![])
+    }
+
     /// Cancel orders and place multiple orders.
     pub fn cancel_all_and_place_orders(
         ctx: Context<CancelAllAndPlaceOrders>,
@@ -298,7 +346,7 @@ pub mod openbook_v2 {
         }
 
         #[cfg(feature = "enable-gpl")]
-        return instructions::cancel_all_and_place_orders(ctx, orders, limit);
+        return instructions::cancel_all_and_place_orders(ctx, true, orders, limit);
 
         #[cfg(not(feature = "enable-gpl"))]
         Ok(vec![])
