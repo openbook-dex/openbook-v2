@@ -16,7 +16,7 @@ import {
   getProvider,
   BN,
 } from '@coral-xyz/anchor';
-import { QUOTE_DECIMALS, toNative, toUiDecimals } from './utils/utils';
+import { toNative, toUiDecimals } from './utils/utils';
 import Big from 'big.js';
 import { IDL, type OpenbookV2 } from './openbook_v2';
 const BATCH_TX_SIZE = 50;
@@ -124,7 +124,7 @@ export async function findAllMarkets(
 
 function priceLotsToUiConverter(market: MarketAccount): number {
   return new Big(10)
-    .pow(market.baseDecimals - QUOTE_DECIMALS)
+    .pow(market.baseDecimals - market.quoteDecimals)
     .mul(new Big(market.quoteLotSize.toString()))
     .div(new Big(market.baseLotSize.toString()))
     .toNumber();
@@ -142,7 +142,7 @@ function quoteLotsToUiConverter(market: MarketAccount): number {
 }
 
 export function uiPriceToLots(market: MarketAccount, price: number): BN {
-  return toNative(price, QUOTE_DECIMALS)
+  return toNative(price, market.quoteDecimals)
     .mul(market.baseLotSize)
     .div(market.quoteLotSize.mul(new BN(Math.pow(10, market.baseDecimals))));
 }
@@ -152,7 +152,7 @@ export function uiBaseToLots(market: MarketAccount, quantity: number): BN {
 }
 
 export function uiQuoteToLots(market: MarketAccount, uiQuote: number): BN {
-  return toNative(uiQuote, QUOTE_DECIMALS).div(market.quoteLotSize);
+  return toNative(uiQuote, market.quoteDecimals).div(market.quoteLotSize);
 }
 
 export function priceLotsToNative(market: MarketAccount, price: BN): BN {
@@ -164,7 +164,7 @@ export function priceLotsToUi(market: MarketAccount, price: BN): number {
 }
 
 export function priceNativeToUi(market: MarketAccount, price: number): number {
-  return toUiDecimals(price, QUOTE_DECIMALS - market.baseDecimals);
+  return toUiDecimals(price, market.quoteDecimals - market.baseDecimals);
 }
 
 export function baseLotsToUi(market: MarketAccount, quantity: BN): number {

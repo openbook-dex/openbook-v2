@@ -9,7 +9,7 @@ import {
   TOKEN_PROGRAM_ID,
 } from '@solana/spl-token';
 
-export const Side = {
+export const SideUtils = {
   Bid: { bid: {} },
   Ask: { ask: {} },
 };
@@ -48,12 +48,6 @@ export function toNative(uiAmount: number, decimals: number): BN {
 
 export function toUiDecimals(nativeAmount: number, decimals: number): number {
   return nativeAmount / Math.pow(10, decimals);
-}
-
-export const QUOTE_DECIMALS = 6;
-
-export function toUiDecimalsForQuote(nativeAmount: number): number {
-  return toUiDecimals(nativeAmount, QUOTE_DECIMALS);
 }
 
 ///

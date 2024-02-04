@@ -10,6 +10,7 @@ use crate::token_utils::*;
 #[allow(clippy::too_many_arguments)]
 pub fn cancel_all_and_place_orders<'c: 'info, 'info>(
     ctx: Context<'_, '_, 'c, 'info, CancelAllAndPlaceOrders<'info>>,
+    cancel: bool,
     mut orders: Vec<Order>,
     limit: u8,
 ) -> Result<Vec<Option<u128>>> {
@@ -39,7 +40,9 @@ pub fn cancel_all_and_place_orders<'c: 'info, 'info>(
         clock.slot,
     )?;
 
-    book.cancel_all_orders(&mut open_orders_account, *market, u8::MAX, None)?;
+    if cancel {
+        book.cancel_all_orders(&mut open_orders_account, *market, u8::MAX, None)?;
+    }
 
     let mut base_amount = 0_u64;
     let mut quote_amount = 0_u64;

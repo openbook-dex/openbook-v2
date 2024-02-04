@@ -29,11 +29,12 @@ import {
 } from '@solana/web3.js';
 import { IDL, type OpenbookV2 } from './openbook_v2';
 import { sendTransaction } from './utils/rpc';
-import { Side } from './utils/utils';
+import { SideUtils } from './utils/utils';
 
 export type IdsSource = 'api' | 'static' | 'get-program-accounts';
 export type PlaceOrderArgs = IdlTypes<OpenbookV2>['PlaceOrderArgs'];
 export type PlaceOrderType = IdlTypes<OpenbookV2>['PlaceOrderType'];
+export type Side = IdlTypes<OpenbookV2>['Side'];
 export type PlaceOrderPeggedArgs = IdlTypes<OpenbookV2>['PlaceOrderPeggedArgs'];
 export type PlaceMultipleOrdersArgs =
   IdlTypes<OpenbookV2>['PlaceMultipleOrdersArgs'];
@@ -627,7 +628,9 @@ export class OpenBookV2Client {
     openOrdersDelegate?: Keypair,
   ): Promise<[TransactionInstruction, Signer[]]> {
     const marketVault =
-      args.side === Side.Bid ? market.marketQuoteVault : market.marketBaseVault;
+      args.side === SideUtils.Bid
+        ? market.marketQuoteVault
+        : market.marketBaseVault;
     const accountsMeta: AccountMeta[] = remainingAccounts.map((remaining) => ({
       pubkey: remaining,
       isSigner: false,
@@ -673,7 +676,9 @@ export class OpenBookV2Client {
     openOrdersDelegate?: Keypair,
   ): Promise<[TransactionInstruction, Signer[]]> {
     const marketVault =
-      args.side === Side.Bid ? market.marketQuoteVault : market.marketBaseVault;
+      args.side === SideUtils.Bid
+        ? market.marketQuoteVault
+        : market.marketBaseVault;
     const accountsMeta: AccountMeta[] = remainingAccounts.map((remaining) => ({
       pubkey: remaining,
       isSigner: false,
@@ -798,6 +803,49 @@ export class OpenBookV2Client {
     return [ix, signers];
   }
 
+  // Use OrderType from './utils/utils' for orderType
+  public async placeOrdersIx(
+    openOrdersPublicKey: PublicKey,
+    marketPublicKey: PublicKey,
+    market: MarketAccount,
+    userBaseAccount: PublicKey,
+    userQuoteAccount: PublicKey,
+    openOrdersAdmin: PublicKey | null,
+    orderType: PlaceOrderType,
+    bids: PlaceMultipleOrdersArgs[],
+    asks: PlaceMultipleOrdersArgs[],
+    limit: number = 12,
+    openOrdersDelegate?: Keypair,
+  ): Promise<[TransactionInstruction, Signer[]]> {
+    const ix = await this.program.methods
+      .placeOrders(orderType, bids, asks, limit)
+      .accounts({
+        signer:
+          openOrdersDelegate != null
+            ? openOrdersDelegate.publicKey
+            : this.walletPk,
+        asks: market.asks,
+        bids: market.bids,
+        marketQuoteVault: market.marketQuoteVault,
+        marketBaseVault: market.marketBaseVault,
+        eventHeap: market.eventHeap,
+        market: marketPublicKey,
+        openOrdersAccount: openOrdersPublicKey,
+        oracleA: market.oracleA.key,
+        oracleB: market.oracleB.key,
+        userBaseAccount,
+        userQuoteAccount,
+        tokenProgram: TOKEN_PROGRAM_ID,
+        openOrdersAdmin,
+      })
+      .instruction();
+    const signers: Signer[] = [];
+    if (openOrdersDelegate != null) {
+      signers.push(openOrdersDelegate);
+    }
+    return [ix, signers];
+  }
+
   public async cancelOrderById(
     openOrdersPublicKey: PublicKey,
     openOrdersAccount: OpenOrdersAccount,
@@ -831,6 +879,31 @@ export class OpenBookV2Client {
   ): Promise<[TransactionInstruction, Signer[]]> {
     const ix = await this.program.methods
       .cancelOrderByClientOrderId(clientOrderId)
+      .accounts({
+        signer: openOrdersAccount.owner,
+        asks: market.asks,
+        bids: market.bids,
+        market: openOrdersAccount.market,
+        openOrdersAccount: openOrdersPublicKey,
+      })
+      .instruction();
+    const signers: Signer[] = [];
+    if (openOrdersDelegate != null) {
+      signers.push(openOrdersDelegate);
+    }
+    return [ix, signers];
+  }
+
+  public async cancelAllOrders(
+    openOrdersPublicKey: PublicKey,
+    openOrdersAccount: OpenOrdersAccount,
+    market: MarketAccount,
+    limit: number,
+    side: Side | null,
+    openOrdersDelegate?: Keypair,
+  ): Promise<[TransactionInstruction, Signer[]]> {
+    const ix = await this.program.methods
+      .cancelAllOrders(side, limit)
       .accounts({
         signer: openOrdersAccount.owner,
         asks: market.asks,
