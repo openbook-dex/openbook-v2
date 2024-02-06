@@ -973,7 +973,7 @@ export class OpenBookV2Client {
         userBaseAccount: userBaseAccount,
         userQuoteAccount: userQuoteAccount,
         referrerAccount: referrerAccount,
-        penaltyPayer: penaltyPayer ?? PublicKey.default,
+        penaltyPayer: penaltyPayer,
       })
       .instruction();
 
