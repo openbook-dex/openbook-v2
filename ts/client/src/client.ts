@@ -956,7 +956,7 @@ export class OpenBookV2Client {
     userBaseAccount: PublicKey,
     userQuoteAccount: PublicKey,
     referrerAccount: PublicKey | null,
-    penaltyPayer: PublicKey | null,
+    penaltyPayer: PublicKey,
     openOrdersDelegate?: Keypair,
   ): Promise<[TransactionInstruction, Signer[]]> {
     const ix = await this.program.methods
@@ -973,7 +973,7 @@ export class OpenBookV2Client {
         userBaseAccount: userBaseAccount,
         userQuoteAccount: userQuoteAccount,
         referrerAccount: referrerAccount,
-        penaltyPayer: penaltyPayer ?? PublicKey.default,
+        penaltyPayer: penaltyPayer,
       })
       .instruction();
 
