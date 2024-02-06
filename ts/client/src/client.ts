@@ -955,7 +955,7 @@ export class OpenBookV2Client {
     market: MarketAccount,
     userBaseAccount: PublicKey,
     userQuoteAccount: PublicKey,
-    referrerAccount: PublicKey | null,
+    referrerAccount: PublicKey,
     penaltyPayer: PublicKey | null,
     openOrdersDelegate?: Keypair,
   ): Promise<[TransactionInstruction, Signer[]]> {
