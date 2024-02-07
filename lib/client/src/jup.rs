@@ -1,4 +1,3 @@
-use anchor_lang::AccountDeserialize;
 use anchor_lang::__private::bytemuck::Zeroable;
 use anchor_lang::prelude::*;
 use anchor_spl::token::Token;
@@ -14,6 +13,7 @@ use openbook_v2::{
 use crate::{
     book::{amounts_from_book, Amounts},
     remaining_accounts_to_crank,
+    util::ZeroCopyDeserialize,
 };
 use jupiter_amm_interface::{
     AccountMap, Amm, KeyedAccount, Quote, QuoteParams, Side as JupiterSide, Swap,
@@ -59,7 +59,8 @@ impl Amm for OpenBookMarket {
     }
 
     fn from_keyed_account(keyed_account: &KeyedAccount) -> Result<Self> {
-        let market = Market::try_deserialize(&mut keyed_account.account.data.as_slice())?;
+        let market =
+            Market::try_deserialize_from_slice(&mut keyed_account.account.data.as_slice())?;
         let mut related_accounts = vec![
             market.bids,
             market.asks,
@@ -91,13 +92,14 @@ impl Amm for OpenBookMarket {
 
     fn update(&mut self, account_map: &AccountMap) -> Result<()> {
         let bids_data = account_map.get(&self.market.bids).unwrap();
-        self.bids = BookSide::try_deserialize(&mut bids_data.data.as_slice()).unwrap();
+        self.bids = BookSide::try_deserialize_from_slice(&mut bids_data.data.as_slice()).unwrap();
 
         let asks_data = account_map.get(&self.market.asks).unwrap();
-        self.asks = BookSide::try_deserialize(&mut asks_data.data.as_slice()).unwrap();
+        self.asks = BookSide::try_deserialize_from_slice(&mut asks_data.data.as_slice()).unwrap();
 
         let event_heap_data = account_map.get(&self.market.event_heap).unwrap();
-        self.event_heap = EventHeap::try_deserialize(&mut event_heap_data.data.as_slice()).unwrap();
+        self.event_heap =
+            EventHeap::try_deserialize_from_slice(&mut event_heap_data.data.as_slice()).unwrap();
 
         let clock_data = account_map.get(&clock::ID).unwrap();
         let clock: Clock = bincode::deserialize(clock_data.data.as_slice())?;
@@ -401,7 +403,8 @@ mod test {
             let user_input_account = Pubkey::new_unique();
             let user_output_account = Pubkey::new_unique();
 
-            let market_data = Market::try_deserialize(&mut market_account.account.data.as_slice())?;
+            let market_data =
+                Market::try_deserialize_from_slice(&mut market_account.account.data.as_slice())?;
 
             add_token_account(user_input_account, user.pubkey(), input_mint);
             add_token_account(user_output_account, user.pubkey(), output_mint);
