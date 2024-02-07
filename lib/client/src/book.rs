@@ -7,9 +7,8 @@ use openbook_v2::state::{
     Market, Orderbook, Side, DROP_EXPIRED_ORDER_LIMIT, FILL_EVENT_REMAINING_LIMIT,
 };
 
-// TODO Adjust this number after doing some calculations
-pub const MAXIMUM_TAKEN_ORDERS: u8 = 8;
-const MAXIMUM_REMAINING_ACCOUNTS: usize = 4;
+pub const MAXIMUM_TAKEN_ORDERS: u8 = 45;
+const MAXIMUM_REMAINING_ACCOUNTS: usize = 0;
 
 pub struct Amounts {
     pub total_base_taken_native: u64,
