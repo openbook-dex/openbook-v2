@@ -316,11 +316,6 @@ export interface OpenbookV2 {
       ];
       accounts: [
         {
-          name: 'payer';
-          isMut: true;
-          isSigner: true;
-        },
-        {
           name: 'owner';
           isMut: false;
           isSigner: true;
@@ -622,7 +617,119 @@ export interface OpenbookV2 {
       };
     },
     {
-      name: 'cancelAndPlaceOrders';
+      name: 'placeOrders';
+      docs: ['Place multiple orders'];
+      accounts: [
+        {
+          name: 'signer';
+          isMut: false;
+          isSigner: true;
+        },
+        {
+          name: 'openOrdersAccount';
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: 'openOrdersAdmin';
+          isMut: false;
+          isSigner: true;
+          isOptional: true;
+        },
+        {
+          name: 'userQuoteAccount';
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: 'userBaseAccount';
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: 'market';
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: 'bids';
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: 'asks';
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: 'eventHeap';
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: 'marketQuoteVault';
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: 'marketBaseVault';
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: 'oracleA';
+          isMut: false;
+          isSigner: false;
+          isOptional: true;
+        },
+        {
+          name: 'oracleB';
+          isMut: false;
+          isSigner: false;
+          isOptional: true;
+        },
+        {
+          name: 'tokenProgram';
+          isMut: false;
+          isSigner: false;
+        },
+      ];
+      args: [
+        {
+          name: 'ordersType';
+          type: {
+            defined: 'PlaceOrderType';
+          };
+        },
+        {
+          name: 'bids';
+          type: {
+            vec: {
+              defined: 'PlaceMultipleOrdersArgs';
+            };
+          };
+        },
+        {
+          name: 'asks';
+          type: {
+            vec: {
+              defined: 'PlaceMultipleOrdersArgs';
+            };
+          };
+        },
+        {
+          name: 'limit';
+          type: 'u8';
+        },
+      ];
+      returns: {
+        vec: {
+          option: 'u128';
+        };
+      };
+    },
+    {
+      name: 'cancelAllAndPlaceOrders';
       docs: ['Cancel orders and place multiple orders.'];
       accounts: [
         {
@@ -701,18 +808,30 @@ export interface OpenbookV2 {
       ];
       args: [
         {
-          name: 'cancelClientOrdersIds';
+          name: 'ordersType';
           type: {
-            vec: 'u64';
+            defined: 'PlaceOrderType';
           };
         },
         {
-          name: 'placeOrders';
+          name: 'bids';
           type: {
             vec: {
-              defined: 'PlaceOrderArgs';
+              defined: 'PlaceMultipleOrdersArgs';
             };
           };
+        },
+        {
+          name: 'asks';
+          type: {
+            vec: {
+              defined: 'PlaceMultipleOrdersArgs';
+            };
+          };
+        },
+        {
+          name: 'limit';
+          type: 'u8';
         },
       ];
       returns: {
@@ -864,12 +983,6 @@ export interface OpenbookV2 {
           name: 'userQuoteAccount';
           isMut: true;
           isSigner: false;
-        },
-        {
-          name: 'referrerAccount';
-          isMut: true;
-          isSigner: false;
-          isOptional: true;
         },
         {
           name: 'oracleA';
@@ -1857,9 +1970,13 @@ export interface OpenbookV2 {
             type: 'u8';
           },
           {
+            name: 'version';
+            type: 'u8';
+          },
+          {
             name: 'padding';
             type: {
-              array: ['u8', 3];
+              array: ['u8', 2];
             };
           },
           {
@@ -2093,9 +2210,14 @@ export interface OpenbookV2 {
             type: 'u128';
           },
           {
+            name: 'bidsQuoteLots';
+            docs: ['Quote lots in open bids'];
+            type: 'i64';
+          },
+          {
             name: 'reserved';
             type: {
-              array: ['u8', 72];
+              array: ['u8', 64];
             };
           },
         ];
@@ -2658,6 +2780,26 @@ export interface OpenbookV2 {
       };
     },
     {
+      name: 'PlaceMultipleOrdersArgs';
+      type: {
+        kind: 'struct';
+        fields: [
+          {
+            name: 'priceLots';
+            type: 'i64';
+          },
+          {
+            name: 'maxQuoteLotsIncludingFees';
+            type: 'i64';
+          },
+          {
+            name: 'expiryTimestamp';
+            type: 'u64';
+          },
+        ];
+      };
+    },
+    {
       name: 'PlaceOrderPeggedArgs';
       type: {
         kind: 'struct';
@@ -3077,7 +3219,7 @@ export interface OpenbookV2 {
         },
         {
           name: 'makerFee';
-          type: 'i64';
+          type: 'u64';
           index: false;
         },
         {
@@ -3096,8 +3238,8 @@ export interface OpenbookV2 {
           index: false;
         },
         {
-          name: 'takerFee';
-          type: 'i64';
+          name: 'takerFeeCeil';
+          type: 'u64';
           index: false;
         },
         {
@@ -3276,6 +3418,11 @@ export interface OpenbookV2 {
         },
         {
           name: 'bidsBaseLots';
+          type: 'i64';
+          index: false;
+        },
+        {
+          name: 'bidsQuoteLots';
           type: 'i64';
           index: false;
         },
@@ -3854,11 +4001,6 @@ export const IDL: OpenbookV2 = {
       ],
       accounts: [
         {
-          name: 'payer',
-          isMut: true,
-          isSigner: true,
-        },
-        {
           name: 'owner',
           isMut: false,
           isSigner: true,
@@ -4160,7 +4302,119 @@ export const IDL: OpenbookV2 = {
       },
     },
     {
-      name: 'cancelAndPlaceOrders',
+      name: 'placeOrders',
+      docs: ['Place multiple orders'],
+      accounts: [
+        {
+          name: 'signer',
+          isMut: false,
+          isSigner: true,
+        },
+        {
+          name: 'openOrdersAccount',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'openOrdersAdmin',
+          isMut: false,
+          isSigner: true,
+          isOptional: true,
+        },
+        {
+          name: 'userQuoteAccount',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'userBaseAccount',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'market',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'bids',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'asks',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'eventHeap',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'marketQuoteVault',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'marketBaseVault',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'oracleA',
+          isMut: false,
+          isSigner: false,
+          isOptional: true,
+        },
+        {
+          name: 'oracleB',
+          isMut: false,
+          isSigner: false,
+          isOptional: true,
+        },
+        {
+          name: 'tokenProgram',
+          isMut: false,
+          isSigner: false,
+        },
+      ],
+      args: [
+        {
+          name: 'ordersType',
+          type: {
+            defined: 'PlaceOrderType',
+          },
+        },
+        {
+          name: 'bids',
+          type: {
+            vec: {
+              defined: 'PlaceMultipleOrdersArgs',
+            },
+          },
+        },
+        {
+          name: 'asks',
+          type: {
+            vec: {
+              defined: 'PlaceMultipleOrdersArgs',
+            },
+          },
+        },
+        {
+          name: 'limit',
+          type: 'u8',
+        },
+      ],
+      returns: {
+        vec: {
+          option: 'u128',
+        },
+      },
+    },
+    {
+      name: 'cancelAllAndPlaceOrders',
       docs: ['Cancel orders and place multiple orders.'],
       accounts: [
         {
@@ -4239,18 +4493,30 @@ export const IDL: OpenbookV2 = {
       ],
       args: [
         {
-          name: 'cancelClientOrdersIds',
+          name: 'ordersType',
           type: {
-            vec: 'u64',
+            defined: 'PlaceOrderType',
           },
         },
         {
-          name: 'placeOrders',
+          name: 'bids',
           type: {
             vec: {
-              defined: 'PlaceOrderArgs',
+              defined: 'PlaceMultipleOrdersArgs',
             },
           },
+        },
+        {
+          name: 'asks',
+          type: {
+            vec: {
+              defined: 'PlaceMultipleOrdersArgs',
+            },
+          },
+        },
+        {
+          name: 'limit',
+          type: 'u8',
         },
       ],
       returns: {
@@ -4402,12 +4668,6 @@ export const IDL: OpenbookV2 = {
           name: 'userQuoteAccount',
           isMut: true,
           isSigner: false,
-        },
-        {
-          name: 'referrerAccount',
-          isMut: true,
-          isSigner: false,
-          isOptional: true,
         },
         {
           name: 'oracleA',
@@ -5395,9 +5655,13 @@ export const IDL: OpenbookV2 = {
             type: 'u8',
           },
           {
+            name: 'version',
+            type: 'u8',
+          },
+          {
             name: 'padding',
             type: {
-              array: ['u8', 3],
+              array: ['u8', 2],
             },
           },
           {
@@ -5631,9 +5895,14 @@ export const IDL: OpenbookV2 = {
             type: 'u128',
           },
           {
+            name: 'bidsQuoteLots',
+            docs: ['Quote lots in open bids'],
+            type: 'i64',
+          },
+          {
             name: 'reserved',
             type: {
-              array: ['u8', 72],
+              array: ['u8', 64],
             },
           },
         ],
@@ -6196,6 +6465,26 @@ export const IDL: OpenbookV2 = {
       },
     },
     {
+      name: 'PlaceMultipleOrdersArgs',
+      type: {
+        kind: 'struct',
+        fields: [
+          {
+            name: 'priceLots',
+            type: 'i64',
+          },
+          {
+            name: 'maxQuoteLotsIncludingFees',
+            type: 'i64',
+          },
+          {
+            name: 'expiryTimestamp',
+            type: 'u64',
+          },
+        ],
+      },
+    },
+    {
       name: 'PlaceOrderPeggedArgs',
       type: {
         kind: 'struct',
@@ -6615,7 +6904,7 @@ export const IDL: OpenbookV2 = {
         },
         {
           name: 'makerFee',
-          type: 'i64',
+          type: 'u64',
           index: false,
         },
         {
@@ -6634,8 +6923,8 @@ export const IDL: OpenbookV2 = {
           index: false,
         },
         {
-          name: 'takerFee',
-          type: 'i64',
+          name: 'takerFeeCeil',
+          type: 'u64',
           index: false,
         },
         {
@@ -6814,6 +7103,11 @@ export const IDL: OpenbookV2 = {
         },
         {
           name: 'bidsBaseLots',
+          type: 'i64',
+          index: false,
+        },
+        {
+          name: 'bidsQuoteLots',
           type: 'i64',
           index: false,
         },

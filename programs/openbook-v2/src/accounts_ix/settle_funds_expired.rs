@@ -40,7 +40,7 @@ pub struct SettleFundsExpired<'info> {
     #[account(
         mut,
         token::mint = market_quote_vault.mint,
-        constraint = user_base_account.owner == open_orders_account.load()?.owner
+        constraint = user_quote_account.owner == open_orders_account.load()?.owner
     )]
     pub user_quote_account: InterfaceAccount<'info, token_interface::TokenAccount>,
     #[account(

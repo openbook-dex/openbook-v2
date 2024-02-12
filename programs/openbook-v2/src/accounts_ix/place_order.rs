@@ -40,6 +40,7 @@ pub struct PlaceOrder<'info> {
     pub event_heap: AccountLoader<'info, EventHeap>,
     #[account(
         mut,
+        // The side of the vault is checked inside the ix
         constraint = market.load()?.is_market_vault(market_vault.key())
     )]
     pub market_vault: InterfaceAccount<'info, token_interface::TokenAccount>,

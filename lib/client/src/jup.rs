@@ -1,4 +1,3 @@
-use anchor_lang::AccountDeserialize;
 use anchor_lang::__private::bytemuck::Zeroable;
 use anchor_lang::prelude::*;
 use anchor_spl::token::Token;
@@ -14,6 +13,7 @@ use openbook_v2::{
 use crate::{
     book::{amounts_from_book, Amounts},
     remaining_accounts_to_crank,
+    util::ZeroCopyDeserialize,
 };
 use jupiter_amm_interface::{
     AccountMap, Amm, KeyedAccount, Quote, QuoteParams, Side as JupiterSide, Swap,
@@ -35,6 +35,7 @@ pub struct OpenBookMarket {
     related_accounts: Vec<Pubkey>,
     reserve_mints: [Pubkey; 2],
     oracle_price: Option<I80F48>,
+    is_permissioned: bool,
 }
 
 impl Amm for OpenBookMarket {
@@ -59,21 +60,29 @@ impl Amm for OpenBookMarket {
     }
 
     fn from_keyed_account(keyed_account: &KeyedAccount) -> Result<Self> {
-        let market = Market::try_deserialize(&mut keyed_account.account.data.as_slice())?;
-        let mut related_accounts = vec![
-            market.bids,
-            market.asks,
-            market.event_heap,
-            market.market_base_vault,
-            market.market_quote_vault,
-            clock::ID,
-        ];
+        let market =
+            Market::try_deserialize_from_slice(&mut keyed_account.account.data.as_slice())?;
 
-        related_accounts.extend(
-            [market.oracle_a, market.oracle_b]
-                .into_iter()
-                .filter_map(Option::<Pubkey>::from),
-        );
+        let is_permissioned = market.open_orders_admin.is_some();
+        let related_accounts = if is_permissioned {
+            vec![]
+        } else {
+            let mut accs = vec![
+                market.bids,
+                market.asks,
+                market.event_heap,
+                market.market_base_vault,
+                market.market_quote_vault,
+                clock::ID,
+            ];
+
+            accs.extend(
+                [market.oracle_a, market.oracle_b]
+                    .into_iter()
+                    .filter_map(Option::<Pubkey>::from),
+            );
+            accs
+        };
 
         Ok(OpenBookMarket {
             market,
@@ -86,18 +95,24 @@ impl Amm for OpenBookMarket {
             asks: BookSide::zeroed(),
             oracle_price: None,
             timestamp: 0,
+            is_permissioned,
         })
     }
 
     fn update(&mut self, account_map: &AccountMap) -> Result<()> {
+        if self.is_permissioned {
+            return Ok(());
+        }
+
         let bids_data = account_map.get(&self.market.bids).unwrap();
-        self.bids = BookSide::try_deserialize(&mut bids_data.data.as_slice()).unwrap();
+        self.bids = BookSide::try_deserialize_from_slice(&mut bids_data.data.as_slice()).unwrap();
 
         let asks_data = account_map.get(&self.market.asks).unwrap();
-        self.asks = BookSide::try_deserialize(&mut asks_data.data.as_slice()).unwrap();
+        self.asks = BookSide::try_deserialize_from_slice(&mut asks_data.data.as_slice()).unwrap();
 
         let event_heap_data = account_map.get(&self.market.event_heap).unwrap();
-        self.event_heap = EventHeap::try_deserialize(&mut event_heap_data.data.as_slice()).unwrap();
+        self.event_heap =
+            EventHeap::try_deserialize_from_slice(&mut event_heap_data.data.as_slice()).unwrap();
 
         let clock_data = account_map.get(&clock::ID).unwrap();
         let clock: Clock = bincode::deserialize(clock_data.data.as_slice())?;
@@ -115,10 +130,19 @@ impl Amm for OpenBookMarket {
             clock.slot,
         )?;
 
+        self.timestamp = clock.unix_timestamp.try_into().unwrap();
+
         Ok(())
     }
 
     fn quote(&self, quote_params: &QuoteParams) -> Result<Quote> {
+        if self.is_permissioned {
+            return Ok(Quote {
+                not_enough_liquidity: true,
+                ..Quote::default()
+            });
+        }
+
         let side = if quote_params.input_mint == self.market.quote_mint {
             Side::Bid
         } else {
@@ -132,8 +156,7 @@ impl Amm for OpenBookMarket {
         let (max_base_lots, max_quote_lots_including_fees) = match side {
             Side::Bid => (
                 self.market.max_base_lots(),
-                input_amount / self.market.quote_lot_size
-                    + input_amount % self.market.quote_lot_size,
+                input_amount / self.market.quote_lot_size,
             ),
             Side::Ask => (
                 input_amount / self.market.base_lot_size,
@@ -191,89 +214,89 @@ impl Amm for OpenBookMarket {
 
         let source_is_quote = source_mint == &self.market.quote_mint;
 
-        let side = if source_is_quote {
-            Side::Bid
+        let (side, jup_side) = if source_is_quote {
+            (Side::Bid, JupiterSide::Bid)
         } else {
-            Side::Ask
+            (Side::Ask, JupiterSide::Ask)
         };
 
-        let (user_quote_account, user_base_account) = if source_is_quote {
-            (*user_source_token_account, *user_destination_token_account)
+        if self.is_permissioned {
+            Ok(SwapAndAccountMetas {
+                swap: Swap::Openbook { side: { jup_side } },
+                account_metas: vec![],
+            })
         } else {
-            (*user_destination_token_account, *user_source_token_account)
+            let (user_quote_account, user_base_account) = if source_is_quote {
+                (*user_source_token_account, *user_destination_token_account)
+            } else {
+                (*user_destination_token_account, *user_source_token_account)
+            };
+
+            let accounts = PlaceTakeOrder {
+                signer: *user_transfer_authority,
+                penalty_payer: *user_transfer_authority,
+                market: self.key,
+                market_authority: self.market.market_authority,
+                bids: self.market.bids,
+                asks: self.market.asks,
+                user_base_account,
+                user_quote_account,
+                market_base_vault: self.market.market_base_vault,
+                market_quote_vault: self.market.market_quote_vault,
+                event_heap: self.market.event_heap,
+                oracle_a: Option::from(self.market.oracle_a),
+                oracle_b: Option::from(self.market.oracle_b),
+                token_program: Token::id(),
+                system_program: System::id(),
+                open_orders_admin: None,
+                deposit_mint: None,
+                withdraw_mint: None,
         };
 
-        let accounts = PlaceTakeOrder {
-            signer: *user_transfer_authority,
-            penalty_payer: *user_transfer_authority,
-            market: self.key,
-            market_authority: self.market.market_authority,
-            bids: self.market.bids,
-            asks: self.market.asks,
-            user_base_account,
-            user_quote_account,
-            market_base_vault: self.market.market_base_vault,
-            market_quote_vault: self.market.market_quote_vault,
-            event_heap: self.market.event_heap,
-            oracle_a: Option::from(self.market.oracle_a),
-            oracle_b: Option::from(self.market.oracle_b),
-            token_program: Token::id(),
-            system_program: System::id(),
-            open_orders_admin: None,
-            referrer_account: None,
-            deposit_mint: None,
-            withdraw_mint: None,
-        };
+            let mut account_metas = accounts.to_account_metas(None);
 
-        let mut account_metas = accounts.to_account_metas(None);
+            let input_amount = i64::try_from(*in_amount)?;
 
-        let input_amount = i64::try_from(*in_amount)?;
+            let (max_base_lots, max_quote_lots_including_fees) = match side {
+                Side::Bid => (
+                    self.market.max_base_lots(),
+                    input_amount / self.market.quote_lot_size
+                        + input_amount % self.market.quote_lot_size,
+                ),
+                Side::Ask => (
+                    input_amount / self.market.base_lot_size,
+                    self.market.max_quote_lots(),
+                ),
+            };
 
-        let (max_base_lots, max_quote_lots_including_fees) = match side {
-            Side::Bid => (
-                self.market.max_base_lots(),
-                input_amount / self.market.quote_lot_size
-                    + input_amount % self.market.quote_lot_size,
-            ),
-            Side::Ask => (
-                input_amount / self.market.base_lot_size,
-                self.market.max_quote_lots(),
-            ),
-        };
+            let bids_ref = RefCell::new(self.bids);
+            let asks_ref = RefCell::new(self.asks);
+            let book = Orderbook {
+                bids: bids_ref.borrow_mut(),
+                asks: asks_ref.borrow_mut(),
+            };
 
-        let bids_ref = RefCell::new(self.bids);
-        let asks_ref = RefCell::new(self.asks);
-        let book = Orderbook {
-            bids: bids_ref.borrow_mut(),
-            asks: asks_ref.borrow_mut(),
-        };
+            let remainigs = remaining_accounts_to_crank(
+                book,
+                side,
+                max_base_lots,
+                max_quote_lots_including_fees,
+                &self.market,
+                self.oracle_price,
+                self.timestamp,
+            )?;
 
-        let remainigs = remaining_accounts_to_crank(
-            book,
-            side,
-            max_base_lots,
-            max_quote_lots_including_fees,
-            &self.market,
-            self.oracle_price,
-            self.timestamp,
-        )?;
+            let remainigs_accounts: Vec<AccountMeta> = remainigs
+                .iter()
+                .map(|&pubkey| AccountMeta::new(pubkey, false))
+                .collect();
+            account_metas.extend(remainigs_accounts);
 
-        let remainigs_accounts: Vec<AccountMeta> = remainigs
-            .iter()
-            .map(|&pubkey| AccountMeta::new(pubkey, false))
-            .collect();
-        account_metas.extend(remainigs_accounts);
-
-        let side = if source_is_quote {
-            JupiterSide::Bid
-        } else {
-            JupiterSide::Ask
-        };
-
-        Ok(SwapAndAccountMetas {
-            swap: Swap::Openbook { side: { side } },
-            account_metas,
-        })
+            Ok(SwapAndAccountMetas {
+                swap: Swap::Openbook { side: { jup_side } },
+                account_metas,
+            })
+        }
     }
 
     fn clone_amm(&self) -> Box<dyn Amm + Send + Sync> {
@@ -281,15 +304,30 @@ impl Amm for OpenBookMarket {
     }
 }
 
-#[cfg(test)]
+#[cfg(all(test, feature = "enable-gpl"))]
 mod test {
     use super::*;
-    use solana_client::rpc_client::RpcClient;
+    use crate::book::MAXIMUM_TAKEN_ORDERS;
+    use anchor_spl::token::spl_token::{
+        self,
+        state::{Account as TokenAccount, AccountState},
+    };
+    use solana_client::nonblocking::rpc_client::RpcClient;
+    use solana_program_test::{processor, ProgramTest};
+    use solana_sdk::{
+        account::{Account, WritableAccount},
+        instruction::Instruction,
+        program_pack::Pack,
+        signature::Signer,
+        signer::keypair::Keypair,
+        stake_history::Epoch,
+        transaction::Transaction,
+    };
     use std::str::FromStr;
 
-    #[test]
-    // TODO replace std::env by mainnet market after audit deploy
-    fn test_jupiter_local() -> Result<()> {
+    #[tokio::test]
+    // TODO replace with local accounts
+    async fn test_jupiter_local() -> Result<()> {
         let market = match std::env::var("MARKET_PUBKEY") {
             Ok(key) => Pubkey::from_str(&key)?,
             Err(_) => {
@@ -298,8 +336,8 @@ mod test {
             }
         };
 
-        let rpc = RpcClient::new("http://127.0.0.1:8899");
-        let account = rpc.get_account(&market)?;
+        let rpc = RpcClient::new("http://localhost:8899".to_string());
+        let account = rpc.get_account(&market).await?;
 
         let market_account = KeyedAccount {
             key: market,
@@ -310,36 +348,182 @@ mod test {
         let mut openbook = OpenBookMarket::from_keyed_account(&market_account).unwrap();
 
         let pubkeys = openbook.get_accounts_to_update();
-        let accounts: AccountMap = pubkeys
+        let accounts_map: AccountMap = pubkeys
             .iter()
-            .zip(rpc.get_multiple_accounts(&pubkeys)?)
+            .zip(rpc.get_multiple_accounts(&pubkeys).await?)
             .map(|(key, acc)| (*key, acc.unwrap()))
             .collect();
 
-        openbook.update(&accounts)?;
+        openbook.update(&accounts_map)?;
 
         let (base_mint, quote_mint) = {
             let reserves = openbook.get_reserve_mints();
             (reserves[0], reserves[1])
         };
 
-        let quote_params = QuoteParams {
-            in_amount: 80,
-            input_mint: base_mint,
-            output_mint: quote_mint,
-        };
+        for (side, in_amount) in [
+            (openbook_v2::state::Side::Ask, 1_000_000_000),
+            (openbook_v2::state::Side::Bid, 120_456_000),
+        ] {
+            let (input_mint, output_mint) = match side {
+                openbook_v2::state::Side::Ask => (base_mint, quote_mint),
+                openbook_v2::state::Side::Bid => (quote_mint, base_mint),
+            };
 
-        let quote = openbook.quote(&quote_params)?;
+            let quote_params = QuoteParams {
+                in_amount,
+                input_mint,
+                output_mint,
+            };
 
-        println!(
-            "Market with base_lot_size = {}, quote_lot_size = {}, taker_fee = {}",
-            openbook.market.base_lot_size,
-            openbook.market.quote_lot_size,
-            openbook.market.taker_fee
-        );
-        println!("{:#?}", quote_params);
-        println!("{:#?}", quote);
+            let quote = openbook.quote(&quote_params)?;
 
+            println!(
+                "Market with base_lot_size = {}, quote_lot_size = {}, taker_fee = {}",
+                openbook.market.base_lot_size,
+                openbook.market.quote_lot_size,
+                openbook.market.taker_fee
+            );
+            println!("{:#?}", quote_params);
+            println!("{:#?}", quote);
+
+            if openbook.market.open_orders_admin.is_some() {
+                println!("Permissioned market");
+                assert_eq!(quote.in_amount, 0);
+                assert_eq!(quote.out_amount, 0);
+                assert!(quote.not_enough_liquidity);
+            } else {
+                let mut pt = ProgramTest::new(
+                    "openbook_v2",
+                    openbook_v2::id(),
+                    processor!(openbook_v2::entry),
+                );
+
+                pt.add_account(market, market_account.account.clone());
+                for (pubkey, account) in accounts_map.iter() {
+                    pt.add_account(*pubkey, account.clone());
+                }
+
+                let initial_amount = 1_000_000_000_000_000;
+
+                let mut add_token_account = |pubkey, owner, mint| {
+                    let mut data = vec![0_u8; TokenAccount::LEN];
+                    let account = TokenAccount {
+                        state: AccountState::Initialized,
+                        mint,
+                        owner,
+                        amount: initial_amount,
+                        ..TokenAccount::default()
+                    };
+                    TokenAccount::pack(account, &mut data).unwrap();
+                    pt.add_account(
+                        pubkey,
+                        Account::create(
+                            Rent::default().minimum_balance(data.len()),
+                            data,
+                            spl_token::ID,
+                            false,
+                            Epoch::default(),
+                        ),
+                    );
+                };
+
+                let user = Keypair::new();
+                let user_input_account = Pubkey::new_unique();
+                let user_output_account = Pubkey::new_unique();
+
+                let market_data = Market::try_deserialize_from_slice(
+                    &mut market_account.account.data.as_slice(),
+                )?;
+
+                add_token_account(user_input_account, user.pubkey(), input_mint);
+                add_token_account(user_output_account, user.pubkey(), output_mint);
+
+                let (mut banks_client, payer, recent_blockhash) = pt.start().await;
+
+                // This replicates the above logic in quote() so the asme amounts are used
+                let input_amount = i64::try_from(in_amount).unwrap();
+                let (max_base_lots, max_quote_lots_including_fees) = match side {
+                    Side::Bid => (
+                        market_data.max_base_lots(),
+                        input_amount / market_data.quote_lot_size,
+                    ),
+                    Side::Ask => (
+                        input_amount / market_data.base_lot_size,
+                        market_data.max_quote_lots(),
+                    ),
+                };
+
+                let (user_base_account, user_quote_account) = match side {
+                    openbook_v2::state::Side::Ask => (user_input_account, user_output_account),
+                    openbook_v2::state::Side::Bid => (user_output_account, user_input_account),
+                };
+
+                let ix = Instruction {
+                    program_id: openbook_v2::id(),
+                    accounts: anchor_lang::ToAccountMetas::to_account_metas(
+                        &openbook_v2::accounts::PlaceTakeOrder {
+                            signer: user.pubkey(),
+                            penalty_payer: user.pubkey(),
+                            market,
+                            user_base_account,
+                            user_quote_account,
+                            market_authority: market_data.market_authority,
+                            bids: market_data.bids,
+                            asks: market_data.asks,
+                            market_base_vault: market_data.market_base_vault,
+                            market_quote_vault: market_data.market_quote_vault,
+                            event_heap: market_data.event_heap,
+                            oracle_a: Option::from(market_data.oracle_a),
+                            oracle_b: Option::from(market_data.oracle_b),
+                            token_program: Token::id(),
+                            system_program: System::id(),
+                            open_orders_admin: None,
+                        },
+                        None,
+                    ),
+                    data: anchor_lang::InstructionData::data(
+                        &openbook_v2::instruction::PlaceTakeOrder {
+                            args: openbook_v2::PlaceTakeOrderArgs {
+                                side,
+                                price_lots: i64::MAX,
+                                max_base_lots,
+                                max_quote_lots_including_fees,
+                                order_type: openbook_v2::state::PlaceOrderType::Market,
+                                limit: MAXIMUM_TAKEN_ORDERS,
+                            },
+                        },
+                    ),
+                };
+
+                let tx = Transaction::new_signed_with_payer(
+                    &[ix],
+                    Some(&payer.pubkey()),
+                    &[&payer, &user],
+                    recent_blockhash,
+                );
+                banks_client.process_transaction(tx).await.unwrap();
+
+                // let input_account = banks_client.get_account(user).await.unwrap().unwrap();
+
+                let output_account = banks_client
+                    .get_account(user_output_account)
+                    .await
+                    .unwrap()
+                    .unwrap();
+
+                let get_amount = |account: Account| -> u64 {
+                    TokenAccount::unpack(&account.data).unwrap().amount
+                };
+
+                // let input_amount = get_amount(input_account);
+                let output_amount = get_amount(output_account);
+                // println!("{}", input_amount);
+                println!("{}", output_amount);
+
+                assert_eq!(output_amount - initial_amount, quote.out_amount);
+            }
+        }
         Ok(())
     }
 }

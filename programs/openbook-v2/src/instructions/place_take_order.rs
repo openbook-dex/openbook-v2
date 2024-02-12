@@ -7,11 +7,7 @@ use crate::state::*;
 use crate::token_utils::*;
 
 #[allow(clippy::too_many_arguments)]
-pub fn place_take_order<'info>(
-    ctx: Context<'_, '_, '_, 'info, PlaceTakeOrder<'info>>,
-    order: Order,
-    limit: u8,
-) -> Result<()> {
+pub fn place_take_order(ctx: Context<PlaceTakeOrder>, order: Order, limit: u8) -> Result<()> {
     require_gte!(order.max_base_lots, 0, OpenBookError::InvalidInputLots);
     require_gte!(
         order.max_quote_lots_including_fees,
@@ -63,27 +59,23 @@ pub fn place_take_order<'info>(
         ctx.remaining_accounts,
     )?;
 
+    // place_take_orders doesnt pay to referrers
+    let makers_rebates = taker_fees - referrer_amount;
+
     let (deposit_amount, withdraw_amount) = match side {
         Side::Bid => {
-            let total_quote_including_fees = total_quote_taken_native + taker_fees;
+            let total_quote_including_fees = total_quote_taken_native + makers_rebates;
             market.base_deposit_total -= total_base_taken_native;
             market.quote_deposit_total += total_quote_including_fees;
             (total_quote_including_fees, total_base_taken_native)
         }
         Side::Ask => {
-            let total_quote_discounting_fees = total_quote_taken_native - taker_fees;
+            let total_quote_discounting_fees = total_quote_taken_native - makers_rebates;
             market.base_deposit_total += total_base_taken_native;
             market.quote_deposit_total -= total_quote_discounting_fees;
             (total_base_taken_native, total_quote_discounting_fees)
         }
     };
-
-    if ctx.accounts.referrer_account.is_some() {
-        market.fees_to_referrers += referrer_amount as u128;
-        market.quote_deposit_total -= referrer_amount;
-    } else {
-        market.fees_available += referrer_amount;
-    }
 
     let seeds = market_seeds!(market, ctx.accounts.market.key());
 
@@ -178,35 +170,7 @@ pub fn place_take_order<'info>(
         },
     )?;
 
-    if let Some(referrer_account) = &ctx.accounts.referrer_account {
-        if referrer_account.mint == user_withdraw_acc.mint {
-            token_transfer_signed(
-                &ctx.accounts.token_program,
-                &ctx.accounts.market_quote_vault,
-                referrer_account,
-                &ctx.accounts.market_authority,
-                seeds,
-                &withdraw_mint_acc,
-                AmountAndDecimals {
-                    amount: referrer_amount,
-                    decimals: withdraw_decimals,
-                },
-            )?;
-        } else if referrer_account.mint == user_deposit_acc.mint {
-            token_transfer_signed(
-                &ctx.accounts.token_program,
-                &ctx.accounts.market_quote_vault,
-                referrer_account,
-                &ctx.accounts.market_authority,
-                seeds,
-                &deposit_mint_acc,
-                AmountAndDecimals {
-                    amount: referrer_amount,
-                    decimals: deposit_decimals,
-                },
-            )?;
-        }
-    }
+
 
     Ok(())
 }

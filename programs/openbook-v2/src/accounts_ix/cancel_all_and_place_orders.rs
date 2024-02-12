@@ -5,7 +5,7 @@ use anchor_lang::prelude::*;
 use anchor_spl::token_interface::{self, TokenInterface};
 
 #[derive(Accounts)]
-pub struct CancelAndPlaceOrders<'info> {
+pub struct CancelAllAndPlaceOrders<'info> {
     pub signer: Signer<'info>,
     #[account(
         mut,

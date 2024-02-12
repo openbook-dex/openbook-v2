@@ -461,10 +461,8 @@ impl FuzzContext {
         &mut self,
         user_id: &UserId,
         data: &openbook_v2::instruction::PlaceTakeOrder,
-        referrer_id: Option<&ReferrerId>,
         makers: Option<&HashSet<UserId>>,
     ) -> ProgramResult {
-        let referrer_account = referrer_id.map(|id| *self.get_or_create_new_referrer(id));
         let user = self.get_or_create_new_user(user_id);
 
         let accounts = openbook_v2::accounts::PlaceTakeOrder {
@@ -484,7 +482,6 @@ impl FuzzContext {
             token_program: spl_token::ID,
             system_program: system_program::ID,
             open_orders_admin: None,
-            referrer_account,
         };
 
         let remaining = makers.map_or_else(Vec::new, |makers| {
@@ -603,15 +600,15 @@ impl FuzzContext {
         process_instruction(&mut self.state, data, &accounts, &remaining)
     }
 
-    pub fn cancel_and_place_orders(
+    pub fn cancel_all_and_place_orders(
         &mut self,
         user_id: &UserId,
-        data: &openbook_v2::instruction::CancelAndPlaceOrders,
+        data: &openbook_v2::instruction::CancelAllAndPlaceOrders,
         makers: Option<&HashSet<UserId>>,
     ) -> ProgramResult {
         let user = self.get_or_create_new_user(user_id);
 
-        let accounts = openbook_v2::accounts::CancelAndPlaceOrders {
+        let accounts = openbook_v2::accounts::CancelAllAndPlaceOrders {
             open_orders_account: user.open_orders,
             signer: user.owner,
             user_base_account: user.base_vault,

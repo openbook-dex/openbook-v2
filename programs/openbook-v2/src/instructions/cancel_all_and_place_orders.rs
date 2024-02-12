@@ -8,11 +8,11 @@ use crate::state::*;
 use crate::token_utils::*;
 
 #[allow(clippy::too_many_arguments)]
-pub fn cancel_and_place_orders<'info>(
-    ctx: Context<'_, '_, '_, 'info, CancelAndPlaceOrders<'info>>,
-    cancel_client_orders_ids: Vec<u64>,
-    orders: Vec<Order>,
-    limits: Vec<u8>,
+pub fn cancel_all_and_place_orders(
+    ctx: Context<CancelAllAndPlaceOrders>,
+    cancel: bool,
+    mut orders: Vec<Order>,
+    limit: u8,
 ) -> Result<Vec<Option<u128>>> {
     let mut open_orders_account = ctx.accounts.open_orders_account.load_mut()?;
     let open_orders_account_pk = ctx.accounts.open_orders_account.key();
@@ -40,36 +40,41 @@ pub fn cancel_and_place_orders<'info>(
         clock.slot,
     )?;
 
-    for client_order_id in cancel_client_orders_ids {
-        let oo = open_orders_account.find_order_with_client_order_id(client_order_id);
-        if let Some(oo) = oo {
-            let order_id = oo.id;
-            let order_side_and_tree = oo.side_and_tree();
-
-            let cancel_result = book.cancel_order(
-                &mut open_orders_account,
-                order_id,
-                order_side_and_tree,
-                *market,
-                Some(ctx.accounts.open_orders_account.key()),
-            );
-            // Allow cancel fails due order ID not found. Otherwise propagates error
-            if !cancel_result.is_anchor_error_with_code(OpenBookError::OrderIdNotFound.into()) {
-                cancel_result?;
-            }
-        };
+    if cancel {
+        book.cancel_all_orders(&mut open_orders_account, *market, u8::MAX, None)?;
     }
 
     let mut base_amount = 0_u64;
     let mut quote_amount = 0_u64;
     let mut order_ids = Vec::new();
-    for (order, limit) in orders.iter().zip(limits) {
-        require_gte!(order.max_base_lots, 0, OpenBookError::InvalidInputLots);
+    for order in orders.iter_mut() {
+        order.max_base_lots = market.max_base_lots();
         require_gte!(
             order.max_quote_lots_including_fees,
             0,
             OpenBookError::InvalidInputLots
         );
+
+        match order.side {
+            Side::Ask => {
+                let max_available_base = ctx.accounts.user_base_account.amount
+                    + open_orders_account.position.base_free_native
+                    - base_amount;
+                order.max_base_lots = std::cmp::min(
+                    order.max_base_lots,
+                    market.max_base_lots_from_lamports(max_available_base),
+                );
+            }
+            Side::Bid => {
+                let max_available_quote = ctx.accounts.user_quote_account.amount
+                    + open_orders_account.position.quote_free_native
+                    - quote_amount;
+                order.max_quote_lots_including_fees = std::cmp::min(
+                    order.max_quote_lots_including_fees,
+                    market.max_quote_lots_from_lamports(max_available_quote),
+                );
+            }
+        }
 
         let OrderWithAmounts {
             order_id,

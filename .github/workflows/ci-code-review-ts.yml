@@ -1,0 +1,83 @@
+name: Code Review - TS
+
+on:
+  push:
+    paths: 
+      [
+        'ts/**',
+        'yarn.lock'
+      ]
+  pull_request:
+    branches: ['master']
+    paths:
+      [
+        'ts/**',
+        'yarn.lock'
+      ]
+  workflow_dispatch:
+
+jobs:
+  format:
+    name: Format
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'yarn'
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Format
+        run: yarn format
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'yarn'
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Lint
+        run: yarn lint
+
+  sast:
+    name: Static security scan
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Initialise CodeQL
+        uses: github/codeql-action/init@v2
+        with:
+          languages: 'javascript'
+
+      - name: Run CodeQL
+        uses: github/codeql-action/analyze@v2
+
+  all-pass:
+    name: All tests pass 📖
+    needs: ['format', 'lint', 'sast']
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo ok

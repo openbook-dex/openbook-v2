@@ -7,9 +7,8 @@ use openbook_v2::state::{
     Market, Orderbook, Side, DROP_EXPIRED_ORDER_LIMIT, FILL_EVENT_REMAINING_LIMIT,
 };
 
-// TODO Adjust this number after doing some calculations
-const MAXIMUM_TAKEN_ORDERS: u8 = 8;
-const MAXIMUM_REMAINING_ACCOUNTS: usize = 4;
+pub const MAXIMUM_TAKEN_ORDERS: u8 = 45;
+const MAXIMUM_REMAINING_ACCOUNTS: usize = 0;
 
 pub struct Amounts {
     pub total_base_taken_native: u64,
@@ -78,16 +77,17 @@ pub fn amounts_from_book(
         None
     };
     let mut accounts = Vec::new();
-    let (total_base_lots_taken, total_quote_lots_taken, not_enough_liquidity) = iterate_book(
-        book,
-        side,
-        max_base_lots,
-        max_quote_lots_including_fees,
-        market,
-        oracle_price_lots,
-        now_ts,
-        &mut accounts,
-    );
+    let (total_base_lots_taken, total_quote_lots_taken, makers_rebates, not_enough_liquidity) =
+        iterate_book(
+            book,
+            side,
+            max_base_lots,
+            max_quote_lots_including_fees,
+            market,
+            oracle_price_lots,
+            now_ts,
+            &mut accounts,
+        );
 
     let total_base_taken_native = (total_base_lots_taken * market.base_lot_size) as u64;
     let total_quote_taken_native = (total_quote_lots_taken * market.quote_lot_size) as u64;
@@ -95,7 +95,7 @@ pub fn amounts_from_book(
     Ok(Amounts {
         total_base_taken_native,
         total_quote_taken_native,
-        fee: market.taker_fees_ceil(total_quote_taken_native),
+        fee: makers_rebates,
         not_enough_liquidity,
     })
 }
@@ -110,7 +110,7 @@ pub fn iterate_book(
     oracle_price_lots: Option<i64>,
     now_ts: u64,
     accounts: &mut Vec<Pubkey>,
-) -> (i64, i64, bool) {
+) -> (i64, i64, u64, bool) {
     let mut limit = MAXIMUM_TAKEN_ORDERS;
     let mut number_of_processed_fill_events = 0;
     let mut number_of_dropped_expired_orders = 0;
@@ -121,6 +121,7 @@ pub fn iterate_book(
         Side::Ask => max_quote_lots_including_fees,
     };
 
+    let mut maker_rebates_acc = 0;
     let mut remaining_base_lots = order_max_base_lots;
     let mut remaining_quote_lots = order_max_quote_lots;
 
@@ -132,6 +133,7 @@ pub fn iterate_book(
                 accounts.push(best_opposing.node.owner);
                 number_of_dropped_expired_orders += 1;
             }
+            continue;
         }
 
         if remaining_base_lots == 0 || remaining_quote_lots == 0 || limit == 0 {
@@ -149,6 +151,9 @@ pub fn iterate_book(
             .min(max_match_by_quote);
         let match_quote_lots = match_base_lots * best_opposing_price;
 
+        maker_rebates_acc +=
+            market.maker_rebate_floor((match_quote_lots * market.quote_lot_size) as u64);
+
         remaining_base_lots -= match_base_lots;
         remaining_quote_lots -= match_quote_lots;
 
@@ -162,6 +167,7 @@ pub fn iterate_book(
 
     let total_base_lots_taken = order_max_base_lots - remaining_base_lots;
     let total_quote_lots_taken = order_max_quote_lots - remaining_quote_lots;
+
     let not_enough_liquidity = match side {
         Side::Ask => remaining_base_lots != 0,
         Side::Bid => remaining_quote_lots != 0,
@@ -170,6 +176,7 @@ pub fn iterate_book(
     (
         total_base_lots_taken,
         total_quote_lots_taken,
+        maker_rebates_acc,
         not_enough_liquidity,
     )
 }

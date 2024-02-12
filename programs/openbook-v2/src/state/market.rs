@@ -11,8 +11,9 @@ use crate::{accounts_zerocopy::KeyedAccountReader, state::orderbook::Side};
 
 use super::{orderbook, OracleConfig};
 
+// For a 1bps taker fee, set taker_fee to 100, so taker_fee/FEES_SCALE_FACTOR = 10e-4
 pub const FEES_SCALE_FACTOR: i128 = 1_000_000;
-pub const PENALTY_EVENT_HEAP: u64 = 5_000;
+pub const PENALTY_EVENT_HEAP: u64 = 0;
 
 #[account(zero_copy)]
 #[derive(Debug)]
@@ -194,6 +195,20 @@ impl Market {
 
     pub fn max_quote_lots(&self) -> i64 {
         i64::MAX / self.quote_lot_size
+    }
+
+    pub fn max_base_lots_from_lamports(&self, lamports: u64) -> i64 {
+        let base_lots = lamports / self.base_lot_size as u64;
+        std::cmp::min(self.max_base_lots() as u64, base_lots)
+            .try_into()
+            .unwrap()
+    }
+
+    pub fn max_quote_lots_from_lamports(&self, lamports: u64) -> i64 {
+        let quote_lots = lamports / self.quote_lot_size as u64;
+        std::cmp::min(self.max_quote_lots() as u64, quote_lots)
+            .try_into()
+            .unwrap()
     }
 
     /// Convert from the price stored on the book to the price used in value calculations

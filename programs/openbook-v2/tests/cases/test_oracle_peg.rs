@@ -854,6 +854,142 @@ async fn test_locked_amounts() -> Result<(), TransportError> {
     Ok(())
 }
 
+#[tokio::test]
+async fn test_bids_quote_lots() -> Result<(), TransportError> {
+    let quote_lot_size = 10;
+    let base_lot_size = 100;
+    let maker_fee = 200;
+    let taker_fee = 400;
+
+    let TestInitialize {
+        context,
+        owner,
+        mints,
+        owner_token_0: owner_base_ata,
+        owner_token_1: owner_quote_ata,
+        market,
+
+        market_base_vault,
+        market_quote_vault,
+        account_1,
+        account_2,
+        ..
+    } = TestContext::new_with_market(TestNewMarketInitialize {
+        quote_lot_size,
+        base_lot_size,
+        maker_fee,
+        taker_fee,
+        ..TestNewMarketInitialize::default()
+    })
+    .await?;
+    let solana = &context.solana.clone();
+
+    send_tx(
+        solana,
+        PlaceOrderPeggedInstruction {
+            open_orders_account: account_1,
+            market,
+            signer: owner,
+            user_token_account: owner_quote_ata,
+            market_vault: market_quote_vault,
+            mint: mints[1].pubkey,
+            side: Side::Bid,
+            price_offset: 0,
+            peg_limit: 20,
+            max_base_lots: 100,
+            max_quote_lots_including_fees: 100_000_000,
+            client_order_id: 0,
+            remainings: vec![],
+            token_program: ID,
+        },
+    )
+    .await
+    .unwrap();
+
+    // first partial match with another oracle peg order
+    send_tx(
+        solana,
+        PlaceOrderPeggedInstruction {
+            open_orders_account: account_2,
+            market,
+            signer: owner,
+            user_token_account: owner_base_ata,
+            market_vault: market_base_vault,
+            mint: mints[0].pubkey,
+            side: Side::Ask,
+            price_offset: 0,
+            peg_limit: 20,
+            max_base_lots: 30,
+            max_quote_lots_including_fees: 100_000_000,
+            client_order_id: 0,
+            remainings: vec![],
+            token_program: ID,
+        },
+    )
+    .await
+    .unwrap();
+
+    // not yet unlocked!
+    let oo_1 = solana.get_account::<OpenOrdersAccount>(account_1).await;
+    assert_eq!(oo_1.position.bids_quote_lots, 2_000);
+
+    send_tx(
+        solana,
+        ConsumeEventsInstruction {
+            consume_events_admin: None,
+            market,
+            open_orders_accounts: vec![account_1, account_2],
+        },
+    )
+    .await
+    .unwrap();
+
+    let oo_1 = solana.get_account::<OpenOrdersAccount>(account_1).await;
+    assert_eq!(oo_1.position.bids_quote_lots, 1_400);
+
+    // and fill the rest of the order with a normal ask
+    send_tx(
+        solana,
+        PlaceOrderInstruction {
+            open_orders_account: account_2,
+            open_orders_admin: None,
+            market,
+            signer: owner,
+            user_token_account: owner_base_ata,
+            market_vault: market_base_vault,
+            mint: mints[0].pubkey,
+            side: Side::Ask,
+            price_lots: 1,
+            max_base_lots: 70,
+            max_quote_lots_including_fees: 100_000_000,
+            client_order_id: 0,
+            expiry_timestamp: 0,
+            order_type: PlaceOrderType::Limit,
+            self_trade_behavior: SelfTradeBehavior::default(),
+            remainings: vec![],
+            token_program: ID,
+        },
+    )
+    .await
+    .unwrap();
+
+    send_tx(
+        solana,
+        ConsumeEventsInstruction {
+            consume_events_admin: None,
+            market,
+            open_orders_accounts: vec![account_1, account_2],
+        },
+    )
+    .await
+    .unwrap();
+
+    let oo_1 = solana.get_account::<OpenOrdersAccount>(account_1).await;
+    assert_eq!(oo_1.position.bids_quote_lots, 0);
+
+    Ok(())
+}
+
 async fn assert_no_orders(solana: &SolanaCookie, account_1: Pubkey) {
     let open_orders_account = solana.get_account::<OpenOrdersAccount>(account_1).await;
 

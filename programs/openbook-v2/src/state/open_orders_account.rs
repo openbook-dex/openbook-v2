@@ -26,7 +26,10 @@ pub struct OpenOrdersAccount {
 
     pub bump: u8,
 
-    pub padding: [u8; 3],
+    // Introducing a version as we are adding a new field bids_quote_lots
+    pub version: u8,
+
+    pub padding: [u8; 2],
 
     pub position: Position,
 
@@ -67,7 +70,8 @@ impl OpenOrdersAccount {
             delegate: NonZeroPubkeyOption::default(),
             account_num: 0,
             bump: 0,
-            padding: [0; 3],
+            version: 1,
+            padding: [0; 2],
             position: Position::default(),
             open_orders: [OpenOrder::default(); MAX_OPEN_ORDERS],
         })
@@ -134,7 +138,7 @@ impl OpenOrdersAccount {
         let mut locked_maker_fees = maker_fees;
         let mut locked_amount_above_fill_price = 0;
 
-        if fill.peg_limit != -1 && side == Side::Bid {
+        let locked_price = if fill.peg_limit != -1 && side == Side::Bid {
             let quote_at_lock_price =
                 (fill.quantity * fill.peg_limit * market.quote_lot_size) as u64;
             let quote_to_free = quote_at_lock_price - quote_native;
@@ -145,7 +149,10 @@ impl OpenOrdersAccount {
 
             locked_maker_fees = fees_at_lock_price;
             locked_amount_above_fill_price = quote_to_free + maker_fees_to_free;
-        }
+            fill.peg_limit
+        } else {
+            fill.price
+        };
 
         {
             let pa = &mut self.position;
@@ -168,14 +175,24 @@ impl OpenOrdersAccount {
             market.fees_accrued += maker_fees as u128;
 
             if fill.maker_out() {
-                self.remove_order(fill.maker_slot as usize, fill.quantity);
+                self.remove_order(fill.maker_slot as usize, fill.quantity, locked_price);
             } else {
                 match side {
-                    Side::Bid => pa.bids_base_lots -= fill.quantity,
+                    Side::Bid => {
+                        pa.bids_base_lots -= fill.quantity;
+                        pa.bids_quote_lots -= fill.quantity * locked_price;
+                    }
                     Side::Ask => pa.asks_base_lots -= fill.quantity,
                 };
             }
         }
+
+        // Calculate taker fee, ignoring self trades
+        let taker_fee_ceil = if quote_native > 0 && fill.maker != fill.taker {
+            market.taker_fees_ceil(quote_native)
+        } else {
+            0
+        };
 
         emit!(FillLog {
             market: self.market,
@@ -186,11 +203,11 @@ impl OpenOrdersAccount {
             seq_num: fill.seq_num,
             maker: fill.maker,
             maker_client_order_id: fill.maker_client_order_id,
-            maker_fee: market.maker_fee,
+            maker_fee: maker_fees,
             maker_timestamp: fill.maker_timestamp,
             taker: fill.taker,
             taker_client_order_id: fill.taker_client_order_id,
-            taker_fee: market.taker_fee,
+            taker_fee_ceil,
             price: fill.price,
             quantity: fill.quantity,
         });
@@ -201,6 +218,7 @@ impl OpenOrdersAccount {
             open_orders_account_num: self.account_num,
             market: self.market,
             bids_base_lots: pa.bids_base_lots,
+            bids_quote_lots: pa.bids_quote_lots,
             asks_base_lots: pa.asks_base_lots,
             base_free_native: pa.base_free_native,
             quote_free_native: pa.quote_free_native,
@@ -236,6 +254,7 @@ impl OpenOrdersAccount {
             open_orders_account_num: self.account_num,
             market: self.market,
             bids_base_lots: pa.bids_base_lots,
+            bids_quote_lots: pa.bids_quote_lots,
             asks_base_lots: pa.asks_base_lots,
             base_free_native: pa.base_free_native,
             quote_free_native: pa.quote_free_native,
@@ -256,7 +275,10 @@ impl OpenOrdersAccount {
     ) {
         let position = &mut self.position;
         match side {
-            Side::Bid => position.bids_base_lots += order.quantity,
+            Side::Bid => {
+                position.bids_base_lots += order.quantity;
+                position.bids_quote_lots += order.quantity * locked_price;
+            }
             Side::Ask => position.asks_base_lots += order.quantity,
         };
         let slot = order.owner_slot as usize;
@@ -269,7 +291,7 @@ impl OpenOrdersAccount {
         oo.locked_price = locked_price;
     }
 
-    pub fn remove_order(&mut self, slot: usize, base_quantity: i64) {
+    pub fn remove_order(&mut self, slot: usize, base_quantity: i64, locked_price: i64) {
         let oo = self.open_order_by_raw_index(slot);
         assert!(!oo.is_free());
 
@@ -278,7 +300,10 @@ impl OpenOrdersAccount {
 
         // accounting
         match order_side {
-            Side::Bid => position.bids_base_lots -= base_quantity,
+            Side::Bid => {
+                position.bids_base_lots -= base_quantity;
+                position.bids_quote_lots -= base_quantity * locked_price;
+            }
             Side::Ask => position.asks_base_lots -= base_quantity,
         }
 
@@ -304,7 +329,7 @@ impl OpenOrdersAccount {
             Side::Ask => position.base_free_native += base_quantity_native,
         }
 
-        self.remove_order(slot, base_quantity);
+        self.remove_order(slot, base_quantity, price);
     }
 }
 
@@ -331,13 +356,16 @@ pub struct Position {
     /// Cumulative taker volume in quote native units (display only)
     pub taker_volume: u128,
 
+    /// Quote lots in open bids
+    pub bids_quote_lots: i64,
+
     #[derivative(Debug = "ignore")]
-    pub reserved: [u8; 72],
+    pub reserved: [u8; 64],
 }
 
 const_assert_eq!(
     size_of::<Position>(),
-    8 + 8 + 8 + 8 + 8 + 8 + 8 + 16 + 16 + 72
+    8 + 8 + 8 + 8 + 8 + 8 + 8 + 16 + 16 + 8 + 64
 );
 const_assert_eq!(size_of::<Position>(), 160);
 const_assert_eq!(size_of::<Position>() % 8, 0);
@@ -354,7 +382,8 @@ impl Default for Position {
             penalty_heap_count: 0,
             maker_volume: 0,
             taker_volume: 0,
-            reserved: [0; 72],
+            bids_quote_lots: 0,
+            reserved: [0; 64],
         }
     }
 }
@@ -368,7 +397,7 @@ impl Position {
         self.asks_base_lots != 0 || self.bids_base_lots != 0
     }
 
-    pub fn is_empty(&self) -> bool {
+    pub fn is_empty(&self, version: u8) -> bool {
         self.bids_base_lots == 0
             && self.asks_base_lots == 0
             && self.base_free_native == 0
@@ -376,6 +405,8 @@ impl Position {
             && self.locked_maker_fees == 0
             && self.referrer_rebates_available == 0
             && self.penalty_heap_count == 0
+            // For version 0, bids_quote_lots was not properly tracked
+            && (version == 0 || self.bids_quote_lots == 0)
     }
 }
 

@@ -1,3 +1,4 @@
+use crate::error::OpenBookError;
 use crate::state::*;
 use anchor_lang::prelude::*;
 use anchor_spl::token_interface::{self, TokenInterface};
@@ -11,8 +12,8 @@ pub struct SettleFunds<'info> {
 
     #[account(
         mut,
-        has_one = owner,
         has_one = market,
+        constraint = open_orders_account.load()?.is_owner_or_delegate(owner.key()) @ OpenBookError::NoOwnerOrDelegate
     )]
     pub open_orders_account: AccountLoader<'info, OpenOrdersAccount>,
     #[account(
@@ -30,12 +31,14 @@ pub struct SettleFunds<'info> {
     pub market_quote_vault: InterfaceAccount<'info, token_interface::TokenAccount>,
     #[account(
         mut,
-        token::mint = market_base_vault.mint
+        token::mint = market_base_vault.mint,
+        constraint = user_base_account.owner == open_orders_account.load()?.owner
     )]
     pub user_base_account: InterfaceAccount<'info, token_interface::TokenAccount>,
     #[account(
         mut,
-        token::mint = market_quote_vault.mint
+        token::mint = market_quote_vault.mint,
+        constraint = user_quote_account.owner == open_orders_account.load()?.owner
     )]
     pub user_quote_account: InterfaceAccount<'info, token_interface::TokenAccount>,
     #[account(

@@ -20,14 +20,14 @@ pub struct FillLog {
 
     pub maker: Pubkey,
     pub maker_client_order_id: u64,
-    pub maker_fee: i64,
+    pub maker_fee: u64, // native quote
 
     // Timestamp of when the maker order was placed; copied over from the LeafNode
     pub maker_timestamp: u64,
 
     pub taker: Pubkey,
     pub taker_client_order_id: u64,
-    pub taker_fee: i64,
+    pub taker_fee_ceil: u64, // native quote
 
     pub price: i64,
     pub quantity: i64, // number of base lots
@@ -83,6 +83,8 @@ pub struct OpenOrdersPositionLog {
     pub market: Pubkey,
     /// Base lots in open bids
     pub bids_base_lots: i64,
+    /// Quote lots in open bids
+    pub bids_quote_lots: i64,
     /// Base lots in open asks
     pub asks_base_lots: i64,
     pub base_free_native: u64,

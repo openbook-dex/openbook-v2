@@ -6,6 +6,10 @@ version = "0.3.0"
 [lib]
 doctest = false
 
+[features]
+default = ["openbook-v2/client"]
+enable-gpl = ["openbook-v2/enable-gpl"]
+
 [dependencies]
 anchor-client = {workspace = true}
 anchor-lang = {workspace = true}
@@ -22,7 +26,7 @@ itertools = "0.10.3"
 jsonrpc-core = "18.0.0"
 jsonrpc-core-client = {version = "18.0.0", features = ["ws", "http", "tls"]}
 log = "0.4"
-openbook-v2 = {path = "../../programs/openbook-v2", features = ["client"]}
+openbook-v2 = {path = "../../programs/openbook-v2"}
 pyth-sdk-solana = {workspace = true}
 reqwest = "0.11.11"
 serde = "1.0.141"
@@ -39,3 +43,6 @@ thiserror = "1.0.31"
 tokio = {version = "1", features = ["full"]}
 tokio-stream = {version = "0.1.9"}
 jupiter-amm-interface = "0.1.1"
+
+[dev-dependencies]
+solana-program-test = { workspace = true }

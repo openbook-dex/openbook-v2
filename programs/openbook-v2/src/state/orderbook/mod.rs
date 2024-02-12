@@ -285,6 +285,7 @@ mod tests {
         ));
         assert!(order_tree_contains_price(&book.bids, price_lots as u64));
         assert_eq!(maker.position.bids_base_lots, bid_quantity);
+        assert_eq!(maker.position.bids_quote_lots, bid_quantity * price_lots);
         assert_eq!(maker.position.asks_base_lots, 0);
         assert_eq!(event_heap.len(), 0);
 
@@ -330,6 +331,7 @@ mod tests {
         // the taker account is updated
         assert!(taker.open_order_by_raw_index(1).is_free());
         assert_eq!(taker.position.bids_base_lots, 0);
+        assert_eq!(taker.position.bids_quote_lots, 0);
         assert_eq!(taker.position.asks_base_lots, 0);
         // the fill gets added to the event heap
         assert_eq!(event_heap.len(), 1);
@@ -350,6 +352,7 @@ mod tests {
         assert_eq!(maker.position.asks_base_lots, 0);
 
         assert_eq!(taker.position.bids_base_lots, 0);
+        assert_eq!(taker.position.bids_quote_lots, 0);
         assert_eq!(taker.position.asks_base_lots, 0);
         // Maker fee is accrued now
         assert_eq!(

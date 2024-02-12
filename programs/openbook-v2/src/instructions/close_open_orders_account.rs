@@ -6,7 +6,9 @@ pub fn close_open_orders_account(ctx: Context<CloseOpenOrdersAccount>) -> Result
     let open_orders_account = ctx.accounts.open_orders_account.load()?;
 
     require!(
-        open_orders_account.position.is_empty(),
+        open_orders_account
+            .position
+            .is_empty(open_orders_account.version),
         OpenBookError::NonEmptyOpenOrdersPosition
     );
 

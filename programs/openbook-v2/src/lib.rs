@@ -259,22 +259,21 @@ pub mod openbook_v2 {
         Ok(None)
     }
 
-    /// Cancel orders and place multiple orders.
-    pub fn cancel_and_place_orders<'info>(
-        ctx: Context<'_, '_, '_, 'info, CancelAndPlaceOrders<'info>>,
-        cancel_client_orders_ids: Vec<u64>,
-        place_orders: Vec<PlaceOrderArgs>,
+    /// Place multiple orders
+    pub fn place_orders(
+        ctx: Context<CancelAllAndPlaceOrders>,
+        orders_type: PlaceOrderType,
+        bids: Vec<PlaceMultipleOrdersArgs>,
+        asks: Vec<PlaceMultipleOrdersArgs>,
+        limit: u8,
     ) -> Result<Vec<Option<u128>>> {
-        let mut orders = Vec::new();
-        let mut limits = Vec::new();
-        for place_order in place_orders.iter() {
-            require_gte!(
-                place_order.price_lots,
-                1,
-                OpenBookError::InvalidInputPriceLots
-            );
+        let n_bids = bids.len();
 
-            let time_in_force = match Order::tif_from_expiry(place_order.expiry_timestamp) {
+        let mut orders = vec![];
+        for (i, order) in bids.into_iter().chain(asks).enumerate() {
+            require_gte!(order.price_lots, 1, OpenBookError::InvalidInputPriceLots);
+
+            let time_in_force = match Order::tif_from_expiry(order.expiry_timestamp) {
                 Some(t) => t,
                 None => {
                     msg!("Order is already expired");
@@ -282,32 +281,75 @@ pub mod openbook_v2 {
                 }
             };
             orders.push(Order {
-                side: place_order.side,
-                max_base_lots: place_order.max_base_lots,
-                max_quote_lots_including_fees: place_order.max_quote_lots_including_fees,
-                client_order_id: place_order.client_order_id,
+                side: if i < n_bids { Side::Bid } else { Side::Ask },
+                max_base_lots: i64::MIN, // this will be overriden to max_base_lots
+                max_quote_lots_including_fees: order.max_quote_lots_including_fees,
+                client_order_id: i as u64,
                 time_in_force,
-                self_trade_behavior: place_order.self_trade_behavior,
-                params: match place_order.order_type {
+                self_trade_behavior: SelfTradeBehavior::CancelProvide,
+                params: match orders_type {
                     PlaceOrderType::Market => OrderParams::Market,
                     PlaceOrderType::ImmediateOrCancel => OrderParams::ImmediateOrCancel {
-                        price_lots: place_order.price_lots,
+                        price_lots: order.price_lots,
                     },
                     _ => OrderParams::Fixed {
-                        price_lots: place_order.price_lots,
-                        order_type: place_order.order_type.to_post_order_type()?,
+                        price_lots: order.price_lots,
+                        order_type: orders_type.to_post_order_type()?,
                     },
                 },
             });
-            limits.push(place_order.limit);
         }
+
         #[cfg(feature = "enable-gpl")]
-        return instructions::cancel_and_place_orders(
-            ctx,
-            cancel_client_orders_ids,
-            orders,
-            limits,
-        );
+        return instructions::cancel_all_and_place_orders(ctx, false, orders, limit);
+
+        #[cfg(not(feature = "enable-gpl"))]
+        Ok(vec![])
+    }
+
+    /// Cancel orders and place multiple orders.
+    pub fn cancel_all_and_place_orders(
+        ctx: Context<CancelAllAndPlaceOrders>,
+        orders_type: PlaceOrderType,
+        bids: Vec<PlaceMultipleOrdersArgs>,
+        asks: Vec<PlaceMultipleOrdersArgs>,
+        limit: u8,
+    ) -> Result<Vec<Option<u128>>> {
+        let n_bids = bids.len();
+
+        let mut orders = vec![];
+        for (i, order) in bids.into_iter().chain(asks).enumerate() {
+            require_gte!(order.price_lots, 1, OpenBookError::InvalidInputPriceLots);
+
+            let time_in_force = match Order::tif_from_expiry(order.expiry_timestamp) {
+                Some(t) => t,
+                None => {
+                    msg!("Order is already expired");
+                    continue;
+                }
+            };
+            orders.push(Order {
+                side: if i < n_bids { Side::Bid } else { Side::Ask },
+                max_base_lots: i64::MIN, // this will be overriden to max_base_lots
+                max_quote_lots_including_fees: order.max_quote_lots_including_fees,
+                client_order_id: i as u64,
+                time_in_force,
+                self_trade_behavior: SelfTradeBehavior::CancelProvide,
+                params: match orders_type {
+                    PlaceOrderType::Market => OrderParams::Market,
+                    PlaceOrderType::ImmediateOrCancel => OrderParams::ImmediateOrCancel {
+                        price_lots: order.price_lots,
+                    },
+                    _ => OrderParams::Fixed {
+                        price_lots: order.price_lots,
+                        order_type: orders_type.to_post_order_type()?,
+                    },
+                },
+            });
+        }
+
+        #[cfg(feature = "enable-gpl")]
+        return instructions::cancel_all_and_place_orders(ctx, true, orders, limit);
 
         #[cfg(not(feature = "enable-gpl"))]
         Ok(vec![])
@@ -357,10 +399,7 @@ pub mod openbook_v2 {
     /// add a new order off the book.
     ///
     /// This type of order allows for instant token settlement for the taker.
-    pub fn place_take_order<'info>(
-        ctx: Context<'_, '_, '_, 'info, PlaceTakeOrder<'info>>,
-        args: PlaceTakeOrderArgs,
-    ) -> Result<()> {
+    pub fn place_take_order(ctx: Context<PlaceTakeOrder>, args: PlaceTakeOrderArgs) -> Result<()> {
         require_gte!(args.price_lots, 1, OpenBookError::InvalidInputPriceLots);
 
         let order = Order {
@@ -586,6 +625,14 @@ pub struct PlaceOrderArgs {
 
 #[derive(AnchorSerialize, AnchorDeserialize, Debug, Copy, Clone)]
 #[cfg_attr(feature = "arbitrary", derive(arbitrary::Arbitrary))]
+pub struct PlaceMultipleOrdersArgs {
+    pub price_lots: i64,
+    pub max_quote_lots_including_fees: i64,
+    pub expiry_timestamp: u64,
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize, Debug, Copy, Clone)]
+#[cfg_attr(feature = "arbitrary", derive(arbitrary::Arbitrary))]
 pub struct PlaceOrderPeggedArgs {
     pub side: Side,
 
@@ -631,4 +678,21 @@ pub struct PlaceTakeOrderArgs {
     // Use this to limit compute used during order matching.
     // When the limit is reached, processing stops and the instruction succeeds.
     pub limit: u8,
+}
+
+// Add security details to explorer.solana.com
+#[cfg(not(feature = "no-entrypoint"))]
+use {default_env::default_env, solana_security_txt::security_txt};
+
+#[cfg(not(feature = "no-entrypoint"))]
+security_txt! {
+    name: "OpenBook V2",
+    project_url: "https://www.openbook-solana.com/",
+    contacts: "email:contact@openbook-solana.com,discord:https://discord.com/invite/pX3n5Sercb",
+    policy: "https://github.com/openbook-dex/openbook-v2/blob/master/SECURITY.md",
+    preferred_languages: "en",
+    source_code: "https://github.com/openbook-dex/openbook-v2",
+    auditors: "https://github.com/openbook-dex/openbook-v2/blob/master/audit/openbook_audit.pdf",
+    source_revision: default_env!("GITHUB_SHA", "Unknown source revision"),
+    source_release: default_env!("GITHUB_REF_NAME", "Unknown source release")
 }

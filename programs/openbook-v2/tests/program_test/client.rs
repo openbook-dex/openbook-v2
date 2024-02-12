@@ -10,7 +10,9 @@ use std::sync::Arc;
 
 use super::solana::SolanaCookie;
 use super::utils::TestKeypair;
-use openbook_v2::{state::*, PlaceOrderArgs, PlaceOrderPeggedArgs, PlaceTakeOrderArgs};
+use openbook_v2::{
+    state::*, PlaceMultipleOrdersArgs, PlaceOrderArgs, PlaceOrderPeggedArgs, PlaceTakeOrderArgs,
+};
 
 #[async_trait::async_trait(?Send)]
 pub trait ClientAccountLoader {
@@ -227,7 +229,6 @@ pub struct CloseOpenOrdersAccountInstruction {
     pub account_num: u32,
     pub market: Pubkey,
     pub owner: TestKeypair,
-    pub payer: TestKeypair,
     pub sol_destination: Pubkey,
 }
 #[async_trait::async_trait(?Send)]
@@ -259,7 +260,6 @@ impl ClientInstruction for CloseOpenOrdersAccountInstruction {
 
         let accounts = openbook_v2::accounts::CloseOpenOrdersAccount {
             owner: self.owner.pubkey(),
-            payer: self.payer.pubkey(),
             open_orders_indexer,
             open_orders_account,
             sol_destination: self.sol_destination,
@@ -271,7 +271,7 @@ impl ClientInstruction for CloseOpenOrdersAccountInstruction {
     }
 
     fn signers(&self) -> Vec<TestKeypair> {
-        vec![self.owner, self.payer]
+        vec![self.owner]
     }
 }
 
@@ -575,7 +575,6 @@ pub struct PlaceTakeOrderInstruction {
     pub price_lots: i64,
     pub max_base_lots: i64,
     pub max_quote_lots_including_fees: i64,
-    pub referrer_account: Option<Pubkey>,
     pub remainings: Vec<Pubkey>,
     pub token_program: Pubkey,
 }
@@ -618,7 +617,6 @@ impl ClientInstruction for PlaceTakeOrderInstruction {
             market_quote_vault: self.market_quote_vault,
             deposit_mint: Some(self.deposit_mint),
             withdraw_mint: Some(self.withdraw_mint),
-            referrer_account: self.referrer_account,
             token_program: self.token_program,
             system_program: System::id(),
         };
@@ -1417,6 +1415,72 @@ impl ClientInstruction for EditOrderInstruction {
             })
         }
         instruction.accounts.append(&mut vec_remainings);
+        (accounts, instruction)
+    }
+
+    fn signers(&self) -> Vec<TestKeypair> {
+        let mut signers = vec![self.signer];
+        if let Some(open_orders_admin) = self.open_orders_admin {
+            signers.push(open_orders_admin);
+        }
+
+        signers
+    }
+}
+
+#[derive(Clone)]
+pub struct CancelAllAndPlaceOrdersInstruction {
+    pub open_orders_account: Pubkey,
+    pub open_orders_admin: Option<TestKeypair>,
+    pub market: Pubkey,
+    pub signer: TestKeypair,
+    pub user_base_account: Pubkey,
+    pub user_quote_account: Pubkey,
+    pub base_mint: Pubkey,
+    pub quote_mint: Pubkey,
+    pub orders_type: PlaceOrderType,
+    pub bids: Vec<PlaceMultipleOrdersArgs>,
+    pub asks: Vec<PlaceMultipleOrdersArgs>,
+    pub token_program: Pubkey,
+}
+
+#[async_trait::async_trait(?Send)]
+impl ClientInstruction for CancelAllAndPlaceOrdersInstruction {
+    type Accounts = openbook_v2::accounts::CancelAllAndPlaceOrders;
+    type Instruction = openbook_v2::instruction::CancelAllAndPlaceOrders;
+    async fn to_instruction(
+        &self,
+        account_loader: impl ClientAccountLoader + 'async_trait,
+    ) -> (Self::Accounts, instruction::Instruction) {
+        let program_id = openbook_v2::id();
+        let instruction = Self::Instruction {
+            orders_type: self.orders_type,
+            bids: self.bids.clone(),
+            asks: self.asks.clone(),
+            limit: 10,
+        };
+
+        let market: Market = account_loader.load(&self.market).await.unwrap();
+
+        let accounts = Self::Accounts {
+            open_orders_account: self.open_orders_account,
+            open_orders_admin: self.open_orders_admin.map(|kp| kp.pubkey()),
+            market: self.market,
+            bids: market.bids,
+            asks: market.asks,
+            event_heap: market.event_heap,
+            oracle_a: market.oracle_a.into(),
+            oracle_b: market.oracle_b.into(),
+            signer: self.signer.pubkey(),
+            user_base_account: self.user_base_account,
+            user_quote_account: self.user_quote_account,
+            market_base_vault: market.market_base_vault,
+            market_quote_vault: market.market_quote_vault,
+            base_mint: Some(self.base_mint),
+            quote_mint: Some(self.quote_mint),
+            token_program: self.token_program,
+        };
+        let instruction = make_instruction(program_id, &accounts, instruction);
         (accounts, instruction)
     }
 
