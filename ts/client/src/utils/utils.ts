@@ -1,4 +1,6 @@
 import {
+  Connection,
+  Keypair,
   PublicKey,
   SystemProgram,
   TransactionInstruction,
@@ -8,6 +10,8 @@ import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
   TOKEN_PROGRAM_ID,
 } from '@solana/spl-token';
+import { OpenBookV2Client } from '..';
+import { AnchorProvider, Wallet } from '@coral-xyz/anchor';
 
 export const SideUtils = {
   Bid: { bid: {} },
@@ -107,4 +111,12 @@ export async function createAssociatedTokenAccountIdempotentInstruction(
     programId: ASSOCIATED_TOKEN_PROGRAM_ID,
     data: Buffer.from([0x1]),
   });
+}
+
+
+export function initReadOnlyOpenbookClient(rpcUrl: string): OpenBookV2Client {
+  const conn = new Connection(rpcUrl);
+  const stubWallet = new Wallet(Keypair.generate());
+  const provider = new AnchorProvider(conn, stubWallet, {});
+  return new OpenBookV2Client(provider);
 }
