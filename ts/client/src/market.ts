@@ -8,6 +8,7 @@ import {
   type MarketAccount,
   OPENBOOK_PROGRAM_ID,
   getFilteredProgramAccounts,
+  nameToString,
 } from './client';
 import {
   utils,

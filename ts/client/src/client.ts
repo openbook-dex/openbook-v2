@@ -35,6 +35,7 @@ export type IdsSource = 'api' | 'static' | 'get-program-accounts';
 export type PlaceOrderArgs = IdlTypes<OpenbookV2>['PlaceOrderArgs'];
 export type PlaceOrderType = IdlTypes<OpenbookV2>['PlaceOrderType'];
 export type Side = IdlTypes<OpenbookV2>['Side'];
+export type SelfTradeBehavior = IdlTypes<OpenbookV2>['SelfTradeBehavior'];
 export type PlaceOrderPeggedArgs = IdlTypes<OpenbookV2>['PlaceOrderPeggedArgs'];
 export type PlaceMultipleOrdersArgs =
   IdlTypes<OpenbookV2>['PlaceMultipleOrdersArgs'];
@@ -47,6 +48,7 @@ export type OpenOrdersIndexerAccount =
 export type EventHeapAccount = IdlAccounts<OpenbookV2>['eventHeap'];
 export type BookSideAccount = IdlAccounts<OpenbookV2>['bookSide'];
 export type LeafNode = IdlTypes<OpenbookV2>['LeafNode'];
+export type InnerNode = IdlTypes<OpenbookV2>['InnerNode'];
 export type AnyNode = IdlTypes<OpenbookV2>['AnyNode'];
 export type FillEvent = IdlTypes<OpenbookV2>['FillEvent'];
 export type OutEvent = IdlTypes<OpenbookV2>['OutEvent'];
@@ -171,16 +173,6 @@ export class OpenBookV2Client {
     return [ix, address];
   }
 
-  // Get the MarketAccount from the market publicKey
-  public async deserializeMarketAccount(
-    publicKey: PublicKey,
-  ): Promise<MarketAccount | null> {
-    try {
-      return await this.program.account.market.fetch(publicKey);
-    } catch {
-      return null;
-    }
-  }
 
   public async deserializeOpenOrderAccount(
     publicKey: PublicKey,
@@ -210,37 +202,6 @@ export class OpenBookV2Client {
     } catch {
       return null;
     }
-  }
-
-  public async deserializeBookSide(
-    publicKey: PublicKey,
-  ): Promise<BookSideAccount | null> {
-    try {
-      return await this.program.account.bookSide.fetch(publicKey);
-    } catch {
-      return null;
-    }
-  }
-
-  public priceData(key: BN): number {
-    const shiftedValue = key.shrn(64); // Shift right by 64 bits
-    return shiftedValue.toNumber(); // Convert BN to a regular number
-  }
-
-  // Get bids or asks from a bookside account
-  public getLeafNodes(bookside: BookSideAccount): LeafNode[] {
-    const leafNodesData = bookside.nodes.nodes.filter(
-      (x: AnyNode) => x.tag === 2,
-    );
-    const leafNodes: LeafNode[] = [];
-    for (const x of leafNodesData) {
-      const leafNode: LeafNode = this.program.coder.types.decode(
-        'LeafNode',
-        Buffer.from([0, ...x.data]),
-      );
-      leafNodes.push(leafNode);
-    }
-    return leafNodes;
   }
 
   public async createMarketIx(
@@ -654,7 +615,7 @@ export class OpenBookV2Client {
         oracleB: market.oracleB.key,
         userTokenAccount,
         tokenProgram: TOKEN_PROGRAM_ID,
-        openOrdersAdmin,
+        openOrdersAdmin: market.openOrdersAdmin.key,
       })
       .remainingAccounts(accountsMeta)
       .instruction();

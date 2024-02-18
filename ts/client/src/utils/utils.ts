@@ -18,7 +18,7 @@ export const SideUtils = {
   Ask: { ask: {} },
 };
 
-export const OrderType = {
+export const PlaceOrderTypeUtils = {
   Limit: { limit: {} },
   ImmediateOrCancel: { immediateOrCancel: {} },
   PostOnly: { postOnly: {} },
@@ -26,7 +26,7 @@ export const OrderType = {
   PostOnlySlide: { postOnlySlide: {} },
 };
 
-export const SelfTradeBehavior = {
+export const SelfTradeBehaviorUtils = {
   DecrementTake: { decrementTake: {} },
   CancelProvide: { cancelProvide: {} },
   AbortTransaction: { abortTransaction: {} },
@@ -37,6 +37,7 @@ export const SelfTradeBehavior = {
 ///
 export const U64_MAX_BN = new BN('18446744073709551615');
 export const I64_MAX_BN = new BN('9223372036854775807').toTwos(64);
+export const ORDER_FEE_UNIT: BN = new BN(1e6);
 
 export function bpsToDecimal(bps: number): number {
   return bps / 10000;
@@ -47,7 +48,7 @@ export function percentageToDecimal(percentage: number): number {
 }
 
 export function toNative(uiAmount: number, decimals: number): BN {
-  return new BN((uiAmount * Math.pow(10, decimals)).toFixed(0));
+  return new BN(Math.round(uiAmount * Math.pow(10, decimals)));
 }
 
 export function toUiDecimals(nativeAmount: number, decimals: number): number {

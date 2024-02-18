@@ -1,6 +1,5 @@
 import { PublicKey } from "@solana/web3.js";
-import { OPENBOOK_PROGRAM_ID, findAccountsByMints, findAllMarkets, initReadOnlyOpenbookClient } from "..";
-
+import { Market, MarketAccount, OPENBOOK_PROGRAM_ID,findAccountsByMints, findAllMarkets, initReadOnlyOpenbookClient } from "..";
 
 async function testFindAccountsByMints(): Promise<void> {
   const client = initReadOnlyOpenbookClient(process.env.SOL_RPC_URL as any);
@@ -14,5 +13,15 @@ async function testFindAllMarkets(): Promise<void> {
   console.log('markets', markets);
 }
 
-void testFindAccountsByMints();
-void testFindAllMarkets();
+async function testDecodeMarket(): Promise<void> {
+  const client = initReadOnlyOpenbookClient(process.env.SOL_RPC_URL as any);
+  const marketPk = new PublicKey("CFSMrBssNG8Ud1edW59jNLnq2cwrQ9uY5cM3wXmqRJj3");
+  const market = await Market.load(client, marketPk);
+  await market.loadOrderBook();
+
+  console.log(market.toPrettyString());
+}
+
+// void testFindAccountsByMints();
+// void testFindAllMarkets();
+void testDecodeMarket();
