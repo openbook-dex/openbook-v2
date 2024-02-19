@@ -7,21 +7,6 @@ use crate::token_utils::*;
 
 pub fn settle_funds<'info>(ctx: Context<'_, '_, '_, 'info, SettleFunds<'info>>) -> Result<()> {
     let mut open_orders_account = ctx.accounts.open_orders_account.load_mut()?;
-
-    // ensure delegate can only withdraw to owner's token accounts
-    let delegate_option: Option<Pubkey> = Option::from(open_orders_account.delegate);
-    let signer = ctx.accounts.owner.key();
-    if Some(signer) == delegate_option {
-        assert_eq!(
-            ctx.accounts.user_base_account.owner,
-            open_orders_account.owner
-        );
-        assert_eq!(
-            ctx.accounts.user_quote_account.owner,
-            open_orders_account.owner
-        );
-    }
-
     let mut market = ctx.accounts.market.load_mut()?;
 
     let mut roundoff_maker_fees = 0;

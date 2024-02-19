@@ -85,6 +85,17 @@ impl OpenOrdersAccount {
         self.owner == ix_signer
     }
 
+    pub fn is_settle_destination_allowed(&self, ix_signer: Pubkey, account_owner: Pubkey) -> bool {
+        // delegate can withdraw to owner accounts
+        let delegate_option: Option<Pubkey> = Option::from(self.delegate);
+        if Some(ix_signer) == delegate_option {
+            return self.owner == account_owner;
+        }
+
+        // owner can withdraw to anywhere
+        return ix_signer == self.owner;
+    }
+
     pub fn all_orders(&self) -> impl Iterator<Item = &OpenOrder> {
         self.open_orders.iter()
     }
