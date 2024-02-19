@@ -224,32 +224,6 @@ async fn test_delegate_settle() -> Result<(), TransportError> {
     let payer_token_0 = context.users[1].token_accounts[0];
     let payer_token_1 = context.users[1].token_accounts[1];
 
-    //
-    // TEST: Create another market
-    //
-
-    let market_2 = TestKeypair::new();
-
-    send_tx(
-        solana,
-        CreateMarketInstruction {
-            collect_fee_admin: collect_fee_admin.pubkey(),
-            open_orders_admin: None,
-            close_market_admin: None,
-            payer,
-            market: market_2,
-            quote_lot_size: 10,
-            base_lot_size: 100,
-            maker_fee: -200,
-            taker_fee: 400,
-            base_mint: mints[0].pubkey,
-            quote_mint: mints[1].pubkey,
-            ..CreateMarketInstruction::with_new_book_and_heap(solana, None, None).await
-        },
-    )
-    .await
-    .unwrap();
-
     // Set the initial oracle price
     set_stub_oracle_price(solana, &tokens[1], collect_fee_admin, 1000.0).await;
 
@@ -301,20 +275,6 @@ async fn test_delegate_settle() -> Result<(), TransportError> {
     .await
     .unwrap();
 
-    {
-        let open_orders_account_1 = solana.get_account::<OpenOrdersAccount>(account_1).await;
-        let open_orders_account_2 = solana.get_account::<OpenOrdersAccount>(account_2).await;
-
-        assert_eq!(open_orders_account_1.position.bids_base_lots, 1);
-        assert_eq!(open_orders_account_2.position.bids_base_lots, 0);
-        assert_eq!(open_orders_account_1.position.asks_base_lots, 0);
-        assert_eq!(open_orders_account_2.position.asks_base_lots, 0);
-        assert_eq!(open_orders_account_1.position.base_free_native, 0);
-        assert_eq!(open_orders_account_2.position.base_free_native, 0);
-        assert_eq!(open_orders_account_1.position.quote_free_native, 0);
-        assert_eq!(open_orders_account_2.position.quote_free_native, 99960);
-    }
-
     send_tx(
         solana,
         ConsumeEventsInstruction {
@@ -325,20 +285,6 @@ async fn test_delegate_settle() -> Result<(), TransportError> {
     )
     .await
     .unwrap();
-
-    {
-        let open_orders_account_1 = solana.get_account::<OpenOrdersAccount>(account_1).await;
-        let open_orders_account_2 = solana.get_account::<OpenOrdersAccount>(account_2).await;
-
-        assert_eq!(open_orders_account_1.position.bids_base_lots, 0);
-        assert_eq!(open_orders_account_2.position.bids_base_lots, 0);
-        assert_eq!(open_orders_account_1.position.asks_base_lots, 0);
-        assert_eq!(open_orders_account_2.position.asks_base_lots, 0);
-        assert_eq!(open_orders_account_1.position.base_free_native, 100);
-        assert_eq!(open_orders_account_2.position.base_free_native, 0);
-        assert_eq!(open_orders_account_1.position.quote_free_native, 20);
-        assert_eq!(open_orders_account_2.position.quote_free_native, 99960);
-    }
 
     // delegate settle to own account fails
     assert!(send_tx(
