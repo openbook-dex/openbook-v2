@@ -232,8 +232,11 @@ export class OpenOrders {
           break;
       }
 
-      for (const order of gen as Generator<Order>) {
-        if (order.leafNode.key.eq(slot.id)) yield order;
+      inner: for (const order of gen as Generator<Order>) {
+        if (order.leafNode.key.eq(slot.id)) {
+          yield order;
+          break inner;
+        }
       }
     }
   }
