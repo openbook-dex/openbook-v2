@@ -58,7 +58,7 @@ async function testPlaceAndCancelOrder(): Promise<void> {
 
   console.log('placed order', sigPlace);
 
-  await oo?.reload();
+  await Promise.all([oo?.reload(), market.loadBids()]);
 
   console.log(oo?.toPrettyString());
 

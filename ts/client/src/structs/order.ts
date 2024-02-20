@@ -26,15 +26,19 @@ export class Order {
     }
   }
 
-  get price(): number {
+  public get price(): number {
     return this.market.priceLotsToUi(this.priceLots);
   }
 
-  get size(): number {
+  public get size(): number {
     return this.market.baseLotsToUi(this.leafNode.quantity);
   }
 
-  get sizeLots(): BN {
+  public get sizeLots(): BN {
     return this.leafNode.quantity;
+  }
+
+  public toPrettyString(): string {
+    return `side:${this.side === SideUtils.Bid ? 'bid' : 'ask'} price:${this.price} size:${this.size} seqNum:${this.seqNum.toString()} expired:${this.isExpired}`;
   }
 }

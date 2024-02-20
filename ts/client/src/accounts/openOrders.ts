@@ -263,7 +263,7 @@ export class OpenOrders {
 
     debug += ` orders:\n`;
     for (const order of this.items()) {
-      console.log(order);
+      debug += `  ${order.toPrettyString()}\n`;
     }
 
     return debug;
