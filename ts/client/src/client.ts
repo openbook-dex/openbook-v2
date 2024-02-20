@@ -58,6 +58,7 @@ export interface OpenBookClientOptions {
   postSendTxCallback?: ({ txid }: { txid: string }) => void;
   prioritizationFee?: number;
   txConfirmationCommitment?: Commitment;
+  referrerWallet?: PublicKey;
 }
 
 export function nameToString(name: number[]): string {
@@ -73,6 +74,7 @@ export const OPENBOOK_PROGRAM_ID = new PublicKey(
 
 export class OpenBookV2Client {
   public program: Program<OpenbookV2>;
+  public referrerWallet: PublicKey | undefined;
 
   private readonly idsSource: IdsSource;
   private readonly postSendTxCallback?: ({ txid }) => void;
@@ -94,6 +96,7 @@ export class OpenBookV2Client {
         ? (this.program.provider as AnchorProvider).opts.commitment
         : undefined) ??
       'processed';
+    this.referrerWallet = opts.referrerWallet;
     // TODO: evil side effect, but limited backtraces are a nightmare
     Error.stackTraceLimit = 1000;
   }
@@ -172,7 +175,6 @@ export class OpenBookV2Client {
     });
     return [ix, address];
   }
-
 
   public async deserializeOpenOrderAccount(
     publicKey: PublicKey,
@@ -583,7 +585,6 @@ export class OpenBookV2Client {
     marketPublicKey: PublicKey,
     market: MarketAccount,
     userTokenAccount: PublicKey,
-    openOrdersAdmin: PublicKey | null,
     args: PlaceOrderArgs,
     remainingAccounts: PublicKey[],
     openOrdersDelegate?: Keypair,
@@ -598,13 +599,14 @@ export class OpenBookV2Client {
       isWritable: true,
     }));
 
+    const openOrdersAdmin = market.openOrdersAdmin.key.equals(PublicKey.default)
+      ? null
+      : market.openOrdersAdmin.key;
+
     const ix = await this.program.methods
       .placeOrder(args)
       .accounts({
-        signer:
-          openOrdersDelegate != null
-            ? openOrdersDelegate.publicKey
-            : this.walletPk,
+        signer: openOrdersDelegate?.publicKey ?? this.walletPk,
         asks: market.asks,
         bids: market.bids,
         marketVault,
@@ -615,7 +617,7 @@ export class OpenBookV2Client {
         oracleB: market.oracleB.key,
         userTokenAccount,
         tokenProgram: TOKEN_PROGRAM_ID,
-        openOrdersAdmin: market.openOrdersAdmin.key,
+        openOrdersAdmin,
       })
       .remainingAccounts(accountsMeta)
       .instruction();
@@ -855,7 +857,7 @@ export class OpenBookV2Client {
     return [ix, signers];
   }
 
-  public async cancelAllOrders(
+  public async cancelAllOrdersIx(
     openOrdersPublicKey: PublicKey,
     openOrdersAccount: OpenOrdersAccount,
     market: MarketAccount,

@@ -1,17 +1,26 @@
-import { PublicKey } from "@solana/web3.js";
-import { Market, BookSideAccount, SideUtils, Side, OpenBookV2Client, LeafNode, InnerNode, U64_MAX_BN } from "..";
-import { BN } from "@coral-xyz/anchor";
-import { Order } from "../structs/order";
+import { PublicKey } from '@solana/web3.js';
+import {
+  Market,
+  BookSideAccount,
+  SideUtils,
+  Side,
+  OpenBookV2Client,
+  LeafNode,
+  InnerNode,
+  U64_MAX_BN,
+} from '..';
+import { BN } from '@coral-xyz/anchor';
+import { Order } from '../structs/order';
 
 export class BookSide {
-
   public clusterTime: BN;
 
   constructor(
     public market: Market,
     public pubkey: PublicKey,
     public account: BookSideAccount,
-    public side: Side) {
+    public side: Side,
+  ) {
     this.clusterTime = new BN(0);
   }
 
@@ -151,8 +160,7 @@ export class BookSide {
   }
   private toLeafNode(data: number[]): LeafNode {
     return (this.market.client.program as any)._coder.types.typeLayouts
-        .get('LeafNode')
-        .decode(Buffer.from([BookSide.LEAF_NODE_TAG].concat(data)));
+      .get('LeafNode')
+      .decode(Buffer.from([BookSide.LEAF_NODE_TAG].concat(data)));
   }
-
 }

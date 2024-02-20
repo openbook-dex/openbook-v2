@@ -1,7 +1,15 @@
 import Big from 'big.js';
 import { BN } from '@coral-xyz/anchor';
-import { PublicKey } from "@solana/web3.js";
-import { toNative, MarketAccount, OpenBookV2Client, BookSideAccount, BookSide, SideUtils, nameToString } from '..';
+import { PublicKey } from '@solana/web3.js';
+import {
+  toNative,
+  MarketAccount,
+  OpenBookV2Client,
+  BookSideAccount,
+  BookSide,
+  SideUtils,
+  nameToString,
+} from '..';
 
 export class Market {
   public minOrderSize: number;
@@ -18,7 +26,11 @@ export class Market {
    */
   public asks: BookSide | undefined;
 
-  constructor(public client: OpenBookV2Client, public pubkey: PublicKey, public account: MarketAccount) {
+  constructor(
+    public client: OpenBookV2Client,
+    public pubkey: PublicKey,
+    public account: MarketAccount,
+  ) {
     this.minOrderSize = new Big(10)
       .pow(account.baseDecimals - account.quoteDecimals)
       .mul(new Big(account.quoteLotSize.toString()))
@@ -34,7 +46,10 @@ export class Market {
       .toNumber();
   }
 
-  public static async load(client: OpenBookV2Client, pubkey: PublicKey): Promise<Market> {
+  public static async load(
+    client: OpenBookV2Client,
+    pubkey: PublicKey,
+  ): Promise<Market> {
     const account = await client.program.account.market.fetch(pubkey);
     return new Market(client, pubkey, account);
   }
@@ -50,26 +65,37 @@ export class Market {
   }
 
   public baseUiToLots(uiAmount: number): BN {
-    return toNative(uiAmount, this.account.baseDecimals).div(this.account.baseLotSize);
+    return toNative(uiAmount, this.account.baseDecimals).div(
+      this.account.baseLotSize,
+    );
   }
   public quoteUiToLots(uiAmount: number): BN {
-    return toNative(uiAmount, this.account.quoteDecimals).div(this.account.quoteLotSize);
+    return toNative(uiAmount, this.account.quoteDecimals).div(
+      this.account.quoteLotSize,
+    );
   }
   public priceUiToLots(uiAmount: number): BN {
     return toNative(uiAmount, this.account.quoteDecimals)
       .imul(this.account.baseLotSize)
-      .div(new BN(Math.pow(10, this.account.baseDecimals))
-        .imul(this.account.quoteLotSize));
+      .div(
+        new BN(Math.pow(10, this.account.baseDecimals)).imul(
+          this.account.quoteLotSize,
+        ),
+      );
   }
 
   public async loadBids(): Promise<BookSide> {
-    const bidSide = await this.client.program.account.bookSide.fetch(this.account.bids) as BookSideAccount;
+    const bidSide = (await this.client.program.account.bookSide.fetch(
+      this.account.bids,
+    )) as BookSideAccount;
     this.bids = new BookSide(this, this.account.bids, bidSide, SideUtils.Bid);
     return this.bids;
   }
 
   public async loadAsks(): Promise<BookSide> {
-    const askSide = await this.client.program.account.bookSide.fetch(this.account.asks) as BookSideAccount;
+    const askSide = (await this.client.program.account.bookSide.fetch(
+      this.account.asks,
+    )) as BookSideAccount;
     this.asks = new BookSide(this, this.account.asks, askSide, SideUtils.Ask);
     return this.asks;
   }
@@ -97,7 +123,9 @@ export class Market {
     debug += ` marketQuoteVault: ${mkt.marketQuoteVault.toBase58()}\n`;
 
     if (!mkt.oracleA.key.equals(PublicKey.default)) {
-      debug += ` oracleConfig: { confFilter: ${mkt.oracleConfig.confFilter}, maxStalenessSlots: ${mkt.oracleConfig.maxStalenessSlots.toString()} }\n`;
+      debug += ` oracleConfig: { confFilter: ${
+        mkt.oracleConfig.confFilter
+      }, maxStalenessSlots: ${mkt.oracleConfig.maxStalenessSlots.toString()} }\n`;
       debug += ` oracleA: ${mkt.oracleA.key.toBase58()}\n`;
     }
     if (!mkt.oracleB.key.equals(PublicKey.default))
@@ -106,13 +134,17 @@ export class Market {
     debug += ` bids: ${mkt.bids.toBase58()}\n`;
     const bb = this.bids?.best();
     if (bb) {
-      debug += `  best: ${bb.price} ${bb.size} ${bb.leafNode.owner.toBase58()}\n`;
+      debug += `  best: ${bb.price} ${
+        bb.size
+      } ${bb.leafNode.owner.toBase58()}\n`;
     }
 
     debug += ` asks: ${mkt.asks.toBase58()}\n`;
     const ba = this.asks?.best();
     if (ba) {
-      debug += `  best: ${ba.price} ${ba.size} ${ba.leafNode.owner.toBase58()}\n`;
+      debug += `  best: ${ba.price} ${
+        ba.size
+      } ${ba.leafNode.owner.toBase58()}\n`;
     }
 
     debug += ` eventHeap: ${mkt.eventHeap.toBase58()}\n`;
@@ -121,6 +153,5 @@ export class Market {
     debug += ` tickSize: ${this.tickSize}\n`;
 
     return debug;
-
   }
 }
