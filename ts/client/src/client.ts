@@ -809,7 +809,7 @@ export class OpenBookV2Client {
     return [ix, signers];
   }
 
-  public async cancelOrderById(
+  public async cancelOrderByIdIx(
     openOrdersPublicKey: PublicKey,
     openOrdersAccount: OpenOrdersAccount,
     market: MarketAccount,
@@ -833,7 +833,7 @@ export class OpenBookV2Client {
     return [ix, signers];
   }
 
-  public async cancelOrderByClientId(
+  public async cancelOrderByClientIdIx(
     openOrdersPublicKey: PublicKey,
     openOrdersAccount: OpenOrdersAccount,
     market: MarketAccount,

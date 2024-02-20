@@ -149,6 +149,26 @@ export class OpenOrders {
     });
   }
 
+  public async cancelOrder(order: Order | { clientOrderId: number }): Promise<string> {
+
+    const ixs: TransactionInstruction[] = [];
+    if ("clientOrderId" in order) {
+      const id = new BN(order.clientOrderId);
+      const [ix] = await this.cancelOrderByClientIdIx(id);
+      ixs.push(ix);
+    } else {
+      const id = order.leafNode.key;
+      const [ix] = await this.cancelOrderByIdIx(id);
+      ixs.push(ix);
+    }
+
+    const additionalSigners = this.delegate ? [this.delegate] : [];
+
+    return this.market.client.sendAndConfirmTransaction(ixs, {
+      additionalSigners,
+    });
+  }
+
   public async cancelAllOrders(side: Side | null): Promise<string> {
     const [cancelIx] = await this.cancelAllOrdersIx(side);
 
@@ -321,9 +341,18 @@ export class OpenOrders {
       this.pubkey,
       this.account,
       this.market.account,
-      16,
+      24,
       side,
+      this.delegate,
     );
+  }
+
+  public async cancelOrderByIdIx(id: BN) {
+    return this.market.client.cancelOrderByIdIx(this.pubkey, this.account, this.market.account, id, this.delegate);
+  }
+
+  public async cancelOrderByClientIdIx(id: BN) {
+    return this.market.client.cancelOrderByClientIdIx(this.pubkey, this.account, this.market.account, id, this.delegate);
   }
 
   public async settleFundsIx(

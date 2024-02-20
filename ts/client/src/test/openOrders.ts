@@ -29,12 +29,7 @@ async function testLoadOOForMarket(): Promise<void> {
     OpenOrders.loadNullableForMarketAndOwner(market),
     market.loadOrderBook(),
   ]);
-  // console.log(oo?.pubkey.toBase58());
-  // console.log(oo?.account.position);
-  // console.log(oo?.account.openOrders);
-  // console.log(oo);
   console.log(oo?.toPrettyString());
-  // TODO: test reading orders
 }
 
 async function testPlaceAndCancelOrder(): Promise<void> {
@@ -62,7 +57,35 @@ async function testPlaceAndCancelOrder(): Promise<void> {
 
   console.log(oo?.toPrettyString());
 
-  const sigCancel = await oo?.cancelAllOrders(SideUtils.Bid);
+  const sigCancel = await oo?.cancelOrder(oo.items().next().value);
+
+  console.log('cancelled order', sigCancel);
+}
+
+
+async function testPlaceAndCancelOrderByClientId(): Promise<void> {
+  const client = initOpenbookClient();
+  const marketPk = new PublicKey(
+    'CFSMrBssNG8Ud1edW59jNLnq2cwrQ9uY5cM3wXmqRJj3',
+  );
+  const market = await Market.load(client, marketPk);
+
+  console.log(market.toPrettyString());
+  const [oo] = await Promise.all([
+    OpenOrders.loadNullableForMarketAndOwner(market),
+    market.loadOrderBook(),
+  ]);
+
+  const sigPlace = await oo?.placeOrder({
+    side: SideUtils.Bid,
+    price: market.tickSize,
+    size: market.minOrderSize,
+    clientOrderId: 9999,
+  });
+
+  console.log('placed order', sigPlace);
+
+  const sigCancel = await oo?.cancelOrder({clientOrderId: 9999});
 
   console.log('cancelled order', sigCancel);
 }
@@ -70,3 +93,4 @@ async function testPlaceAndCancelOrder(): Promise<void> {
 testLoadIndexerNonExistent();
 testLoadOOForMarket();
 testPlaceAndCancelOrder();
+testPlaceAndCancelOrderByClientId();
