@@ -172,7 +172,11 @@ impl<'a> Orderbook<'a> {
                 break;
             }
 
+            println!("remaining_quote_lots {:?}", remaining_quote_lots);
+            println!("best_opposing_price {:?}", best_opposing_price);
             let max_match_by_quote = remaining_quote_lots / best_opposing_price;
+            println!(" max_match_by_quote {:?}", max_match_by_quote);
+
             if max_match_by_quote == 0 {
                 break;
             }

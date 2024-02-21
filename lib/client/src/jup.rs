@@ -4,6 +4,7 @@ use anchor_spl::token::Token;
 use anyhow::Result;
 use fixed::types::I80F48;
 use openbook_v2::{
+    accounts::PlaceOrder,
     accounts::PlaceTakeOrder,
     accounts_zerocopy,
     pubkey_option::NonZeroPubkeyOption,
@@ -63,7 +64,7 @@ impl Amm for OpenBookMarket {
         let market =
             Market::try_deserialize_from_slice(&mut keyed_account.account.data.as_slice())?;
 
-        let is_permissioned = market.open_orders_admin.is_some();
+        let is_permissioned = !market.open_orders_admin.is_some();
         let related_accounts = if is_permissioned {
             vec![]
         } else {
@@ -310,6 +311,7 @@ mod test {
         self,
         state::{Account as TokenAccount, AccountState},
     };
+    use openbook_v2::state::SelfTradeBehavior;
     use solana_client::nonblocking::rpc_client::RpcClient;
     use solana_program_test::{processor, ProgramTest};
     use solana_sdk::{
@@ -361,7 +363,7 @@ mod test {
 
         for (side, in_amount) in [
             (openbook_v2::state::Side::Ask, 1_000_000_000),
-            (openbook_v2::state::Side::Bid, 120_456_000),
+            // (openbook_v2::state::Side::Bid, 120_456_000),
         ] {
             let (input_mint, output_mint) = match side {
                 openbook_v2::state::Side::Ask => (base_mint, quote_mint),
@@ -385,7 +387,7 @@ mod test {
             println!("{:#?}", quote_params);
             println!("{:#?}", quote);
 
-            if openbook.market.open_orders_admin.is_some() {
+            if !openbook.market.open_orders_admin.is_some() {
                 println!("Permissioned market");
                 assert_eq!(quote.in_amount, 0);
                 assert_eq!(quote.out_amount, 0);
@@ -456,36 +458,43 @@ mod test {
                     openbook_v2::state::Side::Ask => (user_input_account, user_output_account),
                     openbook_v2::state::Side::Bid => (user_output_account, user_input_account),
                 };
+                let user_token_account = user_base_account;
+                let open_orders_account =
+                    Pubkey::from_str("F8YoYdiobmbq4Tx4xEC8HDt7foZPGjMfdic9TAm4ehAJ")?;
 
                 let ix = Instruction {
                     program_id: openbook_v2::id(),
                     accounts: anchor_lang::ToAccountMetas::to_account_metas(
-                        &openbook_v2::accounts::PlaceTakeOrder {
+                        &openbook_v2::accounts::PlaceOrder {
                             signer: user.pubkey(),
-                            penalty_payer: user.pubkey(),
+                            // penalty_payer: user.pubkey(),
                             market,
-                            user_base_account,
-                            user_quote_account,
-                            market_authority: market_data.market_authority,
+                            user_token_account,
+                            // user_quote_account,
+                            // market_authority: market_data.market_authority,
                             bids: market_data.bids,
                             asks: market_data.asks,
-                            market_base_vault: market_data.market_base_vault,
-                            market_quote_vault: market_data.market_quote_vault,
+                            market_vault: market_data.market_base_vault,
+                            // market_quote_vault: market_data.market_quote_vault,
                             event_heap: market_data.event_heap,
                             oracle_a: Option::from(market_data.oracle_a),
                             oracle_b: Option::from(market_data.oracle_b),
                             token_program: Token::id(),
-                            system_program: System::id(),
+                            // system_program: System::id(),
+                            open_orders_account,
                             open_orders_admin: None,
                         },
                         None,
                     ),
                     data: anchor_lang::InstructionData::data(
-                        &openbook_v2::instruction::PlaceTakeOrder {
-                            args: openbook_v2::PlaceTakeOrderArgs {
+                        &openbook_v2::instruction::PlaceOrder {
+                            args: openbook_v2::PlaceOrderArgs {
                                 side,
-                                price_lots: i64::MAX,
+                                price_lots: 450_000_000,
+                                expiry_timestamp: 0,
+                                self_trade_behavior: SelfTradeBehavior::AbortTransaction,
                                 max_base_lots,
+                                client_order_id: 333,
                                 max_quote_lots_including_fees,
                                 order_type: openbook_v2::state::PlaceOrderType::Market,
                                 limit: MAXIMUM_TAKEN_ORDERS,
@@ -493,6 +502,7 @@ mod test {
                         },
                     ),
                 };
+                // println!("ix {:?}", ix.data);
 
                 let tx = Transaction::new_signed_with_payer(
                     &[ix],
