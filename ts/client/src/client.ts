@@ -465,25 +465,25 @@ export class OpenBookV2Client {
   ): Promise<[TransactionInstruction[], PublicKey]> {
     const ixs: TransactionInstruction[] = [];
     let accountIndex = new BN(1);
-
-    if (openOrdersIndexer == null) {
+    
+    if (openOrdersIndexer == null)
       openOrdersIndexer = this.findOpenOrdersIndexer(owner);
-      try {
-        const storedIndexer = await this.deserializeOpenOrdersIndexerAccount(
-          openOrdersIndexer,
-        );
-        if (storedIndexer == null) {
-          ixs.push(
-            await this.createOpenOrdersIndexerIx(openOrdersIndexer, owner),
-          );
-        } else {
-          accountIndex = new BN(storedIndexer.createdCounter + 1);
-        }
-      } catch {
+
+    try {
+      const storedIndexer = await this.deserializeOpenOrdersIndexerAccount(
+        openOrdersIndexer,
+      );
+      if (storedIndexer == null) {
         ixs.push(
           await this.createOpenOrdersIndexerIx(openOrdersIndexer, owner),
         );
+      } else {
+        accountIndex = new BN(storedIndexer.createdCounter + 1);
       }
+    } catch {
+      ixs.push(
+        await this.createOpenOrdersIndexerIx(openOrdersIndexer, owner),
+      );
     }
 
     const openOrdersAccount = this.findOpenOrderAtIndex(owner, accountIndex);
