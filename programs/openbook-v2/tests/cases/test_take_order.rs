@@ -294,6 +294,7 @@ async fn test_negative_spread_ask() -> Result<(), TransportError> {
     let TestInitialize {
         context,
         owner,
+        owner_token_0,
         owner_token_1,
         market,
         market_base_vault,
@@ -308,8 +309,6 @@ async fn test_negative_spread_ask() -> Result<(), TransportError> {
     })
     .await?;
     let solana = &context.solana.clone();
-
-    let meta_owner_token_2 = context.users[1].token_accounts[0];
 
     send_tx(
         solana,
@@ -342,7 +341,7 @@ async fn test_negative_spread_ask() -> Result<(), TransportError> {
             open_orders_admin: None,
             market,
             signer: owner,
-            user_token_account: meta_owner_token_2,
+            user_token_account: owner_token_0,
             market_vault: market_base_vault,
             side: Side::Ask,
             price_lots: 7_500,
@@ -375,6 +374,7 @@ async fn test_negative_spread_bid() -> Result<(), TransportError> {
         context,
         owner,
         owner_token_0,
+        owner_token_1,
         market,
         market_base_vault,
         market_quote_vault,
@@ -388,8 +388,6 @@ async fn test_negative_spread_bid() -> Result<(), TransportError> {
     })
     .await?;
     let solana = &context.solana.clone();
-
-    let meta_owner_token_1 = context.users[1].token_accounts[1];
 
     send_tx(
         solana,
@@ -422,7 +420,7 @@ async fn test_negative_spread_bid() -> Result<(), TransportError> {
             open_orders_admin: None,
             market,
             signer: owner,
-            user_token_account: meta_owner_token_1,
+            user_token_account: owner_token_1,
             market_vault: market_quote_vault,
             side: Side::Bid,
             price_lots: 7_500,
