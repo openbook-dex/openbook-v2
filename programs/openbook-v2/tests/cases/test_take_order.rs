@@ -288,3 +288,82 @@ async fn test_take_bid_order() -> Result<(), TransportError> {
 
     Ok(())
 }
+
+#[tokio::test]
+async fn test_negative_spread_ask() -> Result<(), TransportError> {
+    let TestInitialize {
+        context,
+        owner,
+        owner_token_0,
+        owner_token_1,
+        market,
+        market_base_vault,
+        market_quote_vault,
+        account_1,
+        account_2,
+        ..
+    } = TestContext::new_with_market(TestNewMarketInitialize {
+        quote_lot_size: 100,
+        base_lot_size: 1_000_000_000,
+        ..TestNewMarketInitialize::default()
+    })
+    .await?;
+    let solana = &context.solana.clone();
+
+    send_tx(
+        solana,
+        PlaceOrderInstruction {
+            open_orders_account: account_1,
+            open_orders_admin: None,
+            market,
+            signer: owner,
+            user_token_account: owner_token_1,
+            market_vault: market_quote_vault,
+            side: Side::Bid,
+            price_lots: 10_000,     // $1
+            max_base_lots: 1000000, // wahtever
+            max_quote_lots_including_fees: 10_000,
+            client_order_id: 1,
+            expiry_timestamp: 0,
+            order_type: PlaceOrderType::Limit,
+            self_trade_behavior: SelfTradeBehavior::default(),
+            remainings: vec![],
+        },
+    )
+    .await
+    .unwrap();
+
+    // This order doesn't take any due max_quote_lots_including_fees but it's also don't post in on the book
+    send_tx(
+        solana,
+        PlaceOrderInstruction {
+            open_orders_account: account_2,
+            open_orders_admin: None,
+            market,
+            signer: owner,
+            user_token_account: owner_token_0,
+            market_vault: market_base_vault,
+            side: Side::Ask,
+            price_lots: 7_500,
+            max_base_lots: 1,
+            max_quote_lots_including_fees: 7_500,
+            client_order_id: 25,
+            expiry_timestamp: 0,
+            order_type: PlaceOrderType::Limit,
+            self_trade_behavior: SelfTradeBehavior::AbortTransaction,
+            remainings: vec![],
+        },
+    )
+    .await
+    .unwrap();
+
+    let position = solana
+        .get_account::<OpenOrdersAccount>(account_2)
+        .await
+        .position;
+
+    assert_eq!(position.asks_base_lots, 0);
+    assert_eq!(position.bids_base_lots, 0);
+
+    Ok(())
+}
