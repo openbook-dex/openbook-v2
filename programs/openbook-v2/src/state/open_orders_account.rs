@@ -93,7 +93,7 @@ impl OpenOrdersAccount {
         }
 
         // owner can withdraw to anywhere
-        return ix_signer == self.owner;
+        ix_signer == self.owner
     }
 
     pub fn all_orders(&self) -> impl Iterator<Item = &OpenOrder> {
