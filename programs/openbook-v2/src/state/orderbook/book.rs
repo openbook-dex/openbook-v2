@@ -162,21 +162,22 @@ impl<'a> Orderbook<'a> {
 
             if !side.is_price_within_limit(best_opposing_price, price_lots) {
                 break;
-            } else if post_only {
+            }
+            if post_only {
                 msg!("Order could not be placed due to PostOnly");
                 post_target = None;
                 break; // return silently to not fail other instructions in tx
-            } else if limit == 0 {
+            }
+            if limit == 0 {
                 msg!("Order matching limit reached");
                 post_target = None;
                 break;
             }
 
             let max_match_by_quote = remaining_quote_lots / best_opposing_price;
+            // Do not post orders in the book due to bad pricing and negative spread
             if max_match_by_quote == 0 {
-                if best_opposing_price > price_lots && side == Side::Ask {
-                    post_target = None;
-                }
+                post_target = None;
                 break;
             }
 
