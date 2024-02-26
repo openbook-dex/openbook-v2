@@ -162,7 +162,7 @@ pub fn calculate_amount_with_fee(
             if let Ok(transfer_fee_config) = source_mint.get_extension::<TransferFeeConfig>() {
                 transfer_fee_config
                     .newer_transfer_fee
-                    .calculate_post_fee_amount(amount)
+                    .calculate_post_fee_amount(amount) * 2
             } else {
                 Some(amount)
             }
