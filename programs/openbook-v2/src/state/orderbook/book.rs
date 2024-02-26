@@ -174,6 +174,9 @@ impl<'a> Orderbook<'a> {
 
             let max_match_by_quote = remaining_quote_lots / best_opposing_price;
             if max_match_by_quote == 0 {
+                if best_opposing_price > price_lots && side == Side::Ask {
+                    post_target = None;
+                }
                 break;
             }
 
