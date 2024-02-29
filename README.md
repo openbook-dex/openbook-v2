@@ -25,9 +25,9 @@ available under GPL.
 
 | tag  | network | program ID                                  |
 | ---- | ------- | ------------------------------------------- |
-| v1.1 | mainnet | opnb2LAfJYbRMAHHvqjCwQxanZn7ReEHp1k81EohpZb |
-| v1.1 | devnet  | opnb2LAfJYbRMAHHvqjCwQxanZn7ReEHp1k81EohpZb |
-| v1.1 | testnet | opnb2LAfJYbRMAHHvqjCwQxanZn7ReEHp1k81EohpZb |
+| v1.7 | mainnet | opnb2LAfJYbRMAHHvqjCwQxanZn7ReEHp1k81EohpZb |
+| v1.7 | devnet  | opnb2LAfJYbRMAHHvqjCwQxanZn7ReEHp1k81EohpZb |
+| v1.7 | testnet | opnb2LAfJYbRMAHHvqjCwQxanZn7ReEHp1k81EohpZb |
 
 ## Building & testing
 
