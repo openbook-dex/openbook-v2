@@ -1,6 +1,115 @@
 use super::*;
 
 #[tokio::test]
+async fn test_create_market_same_oracles() -> Result<(), TransportError> {
+    let context = TestContextBuilder::new().start_default().await;
+    let solana = &context.solana.clone();
+
+    let payer = context.users[0].key;
+    let mints = &context.mints[0..=2];
+    let market = TestKeypair::new();
+
+    let fake_oracle_a = solana.create_account_from_len(&payer.pubkey(), 100).await;
+
+    assert!(send_tx(
+        solana,
+        CreateMarketInstruction {
+            collect_fee_admin: payer.pubkey(),
+            open_orders_admin: None,
+            close_market_admin: None,
+            consume_events_admin: None,
+            payer,
+            market,
+            quote_lot_size: 100,
+            base_lot_size: 100,
+            maker_fee: 0,
+            taker_fee: 0,
+            base_mint: mints[0].pubkey,
+            quote_mint: mints[1].pubkey,
+            fee_penalty: 0,
+            time_expiry: 0,
+            ..CreateMarketInstruction::with_new_book_and_heap(
+                solana,
+                Some(fake_oracle_a),
+                Some(fake_oracle_a),
+            )
+            .await
+        },
+    )
+    .await
+    .is_err());
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_create_market_oracle_types() -> Result<(), TransportError> {
+    let context = TestContextBuilder::new().start_default().await;
+    let solana = &context.solana.clone();
+
+    let payer = context.users[0].key;
+    let mints = &context.mints[0..=2];
+    let market = TestKeypair::new();
+
+    let fake_oracle_a = solana.create_account_from_len(&payer.pubkey(), 100).await;
+    let fake_oracle_b = solana.create_account_from_len(&payer.pubkey(), 100).await;
+
+    assert!(send_tx(
+        solana,
+        CreateMarketInstruction {
+            collect_fee_admin: payer.pubkey(),
+            open_orders_admin: None,
+            close_market_admin: None,
+            consume_events_admin: None,
+            payer,
+            market,
+            quote_lot_size: 100,
+            base_lot_size: 100,
+            maker_fee: 0,
+            taker_fee: 0,
+            base_mint: mints[0].pubkey,
+            quote_mint: mints[1].pubkey,
+            fee_penalty: 0,
+            time_expiry: 0,
+            ..CreateMarketInstruction::with_new_book_and_heap(solana, Some(fake_oracle_a), None,)
+                .await
+        },
+    )
+    .await
+    .is_err());
+
+    assert!(send_tx(
+        solana,
+        CreateMarketInstruction {
+            collect_fee_admin: payer.pubkey(),
+            open_orders_admin: None,
+            close_market_admin: None,
+            consume_events_admin: None,
+            payer,
+            market,
+            quote_lot_size: 100,
+            base_lot_size: 100,
+            maker_fee: 0,
+            taker_fee: 0,
+            base_mint: mints[0].pubkey,
+            quote_mint: mints[1].pubkey,
+            fee_penalty: 0,
+            time_expiry: 0,
+            ..CreateMarketInstruction::with_new_book_and_heap(
+                solana,
+                Some(fake_oracle_a),
+                Some(fake_oracle_b)
+            )
+            .await
+        },
+    )
+    .await
+    .is_err());
+
+    Ok(())
+}
+
+#[tokio::test]
 async fn test_oracle_peg_enabled() -> Result<(), TransportError> {
     let TestInitialize {
         context,
