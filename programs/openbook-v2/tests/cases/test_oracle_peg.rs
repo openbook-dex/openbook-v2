@@ -1,6 +1,67 @@
 use super::*;
 
 #[tokio::test]
+async fn test_create_market_single_oracle() -> Result<(), TransportError> {
+    let context = TestContextBuilder::new().start_default().await;
+    let solana = &context.solana.clone();
+
+    let payer = context.users[0].key;
+    let mints = &context.mints[0..=2];
+    let tokens = Token::create(mints.to_vec(), solana, payer, payer).await;
+    let market = TestKeypair::new();
+
+    assert!(send_tx(
+        solana,
+        CreateMarketInstruction {
+            collect_fee_admin: payer.pubkey(),
+            open_orders_admin: None,
+            close_market_admin: None,
+            consume_events_admin: None,
+            payer,
+            market,
+            quote_lot_size: 100,
+            base_lot_size: 100,
+            maker_fee: 0,
+            taker_fee: 0,
+            base_mint: mints[0].pubkey,
+            quote_mint: mints[1].pubkey,
+            fee_penalty: 0,
+            time_expiry: 0,
+            ..CreateMarketInstruction::with_new_book_and_heap(solana, Some(tokens[0].oracle), None,)
+                .await
+        },
+    )
+    .await
+    .is_ok());
+
+    assert!(send_tx(
+        solana,
+        CreateMarketInstruction {
+            collect_fee_admin: payer.pubkey(),
+            open_orders_admin: None,
+            close_market_admin: None,
+            consume_events_admin: None,
+            payer,
+            market,
+            quote_lot_size: 100,
+            base_lot_size: 100,
+            maker_fee: 0,
+            taker_fee: 0,
+            base_mint: mints[0].pubkey,
+            quote_mint: mints[1].pubkey,
+            fee_penalty: 0,
+            time_expiry: 0,
+            ..CreateMarketInstruction::with_new_book_and_heap(solana, None, Some(tokens[1].oracle))
+                .await
+        },
+    )
+    .await
+    .is_err());
+
+    Ok(())
+}
+
+#[tokio::test]
 async fn test_create_market_same_oracles() -> Result<(), TransportError> {
     let context = TestContextBuilder::new().start_default().await;
     let solana = &context.solana.clone();

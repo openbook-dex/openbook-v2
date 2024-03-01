@@ -51,9 +51,12 @@ pub fn create_market(
 
         require_keys_neq!(*oracle_a.key, *oracle_b.key);
         require!(
-            oracle::determine_oracle_type(&oracle_a) == oracle::determine_oracle_type(&oracle_b),
+            oracle::determine_oracle_type(&oracle_a)? == oracle::determine_oracle_type(&oracle_b)?,
             OpenBookError::InvalidOracleTypes
         );
+    } else if oracle_a.is_some() {
+        let oracle_a = AccountInfoRef::borrow(ctx.accounts.oracle_a.as_ref().unwrap())?;
+        oracle::determine_oracle_type(&oracle_a)?;
     } else if oracle_b.is_some() {
         return Err(OpenBookError::InvalidSecondOracle.into());
     }
