@@ -28,21 +28,27 @@ async fn test_with_single_oracle() -> Result<(), TransportError> {
     .await
     .is_ok());
 
-    assert!(send_tx(
-        solana,
-        CreateMarketInstruction {
-            payer,
-            market: market_b,
-            quote_lot_size: 100,
-            base_lot_size: 100,
-            base_mint: mints[0].pubkey,
-            quote_mint: mints[1].pubkey,
-            ..CreateMarketInstruction::with_new_book_and_heap(solana, None, Some(tokens[1].oracle))
+    assert_eq!(
+        send_tx_and_get_ix_custom_error(
+            solana,
+            CreateMarketInstruction {
+                payer,
+                market: market_b,
+                quote_lot_size: 100,
+                base_lot_size: 100,
+                base_mint: mints[0].pubkey,
+                quote_mint: mints[1].pubkey,
+                ..CreateMarketInstruction::with_new_book_and_heap(
+                    solana,
+                    None,
+                    Some(tokens[1].oracle)
+                )
                 .await
-        },
-    )
-    .await
-    .is_err());
+            },
+        )
+        .await,
+        Some(openbook_v2::error::OpenBookError::InvalidSecondOracle.into())
+    );
 
     Ok(())
 }
@@ -58,25 +64,27 @@ async fn test_with_same_oracles() -> Result<(), TransportError> {
     let market = TestKeypair::new();
     let fake_oracle_a = solana.create_account_from_len(&payer.pubkey(), 100).await;
 
-    assert!(send_tx(
-        solana,
-        CreateMarketInstruction {
-            payer,
-            market,
-            quote_lot_size: 100,
-            base_lot_size: 100,
-            base_mint: mints[0].pubkey,
-            quote_mint: mints[1].pubkey,
-            ..CreateMarketInstruction::with_new_book_and_heap(
-                solana,
-                Some(fake_oracle_a),
-                Some(fake_oracle_a),
-            )
-            .await
-        },
-    )
-    .await
-    .is_err());
+    assert_eq!(
+        send_tx_and_get_ix_custom_error(
+            solana,
+            CreateMarketInstruction {
+                payer,
+                market,
+                quote_lot_size: 100,
+                base_lot_size: 100,
+                base_mint: mints[0].pubkey,
+                quote_mint: mints[1].pubkey,
+                ..CreateMarketInstruction::with_new_book_and_heap(
+                    solana,
+                    Some(fake_oracle_a),
+                    Some(fake_oracle_a),
+                )
+                .await
+            },
+        )
+        .await,
+        Some(anchor_lang::error::ErrorCode::RequireKeysNeqViolated.into())
+    );
 
     Ok(())
 }
@@ -95,41 +103,45 @@ async fn test_with_wrong_oracle_types() -> Result<(), TransportError> {
     let fake_oracle_a = solana.create_account_from_len(&payer.pubkey(), 100).await;
     let fake_oracle_b = solana.create_account_from_len(&payer.pubkey(), 100).await;
 
-    assert!(send_tx(
-        solana,
-        CreateMarketInstruction {
-            payer,
-            market: market_a,
-            quote_lot_size: 100,
-            base_lot_size: 100,
-            base_mint: mints[0].pubkey,
-            quote_mint: mints[1].pubkey,
-            ..CreateMarketInstruction::with_new_book_and_heap(solana, Some(fake_oracle_a), None,)
-                .await
-        },
-    )
-    .await
-    .is_err());
+    assert_eq!(
+        send_tx_and_get_ix_custom_error(
+            solana,
+            CreateMarketInstruction {
+                payer,
+                market: market_a,
+                quote_lot_size: 100,
+                base_lot_size: 100,
+                base_mint: mints[0].pubkey,
+                quote_mint: mints[1].pubkey,
+                ..CreateMarketInstruction::with_new_book_and_heap(solana, Some(fake_oracle_a), None)
+                    .await
+            },
+        )
+        .await,
+        Some(openbook_v2::error::OpenBookError::UnknownOracleType.into())
+    );
 
-    assert!(send_tx(
-        solana,
-        CreateMarketInstruction {
-            payer,
-            market: market_ab,
-            quote_lot_size: 100,
-            base_lot_size: 100,
-            base_mint: mints[0].pubkey,
-            quote_mint: mints[1].pubkey,
-            ..CreateMarketInstruction::with_new_book_and_heap(
-                solana,
-                Some(fake_oracle_a),
-                Some(fake_oracle_b)
-            )
-            .await
-        },
-    )
-    .await
-    .is_err());
+    assert_eq!(
+        send_tx_and_get_ix_custom_error(
+            solana,
+            CreateMarketInstruction {
+                payer,
+                market: market_ab,
+                quote_lot_size: 100,
+                base_lot_size: 100,
+                base_mint: mints[0].pubkey,
+                quote_mint: mints[1].pubkey,
+                ..CreateMarketInstruction::with_new_book_and_heap(
+                    solana,
+                    Some(fake_oracle_a),
+                    Some(fake_oracle_b)
+                )
+                .await
+            },
+        )
+        .await,
+        Some(openbook_v2::error::OpenBookError::UnknownOracleType.into())
+    );
 
     Ok(())
 }
