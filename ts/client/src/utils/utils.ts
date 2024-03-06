@@ -17,6 +17,7 @@ export const SideUtils = {
 export const OrderType = {
   Limit: { limit: {} },
   ImmediateOrCancel: { immediateOrCancel: {} },
+  FillOrKill: { fillOrKill: {} },
   PostOnly: { postOnly: {} },
   Market: { market: {} },
   PostOnlySlide: { postOnlySlide: {} },

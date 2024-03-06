@@ -39,6 +39,10 @@ pub enum PlaceOrderType {
     /// If existing orders match with this order, adjust the price to just barely
     /// not match. Always places an order on the book.
     PostOnlySlide = 4,
+
+    /// Take existing orders up to price, max_base_quantity and max_quote_quantity.
+    /// Abort if partially executed, never place an order on the book.
+    FillOrKill = 5,
 }
 
 impl PlaceOrderType {
@@ -46,6 +50,7 @@ impl PlaceOrderType {
         match *self {
             Self::Market => Err(OpenBookError::InvalidOrderPostMarket.into()),
             Self::ImmediateOrCancel => Err(OpenBookError::InvalidOrderPostIOC.into()),
+            Self::FillOrKill => Err(OpenBookError::InvalidOrderPostIOC.into()),
             Self::Limit => Ok(PostOrderType::Limit),
             Self::PostOnly => Ok(PostOrderType::PostOnly),
             Self::PostOnlySlide => Ok(PostOrderType::PostOnlySlide),

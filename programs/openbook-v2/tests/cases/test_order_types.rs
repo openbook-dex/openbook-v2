@@ -1,7 +1,7 @@
 use super::*;
 
 #[tokio::test]
-async fn test_inmediate_order() -> Result<(), TransportError> {
+async fn test_immediate_order() -> Result<(), TransportError> {
     let TestInitialize {
         context,
         collect_fee_admin,

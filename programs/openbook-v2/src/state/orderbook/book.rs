@@ -77,6 +77,7 @@ impl<'a> Orderbook<'a> {
 
         let other_side = side.invert_side();
         let post_only = order.is_post_only();
+        let fill_or_kill = order.is_fill_or_kill();
         let mut post_target = order.post_target();
         let oracle_price_lots = if let Some(oracle_price) = oracle_price {
             Some(market.native_price_to_lot(oracle_price)?)
@@ -359,6 +360,11 @@ impl<'a> Orderbook<'a> {
                 order.peg_limit(),
             );
             post_target = None;
+        }
+
+        // There is still quantity, but it's a fill or kill order -> kill
+        if fill_or_kill && remaining_base_lots > 0 {
+            return err!(OpenBookError::WouldExecutePartially);
         }
 
         let mut maker_fees = 0;
