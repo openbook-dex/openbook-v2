@@ -72,8 +72,10 @@ pub struct SettleFundsLog {
 #[event]
 pub struct SweepFeesLog {
     pub market: Pubkey,
-    pub amount: u64,
-    pub receiver: Pubkey,
+    pub fee_amount: u64,
+    pub fee_receiver: Pubkey,
+    pub penalty_amount: u64,
+    pub penalty_receiver: Pubkey,
 }
 
 #[event]
