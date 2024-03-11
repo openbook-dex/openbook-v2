@@ -1,3 +1,4 @@
+use anchor_lang::{error::Error, AccountDeserialize, ZeroCopy};
 use solana_client::{
     client_error::Result as ClientResult, rpc_client::RpcClient, rpc_request::RpcError,
 };
@@ -6,8 +7,22 @@ use solana_sdk::{
     clock::Slot, commitment_config::CommitmentConfig, signature::Signature,
     transaction::uses_durable_nonce,
 };
-
 use std::{thread, time};
+
+/// zero copy accounts could be larger than the underlying struct
+/// https://github.com/coral-xyz/anchor/blob/08110e63fa5a7369830db972d4abdcfa1aaa7f2e/lang/src/accounts/account_loader.rs#L165
+/// https://github.com/coral-xyz/anchor/blob/08110e63fa5a7369830db972d4abdcfa1aaa7f2e/lang/attribute/account/src/lib.rs#L195
+pub trait ZeroCopyDeserialize {
+    fn try_deserialize_from_slice(buf: &mut &[u8]) -> Result<Self, Error>
+    where
+        Self: Sized;
+}
+
+impl<T: AccountDeserialize + ZeroCopy> ZeroCopyDeserialize for T {
+    fn try_deserialize_from_slice(buf: &mut &[u8]) -> Result<Self, Error> {
+        Self::try_deserialize(&mut &buf[..std::mem::size_of::<Self>() + 8])
+    }
+}
 
 /// Some Result<> types don't convert to anyhow::Result nicely. Force them through stringification.
 pub trait AnyhowWrap {

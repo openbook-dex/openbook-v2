@@ -197,6 +197,170 @@ async fn test_simple_settle() -> Result<(), TransportError> {
 }
 
 #[tokio::test]
+async fn test_delegate_settle() -> Result<(), TransportError> {
+    let TestInitialize {
+        context,
+        collect_fee_admin,
+        owner,
+        payer,
+        mints,
+        owner_token_0,
+        owner_token_1,
+        market,
+        market_base_vault,
+        market_quote_vault,
+        price_lots,
+        tokens,
+        account_1,
+        account_2,
+        ..
+    } = TestContext::new_with_market(TestNewMarketInitialize {
+        close_market_admin_bool: true,
+        payer_as_delegate: true,
+        ..TestNewMarketInitialize::default()
+    })
+    .await?;
+    let solana = &context.solana.clone();
+    let payer_token_0 = context.users[1].token_accounts[0];
+    let payer_token_1 = context.users[1].token_accounts[1];
+
+    // Set the initial oracle price
+    set_stub_oracle_price(solana, &tokens[1], collect_fee_admin, 1000.0).await;
+
+    send_tx(
+        solana,
+        PlaceOrderInstruction {
+            open_orders_account: account_1,
+            open_orders_admin: None,
+            market,
+            signer: owner,
+            user_token_account: owner_token_1,
+            market_vault: market_quote_vault,
+            side: Side::Bid,
+            price_lots,
+            max_base_lots: 1,
+            max_quote_lots_including_fees: 10000,
+
+            client_order_id: 0,
+            expiry_timestamp: 0,
+            order_type: PlaceOrderType::Limit,
+            self_trade_behavior: SelfTradeBehavior::default(),
+            remainings: vec![],
+        },
+    )
+    .await
+    .unwrap();
+
+    send_tx(
+        solana,
+        PlaceOrderInstruction {
+            open_orders_account: account_2,
+            open_orders_admin: None,
+            market,
+            signer: owner,
+            user_token_account: owner_token_0,
+            market_vault: market_base_vault,
+            side: Side::Ask,
+            price_lots,
+            max_base_lots: 1,
+            max_quote_lots_including_fees: 10000,
+
+            client_order_id: 0,
+            expiry_timestamp: 0,
+            order_type: PlaceOrderType::Limit,
+            self_trade_behavior: SelfTradeBehavior::default(),
+            remainings: vec![],
+        },
+    )
+    .await
+    .unwrap();
+
+    send_tx(
+        solana,
+        ConsumeEventsInstruction {
+            consume_events_admin: None,
+            market,
+            open_orders_accounts: vec![account_1, account_2],
+        },
+    )
+    .await
+    .unwrap();
+
+    // delegate settle to own account fails
+    assert!(send_tx(
+        solana,
+        SettleFundsInstruction {
+            owner: payer,
+            market,
+            open_orders_account: account_1,
+            market_base_vault,
+            market_quote_vault,
+            user_base_account: payer_token_0,
+            user_quote_account: payer_token_1,
+            referrer_account: None,
+        },
+    )
+    .await
+    .is_err());
+
+    // delegate settle to owner succeeds
+    send_tx(
+        solana,
+        SettleFundsInstruction {
+            owner: payer,
+            market,
+            open_orders_account: account_1,
+            market_base_vault,
+            market_quote_vault,
+            user_base_account: owner_token_0,
+            user_quote_account: owner_token_1,
+            referrer_account: None,
+        },
+    )
+    .await
+    .unwrap();
+
+    {
+        let open_orders_account_1 = solana.get_account::<OpenOrdersAccount>(account_1).await;
+        let open_orders_account_2 = solana.get_account::<OpenOrdersAccount>(account_2).await;
+
+        assert_eq!(open_orders_account_1.position.base_free_native, 0);
+        assert_eq!(open_orders_account_2.position.base_free_native, 0);
+        assert_eq!(open_orders_account_1.position.quote_free_native, 0);
+        assert_eq!(open_orders_account_2.position.quote_free_native, 99960);
+    }
+
+    // owner settle to payer account succeeds
+    send_tx(
+        solana,
+        SettleFundsInstruction {
+            owner,
+            market,
+            open_orders_account: account_2,
+            market_base_vault,
+            market_quote_vault,
+            user_base_account: payer_token_0,
+            user_quote_account: payer_token_1,
+            referrer_account: None,
+        },
+    )
+    .await
+    .unwrap();
+
+    {
+        let open_orders_account_1 = solana.get_account::<OpenOrdersAccount>(account_1).await;
+        let open_orders_account_2 = solana.get_account::<OpenOrdersAccount>(account_2).await;
+
+        assert_eq!(open_orders_account_1.position.base_free_native, 0);
+        assert_eq!(open_orders_account_2.position.base_free_native, 0);
+        assert_eq!(open_orders_account_1.position.quote_free_native, 0);
+        assert_eq!(open_orders_account_2.position.quote_free_native, 0);
+    }
+
+    Ok(())
+}
+
+#[tokio::test]
 async fn test_cancel_orders() -> Result<(), TransportError> {
     let TestInitialize {
         context,

@@ -465,25 +465,25 @@ export class OpenBookV2Client {
   ): Promise<[TransactionInstruction[], PublicKey]> {
     const ixs: TransactionInstruction[] = [];
     let accountIndex = new BN(1);
-
-    if (openOrdersIndexer == null) {
+    
+    if (openOrdersIndexer == null)
       openOrdersIndexer = this.findOpenOrdersIndexer(owner);
-      try {
-        const storedIndexer = await this.deserializeOpenOrdersIndexerAccount(
-          openOrdersIndexer,
-        );
-        if (storedIndexer == null) {
-          ixs.push(
-            await this.createOpenOrdersIndexerIx(openOrdersIndexer, owner),
-          );
-        } else {
-          accountIndex = new BN(storedIndexer.createdCounter + 1);
-        }
-      } catch {
+
+    try {
+      const storedIndexer = await this.deserializeOpenOrdersIndexerAccount(
+        openOrdersIndexer,
+      );
+      if (storedIndexer == null) {
         ixs.push(
           await this.createOpenOrdersIndexerIx(openOrdersIndexer, owner),
         );
+      } else {
+        accountIndex = new BN(storedIndexer.createdCounter + 1);
       }
+    } catch {
+      ixs.push(
+        await this.createOpenOrdersIndexerIx(openOrdersIndexer, owner),
+      );
     }
 
     const openOrdersAccount = this.findOpenOrderAtIndex(owner, accountIndex);
@@ -956,7 +956,7 @@ export class OpenBookV2Client {
     userBaseAccount: PublicKey,
     userQuoteAccount: PublicKey,
     referrerAccount: PublicKey | null,
-    penaltyPayer: PublicKey | null,
+    penaltyPayer: PublicKey,
     openOrdersDelegate?: Keypair,
   ): Promise<[TransactionInstruction, Signer[]]> {
     const ix = await this.program.methods
@@ -973,7 +973,7 @@ export class OpenBookV2Client {
         userBaseAccount: userBaseAccount,
         userQuoteAccount: userQuoteAccount,
         referrerAccount: referrerAccount,
-        penaltyPayer: penaltyPayer ?? PublicKey.default,
+        penaltyPayer: penaltyPayer,
       })
       .instruction();
 
