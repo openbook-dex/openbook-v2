@@ -103,3 +103,12 @@ just test-dev
 ```bash
 yarn build
 ```
+
+### TS Testing
+
+```bash
+export SOL_RPC_URL=https://a.b.c
+export KEYPAIR="[1,2,3,4,...]"
+yarn ts/client/src/test/market.ts
+yarn ts/client/src/test/openOrders.ts
+```
