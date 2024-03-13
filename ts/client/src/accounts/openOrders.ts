@@ -293,25 +293,25 @@ export class OpenOrders {
     return debug;
   }
 
-  getLockedBaseNative(): BN {
+  getBaseBalanceNative(): BN {
     return this.account.position.asksBaseLots
       .mul(this.market.account.baseLotSize)
       .iadd(this.account.position.baseFreeNative);
   }
 
-  getLockedQuoteNative(): BN {
+  getQuoteBalanceNative(): BN {
     return this.account.position.bidsQuoteLots
       .mul(this.market.account.quoteLotSize)
       .iadd(this.account.position.quoteFreeNative)
       .iadd(this.account.position.lockedMakerFees);
   }
 
-  getLockedBaseUi(): number {
-    return Number(this.getLockedBaseNative().toString()) / 10 ** this.market.account.baseDecimals;
+  getBaseBalanceUi(): number {
+    return Number(this.getBaseBalanceNative().toString()) / 10 ** this.market.account.baseDecimals;
   }
 
-  getLockedQuoteUi(): number {
-    return Number(this.getLockedQuoteNative().toString()) / 10 ** this.market.account.quoteDecimals;
+  getQuoteBalanceUi(): number {
+    return Number(this.getQuoteBalanceNative().toString()) / 10 ** this.market.account.quoteDecimals;
   }
 
   /// low-level API
