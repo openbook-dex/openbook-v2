@@ -39,6 +39,10 @@ export class Order {
   }
 
   public toPrettyString(): string {
-    return `side:${this.side === SideUtils.Bid ? 'bid' : 'ask'} price:${this.price} size:${this.size} seqNum:${this.seqNum.toString()} expired:${this.isExpired}`;
+    return `side:${this.side === SideUtils.Bid ? 'bid' : 'ask'} price:${
+      this.price
+    } size:${this.size} seqNum:${this.seqNum.toString()} expired:${
+      this.isExpired
+    }`;
   }
 }

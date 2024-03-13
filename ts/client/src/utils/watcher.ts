@@ -1,18 +1,23 @@
-import { Connection } from "@solana/web3.js";
-import { BookSide, Market, OpenOrders } from "..";
+import { Connection } from '@solana/web3.js';
+import { BookSide, Market, OpenOrders } from '..';
 
 export class Watcher {
+  accountSubs: { [pk: string]: number } = {};
 
-  accountSubs: {[pk: string]: number} = {};
-
-  constructor(public connection: Connection) {};
+  constructor(public connection: Connection) {}
 
   addMarket(market: Market, includeBook = true): this {
     const { client, asks, bids, pubkey } = market;
 
-    this.accountSubs[pubkey.toBase58()] = this.connection.onAccountChange(pubkey, (ai) => {
-      market.account = client.program.coder.accounts.decode('market', ai.data);
-    });
+    this.accountSubs[pubkey.toBase58()] = this.connection.onAccountChange(
+      pubkey,
+      (ai) => {
+        market.account = client.program.coder.accounts.decode(
+          'market',
+          ai.data,
+        );
+      },
+    );
 
     if (includeBook && asks) {
       this.addBookSide(asks);
@@ -25,17 +30,29 @@ export class Watcher {
 
   addBookSide(bookSide: BookSide): this {
     const { market, pubkey } = bookSide;
-    this.accountSubs[pubkey.toBase58()] = this.connection.onAccountChange(pubkey, (ai) => {
-      bookSide.account = market.client.program.coder.accounts.decode('bookSide', ai.data);
-    });
+    this.accountSubs[pubkey.toBase58()] = this.connection.onAccountChange(
+      pubkey,
+      (ai) => {
+        bookSide.account = market.client.program.coder.accounts.decode(
+          'bookSide',
+          ai.data,
+        );
+      },
+    );
     return this;
   }
 
   addOpenOrders(openOrders: OpenOrders): this {
     const { market, pubkey } = openOrders;
-    this.accountSubs[pubkey.toBase58()] = this.connection.onAccountChange(pubkey, (ai) => {
-      openOrders.account = market.client.program.coder.accounts.decode('OpenOrders', ai.data);
-    });
+    this.accountSubs[pubkey.toBase58()] = this.connection.onAccountChange(
+      pubkey,
+      (ai) => {
+        openOrders.account = market.client.program.coder.accounts.decode(
+          'OpenOrders',
+          ai.data,
+        );
+      },
+    );
     return this;
   }
 

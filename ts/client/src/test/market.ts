@@ -6,7 +6,7 @@ import {
   findAllMarkets,
   initReadOnlyOpenbookClient,
   Watcher,
-  sleep
+  sleep,
 } from '..';
 
 async function testFindAccountsByMints(): Promise<void> {

@@ -17,6 +17,7 @@ export async function sendTransaction(
   opts: any = {},
 ): Promise<string> {
   const connection = provider.connection;
+  const additionalSigners = opts?.additionalSigners || [];
 
   if ((connection as any).banksClient !== undefined) {
     const tx = new Transaction();
@@ -28,7 +29,7 @@ export async function sendTransaction(
       connection as any
     ).banksClient.getLatestBlockhash();
 
-    for (const signer of opts?.additionalSigners) {
+    for (const signer of additionalSigners) {
       tx.partialSign(signer);
     }
 
@@ -58,11 +59,8 @@ export async function sendTransaction(
   });
   let vtx = new VersionedTransaction(message);
 
-  if (
-    opts?.additionalSigners !== undefined &&
-    opts?.additionalSigners.length !== 0
-  ) {
-    vtx.sign([...opts?.additionalSigners]);
+  if (additionalSigners !== undefined && additionalSigners.length !== 0) {
+    vtx.sign([...additionalSigners]);
   }
 
   if (

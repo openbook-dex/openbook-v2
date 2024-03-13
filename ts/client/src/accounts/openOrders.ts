@@ -149,10 +149,11 @@ export class OpenOrders {
     });
   }
 
-  public async cancelOrder(order: Order | { clientOrderId: number }): Promise<string> {
-
+  public async cancelOrder(
+    order: Order | { clientOrderId: number },
+  ): Promise<string> {
     const ixs: TransactionInstruction[] = [];
-    if ("clientOrderId" in order) {
+    if ('clientOrderId' in order) {
       const id = new BN(order.clientOrderId);
       const [ix] = await this.cancelOrderByClientIdIx(id);
       ixs.push(ix);
@@ -348,11 +349,23 @@ export class OpenOrders {
   }
 
   public async cancelOrderByIdIx(id: BN) {
-    return this.market.client.cancelOrderByIdIx(this.pubkey, this.account, this.market.account, id, this.delegate);
+    return this.market.client.cancelOrderByIdIx(
+      this.pubkey,
+      this.account,
+      this.market.account,
+      id,
+      this.delegate,
+    );
   }
 
   public async cancelOrderByClientIdIx(id: BN) {
-    return this.market.client.cancelOrderByClientIdIx(this.pubkey, this.account, this.market.account, id, this.delegate);
+    return this.market.client.cancelOrderByClientIdIx(
+      this.pubkey,
+      this.account,
+      this.market.account,
+      id,
+      this.delegate,
+    );
   }
 
   public async settleFundsIx(

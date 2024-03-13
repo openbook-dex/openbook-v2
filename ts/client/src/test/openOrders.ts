@@ -62,7 +62,6 @@ async function testPlaceAndCancelOrder(): Promise<void> {
   console.log('cancelled order', sigCancel);
 }
 
-
 async function testPlaceAndCancelOrderByClientId(): Promise<void> {
   const client = initOpenbookClient();
   const marketPk = new PublicKey(
@@ -85,7 +84,7 @@ async function testPlaceAndCancelOrderByClientId(): Promise<void> {
 
   console.log('placed order', sigPlace);
 
-  const sigCancel = await oo?.cancelOrder({clientOrderId: 9999});
+  const sigCancel = await oo?.cancelOrder({ clientOrderId: 9999 });
 
   console.log('cancelled order', sigCancel);
 }

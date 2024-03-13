@@ -734,7 +734,7 @@ export class OpenBookV2Client {
     orderType: PlaceOrderType,
     bids: PlaceMultipleOrdersArgs[],
     asks: PlaceMultipleOrdersArgs[],
-    limit: number = 12,
+    limit = 12,
     openOrdersDelegate?: Keypair,
   ): Promise<[TransactionInstruction, Signer[]]> {
     const ix = await this.program.methods
@@ -777,7 +777,7 @@ export class OpenBookV2Client {
     orderType: PlaceOrderType,
     bids: PlaceMultipleOrdersArgs[],
     asks: PlaceMultipleOrdersArgs[],
-    limit: number = 12,
+    limit = 12,
     openOrdersDelegate?: Keypair,
   ): Promise<[TransactionInstruction, Signer[]]> {
     const ix = await this.program.methods
