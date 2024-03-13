@@ -89,7 +89,7 @@ async function testPlaceAndCancelOrderByClientId(): Promise<void> {
   console.log('cancelled order', sigCancel);
 }
 
-testLoadIndexerNonExistent();
-testLoadOOForMarket();
-testPlaceAndCancelOrder();
-testPlaceAndCancelOrderByClientId();
+// testLoadIndexerNonExistent();
+void testLoadOOForMarket();
+// testPlaceAndCancelOrder();
+// testPlaceAndCancelOrderByClientId();

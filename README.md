@@ -107,6 +107,6 @@ yarn build
 
 ```bash
 export SOL_RPC_URL=https://a.b.c
-export KEYPAIR="1,2,3,4"
+export KEYPAIR="[1,2,3,4,...]"
 yarn ts/client/src/test/market.ts
 ```

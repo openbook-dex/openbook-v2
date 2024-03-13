@@ -293,6 +293,27 @@ export class OpenOrders {
     return debug;
   }
 
+  getLockedBaseNative(): BN {
+    return this.account.position.asksBaseLots
+      .mul(this.market.account.baseLotSize)
+      .iadd(this.account.position.baseFreeNative);
+  }
+
+  getLockedQuoteNative(): BN {
+    return this.account.position.bidsQuoteLots
+      .mul(this.market.account.quoteLotSize)
+      .iadd(this.account.position.quoteFreeNative)
+      .iadd(this.account.position.lockedMakerFees);
+  }
+
+  getLockedBaseUi(): number {
+    return Number(this.getLockedBaseNative().toString()) / 10 ** this.market.account.baseDecimals;
+  }
+
+  getLockedQuoteUi(): number {
+    return Number(this.getLockedQuoteNative().toString()) / 10 ** this.market.account.quoteDecimals;
+  }
+
   /// low-level API
 
   public async placeOrderIx(
