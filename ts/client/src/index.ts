@@ -6,5 +6,6 @@ export * from './accounts/market';
 export * from './accounts/openOrders';
 export * from './market';
 export * from './utils/utils';
+export * from './utils/watcher';
 
 export { IDL, type OpenbookV2 };

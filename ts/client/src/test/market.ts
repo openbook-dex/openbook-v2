@@ -5,6 +5,8 @@ import {
   findAccountsByMints,
   findAllMarkets,
   initReadOnlyOpenbookClient,
+  Watcher,
+  sleep
 } from '..';
 
 async function testFindAccountsByMints(): Promise<void> {
@@ -39,6 +41,25 @@ async function testDecodeMarket(): Promise<void> {
   console.log(market.toPrettyString());
 }
 
+async function testWatchMarket(): Promise<void> {
+  const client = initReadOnlyOpenbookClient();
+  const marketPk = new PublicKey(
+    'CFSMrBssNG8Ud1edW59jNLnq2cwrQ9uY5cM3wXmqRJj3',
+  );
+  const market = await Market.load(client, marketPk);
+  await market.loadOrderBook();
+
+  console.log('bids before sub', market.bids?.getL2(2));
+
+  const w = new Watcher(client.connection);
+  w.addMarket(market);
+
+  await sleep(5_000);
+
+  console.log('bids after sub', market.bids?.getL2(2));
+}
+
 // void testFindAccountsByMints();
 // void testFindAllMarkets();
-void testDecodeMarket();
+// void testDecodeMarket();
+void testWatchMarket();
