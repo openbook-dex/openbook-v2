@@ -307,11 +307,17 @@ export class OpenOrders {
   }
 
   getBaseBalanceUi(): number {
-    return Number(this.getBaseBalanceNative().toString()) / 10 ** this.market.account.baseDecimals;
+    return (
+      Number(this.getBaseBalanceNative().toString()) /
+      10 ** this.market.account.baseDecimals
+    );
   }
 
   getQuoteBalanceUi(): number {
-    return Number(this.getQuoteBalanceNative().toString()) / 10 ** this.market.account.quoteDecimals;
+    return (
+      Number(this.getQuoteBalanceNative().toString()) /
+      10 ** this.market.account.quoteDecimals
+    );
   }
 
   /// low-level API
