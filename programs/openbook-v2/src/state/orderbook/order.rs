@@ -75,10 +75,7 @@ impl Order {
 
     /// Is this order required to be executed completely? It will fail if it would do a partial execution.
     pub fn is_fill_or_kill(&self) -> bool {
-        match self.params {
-            OrderParams::FillOrKill { .. } => true,
-            _ => return false,
-        }
+        matches!(self.params, OrderParams::FillOrKill { .. })
     }
 
     /// Order tree that this order should be added to
