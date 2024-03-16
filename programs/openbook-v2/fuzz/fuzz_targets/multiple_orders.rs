@@ -479,6 +479,7 @@ mod error_parser {
             e if e == OpenBookError::InvalidPriceLots.into() => Corpus::Keep,
             e if e == OpenBookError::OpenOrdersFull.into() => Corpus::Keep,
             e if e == OpenBookError::WouldSelfTrade.into() => Corpus::Keep,
+            e if e == OpenBookError::WouldExecutePartially.into() => Corpus::Keep,
             e if e == TokenError::InsufficientFunds.into() => Corpus::Keep,
             _ => panic!("{}", err),
         }
@@ -498,6 +499,7 @@ mod error_parser {
             e if e == OpenBookError::OpenOrdersFull.into() => Corpus::Keep,
             e if e == OpenBookError::OraclePegInvalidOracleState.into() => Corpus::Keep,
             e if e == OpenBookError::WouldSelfTrade.into() => Corpus::Keep,
+            e if e == OpenBookError::WouldExecutePartially.into() => Corpus::Keep,
             e if e == TokenError::InsufficientFunds.into() => Corpus::Keep,
             _ => panic!("{}", err),
         }
@@ -510,6 +512,7 @@ mod error_parser {
             e if e == OpenBookError::InvalidInputOrderType.into() => Corpus::Reject,
             e if e == OpenBookError::InvalidInputPriceLots.into() => Corpus::Reject,
             e if e == OpenBookError::InvalidOraclePrice.into() => Corpus::Keep,
+            e if e == OpenBookError::WouldExecutePartially.into() => Corpus::Keep,
             e if e == TokenError::InsufficientFunds.into() => Corpus::Keep,
             _ => panic!("{}", err),
         }
@@ -544,6 +547,7 @@ mod error_parser {
             e if e == OpenBookError::InvalidPriceLots.into() => Corpus::Keep,
             e if e == OpenBookError::OpenOrdersFull.into() => Corpus::Keep,
             e if e == OpenBookError::WouldSelfTrade.into() => Corpus::Keep,
+            e if e == OpenBookError::WouldExecutePartially.into() => Corpus::Keep,
             e if e == TokenError::InsufficientFunds.into() => Corpus::Keep,
             _ => panic!("{}", err),
         }
