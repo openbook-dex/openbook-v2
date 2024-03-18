@@ -21,6 +21,7 @@ export const SideUtils = {
 export const PlaceOrderTypeUtils = {
   Limit: { limit: {} },
   ImmediateOrCancel: { immediateOrCancel: {} },
+  FillOrKill: { fillOrKill: {} },
   PostOnly: { postOnly: {} },
   Market: { market: {} },
   PostOnlySlide: { postOnlySlide: {} },

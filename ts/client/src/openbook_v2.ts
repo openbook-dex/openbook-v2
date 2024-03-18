@@ -3000,6 +3000,9 @@ export interface OpenbookV2 {
           {
             name: 'PostOnlySlide';
           },
+          {
+            name: 'FillOrKill';
+          },
         ];
       };
     },
@@ -3089,6 +3092,15 @@ export interface OpenbookV2 {
           },
           {
             name: 'ImmediateOrCancel';
+            fields: [
+              {
+                name: 'price_lots';
+                type: 'i64';
+              },
+            ];
+          },
+          {
+            name: 'FillOrKill';
             fields: [
               {
                 name: 'price_lots';
@@ -3672,11 +3684,16 @@ export interface OpenbookV2 {
     },
     {
       code: 6041;
+      name: 'WouldExecutePartially';
+      msg: 'Fill-Or-Kill order would generate a partial execution';
+    },
+    {
+      code: 6042;
       name: 'NonEmptyMarket';
       msg: 'Cannot close a non-empty market';
     },
     {
-      code: 6042;
+      code: 6043;
       name: 'NonEmptyOpenOrdersPosition';
       msg: 'Cannot close a non-empty open orders account';
     },
@@ -6685,6 +6702,9 @@ export const IDL: OpenbookV2 = {
           {
             name: 'PostOnlySlide',
           },
+          {
+            name: 'FillOrKill',
+          },
         ],
       },
     },
@@ -6774,6 +6794,15 @@ export const IDL: OpenbookV2 = {
           },
           {
             name: 'ImmediateOrCancel',
+            fields: [
+              {
+                name: 'price_lots',
+                type: 'i64',
+              },
+            ],
+          },
+          {
+            name: 'FillOrKill',
             fields: [
               {
                 name: 'price_lots',
@@ -7357,11 +7386,16 @@ export const IDL: OpenbookV2 = {
     },
     {
       code: 6041,
+      name: 'WouldExecutePartially',
+      msg: 'Fill-Or-Kill order would generate a partial execution',
+    },
+    {
+      code: 6042,
       name: 'NonEmptyMarket',
       msg: 'Cannot close a non-empty market',
     },
     {
-      code: 6042,
+      code: 6043,
       name: 'NonEmptyOpenOrdersPosition',
       msg: 'Cannot close a non-empty open orders account',
     },
