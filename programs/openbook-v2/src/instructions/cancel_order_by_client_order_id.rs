@@ -15,5 +15,5 @@ pub fn cancel_order_by_client_order_id(
         asks: ctx.accounts.asks.load_mut()?,
     };
 
-    return book.cancel_all_orders(&mut account, *market, u8::MAX, None, Some(client_order_id));
+    book.cancel_all_orders(&mut account, *market, u8::MAX, None, Some(client_order_id))
 }
