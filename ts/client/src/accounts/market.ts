@@ -12,9 +12,9 @@ import {
 } from '..';
 
 export class Market {
-  public minOrderSize: number;
-  public tickSize: number;
-  public quoteLotFactor: number;
+  public minOrderSize: Big;
+  public tickSize: Big;
+  public quoteLotFactor: Big;
 
   /**
    * use async loadBids() or loadOrderBook() to populate bids
@@ -31,19 +31,14 @@ export class Market {
     public pubkey: PublicKey,
     public account: MarketAccount,
   ) {
-    this.minOrderSize = new Big(10)
-      .pow(account.baseDecimals - account.quoteDecimals)
-      .mul(new Big(account.quoteLotSize.toString()))
-      .div(new Big(account.baseLotSize.toString()))
-      .toNumber();
+    this.minOrderSize = new Big(account.baseLotSize.toString())
+      .mul(new Big(10).pow(-account.baseDecimals));
     this.quoteLotFactor = new Big(account.quoteLotSize.toString())
-      .div(new Big(10).pow(account.quoteDecimals))
-      .toNumber();
+      .mul(new Big(10).pow(-account.quoteDecimals));
     this.tickSize = new Big(10)
       .pow(account.baseDecimals - account.quoteDecimals)
       .mul(new Big(account.quoteLotSize.toString()))
-      .div(new Big(account.baseLotSize.toString()))
-      .toNumber();
+      .div(new Big(account.baseLotSize.toString()));
   }
 
   public static async load(
@@ -55,13 +50,13 @@ export class Market {
   }
 
   public baseLotsToUi(lots: BN): number {
-    return Number(lots.toString()) * this.minOrderSize;
+    return new Big(lots.toString()).mul(this.minOrderSize).toNumber();
   }
   public quoteLotsToUi(lots: BN): number {
-    return Number(lots.toString()) * this.quoteLotFactor;
+    return new Big(lots.toString()).mul(this.quoteLotFactor).toNumber();
   }
   public priceLotsToUi(lots: BN): number {
-    return Number(lots.toString()) * this.tickSize;
+    return new Big(lots.toString()).mul(this.tickSize).toNumber();
   }
 
   public baseUiToLots(uiAmount: number): BN {
