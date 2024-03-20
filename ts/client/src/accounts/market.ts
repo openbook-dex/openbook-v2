@@ -31,10 +31,12 @@ export class Market {
     public pubkey: PublicKey,
     public account: MarketAccount,
   ) {
-    this.minOrderSize = new Big(account.baseLotSize.toString())
-      .mul(new Big(10).pow(-account.baseDecimals));
-    this.quoteLotFactor = new Big(account.quoteLotSize.toString())
-      .mul(new Big(10).pow(-account.quoteDecimals));
+    this.minOrderSize = new Big(account.baseLotSize.toString()).mul(
+      new Big(10).pow(-account.baseDecimals),
+    );
+    this.quoteLotFactor = new Big(account.quoteLotSize.toString()).mul(
+      new Big(10).pow(-account.quoteDecimals),
+    );
     this.tickSize = new Big(10)
       .pow(account.baseDecimals - account.quoteDecimals)
       .mul(new Big(account.quoteLotSize.toString()))
