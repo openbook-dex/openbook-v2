@@ -3086,7 +3086,7 @@ export type OpenbookV2 = {
             name: 'ImmediateOrCancel';
             fields: [
               {
-                name: 'priceLots';
+                name: 'price_lots';
                 type: 'i64';
               },
             ];
@@ -3095,11 +3095,11 @@ export type OpenbookV2 = {
             name: 'Fixed';
             fields: [
               {
-                name: 'priceLots';
+                name: 'price_lots';
                 type: 'i64';
               },
               {
-                name: 'orderType';
+                name: 'order_type';
                 type: {
                   defined: 'PostOrderType';
                 };
@@ -3110,17 +3110,17 @@ export type OpenbookV2 = {
             name: 'OraclePegged';
             fields: [
               {
-                name: 'priceOffsetLots';
+                name: 'price_offset_lots';
                 type: 'i64';
               },
               {
-                name: 'orderType';
+                name: 'order_type';
                 type: {
                   defined: 'PostOrderType';
                 };
               },
               {
-                name: 'pegLimit';
+                name: 'peg_limit';
                 type: 'i64';
               },
             ];
@@ -3140,13 +3140,6 @@ export type OpenbookV2 = {
             name: 'Asks';
           },
         ];
-      };
-    },
-    {
-      name: 'NodeHandle';
-      type: {
-        kind: 'alias';
-        value: 'u32';
       };
     },
   ];
@@ -6773,7 +6766,7 @@ export const IDL: OpenbookV2 = {
             name: 'ImmediateOrCancel',
             fields: [
               {
-                name: 'priceLots',
+                name: 'price_lots',
                 type: 'i64',
               },
             ],
@@ -6782,11 +6775,11 @@ export const IDL: OpenbookV2 = {
             name: 'Fixed',
             fields: [
               {
-                name: 'priceLots',
+                name: 'price_lots',
                 type: 'i64',
               },
               {
-                name: 'orderType',
+                name: 'order_type',
                 type: {
                   defined: 'PostOrderType',
                 },
@@ -6797,17 +6790,17 @@ export const IDL: OpenbookV2 = {
             name: 'OraclePegged',
             fields: [
               {
-                name: 'priceOffsetLots',
+                name: 'price_offset_lots',
                 type: 'i64',
               },
               {
-                name: 'orderType',
+                name: 'order_type',
                 type: {
                   defined: 'PostOrderType',
                 },
               },
               {
-                name: 'pegLimit',
+                name: 'peg_limit',
                 type: 'i64',
               },
             ],
@@ -6827,13 +6820,6 @@ export const IDL: OpenbookV2 = {
             name: 'Asks',
           },
         ],
-      },
-    },
-    {
-      name: 'NodeHandle',
-      type: {
-        kind: 'alias',
-        value: 'u32',
       },
     },
   ],
