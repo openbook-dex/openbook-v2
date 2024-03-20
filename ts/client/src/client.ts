@@ -428,7 +428,7 @@ export class OpenBookV2Client {
   ): Promise<[TransactionInstruction[], PublicKey]> {
     const ixs: TransactionInstruction[] = [];
     let accountIndex = new BN(1);
-    
+
     if (openOrdersIndexer == null)
       openOrdersIndexer = this.findOpenOrdersIndexer(owner);
 
@@ -444,9 +444,7 @@ export class OpenBookV2Client {
         accountIndex = new BN(storedIndexer.createdCounter + 1);
       }
     } catch {
-      ixs.push(
-        await this.createOpenOrdersIndexerIx(openOrdersIndexer, owner),
-      );
+      ixs.push(await this.createOpenOrdersIndexerIx(openOrdersIndexer, owner));
     }
 
     const openOrdersAccount = this.findOpenOrderAtIndex(owner, accountIndex);
@@ -1066,11 +1064,10 @@ export class OpenBookV2Client {
     marketPublicKey: PublicKey,
     market: MarketAccount,
     openOrdersPublicKey: PublicKey,
-    limit: number,
     closeMarketAdmin: Keypair | null = null,
   ): Promise<[TransactionInstruction, Signer[]]> {
     const ix = await this.program.methods
-      .pruneOrders(limit)
+      .pruneOrders()
       .accounts({
         closeMarketAdmin: market.closeMarketAdmin.key,
         openOrdersAccount: openOrdersPublicKey,

@@ -1,4 +1,4 @@
-export interface OpenbookV2 {
+export type OpenbookV2 = {
   version: '0.1.0';
   name: 'openbook_v2';
   instructions: [
@@ -1619,12 +1619,7 @@ export interface OpenbookV2 {
           isSigner: false;
         },
       ];
-      args: [
-        {
-          name: 'limit';
-          type: 'u8';
-        },
-      ];
+      args: [];
     },
     {
       name: 'stubOracleCreate';
@@ -3091,7 +3086,7 @@ export interface OpenbookV2 {
             name: 'ImmediateOrCancel';
             fields: [
               {
-                name: 'price_lots';
+                name: 'priceLots';
                 type: 'i64';
               },
             ];
@@ -3100,11 +3095,11 @@ export interface OpenbookV2 {
             name: 'Fixed';
             fields: [
               {
-                name: 'price_lots';
+                name: 'priceLots';
                 type: 'i64';
               },
               {
-                name: 'order_type';
+                name: 'orderType';
                 type: {
                   defined: 'PostOrderType';
                 };
@@ -3115,17 +3110,17 @@ export interface OpenbookV2 {
             name: 'OraclePegged';
             fields: [
               {
-                name: 'price_offset_lots';
+                name: 'priceOffsetLots';
                 type: 'i64';
               },
               {
-                name: 'order_type';
+                name: 'orderType';
                 type: {
                   defined: 'PostOrderType';
                 };
               },
               {
-                name: 'peg_limit';
+                name: 'pegLimit';
                 type: 'i64';
               },
             ];
@@ -3145,6 +3140,13 @@ export interface OpenbookV2 {
             name: 'Asks';
           },
         ];
+      };
+    },
+    {
+      name: 'NodeHandle';
+      type: {
+        kind: 'alias';
+        value: 'u32';
       };
     },
   ];
@@ -3681,7 +3683,7 @@ export interface OpenbookV2 {
       msg: 'Cannot close a non-empty open orders account';
     },
   ];
-}
+};
 
 export const IDL: OpenbookV2 = {
   version: '0.1.0',
@@ -5304,12 +5306,7 @@ export const IDL: OpenbookV2 = {
           isSigner: false,
         },
       ],
-      args: [
-        {
-          name: 'limit',
-          type: 'u8',
-        },
-      ],
+      args: [],
     },
     {
       name: 'stubOracleCreate',
@@ -6776,7 +6773,7 @@ export const IDL: OpenbookV2 = {
             name: 'ImmediateOrCancel',
             fields: [
               {
-                name: 'price_lots',
+                name: 'priceLots',
                 type: 'i64',
               },
             ],
@@ -6785,11 +6782,11 @@ export const IDL: OpenbookV2 = {
             name: 'Fixed',
             fields: [
               {
-                name: 'price_lots',
+                name: 'priceLots',
                 type: 'i64',
               },
               {
-                name: 'order_type',
+                name: 'orderType',
                 type: {
                   defined: 'PostOrderType',
                 },
@@ -6800,17 +6797,17 @@ export const IDL: OpenbookV2 = {
             name: 'OraclePegged',
             fields: [
               {
-                name: 'price_offset_lots',
+                name: 'priceOffsetLots',
                 type: 'i64',
               },
               {
-                name: 'order_type',
+                name: 'orderType',
                 type: {
                   defined: 'PostOrderType',
                 },
               },
               {
-                name: 'peg_limit',
+                name: 'pegLimit',
                 type: 'i64',
               },
             ],
@@ -6830,6 +6827,13 @@ export const IDL: OpenbookV2 = {
             name: 'Asks',
           },
         ],
+      },
+    },
+    {
+      name: 'NodeHandle',
+      type: {
+        kind: 'alias',
+        value: 'u32',
       },
     },
   ],
