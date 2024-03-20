@@ -33,7 +33,7 @@ async function testFindAllMarkets(): Promise<void> {
 async function testDecodeMarket(): Promise<void> {
   const client = initReadOnlyOpenbookClient();
   const marketPk = new PublicKey(
-    'CFSMrBssNG8Ud1edW59jNLnq2cwrQ9uY5cM3wXmqRJj3',
+    '8wjNUxS1oQpu6YXnG85WBBJtUNH29p8cXdjP4nFqrJTo',
   );
   const market = await Market.load(client, marketPk);
   await market.loadOrderBook();
@@ -61,5 +61,5 @@ async function testWatchMarket(): Promise<void> {
 
 // void testFindAccountsByMints();
 // void testFindAllMarkets();
-// void testDecodeMarket();
-void testWatchMarket();
+void testDecodeMarket();
+// void testWatchMarket();

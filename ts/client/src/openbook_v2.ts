@@ -1,4 +1,4 @@
-export interface OpenbookV2 {
+export type OpenbookV2 = {
   version: '0.1.0';
   name: 'openbook_v2';
   instructions: [
@@ -1619,12 +1619,7 @@ export interface OpenbookV2 {
           isSigner: false;
         },
       ];
-      args: [
-        {
-          name: 'limit';
-          type: 'u8';
-        },
-      ];
+      args: [];
     },
     {
       name: 'stubOracleCreate';
@@ -3698,7 +3693,7 @@ export interface OpenbookV2 {
       msg: 'Cannot close a non-empty open orders account';
     },
   ];
-}
+};
 
 export const IDL: OpenbookV2 = {
   version: '0.1.0',
@@ -5321,12 +5316,7 @@ export const IDL: OpenbookV2 = {
           isSigner: false,
         },
       ],
-      args: [
-        {
-          name: 'limit',
-          type: 'u8',
-        },
-      ],
+      args: [],
     },
     {
       name: 'stubOracleCreate',

@@ -56,8 +56,8 @@ async fn test_edit_order() -> Result<(), TransportError> {
         assert_eq!(open_orders_account_1.position.asks_base_lots, 0);
     }
 
-    // No client Id found
-    assert!(send_tx(
+    // No client Id found, is treated as if order was fully filled
+    send_tx(
         solana,
         EditOrderInstruction {
             open_orders_account: account_1,
@@ -79,7 +79,7 @@ async fn test_edit_order() -> Result<(), TransportError> {
         },
     )
     .await
-    .is_err());
+    .unwrap();
 
     // take 1. send remaining to crank and remove 1 bids_base_lots
     send_tx(

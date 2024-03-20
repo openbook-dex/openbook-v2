@@ -491,6 +491,7 @@ impl<'a> Orderbook<'a> {
         market: Market,
         mut limit: u8,
         side_to_cancel_option: Option<Side>,
+        client_id_option: Option<u64>,
     ) -> Result<i64> {
         let mut total_quantity = 0_i64;
         for i in 0..MAX_OPEN_ORDERS {
@@ -502,6 +503,12 @@ impl<'a> Orderbook<'a> {
             let order_side_and_tree = oo.side_and_tree();
             if let Some(side_to_cancel) = side_to_cancel_option {
                 if side_to_cancel != order_side_and_tree.side() {
+                    continue;
+                }
+            }
+
+            if let Some(client_id) = client_id_option {
+                if client_id != oo.client_id {
                     continue;
                 }
             }

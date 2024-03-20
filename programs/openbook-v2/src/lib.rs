@@ -584,9 +584,9 @@ pub mod openbook_v2 {
 
     /// Remove orders from the book when the market is expired (only
     /// [`close_market_admin`](crate::state::Market::close_market_admin)).
-    pub fn prune_orders(ctx: Context<PruneOrders>, limit: u8) -> Result<()> {
+    pub fn prune_orders(ctx: Context<PruneOrders>) -> Result<()> {
         #[cfg(feature = "enable-gpl")]
-        instructions::prune_orders(ctx, limit)?;
+        instructions::prune_orders(ctx)?;
         Ok(())
     }
 

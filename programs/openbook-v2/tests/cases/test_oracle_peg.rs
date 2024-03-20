@@ -375,17 +375,11 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
     )
     .await
     .unwrap();
-    assert!(send_tx(
-        solana,
-        CancelOrderByClientOrderIdInstruction {
-            open_orders_account: account_2,
-            market,
-            signer: owner,
-            client_order_id: 62,
-        },
-    )
-    .await
-    .is_err());
+
+    {
+        let oo = solana.get_account::<OpenOrdersAccount>(account_2).await;
+        assert!(oo.find_order_with_client_order_id(62).is_none());
+    }
 
     // but once the adjusted price is > the peg limit, it's gone
     set_stub_oracle_price(solana, &tokens[0], collect_fee_admin, 1.004).await;
