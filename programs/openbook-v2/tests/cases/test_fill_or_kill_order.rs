@@ -1,6 +1,4 @@
 use super::*;
-use openbook_v2::accounts::PlaceOrder;
-use static_assertions::assert_cfg;
 use std::sync::Arc;
 
 #[tokio::test]
@@ -152,6 +150,7 @@ async fn assert_balance(token: Pubkey, solana: &Arc<SolanaCookie>, expected_bala
     assert_eq!(balance_base, expected_balance);
 }
 
+#[allow(clippy::too_many_arguments)]
 async fn consume_and_settle(
     owner: TestKeypair,
     owner_token_0: Pubkey,
