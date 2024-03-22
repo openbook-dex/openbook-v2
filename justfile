@@ -1,4 +1,4 @@
-fuzz-toolchain := if `arch` == "arm64" { "+nightly-x86_64-apple-darwin" } else { "+nightly" }
+fuzz-toolchain := if `arch` == "arm64" { "+nightly-2023-04-01-x86_64-apple-darwin" } else { "+nightly-2023-04-01" }
 
 build:
     cargo build-sbf --features enable-gpl

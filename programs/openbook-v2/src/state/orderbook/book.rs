@@ -77,6 +77,7 @@ impl<'a> Orderbook<'a> {
 
         let other_side = side.invert_side();
         let post_only = order.is_post_only();
+        let fill_or_kill = order.is_fill_or_kill();
         let mut post_target = order.post_target();
         let oracle_price_lots = if let Some(oracle_price) = oracle_price {
             Some(market.native_price_to_lot(oracle_price)?)
@@ -361,6 +362,11 @@ impl<'a> Orderbook<'a> {
             post_target = None;
         }
 
+        // There is still quantity, but it's a fill or kill order -> kill
+        if fill_or_kill && remaining_base_lots > 0 {
+            return err!(OpenBookError::WouldExecutePartially);
+        }
+
         let mut maker_fees = 0;
         let mut posted_base_native = 0;
         let mut posted_quote_native = 0;
@@ -485,6 +491,7 @@ impl<'a> Orderbook<'a> {
         market: Market,
         mut limit: u8,
         side_to_cancel_option: Option<Side>,
+        client_id_option: Option<u64>,
     ) -> Result<i64> {
         let mut total_quantity = 0_i64;
         for i in 0..MAX_OPEN_ORDERS {
@@ -496,6 +503,12 @@ impl<'a> Orderbook<'a> {
             let order_side_and_tree = oo.side_and_tree();
             if let Some(side_to_cancel) = side_to_cancel_option {
                 if side_to_cancel != order_side_and_tree.side() {
+                    continue;
+                }
+            }
+
+            if let Some(client_id) = client_id_option {
+                if client_id != oo.client_id {
                     continue;
                 }
             }

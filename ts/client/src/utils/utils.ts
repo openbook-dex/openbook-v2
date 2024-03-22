@@ -1,4 +1,6 @@
 import {
+  Connection,
+  Keypair,
   PublicKey,
   SystemProgram,
   TransactionInstruction,
@@ -8,21 +10,24 @@ import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
   TOKEN_PROGRAM_ID,
 } from '@solana/spl-token';
+import { OpenBookV2Client } from '..';
+import { AnchorProvider, Wallet } from '@coral-xyz/anchor';
 
 export const SideUtils = {
   Bid: { bid: {} },
   Ask: { ask: {} },
 };
 
-export const OrderType = {
+export const PlaceOrderTypeUtils = {
   Limit: { limit: {} },
   ImmediateOrCancel: { immediateOrCancel: {} },
+  FillOrKill: { fillOrKill: {} },
   PostOnly: { postOnly: {} },
   Market: { market: {} },
   PostOnlySlide: { postOnlySlide: {} },
 };
 
-export const SelfTradeBehavior = {
+export const SelfTradeBehaviorUtils = {
   DecrementTake: { decrementTake: {} },
   CancelProvide: { cancelProvide: {} },
   AbortTransaction: { abortTransaction: {} },
@@ -33,6 +38,7 @@ export const SelfTradeBehavior = {
 ///
 export const U64_MAX_BN = new BN('18446744073709551615');
 export const I64_MAX_BN = new BN('9223372036854775807').toTwos(64);
+export const ORDER_FEE_UNIT: BN = new BN(1e6);
 
 export function bpsToDecimal(bps: number): number {
   return bps / 10000;
@@ -43,7 +49,7 @@ export function percentageToDecimal(percentage: number): number {
 }
 
 export function toNative(uiAmount: number, decimals: number): BN {
-  return new BN((uiAmount * Math.pow(10, decimals)).toFixed(0));
+  return new BN(Math.round(uiAmount * Math.pow(10, decimals)));
 }
 
 export function toUiDecimals(nativeAmount: number, decimals: number): number {
@@ -107,4 +113,26 @@ export async function createAssociatedTokenAccountIdempotentInstruction(
     programId: ASSOCIATED_TOKEN_PROGRAM_ID,
     data: Buffer.from([0x1]),
   });
+}
+
+export function initReadOnlyOpenbookClient(): OpenBookV2Client {
+  const conn = new Connection(process.env.SOL_RPC_URL!);
+  const stubWallet = new Wallet(Keypair.generate());
+  const provider = new AnchorProvider(conn, stubWallet, {});
+  return new OpenBookV2Client(provider);
+}
+
+export function initOpenbookClient(): OpenBookV2Client {
+  const conn = new Connection(process.env.SOL_RPC_URL!, 'processed');
+  const wallet = new Wallet(
+    Keypair.fromSecretKey(Uint8Array.from(JSON.parse(process.env.KEYPAIR!))),
+  );
+  const provider = new AnchorProvider(conn, wallet, {});
+  return new OpenBookV2Client(provider, undefined, {
+    prioritizationFee: 10_000,
+  });
+}
+
+export function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
