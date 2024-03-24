@@ -2,29 +2,29 @@ import {
   Keypair,
   PublicKey,
   Signer,
-  Transaction,
   TransactionInstruction,
 } from '@solana/web3.js';
 import {
+  FillEvent,
   OpenBookV2Client,
   OpenOrdersAccount,
+  OutEvent,
   PlaceOrderType,
   SelfTradeBehavior as SelfTradeBehaviorType,
   Side,
   nameToString,
-} from '../client';
-import { Market } from './market';
-import {
   I64_MAX_BN,
   PlaceOrderTypeUtils,
   SelfTradeBehaviorUtils,
   SideUtils,
-  U64_MAX_BN,
   getAssociatedTokenAddress,
-} from '../utils/utils';
+  EventType,
+  Order,
+  OpenOrdersIndexer,
+  Market,
+} from '..';
+
 import { BN } from '@coral-xyz/anchor';
-import { OpenOrdersIndexer } from './openOrdersIndexer';
-import { Order } from '../structs/order';
 import { createAssociatedTokenAccountIdempotentInstruction } from '@solana/spl-token';
 
 export interface OrderToPlace {
@@ -102,6 +102,51 @@ export class OpenOrders {
         this.pubkey,
       );
     return this;
+  }
+
+  public getBalanceNative(): [BN, BN] {
+    const {
+      asksBaseLots,
+      bidsQuoteLots,
+      baseFreeNative,
+      quoteFreeNative,
+      lockedMakerFees,
+    } = this.account.position;
+    const { baseLotSize, quoteLotSize } = this.market.account;
+
+    // TODO count in lots to save compute
+    const base = asksBaseLots.mul(baseLotSize).iadd(baseFreeNative);
+    const quote = bidsQuoteLots
+      .mul(quoteLotSize)
+      .iadd(quoteFreeNative)
+      .iadd(lockedMakerFees);
+
+    if (this.market.eventHeap) {
+      for (const event of this.market.eventHeap.parsedEvents()) {
+        switch (event.eventType) {
+          case EventType.Fill: {
+            const { maker, quantity, price, takerSide } = event as FillEvent;
+            if (maker.equals(this.account.owner)) {
+              if (takerSide === 1) {
+                base.iadd(quantity.mul(baseLotSize));
+                // TODO: adjust for maker fees
+                quote.isub(quantity.mul(price).imul(quoteLotSize));
+              } else {
+                base.isub(quantity.mul(baseLotSize));
+                // TODO: adjust for maker fees
+                quote.iadd(quantity.mul(price).imul(quoteLotSize));
+              }
+            }
+            continue;
+          }
+          case EventType.Out: {
+            continue;
+          }
+        }
+      }
+    }
+
+    return [base, quote];
   }
 
   public setDelegate(delegate: Keypair): this {
@@ -288,6 +333,36 @@ export class OpenOrders {
     debug += ` orders:\n`;
     for (const order of this.items()) {
       debug += `  ${order.toPrettyString()}\n`;
+    }
+
+    if (this.market.eventHeap) {
+      debug += ` events:\n`;
+      for (const event of this.market.eventHeap.parsedEvents()) {
+        switch (event.eventType) {
+          case EventType.Fill: {
+            const { maker, quantity, price, takerSide } = event as FillEvent;
+            if (maker.equals(this.pubkey)) {
+              const fillBase = this.market.baseLotsToUi(quantity);
+              const fillPrice = this.market.priceLotsToUi(price);
+              debug += `  fill side=${
+                takerSide === 1 ? 'Bid' : 'Ask'
+              } qty=${fillBase} price=${fillPrice}\n`;
+            }
+            continue;
+          }
+          case EventType.Out: {
+            const { owner } = event as OutEvent;
+            if (owner.equals(this.pubkey))
+              debug += `  out ${JSON.stringify(event)}\n`;
+            continue;
+          }
+        }
+      }
+
+      debug += ` balance:\n`;
+      const [base, quote] = this.getBalanceNative();
+      debug += `  base: ${base.toString()}\n`;
+      debug += `  quote: ${quote.toString()}\n`;
     }
 
     return debug;

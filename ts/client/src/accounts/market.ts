@@ -9,6 +9,9 @@ import {
   BookSide,
   SideUtils,
   nameToString,
+  EventHeapAccount,
+  EventHeap,
+  EventType,
 } from '..';
 
 export class Market {
@@ -25,6 +28,7 @@ export class Market {
    * use async loadAsks() or loadOrderBook() to populate asks
    */
   public asks: BookSide | undefined;
+  public eventHeap: EventHeap | undefined;
 
   constructor(
     public client: OpenBookV2Client,
@@ -97,6 +101,14 @@ export class Market {
     return this.asks;
   }
 
+  public async loadEventHeap(): Promise<EventHeap> {
+    const eventHeap = (await this.client.program.account.eventHeap.fetch(
+      this.account.eventHeap,
+    )) as EventHeapAccount;
+    this.eventHeap = new EventHeap(this.account.eventHeap, eventHeap, this);
+    return this.eventHeap;
+  }
+
   public async loadOrderBook(): Promise<this> {
     await Promise.all([this.loadBids(), this.loadAsks()]);
     return this;
@@ -145,6 +157,27 @@ export class Market {
     }
 
     debug += ` eventHeap: ${mkt.eventHeap.toBase58()}\n`;
+    if (this.eventHeap) {
+      let fillEvents = 0;
+      let outEvents = 0;
+      for (const event of this.eventHeap.parsedEvents()) {
+        switch (event.eventType) {
+          case EventType.Fill: {
+            fillEvents += 1;
+            continue;
+          }
+          case EventType.Out: {
+            outEvents += 1;
+            continue;
+          }
+        }
+      }
+
+      debug += `  fillEvents: ${fillEvents}\n`;
+      debug += `  outEvents: ${outEvents}\n`;
+    } else {
+      debug += `  loaded: false\n`;
+    }
 
     debug += ` minOrderSize: ${this.minOrderSize}\n`;
     debug += ` tickSize: ${this.tickSize}\n`;

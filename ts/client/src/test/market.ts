@@ -33,10 +33,11 @@ async function testFindAllMarkets(): Promise<void> {
 async function testDecodeMarket(): Promise<void> {
   const client = initReadOnlyOpenbookClient();
   const marketPk = new PublicKey(
-    '8wjNUxS1oQpu6YXnG85WBBJtUNH29p8cXdjP4nFqrJTo',
+    'BU3EaRVo9WN44muCBy3mwkCQ4uYQWiuqay1whEmeSXK3',
   );
   const market = await Market.load(client, marketPk);
   await market.loadOrderBook();
+  await market.loadEventHeap();
 
   console.log(market.toPrettyString());
 }
