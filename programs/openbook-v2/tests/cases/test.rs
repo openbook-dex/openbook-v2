@@ -203,7 +203,6 @@ async fn test_delegate_settle() -> Result<(), TransportError> {
         collect_fee_admin,
         owner,
         payer,
-        mints,
         owner_token_0,
         owner_token_1,
         market,

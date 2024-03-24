@@ -44,6 +44,25 @@ pub async fn send_tx<CI: ClientInstruction>(
     Ok(accounts)
 }
 
+pub async fn send_tx_and_get_ix_custom_error<CI: ClientInstruction>(
+    solana: &SolanaCookie,
+    ix: CI,
+) -> Option<u32> {
+    let tx_result = send_tx(solana, ix).await;
+
+    if let Err(TransportError::TransactionError(
+        solana_sdk::transaction::TransactionError::InstructionError(
+            _,
+            solana_sdk::instruction::InstructionError::Custom(err_num),
+        ),
+    )) = tx_result
+    {
+        Some(err_num)
+    } else {
+        None
+    }
+}
+
 /// Build a transaction from multiple instructions
 pub struct ClientTransaction {
     solana: Arc<SolanaCookie>,
