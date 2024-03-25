@@ -364,8 +364,8 @@ export class OpenOrders {
 
       debug += ` balance:\n`;
       const [base, quote] = this.getBalanceNative();
-      debug += `  base: ${base.toString()}\n`;
-      debug += `  quote: ${quote.toString()}\n`;
+      debug += `  base: ${this.market.baseNativeToUi(base)}\n`;
+      debug += `  quote: ${this.market.quoteNativeToUi(quote)}\n`;
     }
 
     return debug;

@@ -14,14 +14,14 @@ import {
   EventType,
 } from '..';
 
-
 const FEES_SCALE_FACTOR = new BN(1_000_000);
-const FEES_SCALE_FACTOR_MINUS_ONE = FEES_SCALE_FACTOR.subn(1);
 
 export class Market {
   public minOrderSize: Big;
   public tickSize: Big;
   public quoteLotFactor: Big;
+  public baseNativeFactor: Big;
+  public quoteNativeFactor: Big;
 
   /**
    * use async loadBids() or loadOrderBook() to populate bids
@@ -39,12 +39,10 @@ export class Market {
     public pubkey: PublicKey,
     public account: MarketAccount,
   ) {
-    this.minOrderSize = new Big(account.baseLotSize.toString()).mul(
-      new Big(10).pow(-account.baseDecimals),
-    );
-    this.quoteLotFactor = new Big(account.quoteLotSize.toString()).mul(
-      new Big(10).pow(-account.quoteDecimals),
-    );
+    this.baseNativeFactor = new Big(10).pow(-account.baseDecimals);
+    this.quoteNativeFactor =  new Big(10).pow(-account.quoteDecimals);
+    this.minOrderSize = new Big(account.baseLotSize.toString()).mul(this.baseNativeFactor);
+    this.quoteLotFactor = new Big(account.quoteLotSize.toString()).mul(this.quoteNativeFactor);
     this.tickSize = new Big(10)
       .pow(account.baseDecimals - account.quoteDecimals)
       .mul(new Big(account.quoteLotSize.toString()))
@@ -62,8 +60,14 @@ export class Market {
   public baseLotsToUi(lots: BN): number {
     return new Big(lots.toString()).mul(this.minOrderSize).toNumber();
   }
+  public baseNativeToUi(native: BN): number{
+    return new Big(native.toString()).mul(this.baseNativeFactor).toNumber();
+  }
   public quoteLotsToUi(lots: BN): number {
     return new Big(lots.toString()).mul(this.quoteLotFactor).toNumber();
+  }
+  public quoteNativeToUi(native: BN): number{
+    return new Big(native.toString()).mul(this.quoteNativeFactor).toNumber();
   }
   public priceLotsToUi(lots: BN): number {
     return new Big(lots.toString()).mul(this.tickSize).toNumber();
@@ -89,24 +93,9 @@ export class Market {
       );
   }
 
-  // TODO: the makerFee math is not correct for rebates
-  public makerFeeCeil(quoteNative: BN): BN {
-    return quoteNative
-      .add(FEES_SCALE_FACTOR_MINUS_ONE)
-      .imul(this.account.makerFee)
-      .div(FEES_SCALE_FACTOR);
-  }
-
   public makerFeeFloor(quoteNative: BN): BN {
     return quoteNative
       .mul(this.account.makerFee)
-      .div(FEES_SCALE_FACTOR);
-  }
-
-  public takerFeeCeil(quoteNative: BN): BN {
-    return quoteNative
-      .add(FEES_SCALE_FACTOR_MINUS_ONE)
-      .imul(this.account.takerFee)
       .div(FEES_SCALE_FACTOR);
   }
 
