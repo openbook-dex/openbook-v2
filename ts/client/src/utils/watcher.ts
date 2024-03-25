@@ -1,13 +1,13 @@
 import { Connection } from '@solana/web3.js';
-import { BookSide, Market, OpenOrders } from '..';
+import { BookSide, EventHeap, Market, OpenOrders } from '..';
 
 export class Watcher {
   accountSubs: { [pk: string]: number } = {};
 
   constructor(public connection: Connection) {}
 
-  addMarket(market: Market, includeBook = true): this {
-    const { client, asks, bids, pubkey } = market;
+  addMarket(market: Market, includeBook = true, includeEvents = true): this {
+    const { client, asks, bids, eventHeap, pubkey } = market;
 
     this.accountSubs[pubkey.toBase58()] = this.connection.onAccountChange(
       pubkey,
@@ -25,6 +25,9 @@ export class Watcher {
     if (includeBook && bids) {
       this.addBookSide(bids);
     }
+    if (includeEvents && eventHeap) {
+      this.addEventHeap(eventHeap);
+    }
     return this;
   }
 
@@ -35,6 +38,20 @@ export class Watcher {
       (ai) => {
         bookSide.account = market.client.program.coder.accounts.decode(
           'bookSide',
+          ai.data,
+        );
+      },
+    );
+    return this;
+  }
+
+  addEventHeap(eventHeap: EventHeap): this {
+    const { market, pubkey } = eventHeap;
+    this.accountSubs[pubkey.toBase58()] = this.connection.onAccountChange(
+      pubkey,
+      (ai) => {
+        eventHeap.account = market.client.program.coder.accounts.decode(
+          'eventHeap',
           ai.data,
         );
       },

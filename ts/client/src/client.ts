@@ -46,12 +46,13 @@ export type OpenOrdersAccount = IdlAccounts<OpenbookV2>['openOrdersAccount'];
 export type OpenOrdersIndexerAccount =
   IdlAccounts<OpenbookV2>['openOrdersIndexer'];
 export type EventHeapAccount = IdlAccounts<OpenbookV2>['eventHeap'];
-export type BookSideAccount = IdlAccounts<OpenbookV2>['bookSide'];
-export type LeafNode = IdlTypes<OpenbookV2>['LeafNode'];
-export type InnerNode = IdlTypes<OpenbookV2>['InnerNode'];
-export type AnyNode = IdlTypes<OpenbookV2>['AnyNode'];
+export type AnyEvent = IdlTypes<OpenbookV2>['AnyEvent'];
 export type FillEvent = IdlTypes<OpenbookV2>['FillEvent'];
 export type OutEvent = IdlTypes<OpenbookV2>['OutEvent'];
+export type BookSideAccount = IdlAccounts<OpenbookV2>['bookSide'];
+export type AnyNode = IdlTypes<OpenbookV2>['AnyNode'];
+export type InnerNode = IdlTypes<OpenbookV2>['InnerNode'];
+export type LeafNode = IdlTypes<OpenbookV2>['LeafNode'];
 
 export interface OpenBookClientOptions {
   idsSource?: IdsSource;

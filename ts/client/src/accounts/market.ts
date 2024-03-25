@@ -9,12 +9,19 @@ import {
   BookSide,
   SideUtils,
   nameToString,
+  EventHeapAccount,
+  EventHeap,
+  EventType,
 } from '..';
+
+const FEES_SCALE_FACTOR = new BN(1_000_000);
 
 export class Market {
   public minOrderSize: Big;
   public tickSize: Big;
   public quoteLotFactor: Big;
+  public baseNativeFactor: Big;
+  public quoteNativeFactor: Big;
 
   /**
    * use async loadBids() or loadOrderBook() to populate bids
@@ -25,17 +32,20 @@ export class Market {
    * use async loadAsks() or loadOrderBook() to populate asks
    */
   public asks: BookSide | undefined;
+  public eventHeap: EventHeap | undefined;
 
   constructor(
     public client: OpenBookV2Client,
     public pubkey: PublicKey,
     public account: MarketAccount,
   ) {
+    this.baseNativeFactor = new Big(10).pow(-account.baseDecimals);
+    this.quoteNativeFactor = new Big(10).pow(-account.quoteDecimals);
     this.minOrderSize = new Big(account.baseLotSize.toString()).mul(
-      new Big(10).pow(-account.baseDecimals),
+      this.baseNativeFactor,
     );
     this.quoteLotFactor = new Big(account.quoteLotSize.toString()).mul(
-      new Big(10).pow(-account.quoteDecimals),
+      this.quoteNativeFactor,
     );
     this.tickSize = new Big(10)
       .pow(account.baseDecimals - account.quoteDecimals)
@@ -54,8 +64,14 @@ export class Market {
   public baseLotsToUi(lots: BN): number {
     return new Big(lots.toString()).mul(this.minOrderSize).toNumber();
   }
+  public baseNativeToUi(native: BN): number {
+    return new Big(native.toString()).mul(this.baseNativeFactor).toNumber();
+  }
   public quoteLotsToUi(lots: BN): number {
     return new Big(lots.toString()).mul(this.quoteLotFactor).toNumber();
+  }
+  public quoteNativeToUi(native: BN): number {
+    return new Big(native.toString()).mul(this.quoteNativeFactor).toNumber();
   }
   public priceLotsToUi(lots: BN): number {
     return new Big(lots.toString()).mul(this.tickSize).toNumber();
@@ -81,6 +97,10 @@ export class Market {
       );
   }
 
+  public makerFeeFloor(quoteNative: BN): BN {
+    return quoteNative.mul(this.account.makerFee).div(FEES_SCALE_FACTOR);
+  }
+
   public async loadBids(): Promise<BookSide> {
     const bidSide = (await this.client.program.account.bookSide.fetch(
       this.account.bids,
@@ -95,6 +115,14 @@ export class Market {
     )) as BookSideAccount;
     this.asks = new BookSide(this, this.account.asks, askSide, SideUtils.Ask);
     return this.asks;
+  }
+
+  public async loadEventHeap(): Promise<EventHeap> {
+    const eventHeap = (await this.client.program.account.eventHeap.fetch(
+      this.account.eventHeap,
+    )) as EventHeapAccount;
+    this.eventHeap = new EventHeap(this.account.eventHeap, eventHeap, this);
+    return this.eventHeap;
   }
 
   public async loadOrderBook(): Promise<this> {
@@ -145,6 +173,27 @@ export class Market {
     }
 
     debug += ` eventHeap: ${mkt.eventHeap.toBase58()}\n`;
+    if (this.eventHeap) {
+      let fillEvents = 0;
+      let outEvents = 0;
+      for (const event of this.eventHeap.parsedEvents()) {
+        switch (event.eventType) {
+          case EventType.Fill: {
+            fillEvents += 1;
+            continue;
+          }
+          case EventType.Out: {
+            outEvents += 1;
+            continue;
+          }
+        }
+      }
+
+      debug += `  fillEvents: ${fillEvents}\n`;
+      debug += `  outEvents: ${outEvents}\n`;
+    } else {
+      debug += `  loaded: false\n`;
+    }
 
     debug += ` minOrderSize: ${this.minOrderSize}\n`;
     debug += ` tickSize: ${this.tickSize}\n`;

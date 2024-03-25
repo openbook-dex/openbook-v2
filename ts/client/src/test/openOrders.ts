@@ -28,6 +28,7 @@ async function testLoadOOForMarket(): Promise<void> {
   const [oo] = await Promise.all([
     OpenOrders.loadNullableForMarketAndOwner(market),
     market.loadOrderBook(),
+    market.loadEventHeap(),
   ]);
   console.log(oo?.toPrettyString());
 }
