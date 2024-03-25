@@ -14,6 +14,10 @@ import {
   EventType,
 } from '..';
 
+
+const FEES_SCALE_FACTOR = new BN(1_000_000);
+const FEES_SCALE_FACTOR_MINUS_ONE = FEES_SCALE_FACTOR.subn(1);
+
 export class Market {
   public minOrderSize: Big;
   public tickSize: Big;
@@ -83,6 +87,27 @@ export class Market {
           this.account.quoteLotSize,
         ),
       );
+  }
+
+  // TODO: the makerFee math is not correct for rebates
+  public makerFeeCeil(quoteNative: BN): BN {
+    return quoteNative
+      .add(FEES_SCALE_FACTOR_MINUS_ONE)
+      .imul(this.account.makerFee)
+      .div(FEES_SCALE_FACTOR);
+  }
+
+  public makerFeeFloor(quoteNative: BN): BN {
+    return quoteNative
+      .mul(this.account.makerFee)
+      .div(FEES_SCALE_FACTOR);
+  }
+
+  public takerFeeCeil(quoteNative: BN): BN {
+    return quoteNative
+      .add(FEES_SCALE_FACTOR_MINUS_ONE)
+      .imul(this.account.takerFee)
+      .div(FEES_SCALE_FACTOR);
   }
 
   public async loadBids(): Promise<BookSide> {

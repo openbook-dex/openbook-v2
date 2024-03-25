@@ -4,6 +4,8 @@ import {
   Signer,
   TransactionInstruction,
 } from '@solana/web3.js';
+import { BN } from '@coral-xyz/anchor';
+import { createAssociatedTokenAccountIdempotentInstruction } from '@solana/spl-token';
 import {
   FillEvent,
   OpenBookV2Client,
@@ -23,9 +25,6 @@ import {
   OpenOrdersIndexer,
   Market,
 } from '..';
-
-import { BN } from '@coral-xyz/anchor';
-import { createAssociatedTokenAccountIdempotentInstruction } from '@solana/spl-token';
 
 export interface OrderToPlace {
   side: Side;
@@ -127,19 +126,23 @@ export class OpenOrders {
           case EventType.Fill: {
             const { maker, quantity, price, takerSide } = event as FillEvent;
             if (maker.equals(this.account.owner)) {
+              const baseNative = quantity.mul(baseLotSize);
+              const quoteNative = quantity.mul(price).imul(quoteLotSize);
+              const quoteFeesNative = this.market.makerFeeFloor(quoteNative);
               if (takerSide === 1) {
-                base.iadd(quantity.mul(baseLotSize));
-                // TODO: adjust for maker fees
-                quote.isub(quantity.mul(price).imul(quoteLotSize));
+                // buy
+                base.iadd(baseNative);
+                quote.isub(quoteNative.iadd(quoteFeesNative));
               } else {
-                base.isub(quantity.mul(baseLotSize));
-                // TODO: adjust for maker fees
-                quote.iadd(quantity.mul(price).imul(quoteLotSize));
+                // sell
+                base.isub(baseNative);
+                quote.iadd(quoteNative.isub(quoteFeesNative));
               }
             }
             continue;
           }
           case EventType.Out: {
+            // out events don't change balances
             continue;
           }
         }
