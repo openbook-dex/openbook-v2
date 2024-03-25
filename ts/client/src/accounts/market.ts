@@ -40,9 +40,13 @@ export class Market {
     public account: MarketAccount,
   ) {
     this.baseNativeFactor = new Big(10).pow(-account.baseDecimals);
-    this.quoteNativeFactor =  new Big(10).pow(-account.quoteDecimals);
-    this.minOrderSize = new Big(account.baseLotSize.toString()).mul(this.baseNativeFactor);
-    this.quoteLotFactor = new Big(account.quoteLotSize.toString()).mul(this.quoteNativeFactor);
+    this.quoteNativeFactor = new Big(10).pow(-account.quoteDecimals);
+    this.minOrderSize = new Big(account.baseLotSize.toString()).mul(
+      this.baseNativeFactor,
+    );
+    this.quoteLotFactor = new Big(account.quoteLotSize.toString()).mul(
+      this.quoteNativeFactor,
+    );
     this.tickSize = new Big(10)
       .pow(account.baseDecimals - account.quoteDecimals)
       .mul(new Big(account.quoteLotSize.toString()))
@@ -60,13 +64,13 @@ export class Market {
   public baseLotsToUi(lots: BN): number {
     return new Big(lots.toString()).mul(this.minOrderSize).toNumber();
   }
-  public baseNativeToUi(native: BN): number{
+  public baseNativeToUi(native: BN): number {
     return new Big(native.toString()).mul(this.baseNativeFactor).toNumber();
   }
   public quoteLotsToUi(lots: BN): number {
     return new Big(lots.toString()).mul(this.quoteLotFactor).toNumber();
   }
-  public quoteNativeToUi(native: BN): number{
+  public quoteNativeToUi(native: BN): number {
     return new Big(native.toString()).mul(this.quoteNativeFactor).toNumber();
   }
   public priceLotsToUi(lots: BN): number {
@@ -94,9 +98,7 @@ export class Market {
   }
 
   public makerFeeFloor(quoteNative: BN): BN {
-    return quoteNative
-      .mul(this.account.makerFee)
-      .div(FEES_SCALE_FACTOR);
+    return quoteNative.mul(this.account.makerFee).div(FEES_SCALE_FACTOR);
   }
 
   public async loadBids(): Promise<BookSide> {
