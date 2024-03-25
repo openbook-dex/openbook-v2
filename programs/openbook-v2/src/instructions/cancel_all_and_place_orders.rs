@@ -8,8 +8,8 @@ use crate::state::*;
 use crate::token_utils::*;
 
 #[allow(clippy::too_many_arguments)]
-pub fn cancel_all_and_place_orders(
-    ctx: Context<CancelAllAndPlaceOrders>,
+pub fn cancel_all_and_place_orders<'c: 'info, 'info>(
+    ctx: Context<'_, '_, 'c, 'info, CancelAllAndPlaceOrders<'info>>,
     cancel: bool,
     mut orders: Vec<Order>,
     limit: u8,

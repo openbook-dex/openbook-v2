@@ -3,8 +3,8 @@ use crate::error::*;
 use crate::state::Order;
 use anchor_lang::prelude::*;
 
-pub fn edit_order<'info>(
-    ctx: Context<'_, '_, '_, 'info, PlaceOrder<'info>>,
+pub fn edit_order<'c: 'info, 'info>(
+    ctx: Context<'_, '_, 'c, 'info, PlaceOrder<'info>>,
     cancel_client_order_id: u64,
     expected_cancel_size: i64,
     mut order: Order,
@@ -21,7 +21,7 @@ pub fn edit_order<'info>(
             ctx.program_id,
             &mut ctx.accounts.to_cancel_order(),
             ctx.remaining_accounts,
-            ctx.bumps.clone(),
+            ctx.bumps.to_cancel_order(),
         ),
         cancel_client_order_id,
     )?;

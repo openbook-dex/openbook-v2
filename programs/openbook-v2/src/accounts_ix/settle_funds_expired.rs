@@ -1,4 +1,4 @@
-use crate::accounts_ix::SettleFunds;
+use crate::accounts_ix::{SettleFunds, SettleFundsBumps};
 use crate::error::OpenBookError;
 use crate::state::*;
 use anchor_lang::prelude::*;
@@ -53,7 +53,7 @@ pub struct SettleFundsExpired<'info> {
 }
 
 impl<'info> SettleFundsExpired<'info> {
-    pub fn to_settle_funds_accounts(&self) -> SettleFunds<'info> {
+    pub fn to_settle_funds(&self) -> SettleFunds<'info> {
         SettleFunds {
             owner: self.owner.clone(),
             penalty_payer: self.penalty_payer.clone(),
@@ -68,5 +68,11 @@ impl<'info> SettleFundsExpired<'info> {
             token_program: self.token_program.clone(),
             system_program: self.system_program.clone(),
         }
+    }
+}
+
+impl SettleFundsExpiredBumps {
+    pub fn to_settle_funds(&self) -> SettleFundsBumps {
+        SettleFundsBumps {}
     }
 }

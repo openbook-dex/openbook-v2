@@ -1,4 +1,4 @@
-use crate::accounts_ix::CancelOrder;
+use crate::accounts_ix::{CancelOrder, CancelOrderBumps};
 use crate::error::OpenBookError;
 use crate::pubkey_option::NonZeroKey;
 use crate::state::*;
@@ -62,5 +62,11 @@ impl<'info> PlaceOrder<'info> {
             open_orders_account: self.open_orders_account.clone(),
             market: self.market.clone(),
         }
+    }
+}
+
+impl PlaceOrderBumps {
+    pub fn to_cancel_order(&self) -> CancelOrderBumps {
+        CancelOrderBumps {}
     }
 }

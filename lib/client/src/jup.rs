@@ -391,11 +391,22 @@ mod test {
                 assert_eq!(quote.out_amount, 0);
                 assert!(quote.not_enough_liquidity);
             } else {
-                let mut pt = ProgramTest::new(
-                    "openbook_v2",
-                    openbook_v2::id(),
-                    processor!(openbook_v2::entry),
-                );
+                // hack to fix https://github.com/coral-xyz/anchor/issues/2738
+                pub fn fixed_entry(
+                    program_id: &Pubkey,
+                    accounts: &[anchor_lang::prelude::AccountInfo],
+                    data: &[u8],
+                ) -> anchor_lang::solana_program::entrypoint::ProgramResult {
+                    let extended_lifetime_accs = unsafe {
+                        core::mem::transmute::<_, &[anchor_lang::prelude::AccountInfo<'_>]>(
+                            accounts,
+                        )
+                    };
+                    openbook_v2::entry(program_id, extended_lifetime_accs, data)
+                }
+
+                let mut pt =
+                    ProgramTest::new("openbook_v2", openbook_v2::id(), processor!(fixed_entry));
 
                 pt.add_account(market, market_account.account.clone());
                 for (pubkey, account) in accounts_map.iter() {

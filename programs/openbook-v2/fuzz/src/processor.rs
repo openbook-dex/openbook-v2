@@ -57,11 +57,18 @@ impl program_stubs::SyscallStubs for TestSyscallStubs {
                 &new_account_infos,
                 &instruction.data,
             ),
-            id if id == openbook_v2::ID => openbook_v2::entry(
-                &instruction.program_id,
-                &new_account_infos,
-                &instruction.data,
-            ),
+            id if id == openbook_v2::ID => {
+                let extended_lifetime_accs = unsafe {
+                    core::mem::transmute::<&[AccountInfo], &[AccountInfo<'_>]>(
+                        new_account_infos.as_ref(),
+                    )
+                };
+                openbook_v2::entry(
+                    &instruction.program_id,
+                    &extended_lifetime_accs,
+                    &instruction.data,
+                )
+            }
             _ => Err(ProgramError::IncorrectProgramId),
         }
     }
@@ -99,7 +106,7 @@ pub fn process_instruction(
     );
 
     if res.is_ok() {
-        state.update(account_infos);
+        state.update(&account_infos);
     }
 
     res

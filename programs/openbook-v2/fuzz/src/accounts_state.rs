@@ -75,7 +75,7 @@ impl AccountsState {
         infos
     }
 
-    pub fn update(&mut self, infos: Vec<AccountInfo>) {
+    pub fn update(&mut self, infos: &[AccountInfo]) {
         infos.iter().for_each(|info| {
             let account = self.0.get_mut(info.key).unwrap();
             let new_data = info.data.borrow();
