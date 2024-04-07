@@ -1619,7 +1619,12 @@ export type OpenbookV2 = {
           isSigner: false;
         },
       ];
-      args: [];
+      args: [
+        {
+          name: 'limit';
+          type: 'u8';
+        },
+      ];
     },
     {
       name: 'stubOracleCreate';
@@ -5316,7 +5321,12 @@ export const IDL: OpenbookV2 = {
           isSigner: false,
         },
       ],
-      args: [],
+      args: [
+        {
+          name: 'limit',
+          type: 'u8',
+        },
+      ],
     },
     {
       name: 'stubOracleCreate',

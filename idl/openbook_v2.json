@@ -1635,7 +1635,12 @@
           "isSigner": false
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "limit",
+          "type": "u8"
+        }
+      ]
     },
     {
       "name": "stubOracleCreate",
