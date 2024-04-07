@@ -63,6 +63,7 @@ impl<'a> Orderbook<'a> {
         &mut self,
         order: &Order,
         open_book_market: &mut Market,
+        market_pk: &Pubkey,
         event_heap: &mut EventHeap,
         oracle_price: Option<I80F48>,
         mut open_orders_account: Option<&mut OpenOrdersAccount>,
@@ -235,7 +236,7 @@ impl<'a> Orderbook<'a> {
                 maker_out,
                 best_opposing.node.owner_slot,
                 now_ts,
-                event_heap.header.seq_num,
+                market.seq_num,
                 best_opposing.node.owner,
                 best_opposing.node.client_order_id,
                 best_opposing.node.timestamp,
@@ -245,6 +246,11 @@ impl<'a> Orderbook<'a> {
                 best_opposing.node.peg_limit,
                 match_base_lots,
             );
+
+            emit!(TakerSignatureLog {
+                market: *market_pk,
+                seq_num: market.seq_num,
+            });
 
             process_fill_event(
                 fill,

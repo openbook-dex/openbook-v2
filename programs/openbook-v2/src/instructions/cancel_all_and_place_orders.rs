@@ -88,6 +88,7 @@ pub fn cancel_all_and_place_orders(
         } = book.new_order(
             order,
             &mut market,
+            &ctx.accounts.market.key(),
             &mut event_heap,
             oracle_price,
             Some(&mut open_orders_account),

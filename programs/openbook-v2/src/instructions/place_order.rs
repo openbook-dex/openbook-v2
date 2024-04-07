@@ -59,6 +59,7 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<
     } = book.new_order(
         &order,
         &mut market,
+        &ctx.accounts.market.key(),
         &mut event_heap,
         oracle_price,
         Some(&mut open_orders_account),

@@ -211,7 +211,7 @@ impl OpenOrdersAccount {
             maker_slot: fill.maker_slot,
             maker_out: fill.maker_out(),
             timestamp: fill.timestamp,
-            seq_num: fill.seq_num,
+            seq_num: fill.market_seq_num,
             maker: fill.maker,
             maker_client_order_id: fill.maker_client_order_id,
             maker_fee: maker_fees,
