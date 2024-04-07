@@ -1,4 +1,4 @@
-use crate::logs::TotalOrderFillEvent;
+use crate::logs::*;
 use crate::state::MAX_OPEN_ORDERS;
 use crate::{
     error::*,
@@ -465,6 +465,11 @@ impl<'a> Orderbook<'a> {
         }
 
         let placed_order_id = if post_target.is_some() {
+            emit!(PlaceOrderLog {
+                open_orders_account: *owner,
+                order_id,
+                timestamp: now_ts
+            });
             Some(order_id)
         } else {
             None
