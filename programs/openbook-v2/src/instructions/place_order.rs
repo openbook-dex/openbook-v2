@@ -4,6 +4,7 @@ use std::cmp;
 use crate::accounts_ix::*;
 use crate::accounts_zerocopy::AccountInfoRef;
 use crate::error::*;
+use crate::logs::*;
 use crate::state::*;
 use crate::token_utils::*;
 
@@ -67,6 +68,15 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<
         limit,
         ctx.remaining_accounts,
     )?;
+
+    if let Some(order_id) = order_id {
+        emit!(PlaceOrderLog {
+            open_orders_account: open_orders_account_pk,
+            order_id,
+            timestamp: now_ts
+        })
+    }
+    
 
     let position = &mut open_orders_account.position;
     let deposit_amount = match order.side {
