@@ -1208,7 +1208,7 @@ impl ClientInstruction for PruneOrdersInstruction {
         account_loader: impl ClientAccountLoader + 'async_trait,
     ) -> (Self::Accounts, instruction::Instruction) {
         let program_id = openbook_v2::id();
-        let instruction = Self::Instruction {};
+        let instruction = Self::Instruction { limit: 255 };
         let market: Market = account_loader.load(&self.market).await.unwrap();
 
         let accounts = Self::Accounts {
