@@ -71,8 +71,6 @@ impl Amm for OpenBookMarket {
                 market.bids,
                 market.asks,
                 market.event_heap,
-                market.market_base_vault,
-                market.market_quote_vault,
                 clock::ID,
             ];
 
@@ -156,10 +154,10 @@ impl Amm for OpenBookMarket {
         let (max_base_lots, max_quote_lots_including_fees) = match side {
             Side::Bid => (
                 self.market.max_base_lots(),
-                input_amount / self.market.quote_lot_size,
+                input_amount + (self.market.quote_lot_size-1) / self.market.quote_lot_size,
             ),
             Side::Ask => (
-                input_amount / self.market.base_lot_size,
+                input_amount + (self.market.base_lot_size-1) / self.market.base_lot_size,
                 self.market.max_quote_lots(),
             ),
         };
@@ -178,7 +176,7 @@ impl Amm for OpenBookMarket {
             max_quote_lots_including_fees,
             &self.market,
             self.oracle_price,
-            self.timestamp,
+            0,
         )?;
 
         let (in_amount, out_amount) = match side {
@@ -204,7 +202,6 @@ impl Amm for OpenBookMarket {
 
     fn get_swap_and_account_metas(&self, swap_params: &SwapParams) -> Result<SwapAndAccountMetas> {
         let SwapParams {
-            in_amount,
             source_mint,
             user_destination_token_account,
             user_source_token_account,
@@ -253,20 +250,6 @@ impl Amm for OpenBookMarket {
 
             let mut account_metas = accounts.to_account_metas(None);
 
-            let input_amount = i64::try_from(*in_amount)?;
-
-            let (max_base_lots, max_quote_lots_including_fees) = match side {
-                Side::Bid => (
-                    self.market.max_base_lots(),
-                    input_amount / self.market.quote_lot_size
-                        + input_amount % self.market.quote_lot_size,
-                ),
-                Side::Ask => (
-                    input_amount / self.market.base_lot_size,
-                    self.market.max_quote_lots(),
-                ),
-            };
-
             let bids_ref = RefCell::new(self.bids);
             let asks_ref = RefCell::new(self.asks);
             let book = Orderbook {
@@ -274,21 +257,19 @@ impl Amm for OpenBookMarket {
                 asks: asks_ref.borrow_mut(),
             };
 
-            let remainigs = remaining_accounts_to_crank(
+            let remaining_accounts = remaining_accounts_to_crank(
                 book,
                 side,
-                max_base_lots,
-                max_quote_lots_including_fees,
                 &self.market,
                 self.oracle_price,
                 self.timestamp,
             )?;
 
-            let remainigs_accounts: Vec<AccountMeta> = remainigs
+            let remaining_accounts: Vec<AccountMeta> = remaining_accounts
                 .iter()
                 .map(|&pubkey| AccountMeta::new(pubkey, false))
                 .collect();
-            account_metas.extend(remainigs_accounts);
+            account_metas.extend(remaining_accounts);
 
             Ok(SwapAndAccountMetas {
                 swap: Swap::Openbook { side: { jup_side } },
