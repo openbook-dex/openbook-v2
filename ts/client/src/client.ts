@@ -567,7 +567,7 @@ export class OpenBookV2Client {
         userBaseAccount,
         userQuoteAccount,
         marketBaseVault: market.marketBaseVault,
-        marketQuoteVault: market.marketBaseVault,
+        marketQuoteVault: market.marketQuoteVault,
         tokenProgram: TOKEN_PROGRAM_ID,
       })
       .instruction();
@@ -589,7 +589,7 @@ export class OpenBookV2Client {
     openOrdersDelegate?: Keypair,
   ): Promise<[TransactionInstruction, Signer[]]> {
     const marketVault =
-      args.side === SideUtils.Bid
+      args.side.bid
         ? market.marketQuoteVault
         : market.marketBaseVault;
     const accountsMeta: AccountMeta[] = remainingAccounts.map((remaining) => ({
@@ -638,7 +638,7 @@ export class OpenBookV2Client {
     openOrdersDelegate?: Keypair,
   ): Promise<[TransactionInstruction, Signer[]]> {
     const marketVault =
-      args.side === SideUtils.Bid
+      args.side.bid
         ? market.marketQuoteVault
         : market.marketBaseVault;
     const accountsMeta: AccountMeta[] = remainingAccounts.map((remaining) => ({

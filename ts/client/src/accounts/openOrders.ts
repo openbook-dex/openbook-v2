@@ -160,7 +160,7 @@ export class OpenOrders {
   public async placeOrder(order: OrderToPlace): Promise<string> {
     // derive token account
     const mint =
-      order.side === SideUtils.Bid
+      order.side.bid
         ? this.market.account.quoteMint
         : this.market.account.baseMint;
     const userTokenAccount = await getAssociatedTokenAddress(
@@ -172,11 +172,11 @@ export class OpenOrders {
 
     const remainingAccounts = new Set<string>();
     const bookSide =
-      order.side === SideUtils.Bid ? this.market.asks : this.market.bids;
+      order.side.bid ? this.market.asks : this.market.bids;
     if (
       bookSide &&
-      order.orderType !== PlaceOrderTypeUtils.PostOnly &&
-      order.orderType !== PlaceOrderTypeUtils.PostOnlySlide
+      !order.orderType?.postOnly &&
+      !order.orderType?.postOnlySlide
     ) {
       for (const order of bookSide.items()) {
         remainingAccounts.add(order.leafNode.owner.toBase58());
@@ -411,11 +411,11 @@ export class OpenOrders {
       ? new BN(order.quoteLimit)
       : I64_MAX_BN;
     const clientOrderId = new BN(order.clientOrderId || Date.now());
-    const orderType = order.orderType || PlaceOrderTypeUtils.Limit;
-    const expiryTimestamp = new BN(order.expiryTimestamp || 0);
+    const orderType = order.orderType ?? PlaceOrderTypeUtils.Limit;
+    const expiryTimestamp = new BN(order.expiryTimestamp ?? 0);
     const selfTradeBehavior =
-      order.selfTradeBehavior || SelfTradeBehaviorUtils.DecrementTake;
-    const limit = order.matchLoopLimit || 16;
+      order.selfTradeBehavior ?? SelfTradeBehaviorUtils.DecrementTake;
+    const limit = order.matchLoopLimit ?? 16;
 
     const args = {
       side: order.side,

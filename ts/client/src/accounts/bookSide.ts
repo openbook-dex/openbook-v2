@@ -65,7 +65,7 @@ export class BookSide {
       return;
     }
     const stack = [this.rootFixed.maybeNode];
-    const [left, right] = this.side === SideUtils.Bid ? [1, 0] : [0, 1];
+    const [left, right] = this.side.bid ? [1, 0] : [0, 1];
 
     while (stack.length > 0) {
       const index = stack.pop()!;
@@ -94,7 +94,7 @@ export class BookSide {
       return;
     }
     const stack = [this.rootOraclePegged.maybeNode];
-    const [left, right] = this.side === SideUtils.Bid ? [1, 0] : [0, 1];
+    const [left, right] = this.side.bid ? [1, 0] : [0, 1];
 
     while (stack.length > 0) {
       const index = stack.pop()!;
@@ -122,7 +122,7 @@ export class BookSide {
   public compareOrders(a: Order, b: Order): boolean {
     return a.priceLots.eq(b.priceLots)
       ? a.seqNum.lt(b.seqNum) // if prices are equal prefer orders in the order they are placed
-      : this.side === SideUtils.Bid // else compare the actual prices
+      : this.side.bid // else compare the actual prices
       ? a.priceLots.gt(b.priceLots)
       : b.priceLots.gt(a.priceLots);
   }

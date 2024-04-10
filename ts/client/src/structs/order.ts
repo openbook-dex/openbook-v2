@@ -13,7 +13,7 @@ export class Order {
     public isOraclePegged = false,
   ) {
     this.seqNum =
-      this.side === SideUtils.Bid
+      this.side.bid
         ? U64_MAX_BN.sub(this.leafNode.key.maskn(64))
         : this.leafNode.key.maskn(64);
     const priceData = this.leafNode.key.ushrn(64);
@@ -39,7 +39,7 @@ export class Order {
   }
 
   public toPrettyString(): string {
-    return `side:${this.side === SideUtils.Bid ? 'bid' : 'ask'} price:${
+    return `side:${this.side.bid ? 'bid' : 'ask'} price:${
       this.price
     } size:${this.size} seqNum:${this.seqNum.toString()} expired:${
       this.isExpired
