@@ -1,6 +1,6 @@
 use crate::accounts_ix::Deposit;
 use crate::error::*;
-use crate::logs::DepositLog;
+use crate::logs::{emit_stack, DepositLog};
 use crate::token_utils::*;
 use anchor_lang::prelude::*;
 
@@ -33,7 +33,7 @@ pub fn deposit(ctx: Context<Deposit>, base_amount: u64, quote_amount: u64) -> Re
     market.quote_deposit_total += quote_amount;
 
     if base_amount > 0 || quote_amount > 0 {
-        emit!(DepositLog {
+        emit_stack(DepositLog {
             open_orders_account: ctx.accounts.open_orders_account.key(),
             signer: ctx.accounts.owner.key(),
             base_amount,

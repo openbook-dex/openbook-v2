@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 
 use crate::accounts_ix::*;
-use crate::logs::SetDelegateLog;
+use crate::logs::{emit_stack, SetDelegateLog};
 use crate::pubkey_option::NonZeroPubkeyOption;
 
 pub fn set_delegate(ctx: Context<SetDelegate>) -> Result<()> {
@@ -16,9 +16,9 @@ pub fn set_delegate(ctx: Context<SetDelegate>) -> Result<()> {
 
     account.delegate = delegate_account;
 
-    emit!(SetDelegateLog {
+    emit_stack(SetDelegateLog {
         open_orders_account: ctx.accounts.open_orders_account.key(),
-        delegate: delegate_account.into()
+        delegate: delegate_account.into(),
     });
 
     Ok(())

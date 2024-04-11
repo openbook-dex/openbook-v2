@@ -2,7 +2,7 @@ use crate::state::market_seeds;
 use anchor_lang::prelude::*;
 
 use crate::accounts_ix::*;
-use crate::logs::SweepFeesLog;
+use crate::logs::{emit_stack, SweepFeesLog};
 use crate::token_utils::*;
 
 pub fn sweep_fees(ctx: Context<SweepFees>) -> Result<()> {
@@ -24,7 +24,7 @@ pub fn sweep_fees(ctx: Context<SweepFees>) -> Result<()> {
         seeds,
     )?;
 
-    emit!(SweepFeesLog {
+    emit_stack(SweepFeesLog {
         market: ctx.accounts.market.key(),
         amount,
         receiver: ctx.accounts.token_receiver_account.key(),

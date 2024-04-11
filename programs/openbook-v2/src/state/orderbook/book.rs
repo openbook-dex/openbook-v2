@@ -247,7 +247,7 @@ impl<'a> Orderbook<'a> {
                 match_base_lots,
             );
 
-            emit!(TakerSignatureLog {
+            emit_stack(TakerSignatureLog {
                 market: *market_pk,
                 seq_num: market.seq_num,
             });
@@ -310,7 +310,7 @@ impl<'a> Orderbook<'a> {
                 ),
             };
 
-            emit!(TotalOrderFillEvent {
+            emit_stack(TotalOrderFillEvent {
                 side: side.into(),
                 taker: *owner,
                 total_quantity_paid,
@@ -471,10 +471,10 @@ impl<'a> Orderbook<'a> {
         }
 
         let placed_order_id = if post_target.is_some() {
-            emit!(PlaceOrderLog {
+            emit_stack(PlaceOrderLog {
                 open_orders_account: *owner,
                 order_id,
-                timestamp: now_ts
+                timestamp: now_ts,
             });
             Some(order_id)
         } else {

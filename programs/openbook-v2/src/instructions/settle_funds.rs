@@ -1,6 +1,7 @@
 use anchor_lang::prelude::*;
 
 use crate::accounts_ix::*;
+use crate::logs::emit_stack;
 use crate::logs::SettleFundsLog;
 use crate::state::*;
 use crate::token_utils::*;
@@ -73,12 +74,12 @@ pub fn settle_funds<'info>(ctx: Context<'_, '_, '_, 'info, SettleFunds<'info>>) 
         seeds,
     )?;
 
-    emit!(SettleFundsLog {
+    emit_stack(SettleFundsLog {
         open_orders_account: ctx.accounts.open_orders_account.key(),
         base_native: pa.base_free_native,
         quote_native: pa.quote_free_native,
         referrer_rebate,
-        referrer: ctx.accounts.referrer_account.as_ref().map(|acc| acc.key())
+        referrer: ctx.accounts.referrer_account.as_ref().map(|acc| acc.key()),
     });
 
     pa.base_free_native = 0;
