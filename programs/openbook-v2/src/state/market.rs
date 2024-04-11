@@ -226,6 +226,19 @@ impl Market {
             .ok_or_else(|| OpenBookError::InvalidOraclePrice.into())
     }
 
+    pub fn oracle_price_lots(
+        &self,
+        oracle_a_acc: Option<&impl KeyedAccountReader>,
+        oracle_b_acc: Option<&impl KeyedAccountReader>,
+        slot: u64,
+    ) -> Result<Option<i64>> {
+        let oracle_price = self.oracle_price(oracle_a_acc, oracle_b_acc, slot)?;
+        match oracle_price {
+            Some(p) => Ok(Some(self.native_price_to_lot(p)?)),
+            None => Ok(None),
+        }
+    }
+
     pub fn oracle_price(
         &self,
         oracle_a_acc: Option<&impl KeyedAccountReader>,

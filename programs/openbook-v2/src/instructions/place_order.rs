@@ -41,7 +41,7 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<
 
     let now_ts: u64 = clock.unix_timestamp.try_into().unwrap();
 
-    let oracle_price = market.oracle_price(
+    let oracle_price_lots = market.oracle_price_lots(
         AccountInfoRef::borrow_some(ctx.accounts.oracle_a.as_ref())?.as_ref(),
         AccountInfoRef::borrow_some(ctx.accounts.oracle_b.as_ref())?.as_ref(),
         clock.slot,
@@ -60,7 +60,7 @@ pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<
         &order,
         &mut market,
         &mut event_heap,
-        oracle_price,
+        oracle_price_lots,
         Some(&mut open_orders_account),
         &open_orders_account_pk,
         now_ts,
