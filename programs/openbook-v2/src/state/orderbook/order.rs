@@ -31,6 +31,9 @@ pub enum OrderParams {
     ImmediateOrCancel {
         price_lots: i64,
     },
+    FillOrKill {
+        price_lots: i64,
+    },
     Fixed {
         price_lots: i64,
         order_type: PostOrderType,
@@ -68,6 +71,11 @@ impl Order {
             _ => return false,
         };
         order_type == PostOrderType::PostOnly || order_type == PostOrderType::PostOnlySlide
+    }
+
+    /// Is this order required to be executed completely? It will fail if it would do a partial execution.
+    pub fn is_fill_or_kill(&self) -> bool {
+        matches!(self.params, OrderParams::FillOrKill { .. })
     }
 
     /// Order tree that this order should be added to
@@ -115,6 +123,7 @@ impl Order {
         let price_lots = match self.params {
             OrderParams::Market => market_order_limit_for_side(self.side),
             OrderParams::ImmediateOrCancel { price_lots } => price_lots,
+            OrderParams::FillOrKill { price_lots } => price_lots,
             OrderParams::Fixed {
                 price_lots,
                 order_type,

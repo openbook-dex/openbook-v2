@@ -16,7 +16,7 @@ pub fn cancel_all_orders(
         asks: ctx.accounts.asks.load_mut()?,
     };
 
-    book.cancel_all_orders(&mut account, *market, limit, side_option)?;
+    book.cancel_all_orders(&mut account, *market, limit, side_option, None)?;
 
     Ok(())
 }

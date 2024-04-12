@@ -41,7 +41,7 @@ pub fn cancel_all_and_place_orders<'c: 'info, 'info>(
     )?;
 
     if cancel {
-        book.cancel_all_orders(&mut open_orders_account, *market, u8::MAX, None)?;
+        book.cancel_all_orders(&mut open_orders_account, *market, u8::MAX, None, None)?;
     }
 
     let mut base_amount = 0_u64;

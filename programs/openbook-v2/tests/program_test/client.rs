@@ -44,6 +44,25 @@ pub async fn send_tx<CI: ClientInstruction>(
     Ok(accounts)
 }
 
+pub async fn send_tx_and_get_ix_custom_error<CI: ClientInstruction>(
+    solana: &SolanaCookie,
+    ix: CI,
+) -> Option<u32> {
+    let tx_result = send_tx(solana, ix).await;
+
+    if let Err(TransportError::TransactionError(
+        solana_sdk::transaction::TransactionError::InstructionError(
+            _,
+            solana_sdk::instruction::InstructionError::Custom(err_num),
+        ),
+    )) = tx_result
+    {
+        Some(err_num)
+    } else {
+        None
+    }
+}
+
 /// Build a transaction from multiple instructions
 pub struct ClientTransaction {
     solana: Arc<SolanaCookie>,
@@ -1189,7 +1208,7 @@ impl ClientInstruction for PruneOrdersInstruction {
         account_loader: impl ClientAccountLoader + 'async_trait,
     ) -> (Self::Accounts, instruction::Instruction) {
         let program_id = openbook_v2::id();
-        let instruction = Self::Instruction { limit: 5 };
+        let instruction = Self::Instruction {};
         let market: Market = account_loader.load(&self.market).await.unwrap();
 
         let accounts = Self::Accounts {

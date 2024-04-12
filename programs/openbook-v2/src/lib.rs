@@ -143,6 +143,9 @@ pub mod openbook_v2 {
                 PlaceOrderType::ImmediateOrCancel => OrderParams::ImmediateOrCancel {
                     price_lots: args.price_lots,
                 },
+                PlaceOrderType::FillOrKill => OrderParams::FillOrKill {
+                    price_lots: args.price_lots,
+                },
                 _ => OrderParams::Fixed {
                     price_lots: args.price_lots,
                     order_type: args.order_type.to_post_order_type()?,
@@ -186,6 +189,9 @@ pub mod openbook_v2 {
             params: match place_order.order_type {
                 PlaceOrderType::Market => OrderParams::Market,
                 PlaceOrderType::ImmediateOrCancel => OrderParams::ImmediateOrCancel {
+                    price_lots: place_order.price_lots,
+                },
+                PlaceOrderType::FillOrKill => OrderParams::FillOrKill {
                     price_lots: place_order.price_lots,
                 },
                 _ => OrderParams::Fixed {
@@ -292,6 +298,9 @@ pub mod openbook_v2 {
                     PlaceOrderType::ImmediateOrCancel => OrderParams::ImmediateOrCancel {
                         price_lots: order.price_lots,
                     },
+                    PlaceOrderType::FillOrKill => OrderParams::FillOrKill {
+                        price_lots: order.price_lots,
+                    },
                     _ => OrderParams::Fixed {
                         price_lots: order.price_lots,
                         order_type: orders_type.to_post_order_type()?,
@@ -338,6 +347,9 @@ pub mod openbook_v2 {
                 params: match orders_type {
                     PlaceOrderType::Market => OrderParams::Market,
                     PlaceOrderType::ImmediateOrCancel => OrderParams::ImmediateOrCancel {
+                        price_lots: order.price_lots,
+                    },
+                    PlaceOrderType::FillOrKill => OrderParams::FillOrKill {
                         price_lots: order.price_lots,
                     },
                     _ => OrderParams::Fixed {
@@ -415,6 +427,9 @@ pub mod openbook_v2 {
             params: match args.order_type {
                 PlaceOrderType::Market => OrderParams::Market,
                 PlaceOrderType::ImmediateOrCancel => OrderParams::ImmediateOrCancel {
+                    price_lots: args.price_lots,
+                },
+                PlaceOrderType::FillOrKill => OrderParams::FillOrKill {
                     price_lots: args.price_lots,
                 },
                 _ => return Err(OpenBookError::InvalidInputOrderType.into()),
@@ -581,9 +596,9 @@ pub mod openbook_v2 {
 
     /// Remove orders from the book when the market is expired (only
     /// [`close_market_admin`](crate::state::Market::close_market_admin)).
-    pub fn prune_orders(ctx: Context<PruneOrders>, limit: u8) -> Result<()> {
+    pub fn prune_orders(ctx: Context<PruneOrders>) -> Result<()> {
         #[cfg(feature = "enable-gpl")]
-        instructions::prune_orders(ctx, limit)?;
+        instructions::prune_orders(ctx)?;
         Ok(())
     }
 

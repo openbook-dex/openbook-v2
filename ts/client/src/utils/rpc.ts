@@ -17,6 +17,8 @@ export async function sendTransaction(
   opts: any = {},
 ): Promise<string> {
   const connection = provider.connection;
+  const additionalSigners = opts?.additionalSigners || [];
+
   if ((connection as any).banksClient !== undefined) {
     const tx = new Transaction();
     for (const ix of ixs) {
@@ -27,13 +29,14 @@ export async function sendTransaction(
       connection as any
     ).banksClient.getLatestBlockhash();
 
-    for (const signer of opts?.additionalSigners) {
+    for (const signer of additionalSigners) {
       tx.partialSign(signer);
     }
 
     await (connection as any).banksClient.processTransaction(tx);
     return '';
   }
+
   const latestBlockhash =
     opts?.latestBlockhash ??
     (await connection.getLatestBlockhash(
@@ -49,18 +52,15 @@ export async function sendTransaction(
   }
 
   const message = MessageV0.compile({
-    payerKey: provider.wallet.publicKey,
+    payerKey: payer.publicKey,
     instructions: ixs,
     recentBlockhash: latestBlockhash.blockhash,
     addressLookupTableAccounts: alts,
   });
   let vtx = new VersionedTransaction(message);
 
-  if (
-    opts?.additionalSigners !== undefined &&
-    opts?.additionalSigners.length !== 0
-  ) {
-    vtx.sign([...opts?.additionalSigners]);
+  if (additionalSigners !== undefined && additionalSigners.length !== 0) {
+    vtx.sign([...additionalSigners]);
   }
 
   if (
@@ -79,12 +79,7 @@ export async function sendTransaction(
     skipPreflight: true, // mergedOpts.skipPreflight,
   });
 
-  // const signature = await connection.sendTransactionss(
-  //   vtx as any as VersionedTransaction,
-  //   {
-  //     skipPreflight: true,
-  //   },
-  // );
+  // console.log(`sent tx base64=${Buffer.from(vtx.serialize()).toString('base64')}`);
 
   if (
     opts?.postSendTxCallback !== undefined &&
@@ -99,12 +94,12 @@ export async function sendTransaction(
 
   const txConfirmationCommitment =
     opts?.txConfirmationCommitment ?? 'processed';
-  let status: any;
+  let result: any;
   if (
     latestBlockhash.blockhash != null &&
     latestBlockhash.lastValidBlockHeight != null
   ) {
-    status = (
+    result = (
       await connection.confirmTransaction(
         {
           signature: signature,
@@ -115,15 +110,15 @@ export async function sendTransaction(
       )
     ).value;
   } else {
-    status = (
+    result = (
       await connection.confirmTransaction(signature, txConfirmationCommitment)
     ).value;
   }
-  if (status.err !== '' && status.err !== null) {
-    console.warn('Tx status: ', status);
+  if (result.err !== '' && result.err !== null) {
+    console.warn('Tx failed result: ', result);
     throw new OpenBookError({
       txid: signature,
-      message: `${JSON.stringify(status)}`,
+      message: `${JSON.stringify(result)}`,
     });
   }
 

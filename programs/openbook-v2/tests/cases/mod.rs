@@ -14,8 +14,10 @@ pub use utils::assert_equal_fixed_f64 as assert_equal;
 
 mod test;
 mod test_crank;
+mod test_create_market;
 mod test_edit_order;
 mod test_fees;
+mod test_fill_or_kill_order;
 mod test_indexer;
 mod test_multiple_orders;
 mod test_oracle_peg;

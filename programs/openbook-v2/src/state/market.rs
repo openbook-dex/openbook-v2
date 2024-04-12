@@ -13,7 +13,8 @@ use super::{orderbook, OracleConfig};
 
 // For a 1bps taker fee, set taker_fee to 100, so taker_fee/FEES_SCALE_FACTOR = 10e-4
 pub const FEES_SCALE_FACTOR: i128 = 1_000_000;
-pub const PENALTY_EVENT_HEAP: u64 = 0;
+// taker pays 500 lamports penalty for every transaction that adds to the event heap
+pub const PENALTY_EVENT_HEAP: u64 = 500;
 
 #[account(zero_copy)]
 #[derive(Debug)]
