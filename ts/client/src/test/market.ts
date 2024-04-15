@@ -67,13 +67,13 @@ async function testMarketLots(): Promise<void> {
   );
   const market = await Market.load(client, marketPk);
 
-  if ("1" !== market.priceUiToLots(1e-10).toString()) {
+  if ('1' !== market.priceUiToLots(1e-10).toString()) {
     throw new Error('price lot calculation rounds wrongly');
   }
-  if ("0" !== market.priceUiToLots(9e-11).toString()) {
+  if ('0' !== market.priceUiToLots(9e-11).toString()) {
     throw new Error('price lot calculation rounds wrongly');
   }
-  if ("1" !== market.priceUiToLots(19e-11).toString()) {
+  if ('1' !== market.priceUiToLots(19e-11).toString()) {
     throw new Error('price lot calculation rounds wrongly');
   }
 }

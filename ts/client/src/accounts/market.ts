@@ -88,12 +88,14 @@ export class Market {
     );
   }
   public priceUiToLots(uiAmount: number): BN {
-    return toNative(uiAmount * Number(this.account.baseLotSize.toString()), this.account.quoteDecimals)
-      .div(
-        new BN(Math.pow(10, this.account.baseDecimals)).imul(
-          this.account.quoteLotSize,
-        ),
-      );
+    return toNative(
+      uiAmount * Number(this.account.baseLotSize.toString()),
+      this.account.quoteDecimals,
+    ).div(
+      new BN(Math.pow(10, this.account.baseDecimals)).imul(
+        this.account.quoteLotSize,
+      ),
+    );
   }
 
   public makerFeeFloor(quoteNative: BN): BN {
