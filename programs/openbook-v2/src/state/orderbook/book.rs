@@ -471,11 +471,6 @@ impl<'a> Orderbook<'a> {
         }
 
         let placed_order_id = if post_target.is_some() {
-            emit_stack(PlaceOrderLog {
-                open_orders_account: *owner,
-                order_id,
-                timestamp: now_ts,
-            });
             Some(order_id)
         } else {
             None

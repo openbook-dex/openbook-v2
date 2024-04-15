@@ -50,13 +50,6 @@ pub struct FillLog {
 }
 
 #[event]
-pub struct PlaceOrderLog {
-    pub open_orders_account: Pubkey,
-    pub order_id: u128,
-    pub timestamp: u64,
-}
-
-#[event]
 pub struct TakerSignatureLog {
     pub market: Pubkey,
     pub seq_num: u64,
