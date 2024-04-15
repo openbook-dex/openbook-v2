@@ -588,10 +588,9 @@ export class OpenBookV2Client {
     remainingAccounts: PublicKey[],
     openOrdersDelegate?: Keypair,
   ): Promise<[TransactionInstruction, Signer[]]> {
-    const marketVault =
-      args.side.bid
-        ? market.marketQuoteVault
-        : market.marketBaseVault;
+    const marketVault = args.side.bid
+      ? market.marketQuoteVault
+      : market.marketBaseVault;
     const accountsMeta: AccountMeta[] = remainingAccounts.map((remaining) => ({
       pubkey: remaining,
       isSigner: false,
@@ -637,10 +636,9 @@ export class OpenBookV2Client {
     remainingAccounts: PublicKey[],
     openOrdersDelegate?: Keypair,
   ): Promise<[TransactionInstruction, Signer[]]> {
-    const marketVault =
-      args.side.bid
-        ? market.marketQuoteVault
-        : market.marketBaseVault;
+    const marketVault = args.side.bid
+      ? market.marketQuoteVault
+      : market.marketBaseVault;
     const accountsMeta: AccountMeta[] = remainingAccounts.map((remaining) => ({
       pubkey: remaining,
       isSigner: false,

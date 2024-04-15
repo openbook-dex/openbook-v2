@@ -88,8 +88,7 @@ export class Market {
     );
   }
   public priceUiToLots(uiAmount: number): BN {
-    return toNative(uiAmount, this.account.quoteDecimals)
-      .imul(this.account.baseLotSize)
+    return toNative(uiAmount * Number(this.account.baseLotSize.toString()), this.account.quoteDecimals)
       .div(
         new BN(Math.pow(10, this.account.baseDecimals)).imul(
           this.account.quoteLotSize,

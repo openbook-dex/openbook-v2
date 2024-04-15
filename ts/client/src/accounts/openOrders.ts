@@ -159,10 +159,9 @@ export class OpenOrders {
 
   public async placeOrder(order: OrderToPlace): Promise<string> {
     // derive token account
-    const mint =
-      order.side.bid
-        ? this.market.account.quoteMint
-        : this.market.account.baseMint;
+    const mint = order.side.bid
+      ? this.market.account.quoteMint
+      : this.market.account.baseMint;
     const userTokenAccount = await getAssociatedTokenAddress(
       mint,
       this.market.client.walletPk,
@@ -171,8 +170,7 @@ export class OpenOrders {
     // TODO: derive wrap sol instruction
 
     const remainingAccounts = new Set<string>();
-    const bookSide =
-      order.side.bid ? this.market.asks : this.market.bids;
+    const bookSide = order.side.bid ? this.market.asks : this.market.bids;
     if (
       bookSide &&
       !order.orderType?.postOnly &&

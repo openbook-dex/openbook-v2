@@ -12,10 +12,9 @@ export class Order {
     public isExpired = false,
     public isOraclePegged = false,
   ) {
-    this.seqNum =
-      this.side.bid
-        ? U64_MAX_BN.sub(this.leafNode.key.maskn(64))
-        : this.leafNode.key.maskn(64);
+    this.seqNum = this.side.bid
+      ? U64_MAX_BN.sub(this.leafNode.key.maskn(64))
+      : this.leafNode.key.maskn(64);
     const priceData = this.leafNode.key.ushrn(64);
     if (this.isOraclePegged) {
       const priceOffset = priceData.sub(new BN(1).ushln(63));
@@ -39,10 +38,8 @@ export class Order {
   }
 
   public toPrettyString(): string {
-    return `side:${this.side.bid ? 'bid' : 'ask'} price:${
-      this.price
-    } size:${this.size} seqNum:${this.seqNum.toString()} expired:${
-      this.isExpired
-    }`;
+    return `side:${this.side.bid ? 'bid' : 'ask'} price:${this.price} size:${
+      this.size
+    } seqNum:${this.seqNum.toString()} expired:${this.isExpired}`;
   }
 }

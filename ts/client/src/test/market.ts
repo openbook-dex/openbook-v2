@@ -60,7 +60,26 @@ async function testWatchMarket(): Promise<void> {
   console.log('bids after sub', market.bids?.getL2(2));
 }
 
+async function testMarketLots(): Promise<void> {
+  const client = initReadOnlyOpenbookClient();
+  const marketPk = new PublicKey(
+    'Hojg6SoyQAjXRBU4HtR48RB5YVfNzu2vwcLMK6xXPSJS',
+  );
+  const market = await Market.load(client, marketPk);
+
+  if ("1" !== market.priceUiToLots(1e-10).toString()) {
+    throw new Error('price lot calculation rounds wrongly');
+  }
+  if ("0" !== market.priceUiToLots(9e-11).toString()) {
+    throw new Error('price lot calculation rounds wrongly');
+  }
+  if ("1" !== market.priceUiToLots(19e-11).toString()) {
+    throw new Error('price lot calculation rounds wrongly');
+  }
+}
+
 // void testFindAccountsByMints();
 // void testFindAllMarkets();
-void testDecodeMarket();
+// void testDecodeMarket();
 // void testWatchMarket();
+void testMarketLots();
