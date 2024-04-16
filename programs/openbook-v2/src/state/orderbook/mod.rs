@@ -77,24 +77,27 @@ mod tests {
         }
     }
 
-    fn test_setup(price: f64) -> (Market, Option<I80F48>, EventHeap, OrderbookAccounts) {
+    fn test_setup(price: f64) -> (Market, Option<i64>, EventHeap, OrderbookAccounts) {
         let book = OrderbookAccounts::new();
 
         let event_heap = EventHeap::zeroed();
-
-        let oracle_price = Some(I80F48::from_num(price));
 
         let mut openbook_market = Market::zeroed();
         openbook_market.quote_lot_size = 1;
         openbook_market.base_lot_size = 1;
 
-        (openbook_market, oracle_price, event_heap, book)
+        let oracle_price_lots = openbook_market
+            .native_price_to_lot(I80F48::from_num(price))
+            .ok();
+
+        (openbook_market, oracle_price_lots, event_heap, book)
     }
 
     // Check what happens when one side of the book fills up
     #[test]
     fn book_bids_full() {
-        let (mut openbook_market, oracle_price, mut event_heap, book_accs) = test_setup(5000.0);
+        let (mut openbook_market, oracle_price_lots, mut event_heap, book_accs) =
+            test_setup(5000.0);
         let mut book = book_accs.orderbook();
 
         let mut new_order =
@@ -119,7 +122,7 @@ mod tests {
                     },
                     &mut openbook_market,
                     event_heap,
-                    oracle_price,
+                    oracle_price_lots,
                     Some(&mut account),
                     &Pubkey::new_unique(),
                     now_ts,
@@ -224,7 +227,7 @@ mod tests {
 
     #[test]
     fn book_new_order() {
-        let (mut market, oracle_price, mut event_heap, book_accs) = test_setup(1000.0);
+        let (mut market, oracle_price_lots, mut event_heap, book_accs) = test_setup(1000.0);
         let mut book = book_accs.orderbook();
 
         // Add lots and fees to make sure to exercise unit conversion
@@ -260,7 +263,7 @@ mod tests {
             },
             &mut market,
             &mut event_heap,
-            oracle_price,
+            oracle_price_lots,
             Some(&mut maker),
             &maker_pk,
             now_ts,
@@ -306,7 +309,7 @@ mod tests {
             },
             &mut market,
             &mut event_heap,
-            oracle_price,
+            oracle_price_lots,
             Some(&mut taker),
             &taker_pk,
             now_ts,
@@ -365,7 +368,7 @@ mod tests {
     // enough for a single lot
     #[test]
     fn book_max_quote_lots() {
-        let (mut market, oracle_price, mut event_heap, book_accs) = test_setup(5000.0);
+        let (mut market, oracle_price_lots, mut event_heap, book_accs) = test_setup(5000.0);
         let quote_lot_size = market.quote_lot_size;
         let mut book = book_accs.orderbook();
 
@@ -393,7 +396,7 @@ mod tests {
                 },
                 &mut market,
                 event_heap,
-                oracle_price,
+                oracle_price_lots,
                 Some(&mut account),
                 &Pubkey::default(),
                 0, // now_ts

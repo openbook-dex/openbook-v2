@@ -6,7 +6,6 @@ use crate::{
 };
 use anchor_lang::prelude::*;
 use bytemuck::cast;
-use fixed::types::I80F48;
 use std::cell::RefMut;
 
 use super::*;
@@ -64,7 +63,7 @@ impl<'a> Orderbook<'a> {
         order: &Order,
         open_book_market: &mut Market,
         event_heap: &mut EventHeap,
-        oracle_price: Option<I80F48>,
+        oracle_price_lots: Option<i64>,
         mut open_orders_account: Option<&mut OpenOrdersAccount>,
         owner: &Pubkey,
         now_ts: u64,
@@ -79,11 +78,6 @@ impl<'a> Orderbook<'a> {
         let post_only = order.is_post_only();
         let fill_or_kill = order.is_fill_or_kill();
         let mut post_target = order.post_target();
-        let oracle_price_lots = if let Some(oracle_price) = oracle_price {
-            Some(market.native_price_to_lot(oracle_price)?)
-        } else {
-            None
-        };
         let (price_lots, price_data) = order.price(now_ts, oracle_price_lots, self)?;
 
         // generate new order id
