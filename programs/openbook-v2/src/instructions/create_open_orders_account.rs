@@ -18,7 +18,7 @@ pub fn create_open_orders_account(
     account.name = fill_from_str(&name)?;
     account.account_num = indexer.created_counter;
     account.market = ctx.accounts.market.key();
-    account.bump = *ctx.bumps.get("open_orders_account").unwrap();
+    account.bump = ctx.bumps.open_orders_account;
     account.owner = ctx.accounts.owner.key();
     account.delegate = ctx.accounts.delegate_account.non_zero_key();
     account.version = 1;

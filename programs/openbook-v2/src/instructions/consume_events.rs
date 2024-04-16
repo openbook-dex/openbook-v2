@@ -35,8 +35,8 @@ macro_rules! load_open_orders_account {
     };
 }
 
-pub fn consume_events(
-    ctx: Context<ConsumeEvents>,
+pub fn consume_events<'c: 'info, 'info>(
+    ctx: Context<'_, '_, 'c, 'info, ConsumeEvents>,
     limit: usize,
     slots: Option<Vec<usize>>,
 ) -> Result<()> {

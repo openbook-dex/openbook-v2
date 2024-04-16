@@ -68,10 +68,7 @@ pub fn create_market(
         open_orders_admin: ctx.accounts.open_orders_admin.non_zero_key(),
         consume_events_admin: ctx.accounts.consume_events_admin.non_zero_key(),
         close_market_admin: ctx.accounts.close_market_admin.non_zero_key(),
-        bump: *ctx
-            .bumps
-            .get("market_authority")
-            .ok_or(OpenBookError::SomeError)?,
+        bump: ctx.bumps.market_authority,
         base_decimals: ctx.accounts.base_mint.decimals,
         quote_decimals: ctx.accounts.quote_mint.decimals,
         padding1: Default::default(),

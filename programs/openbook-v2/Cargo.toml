@@ -26,7 +26,6 @@ enable-gpl = []
 anchor-lang = { workspace = true, features = ["event-cpi"] }
 anchor-spl = { workspace = true }
 arbitrary = { version = "~1.0", features = ["derive"], optional = true }
-raydium-amm-v3 = { git = "https://github.com/raydium-io/raydium-clmm.git", features = ["cpi"] }
 arrayref = "0.3.6"
 bytemuck = { version = "^1.7.2", features = ["derive", "min_const_generics"] }
 default-env = "0.1.1"
@@ -40,7 +39,7 @@ solana-program = { workspace = true }
 solana-sdk = { workspace = true, optional = true }
 static_assertions = "1.1"
 switchboard-program = ">=0.2.0"
-switchboard-v2 = "0.4.0"
+switchboard-solana = "0.29.99"
 
 [dev-dependencies]
 async-trait = "0.1.52"

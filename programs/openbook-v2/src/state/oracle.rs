@@ -1,14 +1,15 @@
 use anchor_lang::prelude::*;
 use anchor_lang::Discriminator;
 use fixed::types::U64F64;
-use raydium_amm_v3::states::PoolState;
 use static_assertions::const_assert_eq;
 use std::mem::size_of;
 use switchboard_program::FastRoundResultAccountData;
-use switchboard_v2::AggregatorAccountData;
+use switchboard_solana::AggregatorAccountData;
 
 use crate::accounts_zerocopy::*;
 use crate::error::*;
+use crate::state::raydium_internal;
+use crate::state::raydium_internal::PoolState;
 
 const DECIMAL_CONSTANT_ZERO_INDEX: i8 = 12;
 const DECIMAL_CONSTANTS_F64: [f64; 25] = [
@@ -166,7 +167,7 @@ pub fn determine_oracle_type(acc_info: &impl KeyedAccountReader) -> Result<Oracl
         || acc_info.owner() == &switchboard_v2_mainnet_oracle::ID
     {
         return Ok(OracleType::SwitchboardV1);
-    } else if acc_info.owner() == &raydium_amm_v3::ID {
+    } else if acc_info.owner() == &raydium_internal::ID {
         return Ok(OracleType::RaydiumCLMM);
     }
 
@@ -178,7 +179,9 @@ pub fn determine_oracle_type(acc_info: &impl KeyedAccountReader) -> Result<Oracl
 /// Returns the publish slot in addition to the price info.
 ///
 /// Also see pyth's PriceAccount::get_price_no_older_than().
-fn pyth_get_price(account: &pyth_sdk_solana::state::PriceAccount) -> (pyth_sdk_solana::Price, u64) {
+fn pyth_get_price(
+    account: &pyth_sdk_solana::state::SolanaPriceAccount,
+) -> (pyth_sdk_solana::Price, u64) {
     use pyth_sdk_solana::*;
     if account.agg.status == state::PriceStatus::Trading {
         (
@@ -336,7 +339,7 @@ mod tests {
             (
                 "2QdhepnKRTLjjSqPL1PtKNwqrUkoLee5Gqs8bvZhRdMv",
                 OracleType::RaydiumCLMM,
-                raydium_amm_v3::ID,
+                raydium_internal::ID,
             ),
         ];
 
@@ -366,7 +369,7 @@ mod tests {
         let data = RefCell::new(&mut file_data[..]);
         let ai = &AccountInfoRef {
             key: &Pubkey::default(),
-            owner: &raydium_amm_v3::ID,
+            owner: &raydium_internal::ID,
             data: data.borrow(),
         };
 

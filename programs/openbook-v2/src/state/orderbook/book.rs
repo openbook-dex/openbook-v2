@@ -58,7 +58,7 @@ impl<'a> Orderbook<'a> {
     }
 
     #[allow(clippy::too_many_arguments)]
-    pub fn new_order(
+    pub fn new_order<'c: 'info, 'info>(
         &mut self,
         order: &Order,
         open_book_market: &mut Market,
@@ -68,7 +68,7 @@ impl<'a> Orderbook<'a> {
         owner: &Pubkey,
         now_ts: u64,
         mut limit: u8,
-        remaining_accs: &[AccountInfo],
+        remaining_accs: &'c [AccountInfo<'info>],
     ) -> std::result::Result<OrderWithAmounts, Error> {
         let market = open_book_market;
 
@@ -563,13 +563,13 @@ impl<'a> Orderbook<'a> {
     }
 }
 
-pub fn process_out_event(
+pub fn process_out_event<'c: 'info, 'info>(
     event: OutEvent,
     market: &Market,
     event_heap: &mut EventHeap,
     open_orders_account: Option<&mut OpenOrdersAccount>,
     owner: &Pubkey,
-    remaining_accs: &[AccountInfo],
+    remaining_accs: &'c [AccountInfo<'info>],
 ) -> Result<()> {
     if let Some(acc) = open_orders_account {
         if owner == &event.owner {
@@ -589,11 +589,11 @@ pub fn process_out_event(
     Ok(())
 }
 
-pub fn process_fill_event(
+pub fn process_fill_event<'c: 'info, 'info>(
     event: FillEvent,
     market: &mut Market,
     event_heap: &mut EventHeap,
-    remaining_accs: &[AccountInfo],
+    remaining_accs: &'c [AccountInfo<'info>],
     number_of_processed_fill_events: &mut usize,
 ) -> Result<()> {
     let mut is_processed = false;

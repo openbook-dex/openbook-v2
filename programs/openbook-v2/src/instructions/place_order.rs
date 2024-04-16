@@ -8,7 +8,11 @@ use crate::state::*;
 use crate::token_utils::*;
 
 #[allow(clippy::too_many_arguments)]
-pub fn place_order(ctx: Context<PlaceOrder>, order: Order, limit: u8) -> Result<Option<u128>> {
+pub fn place_order<'c: 'info, 'info>(
+    ctx: Context<'_, '_, 'c, 'info, PlaceOrder<'info>>,
+    order: Order,
+    limit: u8,
+) -> Result<Option<u128>> {
     require_gte!(order.max_base_lots, 0, OpenBookError::InvalidInputLots);
     require_gte!(
         order.max_quote_lots_including_fees,
