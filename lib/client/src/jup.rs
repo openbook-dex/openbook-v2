@@ -67,12 +67,7 @@ impl Amm for OpenBookMarket {
         let related_accounts = if is_permissioned {
             vec![]
         } else {
-            let mut accs = vec![
-                market.bids,
-                market.asks,
-                market.event_heap,
-                clock::ID,
-            ];
+            let mut accs = vec![market.bids, market.asks, market.event_heap, clock::ID];
 
             accs.extend(
                 [market.oracle_a, market.oracle_b]
@@ -154,10 +149,10 @@ impl Amm for OpenBookMarket {
         let (max_base_lots, max_quote_lots_including_fees) = match side {
             Side::Bid => (
                 self.market.max_base_lots(),
-                input_amount + (self.market.quote_lot_size-1) / self.market.quote_lot_size,
+                input_amount + (self.market.quote_lot_size - 1) / self.market.quote_lot_size,
             ),
             Side::Ask => (
-                input_amount + (self.market.base_lot_size-1) / self.market.base_lot_size,
+                input_amount + (self.market.base_lot_size - 1) / self.market.base_lot_size,
                 self.market.max_quote_lots(),
             ),
         };
