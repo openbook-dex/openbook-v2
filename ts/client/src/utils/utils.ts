@@ -49,7 +49,7 @@ export function percentageToDecimal(percentage: number): number {
 }
 
 export function toNative(uiAmount: number, decimals: number): BN {
-  return new BN(Math.round(uiAmount * Math.pow(10, decimals)));
+  return new BN((uiAmount * Math.pow(10, decimals)).toFixed(0));
 }
 
 export function toUiDecimals(nativeAmount: number, decimals: number): number {
