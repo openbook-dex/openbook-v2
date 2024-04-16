@@ -243,7 +243,7 @@ pub struct FillEvent {
     pub maker_slot: u8,
     pub padding: [u8; 4],
     pub timestamp: u64,
-    pub seq_num: u64,
+    pub market_seq_num: u64,
 
     pub maker: Pubkey,
 
@@ -269,7 +269,7 @@ impl FillEvent {
         maker_out: bool,
         maker_slot: u8,
         timestamp: u64,
-        seq_num: u64,
+        market_seq_num: u64,
         maker: Pubkey,
         maker_client_order_id: u64,
         maker_timestamp: u64,
@@ -285,7 +285,7 @@ impl FillEvent {
             maker_out: maker_out.into(),
             maker_slot,
             timestamp,
-            seq_num,
+            market_seq_num,
             maker,
             maker_client_order_id,
             maker_timestamp,

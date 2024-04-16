@@ -54,6 +54,7 @@ pub fn place_take_order<'c: 'info, 'info>(
     } = book.new_order(
         &order,
         &mut market,
+        &ctx.accounts.market.key(),
         &mut event_heap,
         oracle_price_lots,
         None,

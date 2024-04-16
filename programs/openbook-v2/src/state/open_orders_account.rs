@@ -3,7 +3,7 @@ use derivative::Derivative;
 use static_assertions::const_assert_eq;
 use std::mem::size_of;
 
-use crate::logs::FillLog;
+use crate::logs::{emit_stack, FillLog};
 use crate::pubkey_option::NonZeroPubkeyOption;
 use crate::{error::*, logs::OpenOrdersPositionLog};
 
@@ -205,13 +205,13 @@ impl OpenOrdersAccount {
             0
         };
 
-        emit!(FillLog {
+        emit_stack(FillLog {
             market: self.market,
             taker_side: fill.taker_side,
             maker_slot: fill.maker_slot,
             maker_out: fill.maker_out(),
             timestamp: fill.timestamp,
-            seq_num: fill.seq_num,
+            seq_num: fill.market_seq_num,
             maker: fill.maker,
             maker_client_order_id: fill.maker_client_order_id,
             maker_fee: maker_fees,
@@ -224,7 +224,7 @@ impl OpenOrdersAccount {
         });
 
         let pa = &self.position;
-        emit!(OpenOrdersPositionLog {
+        emit_stack(OpenOrdersPositionLog {
             owner: self.owner,
             open_orders_account_num: self.account_num,
             market: self.market,
@@ -236,7 +236,7 @@ impl OpenOrdersAccount {
             locked_maker_fees: pa.locked_maker_fees,
             referrer_rebates_available: pa.referrer_rebates_available,
             maker_volume: pa.maker_volume,
-            taker_volume: pa.taker_volume
+            taker_volume: pa.taker_volume,
         })
     }
 
@@ -260,7 +260,7 @@ impl OpenOrdersAccount {
         pa.referrer_rebates_available += referrer_amount;
         market.referrer_rebates_accrued += referrer_amount;
 
-        emit!(OpenOrdersPositionLog {
+        emit_stack(OpenOrdersPositionLog {
             owner: self.owner,
             open_orders_account_num: self.account_num,
             market: self.market,
@@ -272,7 +272,7 @@ impl OpenOrdersAccount {
             locked_maker_fees: pa.locked_maker_fees,
             referrer_rebates_available: pa.referrer_rebates_available,
             maker_volume: pa.maker_volume,
-            taker_volume: pa.taker_volume
+            taker_volume: pa.taker_volume,
         })
     }
 

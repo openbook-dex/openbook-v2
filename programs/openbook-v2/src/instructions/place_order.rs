@@ -63,6 +63,7 @@ pub fn place_order<'c: 'info, 'info>(
     } = book.new_order(
         &order,
         &mut market,
+        &ctx.accounts.market.key(),
         &mut event_heap,
         oracle_price_lots,
         Some(&mut open_orders_account),

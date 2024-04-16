@@ -1,4 +1,4 @@
-use crate::logs::TotalOrderFillEvent;
+use crate::logs::*;
 use crate::state::MAX_OPEN_ORDERS;
 use crate::{
     error::*,
@@ -62,6 +62,7 @@ impl<'a> Orderbook<'a> {
         &mut self,
         order: &Order,
         open_book_market: &mut Market,
+        market_pk: &Pubkey,
         event_heap: &mut EventHeap,
         oracle_price_lots: Option<i64>,
         mut open_orders_account: Option<&mut OpenOrdersAccount>,
@@ -229,7 +230,7 @@ impl<'a> Orderbook<'a> {
                 maker_out,
                 best_opposing.node.owner_slot,
                 now_ts,
-                event_heap.header.seq_num,
+                market.seq_num,
                 best_opposing.node.owner,
                 best_opposing.node.client_order_id,
                 best_opposing.node.timestamp,
@@ -239,6 +240,11 @@ impl<'a> Orderbook<'a> {
                 best_opposing.node.peg_limit,
                 match_base_lots,
             );
+
+            emit_stack(TakerSignatureLog {
+                market: *market_pk,
+                seq_num: market.seq_num,
+            });
 
             process_fill_event(
                 fill,
@@ -298,7 +304,7 @@ impl<'a> Orderbook<'a> {
                 ),
             };
 
-            emit!(TotalOrderFillEvent {
+            emit_stack(TotalOrderFillEvent {
                 side: side.into(),
                 taker: *owner,
                 total_quantity_paid,

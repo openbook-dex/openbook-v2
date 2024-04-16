@@ -99,6 +99,7 @@ mod tests {
         let (mut openbook_market, oracle_price_lots, mut event_heap, book_accs) =
             test_setup(5000.0);
         let mut book = book_accs.orderbook();
+        let market_pk = Pubkey::new_unique();
 
         let mut new_order =
             |book: &mut Orderbook, event_heap: &mut EventHeap, side, price_lots, now_ts| -> u128 {
@@ -121,6 +122,7 @@ mod tests {
                         self_trade_behavior: SelfTradeBehavior::DecrementTake,
                     },
                     &mut openbook_market,
+                    &market_pk,
                     event_heap,
                     oracle_price_lots,
                     Some(&mut account),
@@ -229,6 +231,7 @@ mod tests {
     fn book_new_order() {
         let (mut market, oracle_price_lots, mut event_heap, book_accs) = test_setup(1000.0);
         let mut book = book_accs.orderbook();
+        let market_pk = Pubkey::new_unique();
 
         // Add lots and fees to make sure to exercise unit conversion
         market.base_lot_size = 10;
@@ -262,6 +265,7 @@ mod tests {
                 self_trade_behavior: SelfTradeBehavior::DecrementTake,
             },
             &mut market,
+            &market_pk,
             &mut event_heap,
             oracle_price_lots,
             Some(&mut maker),
@@ -308,6 +312,7 @@ mod tests {
                 self_trade_behavior: SelfTradeBehavior::DecrementTake,
             },
             &mut market,
+            &market_pk,
             &mut event_heap,
             oracle_price_lots,
             Some(&mut taker),
@@ -371,6 +376,7 @@ mod tests {
         let (mut market, oracle_price_lots, mut event_heap, book_accs) = test_setup(5000.0);
         let quote_lot_size = market.quote_lot_size;
         let mut book = book_accs.orderbook();
+        let market_pk = Pubkey::new_unique();
 
         let mut new_order = |book: &mut Orderbook,
                              event_heap: &mut EventHeap,
@@ -395,6 +401,7 @@ mod tests {
                     self_trade_behavior: SelfTradeBehavior::DecrementTake,
                 },
                 &mut market,
+                &market_pk,
                 event_heap,
                 oracle_price_lots,
                 Some(&mut account),
