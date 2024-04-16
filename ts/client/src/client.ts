@@ -1063,10 +1063,11 @@ export class OpenBookV2Client {
     marketPublicKey: PublicKey,
     market: MarketAccount,
     openOrdersPublicKey: PublicKey,
+    limit: number,
     closeMarketAdmin: Keypair | null = null,
   ): Promise<[TransactionInstruction, Signer[]]> {
     const ix = await this.program.methods
-      .pruneOrders()
+      .pruneOrders(limit)
       .accounts({
         closeMarketAdmin: market.closeMarketAdmin.key,
         openOrdersAccount: openOrdersPublicKey,
