@@ -267,16 +267,16 @@ impl<'a> Orderbook<'a> {
 
         // Record the taker trade in the account already, even though it will only be
         // realized when the fill event gets executed
-        let mut taker_fees = 0_u64;
+        let mut taker_fees_native = 0_u64;
         if total_quote_lots_taken > 0 || total_base_lots_taken > 0 {
             let total_quote_taken_native_wo_self =
                 ((total_quote_lots_taken - decremented_quote_lots) * market.quote_lot_size) as u64;
 
             if total_quote_taken_native_wo_self > 0 {
-                taker_fees = market.taker_fees_ceil(total_quote_taken_native_wo_self);
+                taker_fees_native = market.taker_fees_ceil(total_quote_taken_native_wo_self);
 
                 // Only account taker fees now. Maker fees accounted once processing the event
-                referrer_amount = taker_fees - maker_rebates_acc;
+                referrer_amount = taker_fees_native - maker_rebates_acc;
                 market.fees_accrued += referrer_amount as u128;
             };
 
@@ -286,7 +286,7 @@ impl<'a> Orderbook<'a> {
                     side,
                     total_base_taken_native,
                     total_quote_taken_native,
-                    taker_fees,
+                    taker_fees_native,
                     referrer_amount,
                 );
             } else {
@@ -295,12 +295,12 @@ impl<'a> Orderbook<'a> {
 
             let (total_quantity_paid, total_quantity_received) = match side {
                 Side::Bid => (
-                    total_quote_taken_native + taker_fees,
+                    total_quote_taken_native + taker_fees_native,
                     total_base_taken_native,
                 ),
                 Side::Ask => (
                     total_base_taken_native,
-                    total_quote_taken_native - taker_fees,
+                    total_quote_taken_native - taker_fees_native,
                 ),
             };
 
@@ -309,13 +309,21 @@ impl<'a> Orderbook<'a> {
                 taker: *owner,
                 total_quantity_paid,
                 total_quantity_received,
-                fees: taker_fees,
+                fees: taker_fees_native,
             });
         }
 
+        // The native taker fees in lots, rounded up.
+        //
+        // Imagine quote_lot_size = 10. A new bid comes in with max_quote lots = 10. It matches against
+        // other orders for 5 quote lots total. The taker_fees_native is 15, taker_fees_lots is 2. That
+        // means only up the 3 quote lots may be placed on the book.
+        let taker_fees_lots =
+            (taker_fees_native as i64 + market.quote_lot_size - 1) / market.quote_lot_size;
+
         // Update remaining based on quote_lots taken. If nothing taken, same as the beginning
         remaining_quote_lots =
-            order.max_quote_lots_including_fees - total_quote_lots_taken - (taker_fees as i64);
+            order.max_quote_lots_including_fees - total_quote_lots_taken - taker_fees_lots;
 
         // Apply changes to matched asks (handles invalidate on delete!)
         for (handle, new_quantity) in matched_order_changes {
@@ -367,7 +375,7 @@ impl<'a> Orderbook<'a> {
             return err!(OpenBookError::WouldExecutePartially);
         }
 
-        let mut maker_fees = 0;
+        let mut maker_fees_native = 0;
         let mut posted_base_native = 0;
         let mut posted_quote_native = 0;
 
@@ -386,12 +394,12 @@ impl<'a> Orderbook<'a> {
 
             // Subtract maker fees in bid.
             if side == Side::Bid {
-                maker_fees = market
+                maker_fees_native = market
                     .maker_fees_ceil(posted_quote_native)
                     .try_into()
                     .unwrap();
 
-                open_orders.position.locked_maker_fees += maker_fees;
+                open_orders.position.locked_maker_fees += maker_fees_native;
             }
 
             let bookside = self.bookside_mut(side);
@@ -477,8 +485,8 @@ impl<'a> Orderbook<'a> {
             total_base_taken_native,
             total_quote_taken_native,
             referrer_amount,
-            taker_fees,
-            maker_fees,
+            taker_fees: taker_fees_native,
+            maker_fees: maker_fees_native,
         })
     }
 

@@ -276,3 +276,104 @@ async fn test_cancel_order_yourself() -> Result<(), TransportError> {
 
     Ok(())
 }
+
+#[tokio::test]
+async fn test_place_order_taker_fees() -> Result<(), TransportError> {
+    let TestInitialize {
+        context,
+        collect_fee_admin,
+        owner,
+        owner_token_0,
+        owner_token_1,
+        market,
+        market_base_vault,
+        market_quote_vault,
+        price_lots,
+        tokens,
+        account_1,
+        account_2,
+        bids,
+        ..
+    } = TestContext::new_with_market(TestNewMarketInitialize {
+        taker_fee: 11000, // 1.1%
+        maker_fee: 0,
+        quote_lot_size: 1000,
+        base_lot_size: 1,
+        ..Default::default()
+    })
+    .await?;
+    let solana = &context.solana.clone();
+
+    // Set the initial oracle price
+    set_stub_oracle_price(solana, &tokens[1], collect_fee_admin, 1000.0).await;
+
+    send_tx(
+        solana,
+        PlaceOrderInstruction {
+            open_orders_account: account_1,
+            open_orders_admin: None,
+            market,
+            signer: owner,
+            user_token_account: owner_token_0,
+            market_vault: market_base_vault,
+            side: Side::Ask,
+            price_lots,
+            max_base_lots: 500,
+            max_quote_lots_including_fees: 500,
+            client_order_id: 0,
+            expiry_timestamp: 0,
+            order_type: PlaceOrderType::Limit,
+            self_trade_behavior: SelfTradeBehavior::default(),
+            remainings: vec![],
+        },
+    )
+    .await
+    .unwrap();
+
+    // Now place place a bid that fills the ask fully and has some remainder go to the book
+    let before_quote_balance = solana.token_account_balance(owner_token_1).await;
+    send_tx(
+        solana,
+        PlaceOrderInstruction {
+            open_orders_account: account_2,
+            open_orders_admin: None,
+            market,
+            signer: owner,
+            user_token_account: owner_token_1,
+            market_vault: market_quote_vault,
+            side: Side::Bid,
+            price_lots,
+            max_base_lots: 9999999, // unlimited
+            max_quote_lots_including_fees: 1000,
+            client_order_id: 0,
+            expiry_timestamp: 0,
+            order_type: PlaceOrderType::Limit,
+            self_trade_behavior: SelfTradeBehavior::default(),
+            remainings: vec![],
+        },
+    )
+    .await
+    .unwrap();
+    let after_quote_balance = solana.token_account_balance(owner_token_1).await;
+
+    // What should have happened is:
+    // - match against the ask, paying 500 quote lots for 500 base lots
+    // - taker fee native is 1.1% * 500 * 1000 = 5500 native
+    // - which is 5.5 quote lots, so only 500 - 6 = 494 quote lots can be placed on the book
+
+    let open_orders_account_2 = solana.get_account::<OpenOrdersAccount>(account_2).await;
+    assert_eq!(open_orders_account_2.position.bids_quote_lots, 494);
+    assert_eq!(open_orders_account_2.position.base_free_native, 500);
+
+    assert_eq!(
+        before_quote_balance - after_quote_balance,
+        // cost of buying 500 base lots
+        500 * 1000
+        // taker fee
+        + 5500
+        // order on the book
+        + 494 * 1000
+    );
+
+    Ok(())
+}
