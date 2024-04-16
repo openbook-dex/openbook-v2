@@ -70,7 +70,7 @@ async function testMarketLots(): Promise<void> {
   if ('1' !== market1.priceUiToLots(tick1).toString()) {
     throw new Error('price lot calculation rounds wrongly');
   }
-  if ('0' !== market1.priceUiToLots(.9 * tick1).toString()) {
+  if ('0' !== market1.priceUiToLots(0.9 * tick1).toString()) {
     throw new Error('price lot calculation rounds wrongly');
   }
   if ('1' !== market1.priceUiToLots(1.9 * tick1).toString()) {
@@ -80,13 +80,15 @@ async function testMarketLots(): Promise<void> {
     throw new Error('price lot calculation rounds wrongly');
   }
 
-  const marketPk2 = new PublicKey('DBSZ24hqXS5o8djunrTzBsJUb1P8ZvBs1nng5rmZKsJt');
+  const marketPk2 = new PublicKey(
+    'DBSZ24hqXS5o8djunrTzBsJUb1P8ZvBs1nng5rmZKsJt',
+  );
   const market2 = await Market.load(client, marketPk2);
   const tick2 = market2.tickSize.toNumber();
   if ('1' !== market2.priceUiToLots(tick2).toString()) {
     throw new Error('price lot calculation rounds wrongly');
   }
-  if ('0' !== market2.priceUiToLots(.9 * tick2).toString()) {
+  if ('0' !== market2.priceUiToLots(0.9 * tick2).toString()) {
     throw new Error('price lot calculation rounds wrongly');
   }
   if ('1' !== market2.priceUiToLots(1.9 * tick2).toString()) {
