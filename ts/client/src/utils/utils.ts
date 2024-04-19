@@ -11,7 +11,8 @@ import {
   TOKEN_PROGRAM_ID,
 } from '@solana/spl-token';
 import { OpenBookV2Client } from '..';
-import { AnchorProvider, Wallet } from '@coral-xyz/anchor';
+import { AnchorProvider } from '@coral-xyz/anchor';
+const { Wallet } = require("@coral-xyz/anchor");
 
 export const SideUtils = {
   Bid: { bid: {} },
