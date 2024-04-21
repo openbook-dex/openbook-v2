@@ -1,14 +1,14 @@
-use std::collections::HashMap;
-
 use anchor_lang::prelude::Pubkey;
 use anyhow::Result;
 use fixed::types::I80F48;
+use itertools::Itertools;
 use openbook_v2::state::{
     Market, Orderbook, Side, DROP_EXPIRED_ORDER_LIMIT, FILL_EVENT_REMAINING_LIMIT,
 };
+use std::collections::HashSet;
 
 pub const MAXIMUM_TAKEN_ORDERS: u8 = 45;
-const MAXIMUM_REMAINING_ACCOUNTS: usize = 0;
+const MAXIMUM_REMAINING_ACCOUNTS: usize = 3;
 
 pub struct Amounts {
     pub total_base_taken_native: u64,
@@ -20,8 +20,6 @@ pub struct Amounts {
 pub fn remaining_accounts_to_crank(
     book: Orderbook,
     side: Side,
-    max_base_lots: i64,
-    max_quote_lots_including_fees: i64,
     market: &Market,
     oracle_price: Option<I80F48>,
     now_ts: u64,
@@ -31,35 +29,18 @@ pub fn remaining_accounts_to_crank(
     } else {
         None
     };
-    let mut accounts = Vec::new();
 
-    iterate_book(
-        book,
-        side,
-        max_base_lots,
-        max_quote_lots_including_fees,
-        market,
-        oracle_price_lots,
-        now_ts,
-        &mut accounts,
-    );
+    let mut remaining_accounts = HashSet::new();
+    let opposing_bookside = book.bookside(side.invert_side());
+    for order in opposing_bookside.iter_valid(now_ts, oracle_price_lots) {
+        remaining_accounts.insert(order.node.owner);
 
-    // Get most occurred Pubkey
-    let mut frequency_map: HashMap<Pubkey, usize> = HashMap::new();
-    for &value in &accounts {
-        *frequency_map.entry(value).or_insert(0) += 1;
+        if remaining_accounts.len() >= MAXIMUM_REMAINING_ACCOUNTS {
+            break;
+        }
     }
-    // Sort by occurrences in descending order
-    let mut sorted_pairs: Vec<(Pubkey, usize)> = frequency_map.into_iter().collect();
-    sorted_pairs.sort_by(|a, b| b.1.cmp(&a.1));
 
-    let common_accounts: Vec<Pubkey> = sorted_pairs
-        .iter()
-        .take(MAXIMUM_REMAINING_ACCOUNTS)
-        .map(|(value, _)| *value)
-        .collect();
-
-    Ok(common_accounts)
+    Ok(remaining_accounts.into_iter().collect_vec())
 }
 
 pub fn amounts_from_book(
