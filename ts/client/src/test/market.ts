@@ -4,10 +4,10 @@ import {
   OPENBOOK_PROGRAM_ID,
   findAccountsByMints,
   findAllMarkets,
-  initReadOnlyOpenbookClient,
   Watcher,
   sleep,
 } from '..';
+import { initReadOnlyOpenbookClient } from './util';
 
 async function testFindAccountsByMints(): Promise<void> {
   const client = initReadOnlyOpenbookClient();

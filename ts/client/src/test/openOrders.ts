@@ -1,12 +1,7 @@
 import { PublicKey } from '@solana/web3.js';
-import {
-  Market,
-  OpenOrders,
-  SideUtils,
-  initOpenbookClient,
-  initReadOnlyOpenbookClient,
-} from '..';
+import { Market, OpenOrders, SideUtils } from '..';
 import { OpenOrdersIndexer } from '../accounts/openOrdersIndexer';
+import { initOpenbookClient, initReadOnlyOpenbookClient } from './util';
 
 async function testLoadIndexerNonExistent(): Promise<void> {
   const client = initReadOnlyOpenbookClient();
