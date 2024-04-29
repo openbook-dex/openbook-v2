@@ -217,7 +217,7 @@ impl EventNode {
 
 const EVENT_SIZE: usize = 144;
 #[zero_copy]
-#[derive(Debug, bytemuck::Pod, bytemuck::Zeroable)]
+#[derive(Debug)]
 pub struct AnyEvent {
     pub event_type: u8,
     pub padding: [u8; 143],
