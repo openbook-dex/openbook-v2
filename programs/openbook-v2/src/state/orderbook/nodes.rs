@@ -237,13 +237,12 @@ impl LeafNode {
 
 #[derive(Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
 #[repr(C)]
+#[repr(align(8))]
 pub struct FreeNode {
     pub(crate) tag: u8, // NodeTag
     pub(crate) padding: [u8; 3],
     pub(crate) next: NodeHandle,
-    pub(crate) reserved: [u8; NODE_SIZE - 16],
-    // essential to make AnyNode alignment the same as other node types
-    pub(crate) force_align: u64,
+    pub(crate) reserved: [u8; NODE_SIZE - 8],
 }
 const_assert_eq!(size_of::<FreeNode>(), NODE_SIZE);
 const_assert_eq!(size_of::<FreeNode>() % 8, 0);
@@ -254,6 +253,7 @@ pub struct AnyNode {
     pub tag: u8,
     pub data: [u8; 79],
     // essential to make AnyNode alignment the same as other node types
+    // should prefer repr(align(8)), but that's not compatible with anchor's zero_copy attribute
     pub force_align: u64,
 }
 const_assert_eq!(size_of::<AnyNode>(), NODE_SIZE);
