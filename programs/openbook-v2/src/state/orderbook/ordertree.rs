@@ -262,7 +262,8 @@ impl OrderTreeNodes {
             },
             padding: Default::default(),
             next: self.free_list_head,
-            reserved: [0; 80],
+            reserved: [0; 72],
+            force_align: 0,
         });
 
         self.free_list_len += 1;

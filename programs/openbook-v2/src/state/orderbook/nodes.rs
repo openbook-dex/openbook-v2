@@ -1,4 +1,4 @@
-use std::mem::size_of;
+use std::mem::{align_of, size_of};
 
 use anchor_lang::prelude::*;
 use bytemuck::{cast_mut, cast_ref};
@@ -241,7 +241,9 @@ pub struct FreeNode {
     pub(crate) tag: u8, // NodeTag
     pub(crate) padding: [u8; 3],
     pub(crate) next: NodeHandle,
-    pub(crate) reserved: [u8; NODE_SIZE - 8],
+    pub(crate) reserved: [u8; NODE_SIZE - 16],
+    // essential to make AnyNode alignment the same as other node types
+    pub(crate) force_align: u64,
 }
 const_assert_eq!(size_of::<FreeNode>(), NODE_SIZE);
 const_assert_eq!(size_of::<FreeNode>() % 8, 0);
@@ -249,13 +251,19 @@ const_assert_eq!(size_of::<FreeNode>() % 8, 0);
 #[zero_copy]
 pub struct AnyNode {
     pub tag: u8,
-    pub data: [u8; 87],
+    pub data: [u8; 79],
+    // essential to make AnyNode alignment the same as other node types
+    pub force_align: u64,
 }
 const_assert_eq!(size_of::<AnyNode>(), NODE_SIZE);
 const_assert_eq!(size_of::<AnyNode>() % 8, 0);
+const_assert_eq!(align_of::<AnyNode>(), 8);
 const_assert_eq!(size_of::<AnyNode>(), size_of::<InnerNode>());
+const_assert_eq!(align_of::<AnyNode>(), align_of::<InnerNode>());
 const_assert_eq!(size_of::<AnyNode>(), size_of::<LeafNode>());
+const_assert_eq!(align_of::<AnyNode>(), align_of::<LeafNode>());
 const_assert_eq!(size_of::<AnyNode>(), size_of::<FreeNode>());
+const_assert_eq!(align_of::<AnyNode>(), align_of::<FreeNode>());
 
 pub(crate) enum NodeRef<'a> {
     Inner(&'a InnerNode),
