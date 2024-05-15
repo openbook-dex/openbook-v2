@@ -53,6 +53,7 @@ export type BookSideAccount = IdlAccounts<OpenbookV2>['bookSide'];
 export type AnyNode = IdlTypes<OpenbookV2>['AnyNode'];
 export type InnerNode = IdlTypes<OpenbookV2>['InnerNode'];
 export type LeafNode = IdlTypes<OpenbookV2>['LeafNode'];
+export type OpenOrder = IdlTypes<OpenbookV2>['OpenOrder'];
 
 export interface OpenBookClientOptions {
   idsSource?: IdsSource;
