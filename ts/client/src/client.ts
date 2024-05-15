@@ -577,7 +577,7 @@ export class OpenBookV2Client {
   }
 
   public decodeMarket(data: Buffer): any {
-    return this.program.coder.accounts.decode('Market', data);
+    return this.program.coder.accounts.decode('market', data);
   }
 
   public async placeOrderIx(
