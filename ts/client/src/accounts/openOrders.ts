@@ -103,7 +103,7 @@ export class OpenOrders {
     
     // Need to reload orderbooks because not all information about orders, like
     // size, is stored on the open orders account.
-    this.market.loadOrderBook();
+    await this.market.loadOrderBook();
 
     return this;
   }
