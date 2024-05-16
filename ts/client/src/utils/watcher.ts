@@ -32,12 +32,11 @@ export class Watcher {
   }
 
   addBookSide(bookSide: BookSide): this {
-    const { market, pubkey } = bookSide;
+    const { pubkey } = bookSide;
     this.accountSubs[pubkey.toBase58()] = this.connection.onAccountChange(
       pubkey,
       (ai) => {
-        bookSide.account = market.client.program.coder.accounts.decode(
-          'bookSide',
+        bookSide.account = BookSide.decodeAccountfromBuffer(
           ai.data,
         );
       },
