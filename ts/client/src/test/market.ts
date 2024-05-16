@@ -6,6 +6,7 @@ import {
   findAllMarkets,
   Watcher,
   sleep,
+  BookSide,
 } from '..';
 import { initReadOnlyOpenbookClient } from './util';
 
@@ -41,6 +42,29 @@ async function testDecodeMarket(): Promise<void> {
 
   console.log(market.toPrettyString());
 }
+
+
+async function benchDecodeMarket(): Promise<void> {
+  const client = initReadOnlyOpenbookClient();
+  const marketPk = new PublicKey(
+    'CFSMrBssNG8Ud1edW59jNLnq2cwrQ9uY5cM3wXmqRJj3',
+  );
+  const market = await Market.load(client, marketPk);
+  await market.loadOrderBook();
+  await market.loadEventHeap();
+
+  const bookSideAccount = await client.connection.getAccountInfo(market.bids!.pubkey);
+
+  const start = new Date();
+  for (let i = 0; i < 10000; ++i) {
+    const side = client.program.coder.accounts.decode("bookSide", bookSideAccount!.data);
+    market.bids!.account = side;
+    market.bids!.getL2(16);
+  }
+  const end = new Date();
+  console.log({start, end, duration: end.valueOf() - start.valueOf()});
+  console.log();
+};
 
 async function testWatchMarket(): Promise<void> {
   const client = initReadOnlyOpenbookClient();
@@ -103,4 +127,5 @@ async function testMarketLots(): Promise<void> {
 // void testFindAllMarkets();
 // void testDecodeMarket();
 // void testWatchMarket();
-void testMarketLots();
+// void testMarketLots();
+void benchDecodeMarket();
