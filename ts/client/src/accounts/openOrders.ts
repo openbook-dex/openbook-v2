@@ -100,6 +100,11 @@ export class OpenOrders {
       await this.market.client.program.account.openOrdersAccount.fetch(
         this.pubkey,
       );
+    
+    // Need to reload orderbooks because not all information about orders, like
+    // size, is stored on the open orders account.
+    this.market.loadOrderBook();
+
     return this;
   }
 
