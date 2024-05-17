@@ -24,6 +24,7 @@ import {
   Order,
   OpenOrdersIndexer,
   Market,
+  BookSide,
 } from '..';
 
 export interface OrderToPlace {
@@ -96,10 +97,33 @@ export class OpenOrders {
   }
 
   public async reload(): Promise<this> {
-    this.account =
-      await this.market.client.program.account.openOrdersAccount.fetch(
-        this.pubkey,
-      );
+    // Need to reload orderbooks because not all information about orders, like
+    // size, is stored on the open orders account. Do all fetches together to
+    // ensure they are synced to the same slot.
+    const [bidsAi, asksAi, ooAi] = await this.market.client.connection.getMultipleAccountsInfo(
+      [
+      this.market.account.bids,
+      this.market.account.asks,
+      this.pubkey,
+      ]
+    );
+    this.market.bids = new BookSide(
+      this.market,
+      this.market.account.bids,
+      BookSide.decodeAccountfromBuffer(bidsAi!.data),
+      SideUtils.Bid
+    );
+    this.market.asks = new BookSide(
+      this.market,
+      this.market.account.asks,
+      BookSide.decodeAccountfromBuffer(asksAi!.data),
+      SideUtils.Ask
+    );
+    this.account = this.market.client.program.coder.accounts.decode(
+      "openOrdersAccount",
+      ooAi!.data
+    );
+
     return this;
   }
 
