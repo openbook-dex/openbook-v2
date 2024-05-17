@@ -23,7 +23,8 @@
     "format": "yarn prettier --write ./ts/",
     "lint": "eslint ./ts/client/src --ext ts --ext tsx --ext js --quiet",
     "prepublishOnly": "yarn validate && yarn build",
-    "validate": "yarn lint && yarn format"
+    "validate": "yarn lint && yarn format",
+    "prepare": "yarn build"
   },
   "prettier": {
     "singleQuote": true,
