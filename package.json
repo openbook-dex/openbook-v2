@@ -30,7 +30,7 @@
     "trailingComma": "all"
   },
   "dependencies": {
-    "@coral-xyz/anchor": "^0.28.1-beta.2",
+    "@coral-xyz/anchor": "^0.29.0",
     "@solana/spl-token": "^0.4.0",
     "@solana/web3.js": "^1.77.3",
     "big.js": "^6.2.1"
