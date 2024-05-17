@@ -23,14 +23,15 @@
     "format": "yarn prettier --write ./ts/",
     "lint": "eslint ./ts/client/src --ext ts --ext tsx --ext js --quiet",
     "prepublishOnly": "yarn validate && yarn build",
-    "validate": "yarn lint && yarn format"
+    "validate": "yarn lint && yarn format",
+    "prepare": "yarn build"
   },
   "prettier": {
     "singleQuote": true,
     "trailingComma": "all"
   },
   "dependencies": {
-    "@coral-xyz/anchor": "^0.28.1-beta.2",
+    "@coral-xyz/anchor": "^0.29.0",
     "@solana/spl-token": "^0.4.0",
     "@solana/web3.js": "^1.77.3",
     "big.js": "^6.2.1"
