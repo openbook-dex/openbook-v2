@@ -89,13 +89,12 @@ pub enum OpenBookError {
     InvalidPostAmount,
     #[msg("Oracle peg orders are not enabled for this market")]
     DisabledOraclePeg,
-    #[msg("Fill-Or-Kill order would generate a partial execution")]
-    WouldExecutePartially,
-
     #[msg("Cannot close a non-empty market")]
     NonEmptyMarket,
     #[msg("Cannot close a non-empty open orders account")]
     NonEmptyOpenOrdersPosition,
+    #[msg("Fill-Or-Kill order would generate a partial execution")]
+    WouldExecutePartially,
 }
 
 impl From<OpenBookError> for ProgramError {
