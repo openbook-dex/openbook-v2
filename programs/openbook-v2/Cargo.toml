@@ -1,5 +1,3 @@
-cargo-features = ["workspace-inheritance"]
-
 [package]
 description = "Created with Anchor"
 edition = "2021"
