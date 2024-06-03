@@ -31,9 +31,6 @@ pub enum OrderParams {
     ImmediateOrCancel {
         price_lots: i64,
     },
-    FillOrKill {
-        price_lots: i64,
-    },
     Fixed {
         price_lots: i64,
         order_type: PostOrderType,
@@ -42,6 +39,9 @@ pub enum OrderParams {
         price_offset_lots: i64,
         order_type: PostOrderType,
         peg_limit: i64,
+    },
+    FillOrKill {
+        price_lots: i64,
     },
 }
 
