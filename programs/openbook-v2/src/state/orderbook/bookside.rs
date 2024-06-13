@@ -182,6 +182,15 @@ impl BookSide {
         )
     }
 
+    /// Return the quantity of the order closest to the spread
+    pub fn best_quantity(&self, now_ts: u64, oracle_price_lots: Option<i64>) -> Option<i64> {
+        Some(
+            self.iter_valid(now_ts, oracle_price_lots)
+                .next()?
+                .quantity,
+        )
+    }
+
     /// Walk up the book `quantity` units and return the price at that level. If `quantity` units
     /// not on book, return None
     pub fn impact_price(&self, quantity: i64, now_ts: u64, oracle_price_lots: i64) -> Option<i64> {

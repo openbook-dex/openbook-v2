@@ -197,6 +197,7 @@ impl Market {
     pub fn max_quote_lots(&self) -> i64 {
         i64::MAX / self.quote_lot_size
     }
+a
 
     pub fn max_base_lots_from_lamports(&self, lamports: u64) -> i64 {
         let base_lots = lamports / self.base_lot_size as u64;
@@ -216,6 +217,24 @@ impl Market {
     pub fn lot_to_native_price(&self, price: i64) -> I80F48 {
         I80F48::from_num(price) * I80F48::from_num(self.quote_lot_size)
             / I80F48::from_num(self.base_lot_size)
+    }
+
+    /// Convert the quantity from quote lots to native quantity (e.g. 5 SOL, 0.3 USDC, etc)
+    pub fn quote_lot_to_native_quantity(&self, quote_lots: i64) -> f64 {
+        let quote_lot_size = self.quote_lot_size as f64;
+        let quote_decimals = self.quote_decimals as u32;
+        let quote_units = quote_lots as f64 * quote_lot_size;
+        let quantity = quote_units / 10_i64.pow(quote_decimals) as f64;
+        quantity
+    }
+
+    /// Convert the quantity from base lots to native quantity (e.g. 5 SOL, 0.3 USDC, etc)
+    pub fn base_lot_to_native_quantity(&self, base_lots: i64) -> f64 {
+        let base_lot_size = self.base_lot_size as f64;
+        let base_decimals = self.base_decimals as u32;
+        let base_units = base_lots as f64 * base_lot_size;
+        let quantity = base_units / 10_i64.pow(base_decimals) as f64;
+        quantity
     }
 
     pub fn native_price_to_lot(&self, price: I80F48) -> Result<i64> {
