@@ -3100,15 +3100,6 @@ export type OpenbookV2 = {
             ];
           },
           {
-            name: 'FillOrKill';
-            fields: [
-              {
-                name: 'price_lots';
-                type: 'i64';
-              },
-            ];
-          },
-          {
             name: 'Fixed';
             fields: [
               {
@@ -3138,6 +3129,15 @@ export type OpenbookV2 = {
               },
               {
                 name: 'peg_limit';
+                type: 'i64';
+              },
+            ];
+          },
+          {
+            name: 'FillOrKill';
+            fields: [
+              {
+                name: 'price_lots';
                 type: 'i64';
               },
             ];
@@ -3684,18 +3684,18 @@ export type OpenbookV2 = {
     },
     {
       code: 6041;
-      name: 'WouldExecutePartially';
-      msg: 'Fill-Or-Kill order would generate a partial execution';
-    },
-    {
-      code: 6042;
       name: 'NonEmptyMarket';
       msg: 'Cannot close a non-empty market';
     },
     {
-      code: 6043;
+      code: 6042;
       name: 'NonEmptyOpenOrdersPosition';
       msg: 'Cannot close a non-empty open orders account';
+    },
+    {
+      code: 6043;
+      name: 'WouldExecutePartially';
+      msg: 'Fill-Or-Kill order would generate a partial execution';
     },
   ];
 };
@@ -6802,15 +6802,6 @@ export const IDL: OpenbookV2 = {
             ],
           },
           {
-            name: 'FillOrKill',
-            fields: [
-              {
-                name: 'price_lots',
-                type: 'i64',
-              },
-            ],
-          },
-          {
             name: 'Fixed',
             fields: [
               {
@@ -6840,6 +6831,15 @@ export const IDL: OpenbookV2 = {
               },
               {
                 name: 'peg_limit',
+                type: 'i64',
+              },
+            ],
+          },
+          {
+            name: 'FillOrKill',
+            fields: [
+              {
+                name: 'price_lots',
                 type: 'i64',
               },
             ],
@@ -7386,18 +7386,18 @@ export const IDL: OpenbookV2 = {
     },
     {
       code: 6041,
-      name: 'WouldExecutePartially',
-      msg: 'Fill-Or-Kill order would generate a partial execution',
-    },
-    {
-      code: 6042,
       name: 'NonEmptyMarket',
       msg: 'Cannot close a non-empty market',
     },
     {
-      code: 6043,
+      code: 6042,
       name: 'NonEmptyOpenOrdersPosition',
       msg: 'Cannot close a non-empty open orders account',
+    },
+    {
+      code: 6043,
+      name: 'WouldExecutePartially',
+      msg: 'Fill-Or-Kill order would generate a partial execution',
     },
   ],
 };

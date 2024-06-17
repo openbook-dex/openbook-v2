@@ -3253,15 +3253,6 @@
             ]
           },
           {
-            "name": "FillOrKill",
-            "fields": [
-              {
-                "name": "price_lots",
-                "type": "i64"
-              }
-            ]
-          },
-          {
             "name": "Fixed",
             "fields": [
               {
@@ -3291,6 +3282,15 @@
               },
               {
                 "name": "peg_limit",
+                "type": "i64"
+              }
+            ]
+          },
+          {
+            "name": "FillOrKill",
+            "fields": [
+              {
+                "name": "price_lots",
                 "type": "i64"
               }
             ]
@@ -3837,18 +3837,18 @@
     },
     {
       "code": 6041,
-      "name": "WouldExecutePartially",
-      "msg": "Fill-Or-Kill order would generate a partial execution"
-    },
-    {
-      "code": 6042,
       "name": "NonEmptyMarket",
       "msg": "Cannot close a non-empty market"
     },
     {
-      "code": 6043,
+      "code": 6042,
       "name": "NonEmptyOpenOrdersPosition",
       "msg": "Cannot close a non-empty open orders account"
+    },
+    {
+      "code": 6043,
+      "name": "WouldExecutePartially",
+      "msg": "Fill-Or-Kill order would generate a partial execution"
     }
   ]
 }
