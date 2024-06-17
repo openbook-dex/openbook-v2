@@ -70,14 +70,14 @@ async function benchDecodeMarket(): Promise<void> {
 async function testDecodeMultiple(): Promise<void> {
   const client = initReadOnlyOpenbookClient();
   const markets = [
-    new PublicKey("BU3EaRVo9WN44muCBy3mwkCQ4uYQWiuqay1whEmeSXK3"),
-    new PublicKey("D8BPZXCYvVBkXR5NAoDnuzjFGuF2kFKWyfEUtZbmjRg7"),
+    new PublicKey('BU3EaRVo9WN44muCBy3mwkCQ4uYQWiuqay1whEmeSXK3'),
+    new PublicKey('D8BPZXCYvVBkXR5NAoDnuzjFGuF2kFKWyfEUtZbmjRg7'),
   ];
   for (const marketPk of markets) {
     const market = await Market.load(client, marketPk);
     await market.loadOrderBook();
 
-    const mktTag = marketPk.toString().substring(0,6);
+    const mktTag = marketPk.toString().substring(0, 6);
 
     console.log(mktTag, market.bids?.getL2(300));
     console.log(mktTag, market.asks?.getL2(300));

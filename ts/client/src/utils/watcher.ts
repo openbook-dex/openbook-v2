@@ -36,9 +36,7 @@ export class Watcher {
     this.accountSubs[pubkey.toBase58()] = this.connection.onAccountChange(
       pubkey,
       (ai) => {
-        bookSide.account = BookSide.decodeAccountfromBuffer(
-          ai.data,
-        );
+        bookSide.account = BookSide.decodeAccountfromBuffer(ai.data);
       },
     );
     return this;

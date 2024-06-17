@@ -102,14 +102,28 @@ export class Market {
   }
 
   public async loadBids(): Promise<BookSide> {
-    const bidsAi = await this.client.connection.getAccountInfo(this.account.bids);
-    this.bids = new BookSide(this, this.account.bids, BookSide.decodeAccountfromBuffer(bidsAi!.data), SideUtils.Bid);
+    const bidsAi = await this.client.connection.getAccountInfo(
+      this.account.bids,
+    );
+    this.bids = new BookSide(
+      this,
+      this.account.bids,
+      BookSide.decodeAccountfromBuffer(bidsAi!.data),
+      SideUtils.Bid,
+    );
     return this.bids;
   }
 
   public async loadAsks(): Promise<BookSide> {
-    const asksAi = await this.client.connection.getAccountInfo(this.account.asks);
-    this.asks = new BookSide(this, this.account.asks, BookSide.decodeAccountfromBuffer(asksAi!.data), SideUtils.Ask);
+    const asksAi = await this.client.connection.getAccountInfo(
+      this.account.asks,
+    );
+    this.asks = new BookSide(
+      this,
+      this.account.asks,
+      BookSide.decodeAccountfromBuffer(asksAi!.data),
+      SideUtils.Ask,
+    );
     return this.asks;
   }
 

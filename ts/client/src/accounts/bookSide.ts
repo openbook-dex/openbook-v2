@@ -32,18 +32,19 @@ export class BookSide {
   }
 
   public static decodeAccountfromBuffer(data: Buffer): BookSideAccount {
-     // TODO: add discriminator parsing & check
+    // TODO: add discriminator parsing & check
     const roots = [
       decodeOrderTreeRootStruct(data.subarray(8)),
-      decodeOrderTreeRootStruct(data.subarray(16))];
+      decodeOrderTreeRootStruct(data.subarray(16)),
+    ];
 
     // skip reserved
-    let offset = 56+256;
+    let offset = 56 + 256;
 
     const orderTreeType = data.readUInt8(offset);
-    const bumpIndex = data.readUInt32LE(offset+4);
-    const freeListLen = data.readUInt32LE(offset+8);
-    const freeListHead = data.readUInt32LE(offset+12);
+    const bumpIndex = data.readUInt32LE(offset + 4);
+    const freeListLen = data.readUInt32LE(offset + 8);
+    const freeListHead = data.readUInt32LE(offset + 12);
 
     // skip more reserved data
     offset += 16 + 512;
@@ -51,8 +52,8 @@ export class BookSide {
     const nodes: any[] = [];
     for (let i = 0; i < 1024; ++i) {
       const tag = data.readUInt8(offset);
-      const nodeData = data.subarray(offset, offset+88);
-      nodes.push({tag, nodeData});
+      const nodeData = data.subarray(offset, offset + 88);
+      nodes.push({ tag, nodeData });
       offset += 88;
     }
 
@@ -60,7 +61,10 @@ export class BookSide {
     // it doesn't include reserved data and it's AnyNodes don't have the field
     // data: number[] (excluding the tag prefix byte)
     // but nodeData: Buffer (including the tag prefix byte)
-    const result = { roots, nodes: { orderTreeType, bumpIndex, freeListLen, freeListHead, nodes }};
+    const result = {
+      roots,
+      nodes: { orderTreeType, bumpIndex, freeListLen, freeListHead, nodes },
+    };
 
     return result as any;
   }
@@ -195,22 +199,30 @@ export class BookSide {
   private static LEAF_NODE_TAG = 2;
 
   private toInnerNode(node: AnyNode): InnerNode {
-    const layout = (this.market.client.program as any)._coder.types.typeLayouts.get('InnerNode');
+    const layout = (
+      this.market.client.program as any
+    )._coder.types.typeLayouts.get('InnerNode');
     // need to differentiate between accounts loaded via anchor and decodeAccountfromBuffer
-    if ( 'nodeData' in node) {
+    if ('nodeData' in node) {
       return layout.decode(node['nodeData']);
     } else {
-      return layout.decode(Buffer.from([BookSide.INNER_NODE_TAG].concat(node.data)));
+      return layout.decode(
+        Buffer.from([BookSide.INNER_NODE_TAG].concat(node.data)),
+      );
     }
   }
 
   private toLeafNode(node: AnyNode): LeafNode {
-    const layout = (this.market.client.program as any)._coder.types.typeLayouts.get('LeafNode');
+    const layout = (
+      this.market.client.program as any
+    )._coder.types.typeLayouts.get('LeafNode');
     // need to differentiate between accounts loaded via anchor and decodeAccountfromBuffer
-    if ( 'nodeData' in node) {
+    if ('nodeData' in node) {
       return layout.decode(node['nodeData']);
     } else {
-      return layout.decode(Buffer.from([BookSide.LEAF_NODE_TAG].concat(node.data)));
+      return layout.decode(
+        Buffer.from([BookSide.LEAF_NODE_TAG].concat(node.data)),
+      );
     }
   }
 }
