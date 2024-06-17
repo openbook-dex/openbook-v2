@@ -14,7 +14,7 @@ use itertools::Itertools;
 use openbook_v2::state::OracleConfigParams;
 use openbook_v2::{
     state::{Market, OpenOrdersAccount, PlaceOrderType, SelfTradeBehavior, Side},
-    PlaceOrderArgs, PlaceOrderPeggedArgs,
+    PlaceMultipleOrdersArgs, PlaceOrderArgs, PlaceOrderPeggedArgs,
 };
 
 use solana_client::nonblocking::rpc_client::RpcClient as RpcClientAsync;
@@ -542,6 +542,53 @@ impl OpenBookClient {
                 side_option,
                 limit,
             }),
+        };
+        self.send_and_confirm_owner_tx(vec![ix]).await
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    pub async fn cancel_all_and_place_orders(
+        &self,
+        market: Market,
+        market_address: Pubkey,
+        user_base_account: Pubkey,
+        user_quote_account: Pubkey,
+        orders_type: PlaceOrderType,
+        bids: Vec<PlaceMultipleOrdersArgs>,
+        asks: Vec<PlaceMultipleOrdersArgs>,
+        limit: u8,
+    ) -> anyhow::Result<Signature> {
+        let ix = Instruction {
+            program_id: openbook_v2::id(),
+            accounts: {
+                anchor_lang::ToAccountMetas::to_account_metas(
+                    &openbook_v2::accounts::CancelAllAndPlaceOrders {
+                        open_orders_account: self.open_orders_account,
+                        signer: self.owner(),
+                        open_orders_admin: market.open_orders_admin.into(),
+                        user_quote_account: user_quote_account,
+                        user_base_account: user_base_account,
+                        market: market_address,
+                        bids: market.bids,
+                        asks: market.asks,
+                        event_heap: market.event_heap,
+                        market_quote_vault: market.market_quote_vault,
+                        market_base_vault: market.market_base_vault,
+                        oracle_a: market.oracle_a.into(),
+                        oracle_b: market.oracle_b.into(),
+                        token_program: Token::id(),
+                    },
+                    None,
+                )
+            },
+            data: anchor_lang::InstructionData::data(
+                &openbook_v2::instruction::CancelAllAndPlaceOrders {
+                    orders_type,
+                    bids,
+                    asks,
+                    limit,
+                },
+            ),
         };
         self.send_and_confirm_owner_tx(vec![ix]).await
     }
