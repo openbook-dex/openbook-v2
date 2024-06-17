@@ -43,7 +43,6 @@ async function testDecodeMarket(): Promise<void> {
   console.log(market.toPrettyString());
 }
 
-
 async function benchDecodeMarket(): Promise<void> {
   const client = initReadOnlyOpenbookClient();
   const marketPk = new PublicKey(
@@ -53,18 +52,37 @@ async function benchDecodeMarket(): Promise<void> {
   await market.loadOrderBook();
   await market.loadEventHeap();
 
-  const bookSideAccount = await client.connection.getAccountInfo(market.bids!.pubkey);
+  const bookSideAccount = await client.connection.getAccountInfo(
+    market.bids!.pubkey,
+  );
 
   const start = new Date();
   for (let i = 0; i < 10000; ++i) {
-    const side = client.program.coder.accounts.decode("bookSide", bookSideAccount!.data);
+    const side = BookSide.decodeAccountfromBuffer(bookSideAccount!.data);
     market.bids!.account = side;
     market.bids!.getL2(16);
   }
   const end = new Date();
-  console.log({start, end, duration: end.valueOf() - start.valueOf()});
+  console.log({ start, end, duration: end.valueOf() - start.valueOf() });
   console.log();
-};
+}
+
+async function testDecodeMultiple(): Promise<void> {
+  const client = initReadOnlyOpenbookClient();
+  const markets = [
+    new PublicKey("BU3EaRVo9WN44muCBy3mwkCQ4uYQWiuqay1whEmeSXK3"),
+    new PublicKey("D8BPZXCYvVBkXR5NAoDnuzjFGuF2kFKWyfEUtZbmjRg7"),
+  ];
+  for (const marketPk of markets) {
+    const market = await Market.load(client, marketPk);
+    await market.loadOrderBook();
+
+    const mktTag = marketPk.toString().substring(0,6);
+
+    console.log(mktTag, market.bids?.getL2(300));
+    console.log(mktTag, market.asks?.getL2(300));
+  }
+}
 
 async function testWatchMarket(): Promise<void> {
   const client = initReadOnlyOpenbookClient();
@@ -129,3 +147,4 @@ async function testMarketLots(): Promise<void> {
 // void testWatchMarket();
 // void testMarketLots();
 void benchDecodeMarket();
+// void testDecodeMultiple();
