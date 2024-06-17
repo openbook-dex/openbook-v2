@@ -28,6 +28,13 @@ async function testLoadOOForMarket(): Promise<void> {
   console.log(oo?.toPrettyString());
 }
 
+async function testLoadOOForWallet(): Promise<void> {
+  const client = initOpenbookClient();
+  const ooi = await OpenOrdersIndexer.loadNullable(client);
+  const oos = await ooi!.loadAllOpenOrders();
+  for (const oo of oos) console.log(oo?.toPrettyString());
+}
+
 async function testPlaceAndCancelOrder(): Promise<void> {
   const client = initOpenbookClient();
   const marketPk = new PublicKey(
@@ -86,6 +93,7 @@ async function testPlaceAndCancelOrderByClientId(): Promise<void> {
 }
 
 // testLoadIndexerNonExistent();
-void testLoadOOForMarket();
+// void testLoadOOForMarket();
+void testLoadOOForWallet();
 // testPlaceAndCancelOrder();
 // testPlaceAndCancelOrderByClientId();
