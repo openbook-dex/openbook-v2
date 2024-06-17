@@ -45,7 +45,7 @@ export class OpenOrdersIndexer {
       marketPks,
     );
     const bookSidePks = markets.flatMap((m) => [m!.bids, m!.asks]);
-    const bookSides = await this.client.program.account.bookSide.fetchMultiple(
+    const bookSideAis = await this.client.connection.getMultipleAccountsInfo(
       bookSidePks,
     );
     return oos.map((oo, i) => {
@@ -53,13 +53,13 @@ export class OpenOrdersIndexer {
       mkt.bids = new BookSide(
         mkt,
         bookSidePks[2 * i],
-        bookSides[2 * i]!,
+        BookSide.decodeAccountfromBuffer(bookSideAis[2 * i]!.data),
         SideUtils.Bid,
       );
       mkt.asks = new BookSide(
         mkt,
         bookSidePks[2 * i + 1],
-        bookSides[2 * i + 1]!,
+        BookSide.decodeAccountfromBuffer(bookSideAis[2 * i + 1]!.data),
         SideUtils.Ask,
       );
       return new OpenOrders(ooPks[i], oo!, mkt);
