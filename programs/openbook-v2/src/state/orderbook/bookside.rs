@@ -187,6 +187,7 @@ impl BookSide {
         Some(
             self.iter_valid(now_ts, oracle_price_lots)
                 .next()?
+                .node
                 .quantity,
         )
     }
