@@ -218,6 +218,22 @@ impl Market {
             / I80F48::from_num(self.base_lot_size)
     }
 
+    /// Convert the quantity from quote lots to native quantity (e.g. 5 SOL, 3 USDC, etc)
+    pub fn quote_lot_to_native_quantity(&self, quote_lots: i64) -> i64 {
+        let quote_lot_size = self.quote_lot_size;
+        let quote_decimals = self.quote_decimals;
+        let quote_units = quote_lots * quote_lot_size;
+        quote_units / 10_i64.pow(quote_decimals.into())
+    }
+
+    /// Convert the quantity from base lots to native quantity (e.g. 5 SOL, 3 USDC, etc)
+    pub fn base_lot_to_native_quantity(&self, base_lots: i64) -> i64 {
+        let base_lot_size = self.base_lot_size;
+        let base_decimals = self.base_decimals;
+        let base_units = base_lots * base_lot_size;
+        base_units / 10_i64.pow(base_decimals.into())
+    }
+
     pub fn native_price_to_lot(&self, price: I80F48) -> Result<i64> {
         price
             .checked_mul(I80F48::from_num(self.base_lot_size))
