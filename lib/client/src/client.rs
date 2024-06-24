@@ -33,6 +33,9 @@ use solana_sdk::instruction::Instruction;
 use solana_sdk::signature::{Keypair, Signature};
 use solana_sdk::{commitment_config::CommitmentConfig, pubkey::Pubkey, signer::Signer};
 
+use backon::ExponentialBuilder;
+use backon::Retryable;
+
 // very close to anchor_client::Client, which unfortunately has no accessors or Clone
 #[derive(Clone, Debug)]
 pub struct Client {
@@ -791,18 +794,26 @@ impl<'a> TransactionBuilder<'a> {
     pub async fn send(self, client: &Client) -> anyhow::Result<Signature> {
         let rpc = client.rpc_async();
         let tx = self.transaction(&rpc).await?;
-        rpc.send_transaction_with_config(&tx, client.rpc_send_transaction_config)
-            .await
-            .map_err(prettify_solana_client_error)
+        (|| async {
+            rpc.send_transaction_with_config(&tx, client.rpc_send_transaction_config)
+                .await
+                .map_err(prettify_solana_client_error)
+        })
+        .retry(&ExponentialBuilder::default())
+        .await
     }
 
     pub async fn send_and_confirm(self, client: &Client) -> anyhow::Result<Signature> {
         let rpc = client.rpc_async();
         let tx = self.transaction(&rpc).await?;
         // TODO: Wish we could use client.rpc_send_transaction_config here too!
-        rpc.send_and_confirm_transaction(&tx)
-            .await
-            .map_err(prettify_solana_client_error)
+        (|| async {
+            rpc.send_and_confirm_transaction(&tx)
+                .await
+                .map_err(prettify_solana_client_error)
+        })
+        .retry(&ExponentialBuilder::default())
+        .await
     }
 }
 

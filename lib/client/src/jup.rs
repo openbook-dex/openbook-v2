@@ -108,7 +108,7 @@ impl Amm for OpenBookMarket {
             EventHeap::try_deserialize_from_slice(&mut event_heap_data.data.as_slice()).unwrap();
 
         let clock_data = account_map.get(&clock::ID).unwrap();
-        let clock: Clock = bincode::deserialize(clock_data.data.as_slice())?;
+        let clock: Clock = serde_json::from_slice(clock_data.data.as_slice())?;
 
         let oracle_acc =
             |nonzero_pubkey: NonZeroPubkeyOption| -> Option<accounts_zerocopy::KeyedAccount> {
