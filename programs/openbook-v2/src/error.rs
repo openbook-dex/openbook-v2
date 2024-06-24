@@ -6,7 +6,7 @@ pub enum OpenBookError {
     #[msg("")]
     SomeError,
 
-    #[msg("Name lenght above limit")]
+    #[msg("Name length above limit")]
     InvalidInputNameLength,
     #[msg("Market cannot be created as expired")]
     InvalidInputMarketExpired,
