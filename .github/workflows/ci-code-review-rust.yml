@@ -63,7 +63,7 @@ jobs:
         uses: actions/checkout@v4
       - name: Solanaizer Audit
         continue-on-error: false
-        uses: solanaizer/solanaizer-action
+        uses: solanaizer/solanaizer-action@0.1.11
 
   build:
     name: Build
