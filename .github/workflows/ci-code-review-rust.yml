@@ -9,7 +9,7 @@ on:
       ]
   
   pull_request:
-    branches: ['master']
+    branches: ['master', "audit"]
     paths:
       [
         'programs/**',
@@ -55,6 +55,15 @@ jobs:
 
       - name: Run Clippy
         run: cargo clippy --features enable-gpl -- --no-deps -D warnings --allow=clippy::result-large-err
+
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check-out the repository
+        uses: actions/checkout@v4
+      - name: Solanaizer Audit
+        continue-on-error: false
+        uses: solanaizer/solanaizer-action
 
   build:
     name: Build
