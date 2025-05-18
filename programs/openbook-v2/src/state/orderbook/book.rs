@@ -84,11 +84,6 @@ impl<'a> Orderbook<'a> {
         // generate new order id
         let order_id = market.gen_order_id(side, price_data);
 
-        // Iterate through book and match against this new order.
-        //
-        // Any changes to matching orders on the other side of the book are collected in
-        // matched_changes/matched_deletes and then applied after this loop.
-
         let order_max_base_lots = order.max_base_lots;
         let order_max_quote_lots = if side == Side::Bid && !post_only {
             market.subtract_taker_fees(order.max_quote_lots_including_fees)
@@ -115,6 +110,10 @@ impl<'a> Orderbook<'a> {
         let mut referrer_amount = 0_u64;
         let mut maker_rebates_acc = 0_u64;
 
+        // Iterate through book and match against this new order.
+        //
+        // Any changes to matching orders on the other side of the book are collected in
+        // matched_order_changes/matched_order_deletes and then applied after this loop.
         let mut matched_order_changes: Vec<(BookSideOrderHandle, i64)> = vec![];
         let mut matched_order_deletes: Vec<(BookSideOrderTree, u128)> = vec![];
         let mut number_of_dropped_expired_orders = 0;
