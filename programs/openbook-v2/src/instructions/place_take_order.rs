@@ -64,7 +64,10 @@ pub fn place_take_order<'c: 'info, 'info>(
         ctx.remaining_accounts,
     )?;
 
-    // place_take_orders doesnt pay to referrers
+    // place_take_orders doesnt pay to referrers, so route referrer_amount to fees_available
+    // so it can be swept by collect_fee_admin (prevents permanent fund lockup)
+    market.fees_available += referrer_amount;
+
     let makers_rebates = taker_fees - referrer_amount;
 
     let (deposit_amount, withdraw_amount) = match side {

@@ -170,6 +170,13 @@ impl<'a> Orderbook<'a> {
                 break;
             }
 
+            // Stop matching if event heap is nearly full to prevent panics
+            if event_heap.is_full() {
+                msg!("Event heap is full, stopping matching");
+                post_target = None;
+                break;
+            }
+
             let max_match_by_quote = remaining_quote_lots / best_opposing_price;
             // Do not post orders in the book due to bad pricing and negative spread
             if max_match_by_quote == 0 {
