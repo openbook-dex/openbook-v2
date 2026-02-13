@@ -176,6 +176,8 @@ impl OpenOrdersAccount {
                 }
                 Side::Ask => {
                     pa.quote_free_native += quote_native + maker_rebate - maker_fees;
+                    // Ensure quote_deposit_total tracks quote leaving the market to makers
+                    market.quote_deposit_total -= quote_native;
                 }
             };
 
