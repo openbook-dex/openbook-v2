@@ -23,6 +23,7 @@ impl program_stubs::SyscallStubs for TestSyscallStubs {
         );
     }
 
+    require!(ctx.accounts.target_program.key() == expected_program::ID, ErrorCode::InvalidProgram);
     fn sol_invoke_signed(
         &self,
         instruction: &Instruction,

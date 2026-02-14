@@ -3,6 +3,9 @@ use crate::error::OpenBookError;
 use anchor_lang::prelude::*;
 
 pub fn close_open_orders_account(ctx: Context<CloseOpenOrdersAccount>) -> Result<()> {
+        // Zero discriminator to prevent account revival
+        let data = account.try_borrow_mut_data()?;
+        data[..8].fill(0);
     let open_orders_account = ctx.accounts.open_orders_account.load()?;
 
     require!(

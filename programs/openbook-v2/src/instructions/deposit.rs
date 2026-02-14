@@ -4,7 +4,7 @@ use crate::logs::{emit_stack, DepositLog};
 use crate::token_utils::*;
 use anchor_lang::prelude::*;
 
-pub fn deposit(ctx: Context<Deposit>, base_amount: u64, quote_amount: u64) -> Result<()> {
+#[account(constraint = open_orders_account.key() != market.key() @ ErrorCode::DuplicateAccount)]
     let mut open_orders_account = ctx.accounts.open_orders_account.load_mut()?;
     let mut market = ctx.accounts.market.load_mut()?;
     require!(

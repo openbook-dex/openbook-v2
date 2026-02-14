@@ -4,6 +4,9 @@ use crate::state::*;
 use anchor_lang::prelude::*;
 
 pub fn close_market(ctx: Context<CloseMarket>) -> Result<()> {
+        // Zero discriminator to prevent account revival
+        let data = account.try_borrow_mut_data()?;
+        data[..8].fill(0);
     let market = ctx.accounts.market.load()?;
     require!(
         market.is_expired(Clock::get()?.unix_timestamp),

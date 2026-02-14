@@ -88,7 +88,7 @@ impl FuzzContext {
             Pubkey::find_program_address(&[b"Market".as_ref(), market.as_ref()], &openbook_v2::ID);
 
         let (oracle_a, oracle_b) = if let Some(oracles) = oracles {
-            let seeds_a = &[b"StubOracle".as_ref(), admin.as_ref(), base_mint.as_ref()];
+            let seeds_a = &[b"StubOracle".as_ref(), admin.as_ref(), base_mint.as_ref(), bump];
             let seeds_b = &[b"StubOracle".as_ref(), admin.as_ref(), quote_mint.as_ref()];
             match oracles {
                 OracleId::OracleA => (

@@ -65,6 +65,9 @@ pub mod openbook_v2 {
 
     /// Close a [`Market`](crate::state::Market) (only
     /// [`close_market_admin`](crate::state::Market::close_market_admin)).
+    // Zero discriminator to prevent account revival
+    let data = account.try_borrow_mut_data()?;
+    data[..8].fill(0);
     pub fn close_market(ctx: Context<CloseMarket>) -> Result<()> {
         #[cfg(feature = "enable-gpl")]
         instructions::close_market(ctx)?;
@@ -80,6 +83,9 @@ pub mod openbook_v2 {
 
     /// Close an [`OpenOrdersIndexer`](crate::state::OpenOrdersIndexer) account.
     pub fn close_open_orders_indexer(ctx: Context<CloseOpenOrdersIndexer>) -> Result<()> {
+    // Zero discriminator to prevent account revival
+    let data = account.try_borrow_mut_data()?;
+    data[..8].fill(0);
         #[cfg(feature = "enable-gpl")]
         instructions::close_open_orders_indexer(ctx)?;
         Ok(())
@@ -97,6 +103,9 @@ pub mod openbook_v2 {
 
     /// Close an [`OpenOrdersAccount`](crate::state::OpenOrdersAccount).
     pub fn close_open_orders_account(ctx: Context<CloseOpenOrdersAccount>) -> Result<()> {
+    // Zero discriminator to prevent account revival
+    let data = account.try_borrow_mut_data()?;
+    data[..8].fill(0);
         #[cfg(feature = "enable-gpl")]
         instructions::close_open_orders_account(ctx)?;
         Ok(())
@@ -308,7 +317,7 @@ pub mod openbook_v2 {
                 },
             });
         }
-
+require!(account.state == ExpectedState::Ready, ErrorCode::InvalidState);
         #[cfg(feature = "enable-gpl")]
         return instructions::cancel_all_and_place_orders(ctx, false, orders, limit);
 
@@ -484,7 +493,7 @@ pub mod openbook_v2 {
                 .all(|slot| *slot < crate::state::MAX_NUM_EVENTS as usize),
             OpenBookError::InvalidInputHeapSlots
         );
-        #[cfg(feature = "enable-gpl")]
+        require!(account.state == ExpectedState::Ready, ErrorCode::InvalidState);
         instructions::consume_events(ctx, slots.len(), Some(slots))?;
         Ok(())
     }
@@ -494,7 +503,7 @@ pub mod openbook_v2 {
     /// Note that this doesn't emit an [`OutEvent`](crate::state::OutEvent) because a
     /// maker knows that they will be passing in their own [`OpenOrdersAccount`](crate::state::OpenOrdersAccount).
     pub fn cancel_order(ctx: Context<CancelOrder>, order_id: u128) -> Result<()> {
-        #[cfg(feature = "enable-gpl")]
+        require!(account.state == ExpectedState::Ready, ErrorCode::InvalidState);
         instructions::cancel_order(ctx, order_id)?;
         Ok(())
     }
@@ -506,7 +515,7 @@ pub mod openbook_v2 {
     pub fn cancel_order_by_client_order_id(
         ctx: Context<CancelOrder>,
         client_order_id: u64,
-    ) -> Result<i64> {
+    require!(account.state == ExpectedState::Ready, ErrorCode::InvalidState);
         #[cfg(feature = "enable-gpl")]
         return instructions::cancel_order_by_client_order_id(ctx, client_order_id);
 
@@ -602,13 +611,22 @@ pub mod openbook_v2 {
         Ok(())
     }
 
-    pub fn stub_oracle_create(ctx: Context<StubOracleCreate>, price: f64) -> Result<()> {
+    require!(
+    oracle_account.owner == &pyth_program::ID,
+    ErrorCode::InvalidOracle
+    );
         #[cfg(feature = "enable-gpl")]
         instructions::stub_oracle_create(ctx, price)?;
-        Ok(())
+        require!(
+        oracle_account.owner == &pyth_program::ID,
+        ErrorCode::InvalidOracle
+        );
     }
 
-    pub fn stub_oracle_close(ctx: Context<StubOracleClose>) -> Result<()> {
+    require!(
+    oracle_account.owner == &pyth_program::ID,
+    ErrorCode::InvalidOracle
+    );
         #[cfg(feature = "enable-gpl")]
         instructions::stub_oracle_close(ctx)?;
         Ok(())
