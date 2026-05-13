@@ -12,7 +12,7 @@ mod book;
 mod bookside;
 mod bookside_iterator;
 mod heap;
-mod nodes;
+pub mod nodes;
 mod order;
 mod order_type;
 mod ordertree;
@@ -30,7 +30,7 @@ mod tests {
     fn order_tree_leaf_by_key(bookside: &BookSide, key: u128) -> Option<&LeafNode> {
         for component in [BookSideOrderTree::Fixed, BookSideOrderTree::OraclePegged] {
             for (_, leaf) in bookside.nodes.iter(bookside.root(component)) {
-                if leaf.key == key {
+                if leaf.key() == key {
                     return Some(leaf);
                 }
             }
@@ -132,7 +132,7 @@ mod tests {
                     &[],
                 )
                 .unwrap();
-                account.open_order_by_raw_index(0).id
+                account.open_order_by_raw_index(0).id.to_u128()
             };
 
         // insert bids until book side is full
@@ -276,11 +276,12 @@ mod tests {
         )
         .unwrap();
         let order =
-            order_tree_leaf_by_key(&book.bids, maker.open_order_by_raw_index(0).id).unwrap();
+            order_tree_leaf_by_key(&book.bids, maker.open_order_by_raw_index(0).id.to_u128())
+                .unwrap();
         assert_eq!(order.client_order_id, 42);
         assert_eq!(order.quantity, bid_quantity);
         assert!(maker.open_order_by_raw_index(1).is_free());
-        assert_ne!(maker.open_order_by_raw_index(0).id, 0);
+        assert_ne!(maker.open_order_by_raw_index(0).id.to_u128(), 0);
         assert_eq!(maker.open_order_by_raw_index(0).client_id, 42);
         assert_eq!(
             maker.open_order_by_raw_index(0).side_and_tree(),
@@ -288,7 +289,7 @@ mod tests {
         );
         assert!(order_tree_contains_key(
             &book.bids,
-            maker.open_order_by_raw_index(0).id
+            maker.open_order_by_raw_index(0).id.to_u128()
         ));
         assert!(order_tree_contains_price(&book.bids, price_lots as u64));
         assert_eq!(maker.position.bids_base_lots, bid_quantity);
@@ -325,14 +326,15 @@ mod tests {
         // the remainder of the maker order is still on the book
         // (the maker account is unchanged: it was not even passed in)
         let order =
-            order_tree_leaf_by_key(&book.bids, maker.open_order_by_raw_index(0).id).unwrap();
+            order_tree_leaf_by_key(&book.bids, maker.open_order_by_raw_index(0).id.to_u128())
+                .unwrap();
         assert_eq!(fixed_price_lots(order.price_data()), price_lots);
         assert_eq!(order.quantity, bid_quantity - match_quantity);
 
         // fees were immediately accrued
         let match_quote = match_quantity * price_lots * market.quote_lot_size;
         assert_eq!(
-            market.fees_accrued as i64,
+            market.fees_accrued.to_u128() as i64,
             match_quote * (taker_fee) / (FEES_SCALE_FACTOR as i64)
         );
 
@@ -364,7 +366,7 @@ mod tests {
         assert_eq!(taker.position.asks_base_lots, 0);
         // Maker fee is accrued now
         assert_eq!(
-            market.fees_accrued as i64,
+            market.fees_accrued.to_u128() as i64,
             match_quote * (maker_fee + taker_fee) / (FEES_SCALE_FACTOR as i64)
         );
     }
@@ -411,7 +413,7 @@ mod tests {
                 &[],
             )
             .unwrap();
-            account.open_order_by_raw_index(0).id
+            account.open_order_by_raw_index(0).id.to_u128()
         };
 
         // Setup

@@ -152,7 +152,7 @@ pub fn rank_orders<'a>(
                 |a, b| a < b
             };
 
-            if is_better(f.1.key, key_for_fixed_price(o.1.key, o.2)) ^ return_worse {
+            if is_better(f.1.key(), key_for_fixed_price(o.1.key(), o.2)) ^ return_worse {
                 Some(fixed_to_result(f, now_ts))
             } else {
                 Some(oracle_pegged_to_result(o, now_ts))

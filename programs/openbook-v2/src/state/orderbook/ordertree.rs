@@ -104,7 +104,7 @@ impl OrderTreeNodes {
     }
 
     pub fn remove_worst(&mut self, root: &mut OrderTreeRoot) -> Option<LeafNode> {
-        self.remove_by_key(root, self.find_worst(root)?.1.key)
+        self.remove_by_key(root, self.find_worst(root)?.1.key())
     }
 
     pub fn find_worst(&self, root: &OrderTreeRoot) -> Option<(NodeHandle, &LeafNode)> {
@@ -202,7 +202,7 @@ impl OrderTreeNodes {
         // special case potentially removing the root
         let mut parent_h = root.node()?;
         let (mut child_h, mut crit_bit) = match self.node(parent_h).unwrap().case().unwrap() {
-            NodeRef::Leaf(&leaf) if leaf.key == search_key => {
+            NodeRef::Leaf(&leaf) if leaf.key() == search_key => {
                 assert_eq!(root.leaf_count, 1);
                 root.maybe_node = 0;
                 root.leaf_count = 0;
@@ -225,7 +225,7 @@ impl OrderTreeNodes {
                     stack.push((parent_h, crit_bit));
                 }
                 NodeRef::Leaf(leaf) => {
-                    if leaf.key != search_key {
+                    if leaf.key() != search_key {
                         return None;
                     }
                     break;
@@ -330,7 +330,7 @@ impl OrderTreeNodes {
             // require if the new node will be a child of the root
             let parent_contents = *self.node(parent_handle).unwrap();
             let parent_key = parent_contents.key().unwrap();
-            if parent_key == new_leaf.key {
+            if parent_key == new_leaf.key() {
                 // This should never happen because key should never match
                 if let Some(NodeRef::Leaf(&old_parent_as_leaf)) = parent_contents.case() {
                     // clobber the existing leaf
@@ -344,13 +344,13 @@ impl OrderTreeNodes {
                 }
                 // InnerNodes have a random child's key, so matching can happen and is fine
             }
-            let shared_prefix_len: u32 = (parent_key ^ new_leaf.key).leading_zeros();
+            let shared_prefix_len: u32 = (parent_key ^ new_leaf.key()).leading_zeros();
             match parent_contents.case() {
                 None => unreachable!(),
                 Some(NodeRef::Inner(inner)) => {
                     let keep_old_parent = shared_prefix_len >= inner.prefix_len;
                     if keep_old_parent {
-                        let (child, crit_bit) = inner.walk_down(new_leaf.key);
+                        let (child, crit_bit) = inner.walk_down(new_leaf.key());
                         stack.push((parent_handle, crit_bit));
                         parent_handle = child;
                         continue;
@@ -363,7 +363,7 @@ impl OrderTreeNodes {
 
             // change the parent in place to represent the LCA of [new_leaf] and [parent]
             let crit_bit_mask: u128 = 1u128 << (127 - shared_prefix_len);
-            let new_leaf_crit_bit = (crit_bit_mask & new_leaf.key) != 0;
+            let new_leaf_crit_bit = (crit_bit_mask & new_leaf.key()) != 0;
             let old_parent_crit_bit = !new_leaf_crit_bit;
 
             let new_leaf_handle = self.insert(new_leaf.as_ref())?;
@@ -376,7 +376,7 @@ impl OrderTreeNodes {
             };
 
             let new_parent: &mut InnerNode = cast_mut(self.node_mut(parent_handle).unwrap());
-            *new_parent = InnerNode::new(shared_prefix_len, new_leaf.key);
+            *new_parent = InnerNode::new(shared_prefix_len, new_leaf.key());
 
             new_parent.children[new_leaf_crit_bit as usize] = new_leaf_handle;
             new_parent.children[old_parent_crit_bit as usize] = moved_parent_handle;
@@ -473,8 +473,8 @@ mod tests {
                 let right = order_tree.node(inner.children[1]).unwrap().key().unwrap();
 
                 // the left and right keys share the InnerNode's prefix
-                assert!((inner.key ^ left).leading_zeros() >= inner.prefix_len);
-                assert!((inner.key ^ right).leading_zeros() >= inner.prefix_len);
+                assert!((inner.key() ^ left).leading_zeros() >= inner.prefix_len);
+                assert!((inner.key() ^ right).leading_zeros() >= inner.prefix_len);
 
                 // the left and right node key have the critbit unset and set respectively
                 let crit_bit_mask: u128 = 1u128 << (127 - inner.prefix_len);
@@ -497,7 +497,7 @@ mod tests {
         let ascending = order_tree.order_tree_type() == OrderTreeType::Asks;
         let mut last_key = if ascending { 0 } else { u128::MAX };
         for (_, node) in order_tree.iter(root) {
-            let key = node.key;
+            let key = node.key();
             if ascending {
                 assert!(key >= last_key);
             } else {

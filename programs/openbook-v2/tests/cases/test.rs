@@ -572,7 +572,7 @@ async fn test_cancel_orders() -> Result<(), TransportError> {
             signer: owner,
             market,
             open_orders_account: account_1,
-            order_id: order_id_to_cancel,
+            order_id: order_id_to_cancel.to_u128(),
         },
     )
     .await
@@ -632,7 +632,7 @@ async fn test_cancel_orders() -> Result<(), TransportError> {
             signer: owner,
             market,
             open_orders_account: account_1,
-            order_id: order_id_to_cancel,
+            order_id: order_id_to_cancel.to_u128(),
         },
     )
     .await

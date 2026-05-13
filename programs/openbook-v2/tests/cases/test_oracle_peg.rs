@@ -157,7 +157,7 @@ async fn test_oracle_peg() -> Result<(), TransportError> {
             signer: owner,
             market,
             open_orders_account: account_1,
-            order_id: order.id,
+            order_id: order.id.to_u128(),
         },
     )
     .await

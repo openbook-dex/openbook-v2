@@ -77,7 +77,7 @@ jobs:
       - name: Install Solana
         uses: metadaoproject/setup-solana@v1.0
         with:
-          solana-cli-version: $SOLANA_VERSION
+          solana-cli-version: ${{ env.SOLANA_VERSION }}
 
       - name: Build OpenBook V2
         run: cargo build-sbf --features enable-gpl
@@ -103,7 +103,7 @@ jobs:
       - name: Install Solana
         uses: metadaoproject/setup-solana@v1.0
         with:
-          solana-cli-version: $SOLANA_VERSION
+          solana-cli-version: ${{ env.SOLANA_VERSION }}
 
       - name: Create keypair
         run: solana-keygen new --no-bip39-passphrase

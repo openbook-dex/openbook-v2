@@ -10,6 +10,68 @@ use super::order_type::Side;
 pub type NodeHandle = u32;
 const NODE_SIZE: usize = 88;
 
+/// Layout-stable 128-bit key representation.
+///
+/// Replaces raw `u128` in persisted node structs to guarantee 8-byte alignment
+/// and 16-byte size on all targets and Rust versions. Native `u128` alignment
+/// varies by platform (8 on old x86, 16 on aarch64 and modern x86), which
+/// would inflate node size beyond the required 88 bytes.
+#[derive(
+    Copy,
+    Clone,
+    Debug,
+    Default,
+    PartialEq,
+    Eq,
+    bytemuck::Pod,
+    bytemuck::Zeroable,
+    AnchorSerialize,
+    AnchorDeserialize,
+)]
+#[repr(C)]
+pub struct U128Bytes {
+    data: [u8; 16],
+}
+const_assert_eq!(size_of::<U128Bytes>(), 16);
+const_assert_eq!(align_of::<U128Bytes>(), 1);
+
+impl U128Bytes {
+    #[inline(always)]
+    pub fn from_u128(v: u128) -> Self {
+        Self {
+            data: v.to_le_bytes(),
+        }
+    }
+
+    #[inline(always)]
+    pub fn to_u128(self) -> u128 {
+        u128::from_le_bytes(self.data)
+    }
+
+    #[inline(always)]
+    pub fn wrapping_add_assign(&mut self, rhs: u128) {
+        *self = Self::from_u128(self.to_u128().wrapping_add(rhs));
+    }
+}
+
+impl From<u128> for U128Bytes {
+    fn from(v: u128) -> Self {
+        Self::from_u128(v)
+    }
+}
+
+impl PartialEq<u128> for U128Bytes {
+    fn eq(&self, other: &u128) -> bool {
+        self.to_u128() == *other
+    }
+}
+
+impl std::fmt::Display for U128Bytes {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.to_u128())
+    }
+}
+
 #[derive(IntoPrimitive, TryFromPrimitive)]
 #[repr(u8)]
 pub enum NodeTag {
@@ -85,7 +147,7 @@ pub struct InnerNode {
     pub prefix_len: u32,
 
     /// only the top `prefix_len` bits of `key` are relevant
-    pub key: u128,
+    pub key: U128Bytes,
 
     /// indexes into `BookSide::nodes`
     pub children: [NodeHandle; 2],
@@ -108,11 +170,17 @@ impl InnerNode {
             tag: NodeTag::InnerNode.into(),
             padding: Default::default(),
             prefix_len,
-            key,
+            key: U128Bytes::from_u128(key),
             children: [0; 2],
             child_earliest_expiry: [u64::MAX; 2],
             reserved: [0; NODE_SIZE - 48],
         }
+    }
+
+    /// Returns the logical u128 key
+    #[inline(always)]
+    pub fn key(&self) -> u128 {
+        self.key.to_u128()
     }
 
     /// Returns the handle of the child that may contain the search key
@@ -157,7 +225,7 @@ pub struct LeafNode {
     pub padding: [u8; 4],
 
     /// The binary tree key, see new_node_key()
-    pub key: u128,
+    pub key: U128Bytes,
 
     /// Address of the owning OpenOrdersAccount
     pub owner: Pubkey,
@@ -201,7 +269,7 @@ impl LeafNode {
             owner_slot,
             time_in_force,
             padding: Default::default(),
-            key,
+            key: U128Bytes::from_u128(key),
             owner,
             quantity,
             timestamp,
@@ -210,12 +278,18 @@ impl LeafNode {
         }
     }
 
+    /// Returns the logical u128 key
+    #[inline(always)]
+    pub fn key(&self) -> u128 {
+        self.key.to_u128()
+    }
+
     /// The order's price_data as stored in the key
     ///
     /// Needs to be unpacked differently for fixed and oracle pegged orders.
     #[inline(always)]
     pub fn price_data(&self) -> u64 {
-        (self.key >> 64) as u64
+        (self.key() >> 64) as u64
     }
 
     /// Time at which this order will expire, u64::MAX if never
@@ -278,8 +352,8 @@ pub(crate) enum NodeRefMut<'a> {
 impl AnyNode {
     pub fn key(&self) -> Option<u128> {
         match self.case()? {
-            NodeRef::Inner(inner) => Some(inner.key),
-            NodeRef::Leaf(leaf) => Some(leaf.key),
+            NodeRef::Inner(inner) => Some(inner.key()),
+            NodeRef::Leaf(leaf) => Some(leaf.key()),
         }
     }
 

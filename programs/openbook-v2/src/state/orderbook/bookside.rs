@@ -116,7 +116,7 @@ impl BookSide {
             oracle_price_lots,
         )?;
         let price = worse.price_lots;
-        let key = worse.node.key;
+        let key = worse.node.key();
         let order_tree = worse.handle.order_tree;
         let n = self.remove_by_key(order_tree, key)?;
         Some((n, price))
@@ -271,7 +271,7 @@ mod tests {
             let mut last_price = if ascending { 0 } else { i64::MAX };
             for order in bookside.iter_all_including_invalid(0, Some(oracle_price_lots)) {
                 let price = order.price_lots;
-                println!("{} {:?} {price}", order.node.key, order.handle.order_tree);
+                println!("{} {:?} {price}", order.node.key(), order.handle.order_tree);
                 if ascending {
                     assert!(price >= last_price);
                 } else {

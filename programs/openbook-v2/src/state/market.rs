@@ -9,6 +9,7 @@ use crate::pubkey_option::NonZeroPubkeyOption;
 use crate::state::oracle;
 use crate::{accounts_zerocopy::KeyedAccountReader, state::orderbook::Side};
 
+use super::orderbook::nodes::U128Bytes;
 use super::{orderbook, OracleConfig};
 
 // For a 1bps taker fee, set taker_fee to 100, so taker_fee/FEES_SCALE_FACTOR = 10e-4
@@ -91,9 +92,9 @@ pub struct Market {
     pub taker_fee: i64,
 
     /// Total fees accrued in native quote
-    pub fees_accrued: u128,
+    pub fees_accrued: U128Bytes,
     /// Total fees settled in native quote
-    pub fees_to_referrers: u128,
+    pub fees_to_referrers: U128Bytes,
 
     /// Referrer rebates to be distributed
     pub referrer_rebates_accrued: u64,
@@ -102,10 +103,10 @@ pub struct Market {
     pub fees_available: u64,
 
     /// Cumulative maker volume (same as taker volume) in quote native units
-    pub maker_volume: u128,
+    pub maker_volume: U128Bytes,
 
     /// Cumulative taker volume in quote native units due to place take orders
-    pub taker_volume_wo_oo: u128,
+    pub taker_volume_wo_oo: U128Bytes,
 
     pub base_mint: Pubkey,
     pub quote_mint: Pubkey,

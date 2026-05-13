@@ -149,7 +149,7 @@ impl<'a> Orderbook<'a> {
                         remaining_accs,
                     )?;
                     matched_order_deletes
-                        .push((best_opposing.handle.order_tree, best_opposing.node.key));
+                        .push((best_opposing.handle.order_tree, best_opposing.node.key()));
                 }
                 continue;
             }
@@ -197,7 +197,7 @@ impl<'a> Orderbook<'a> {
                             *market,
                         );
                         matched_order_deletes
-                            .push((best_opposing.handle.order_tree, best_opposing.node.key));
+                            .push((best_opposing.handle.order_tree, best_opposing.node.key()));
 
                         // skip actual matching
                         continue;
@@ -220,7 +220,7 @@ impl<'a> Orderbook<'a> {
             let maker_out = new_best_opposing_quantity == 0;
             if maker_out {
                 matched_order_deletes
-                    .push((best_opposing.handle.order_tree, best_opposing.node.key));
+                    .push((best_opposing.handle.order_tree, best_opposing.node.key()));
             } else {
                 matched_order_changes.push((best_opposing.handle, new_best_opposing_quantity));
             }
@@ -277,7 +277,9 @@ impl<'a> Orderbook<'a> {
 
                 // Only account taker fees now. Maker fees accounted once processing the event
                 referrer_amount = taker_fees_native - maker_rebates_acc;
-                market.fees_accrued += referrer_amount as u128;
+                market
+                    .fees_accrued
+                    .wrapping_add_assign(referrer_amount as u128);
             };
 
             if let Some(open_orders_account) = &mut open_orders_account {
@@ -290,7 +292,9 @@ impl<'a> Orderbook<'a> {
                     referrer_amount,
                 );
             } else {
-                market.taker_volume_wo_oo += total_quote_taken_native as u128;
+                market
+                    .taker_volume_wo_oo
+                    .wrapping_add_assign(total_quote_taken_native as u128);
             }
 
             let (total_quantity_paid, total_quantity_received) = match side {
@@ -526,7 +530,7 @@ impl<'a> Orderbook<'a> {
                 break;
             }
 
-            let order_id = oo.id;
+            let order_id = oo.id.to_u128();
 
             let cancel_result = self.cancel_order(
                 open_orders_account,

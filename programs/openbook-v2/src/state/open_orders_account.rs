@@ -7,6 +7,7 @@ use crate::logs::{emit_stack, FillLog};
 use crate::pubkey_option::NonZeroPubkeyOption;
 use crate::{error::*, logs::OpenOrdersPositionLog};
 
+use super::orderbook::nodes::U128Bytes;
 use super::{BookSideOrderTree, FillEvent, LeafNode, Market, Side, SideAndOrderTree};
 
 pub const MAX_OPEN_ORDERS: usize = 24;
@@ -120,7 +121,8 @@ impl OpenOrdersAccount {
     }
 
     pub fn find_order_with_order_id(&self, order_id: u128) -> Option<&OpenOrder> {
-        self.all_orders_in_use().find(|&oo| oo.id == order_id)
+        self.all_orders_in_use()
+            .find(|&oo| oo.id.to_u128() == order_id)
     }
 
     pub fn open_order_by_raw_index(&self, raw_index: usize) -> &OpenOrder {
@@ -179,11 +181,13 @@ impl OpenOrdersAccount {
                 }
             };
 
-            pa.maker_volume += quote_native as u128;
+            pa.maker_volume.wrapping_add_assign(quote_native as u128);
             pa.referrer_rebates_available += maker_fees;
             market.referrer_rebates_accrued += maker_fees;
-            market.maker_volume += quote_native as u128;
-            market.fees_accrued += maker_fees as u128;
+            market
+                .maker_volume
+                .wrapping_add_assign(quote_native as u128);
+            market.fees_accrued.wrapping_add_assign(maker_fees as u128);
 
             if fill.maker_out() {
                 self.remove_order(fill.maker_slot as usize, fill.quantity, locked_price);
@@ -235,8 +239,8 @@ impl OpenOrdersAccount {
             quote_free_native: pa.quote_free_native,
             locked_maker_fees: pa.locked_maker_fees,
             referrer_rebates_available: pa.referrer_rebates_available,
-            maker_volume: pa.maker_volume,
-            taker_volume: pa.taker_volume,
+            maker_volume: pa.maker_volume.to_u128(),
+            taker_volume: pa.taker_volume.to_u128(),
         })
     }
 
@@ -256,7 +260,7 @@ impl OpenOrdersAccount {
             Side::Ask => pa.quote_free_native += quote_native - taker_fees,
         };
 
-        pa.taker_volume += quote_native as u128;
+        pa.taker_volume.wrapping_add_assign(quote_native as u128);
         pa.referrer_rebates_available += referrer_amount;
         market.referrer_rebates_accrued += referrer_amount;
 
@@ -271,8 +275,8 @@ impl OpenOrdersAccount {
             quote_free_native: pa.quote_free_native,
             locked_maker_fees: pa.locked_maker_fees,
             referrer_rebates_available: pa.referrer_rebates_available,
-            maker_volume: pa.maker_volume,
-            taker_volume: pa.taker_volume,
+            maker_volume: pa.maker_volume.to_u128(),
+            taker_volume: pa.taker_volume.to_u128(),
         })
     }
 
@@ -363,9 +367,9 @@ pub struct Position {
     pub penalty_heap_count: u64,
 
     /// Cumulative maker volume in quote native units (display only)
-    pub maker_volume: u128,
+    pub maker_volume: U128Bytes,
     /// Cumulative taker volume in quote native units (display only)
-    pub taker_volume: u128,
+    pub taker_volume: U128Bytes,
 
     /// Quote lots in open bids
     pub bids_quote_lots: i64,
@@ -391,8 +395,8 @@ impl Default for Position {
             locked_maker_fees: 0,
             referrer_rebates_available: 0,
             penalty_heap_count: 0,
-            maker_volume: 0,
-            taker_volume: 0,
+            maker_volume: U128Bytes::from_u128(0),
+            taker_volume: U128Bytes::from_u128(0),
             bids_quote_lots: 0,
             reserved: [0; 64],
         }
@@ -424,7 +428,7 @@ impl Position {
 #[zero_copy]
 #[derive(Debug)]
 pub struct OpenOrder {
-    pub id: u128,
+    pub id: U128Bytes,
     pub client_id: u64,
     /// Price at which user's assets were locked
     pub locked_price: i64,
@@ -444,7 +448,7 @@ impl Default for OpenOrder {
             side_and_tree: SideAndOrderTree::BidFixed.into(),
             client_id: 0,
             locked_price: 0,
-            id: 0,
+            id: U128Bytes::from_u128(0),
             padding: [0; 6],
         }
     }

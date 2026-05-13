@@ -14,7 +14,7 @@ pub fn cancel_order(ctx: Context<CancelOrder>, order_id: u128) -> Result<()> {
             error_msg_typed!(OpenBookError::OpenOrdersOrderNotFound, "id = {order_id}")
         })?;
 
-    let order_id = oo.id;
+    let order_id = oo.id.to_u128();
     let order_side_and_tree = oo.side_and_tree();
 
     let market = ctx.accounts.market.load()?;
