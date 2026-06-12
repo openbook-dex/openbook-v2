@@ -55,5 +55,9 @@
     "ts-node": "^10.9.2",
     "typescript": "*"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "homepage": "https://github.com/openbook-dex/openbook-v2#readme",
+  "bugs": {
+    "url": "https://github.com/openbook-dex/openbook-v2/issues"
+  }
 }
