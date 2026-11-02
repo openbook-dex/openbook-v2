@@ -1,7 +1,8 @@
 fuzz-toolchain := if `arch` == "arm64" { "+nightly-2023-04-01-x86_64-apple-darwin" } else { "+nightly-2023-04-01" }
 
+# only the program: cargo build-sbf would also try to build the janitor CLI for sbf
 build:
-    cargo build-sbf --features enable-gpl
+    (cd ./programs/openbook-v2 && cargo build-sbf --features enable-gpl)
 
 lint:
     cargo clippy --no-deps --tests --features enable-gpl --features test-bpf -- --allow=clippy::result-large-err
