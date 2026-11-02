@@ -210,6 +210,16 @@ impl LeafNode {
         }
     }
 
+    /// Price a bid locked quote at, as recorded in the open orders account: the peg limit of a
+    /// pegged order, the fixed price otherwise. Asks lock base, independent of the price.
+    pub fn locked_price(&self) -> i64 {
+        if self.peg_limit != -1 {
+            self.peg_limit
+        } else {
+            fixed_price_lots(self.price_data())
+        }
+    }
+
     /// The order's price_data as stored in the key
     ///
     /// Needs to be unpacked differently for fixed and oracle pegged orders.

@@ -5,7 +5,7 @@ use std::{sync::Arc, sync::RwLock};
 
 use fixed::types::I80F48;
 use log::*;
-use openbook_v2::state::Market;
+use openbook_v2::state::{Market, JANITOR, SUNSET_TS};
 use solana_program::{program_option::COption, program_pack::Pack};
 use solana_program_test::*;
 use solana_sdk::pubkey::Pubkey;
@@ -143,6 +143,16 @@ impl TestContextBuilder {
         // intentionally set to as tight as possible, to catch potential problems early
         test.set_compute_max_units(130000);
 
+        // the janitor pays for ATAs it creates while settling
+        test.add_account(
+            JANITOR,
+            solana_sdk::account::Account::new(
+                1_000_000_000_000,
+                0,
+                &solana_sdk::system_program::id(),
+            ),
+        );
+
         Self {
             test,
             logger_capture: LOGGER_CAPTURE.clone(),
@@ -262,13 +272,18 @@ impl TestContextBuilder {
         let mut context = self.test.start_with_context().await;
         let rent = context.banks_client.get_rent().await.unwrap();
 
-        Arc::new(SolanaCookie {
+        let solana = Arc::new(SolanaCookie {
             context: RefCell::new(context),
             rent,
             logger_capture: self.logger_capture.clone(),
             logger_lock: LOGGER_LOCK.clone(),
             last_transaction_log: RefCell::new(vec![]),
-        })
+        });
+
+        // Every test starts before the sunset, the janitor tests move past it.
+        solana.set_clock_unix_timestamp(SUNSET_TS - 24 * 3600).await;
+
+        solana
     }
 }
 
@@ -317,7 +332,14 @@ impl TestContext {
     pub async fn new_with_market(
         args: TestNewMarketInitialize,
     ) -> Result<TestInitialize, TransportError> {
-        let context = TestContextBuilder::new().start_default().await;
+        Self::new_with_market_and_builder(TestContextBuilder::new(), args).await
+    }
+
+    pub async fn new_with_market_and_builder(
+        builder: TestContextBuilder,
+        args: TestNewMarketInitialize,
+    ) -> Result<TestInitialize, TransportError> {
+        let context = builder.start_default().await;
         let solana = &context.solana.clone();
 
         let collect_fee_admin_acc = TestKeypair::new();

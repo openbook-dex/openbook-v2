@@ -8,3 +8,7 @@ test-ledger
 dist
 .vscode
 dist
+# janitor keypair and the janitor CLI's outputs, the keypair must never be committed
+janitor.json
+survey.json
+report.json

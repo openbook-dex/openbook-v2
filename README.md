@@ -2,6 +2,17 @@
 
 A central-limit order-book program based on [Mango V4](https://github.com/blockworks-foundation/mango-v4) and the [previous OpenBook program](https://github.com/openbook-dex/program) (which was a fork of [Serum](https://github.com/project-serum/serum-dex)).
 
+## Sunset
+
+The program is being wound down. Since 2026-11-15 (`SUNSET_TS`) it no longer creates markets,
+open orders accounts or indexers, and accepts no deposits or new orders. Cancelling, settling and
+closing keep working for every user.
+
+A designated janitor key cranks the remaining events, cancels resting orders, settles free funds
+into the owners' associated token accounts and closes open orders accounts, indexers and markets.
+Owners get their tokens and most of the rent back; the janitor keeps a small reward per account.
+See the `janitor` CLI in [lib/janitor](lib/janitor).
+
 ## License
 
 See the [LICENSE file](LICENSE).

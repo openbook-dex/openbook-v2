@@ -4,7 +4,7 @@ cargo-features = ["workspace-inheritance"]
 description = "Created with Anchor"
 edition = "2021"
 name = "openbook-v2"
-version = "0.1.0"
+version = "0.2.0"
 
 [lib]
 crate-type = ["cdylib", "lib"]
@@ -20,6 +20,9 @@ test-bpf = ["client"]
 client = ["solana-sdk", "no-entrypoint"]
 # Enables GPL-licensed parts of the code. See LICENSE file.
 enable-gpl = []
+# Replaces the mainnet JANITOR with a test key whose secret is public (CI). Never deploy a build
+# with this feature.
+test-janitor = []
 
 
 [dependencies]

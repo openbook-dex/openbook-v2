@@ -1,5 +1,5 @@
 export type OpenbookV2 = {
-  version: '0.1.0';
+  version: '0.2.0';
   name: 'openbook_v2';
   instructions: [
     {
@@ -1512,6 +1512,9 @@ export type OpenbookV2 = {
           name: 'collectFeeAdmin';
           isMut: false;
           isSigner: true;
+          docs: [
+            "The market's `collect_fee_admin`, or the janitor sweeping on its behalf",
+          ];
         },
         {
           name: 'market';
@@ -1708,6 +1711,195 @@ export type OpenbookV2 = {
           type: 'f64';
         },
       ];
+    },
+    {
+      name: 'janitorCloseOpenOrdersAccount';
+      docs: [
+        'Settle the free funds of an [`OpenOrdersAccount`](crate::state::OpenOrdersAccount) into',
+        "the owner's associated token accounts and close it (only",
+        '[`JANITOR`](crate::state::JANITOR)). The janitor keeps a reward out of the rent, the',
+        "owner gets the rest. Closing the owner's last account also closes the indexer into the",
+        'owner.',
+      ];
+      accounts: [
+        {
+          name: 'janitor';
+          isMut: true;
+          isSigner: true;
+        },
+        {
+          name: 'owner';
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: 'openOrdersIndexer';
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: 'openOrdersAccount';
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: 'market';
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: 'marketAuthority';
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: 'marketBaseVault';
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: 'marketQuoteVault';
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: 'ownerBaseAta';
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: 'ownerQuoteAta';
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: 'baseMint';
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: 'quoteMint';
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: 'tokenProgram';
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: 'associatedTokenProgram';
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: 'systemProgram';
+          isMut: false;
+          isSigner: false;
+        },
+      ];
+      args: [];
+    },
+    {
+      name: 'janitorCloseOpenOrdersIndexer';
+      docs: [
+        'Close an [`OpenOrdersIndexer`](crate::state::OpenOrdersIndexer) that was already empty',
+        'into its owner (only [`JANITOR`](crate::state::JANITOR)). The indexer does not store its',
+        'owner, the janitor finds it off-chain and the indexer seeds prove it. Indexers emptied by',
+        '[`janitor_close_open_orders_account`] are closed into their owner there.',
+      ];
+      accounts: [
+        {
+          name: 'janitor';
+          isMut: true;
+          isSigner: true;
+        },
+        {
+          name: 'owner';
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: 'openOrdersIndexer';
+          isMut: true;
+          isSigner: false;
+          docs: [
+            'An indexer does not store its owner, its address is only derived from it: the janitor',
+            'finds the owner off-chain (transaction history), the seeds prove it.',
+          ];
+        },
+      ];
+      args: [];
+    },
+    {
+      name: 'janitorCloseMarket';
+      docs: [
+        'Close an empty [`Market`](crate::state::Market) with its book, event heap and vaults,',
+        'all rent to the [`ESCROW`](crate::state::ESCROW) (only [`JANITOR`](crate::state::JANITOR)).',
+      ];
+      accounts: [
+        {
+          name: 'janitor';
+          isMut: false;
+          isSigner: true;
+        },
+        {
+          name: 'market';
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: 'bids';
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: 'asks';
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: 'eventHeap';
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: 'marketBaseVault';
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: 'marketQuoteVault';
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: 'marketAuthority';
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: 'baseMint';
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: 'quoteMint';
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: 'escrow';
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: 'tokenProgram';
+          isMut: false;
+          isSigner: false;
+        },
+      ];
+      args: [];
     },
   ];
   accounts: [
@@ -1928,9 +2120,21 @@ export type OpenbookV2 = {
             type: 'u64';
           },
           {
+            name: 'orphanedEvents';
+            type: 'u64';
+          },
+          {
+            name: 'orphanedBaseNative';
+            type: 'u64';
+          },
+          {
+            name: 'orphanedQuoteNative';
+            type: 'u64';
+          },
+          {
             name: 'reserved';
             type: {
-              array: ['u8', 128];
+              array: ['u8', 104];
             };
           },
         ];
@@ -2488,9 +2692,13 @@ export type OpenbookV2 = {
             type: 'i64';
           },
           {
+            name: 'lockedPrice';
+            type: 'i64';
+          },
+          {
             name: 'padding1';
             type: {
-              array: ['u8', 80];
+              array: ['u8', 72];
             };
           },
         ];
@@ -3697,11 +3905,41 @@ export type OpenbookV2 = {
       name: 'WouldExecutePartially';
       msg: 'Fill-Or-Kill order would generate a partial execution';
     },
+    {
+      code: 6044;
+      name: 'ProgramSunset';
+      msg: 'The program is sunset, no new markets, accounts, deposits or orders are accepted';
+    },
+    {
+      code: 6045;
+      name: 'OpenOrdersNotCancelled';
+      msg: 'Cancel all orders of the open orders account first';
+    },
+    {
+      code: 6046;
+      name: 'InvalidJanitor';
+      msg: 'The signer is not the janitor';
+    },
+    {
+      code: 6047;
+      name: 'InvalidOwnerTokenAccount';
+      msg: "Settlement destination is not the owner's associated token account";
+    },
+    {
+      code: 6048;
+      name: 'JanitorNotActive';
+      msg: 'The janitor is only active after the sunset';
+    },
+    {
+      code: 6049;
+      name: 'InvalidFeeReceiver';
+      msg: "The token receiver account is not owned by the market's `collect_fee_admin`";
+    },
   ];
 };
 
 export const IDL: OpenbookV2 = {
-  version: '0.1.0',
+  version: '0.2.0',
   name: 'openbook_v2',
   instructions: [
     {
@@ -5214,6 +5452,9 @@ export const IDL: OpenbookV2 = {
           name: 'collectFeeAdmin',
           isMut: false,
           isSigner: true,
+          docs: [
+            "The market's `collect_fee_admin`, or the janitor sweeping on its behalf",
+          ],
         },
         {
           name: 'market',
@@ -5410,6 +5651,195 @@ export const IDL: OpenbookV2 = {
           type: 'f64',
         },
       ],
+    },
+    {
+      name: 'janitorCloseOpenOrdersAccount',
+      docs: [
+        'Settle the free funds of an [`OpenOrdersAccount`](crate::state::OpenOrdersAccount) into',
+        "the owner's associated token accounts and close it (only",
+        '[`JANITOR`](crate::state::JANITOR)). The janitor keeps a reward out of the rent, the',
+        "owner gets the rest. Closing the owner's last account also closes the indexer into the",
+        'owner.',
+      ],
+      accounts: [
+        {
+          name: 'janitor',
+          isMut: true,
+          isSigner: true,
+        },
+        {
+          name: 'owner',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'openOrdersIndexer',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'openOrdersAccount',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'market',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'marketAuthority',
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: 'marketBaseVault',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'marketQuoteVault',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'ownerBaseAta',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'ownerQuoteAta',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'baseMint',
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: 'quoteMint',
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: 'tokenProgram',
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: 'associatedTokenProgram',
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: 'systemProgram',
+          isMut: false,
+          isSigner: false,
+        },
+      ],
+      args: [],
+    },
+    {
+      name: 'janitorCloseOpenOrdersIndexer',
+      docs: [
+        'Close an [`OpenOrdersIndexer`](crate::state::OpenOrdersIndexer) that was already empty',
+        'into its owner (only [`JANITOR`](crate::state::JANITOR)). The indexer does not store its',
+        'owner, the janitor finds it off-chain and the indexer seeds prove it. Indexers emptied by',
+        '[`janitor_close_open_orders_account`] are closed into their owner there.',
+      ],
+      accounts: [
+        {
+          name: 'janitor',
+          isMut: true,
+          isSigner: true,
+        },
+        {
+          name: 'owner',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'openOrdersIndexer',
+          isMut: true,
+          isSigner: false,
+          docs: [
+            'An indexer does not store its owner, its address is only derived from it: the janitor',
+            'finds the owner off-chain (transaction history), the seeds prove it.',
+          ],
+        },
+      ],
+      args: [],
+    },
+    {
+      name: 'janitorCloseMarket',
+      docs: [
+        'Close an empty [`Market`](crate::state::Market) with its book, event heap and vaults,',
+        'all rent to the [`ESCROW`](crate::state::ESCROW) (only [`JANITOR`](crate::state::JANITOR)).',
+      ],
+      accounts: [
+        {
+          name: 'janitor',
+          isMut: false,
+          isSigner: true,
+        },
+        {
+          name: 'market',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'bids',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'asks',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'eventHeap',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'marketBaseVault',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'marketQuoteVault',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'marketAuthority',
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: 'baseMint',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'quoteMint',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'escrow',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'tokenProgram',
+          isMut: false,
+          isSigner: false,
+        },
+      ],
+      args: [],
     },
   ],
   accounts: [
@@ -5630,9 +6060,21 @@ export const IDL: OpenbookV2 = {
             type: 'u64',
           },
           {
+            name: 'orphanedEvents',
+            type: 'u64',
+          },
+          {
+            name: 'orphanedBaseNative',
+            type: 'u64',
+          },
+          {
+            name: 'orphanedQuoteNative',
+            type: 'u64',
+          },
+          {
             name: 'reserved',
             type: {
-              array: ['u8', 128],
+              array: ['u8', 104],
             },
           },
         ],
@@ -6190,9 +6632,13 @@ export const IDL: OpenbookV2 = {
             type: 'i64',
           },
           {
+            name: 'lockedPrice',
+            type: 'i64',
+          },
+          {
             name: 'padding1',
             type: {
-              array: ['u8', 80],
+              array: ['u8', 72],
             },
           },
         ],
@@ -7398,6 +7844,36 @@ export const IDL: OpenbookV2 = {
       code: 6043,
       name: 'WouldExecutePartially',
       msg: 'Fill-Or-Kill order would generate a partial execution',
+    },
+    {
+      code: 6044,
+      name: 'ProgramSunset',
+      msg: 'The program is sunset, no new markets, accounts, deposits or orders are accepted',
+    },
+    {
+      code: 6045,
+      name: 'OpenOrdersNotCancelled',
+      msg: 'Cancel all orders of the open orders account first',
+    },
+    {
+      code: 6046,
+      name: 'InvalidJanitor',
+      msg: 'The signer is not the janitor',
+    },
+    {
+      code: 6047,
+      name: 'InvalidOwnerTokenAccount',
+      msg: "Settlement destination is not the owner's associated token account",
+    },
+    {
+      code: 6048,
+      name: 'JanitorNotActive',
+      msg: 'The janitor is only active after the sunset',
+    },
+    {
+      code: 6049,
+      name: 'InvalidFeeReceiver',
+      msg: "The token receiver account is not owned by the market's `collect_fee_admin`",
     },
   ],
 };

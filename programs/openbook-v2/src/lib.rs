@@ -49,6 +49,7 @@ pub mod openbook_v2 {
         taker_fee: i64,
         time_expiry: i64,
     ) -> Result<()> {
+        state::require_not_sunset()?;
         #[cfg(feature = "enable-gpl")]
         instructions::create_market(
             ctx,
@@ -73,6 +74,7 @@ pub mod openbook_v2 {
 
     /// Create an [`OpenOrdersIndexer`](crate::state::OpenOrdersIndexer) account.
     pub fn create_open_orders_indexer(ctx: Context<CreateOpenOrdersIndexer>) -> Result<()> {
+        state::require_not_sunset()?;
         #[cfg(feature = "enable-gpl")]
         instructions::create_open_orders_indexer(ctx)?;
         Ok(())
@@ -90,6 +92,7 @@ pub mod openbook_v2 {
         ctx: Context<CreateOpenOrdersAccount>,
         name: String,
     ) -> Result<()> {
+        state::require_not_sunset()?;
         #[cfg(feature = "enable-gpl")]
         instructions::create_open_orders_account(ctx, name)?;
         Ok(())
@@ -122,6 +125,7 @@ pub mod openbook_v2 {
         ctx: Context<'_, '_, 'c, 'info, PlaceOrder<'info>>,
         args: PlaceOrderArgs,
     ) -> Result<Option<u128>> {
+        state::require_not_sunset()?;
         require_gte!(args.price_lots, 1, OpenBookError::InvalidInputPriceLots);
 
         let time_in_force = match Order::tif_from_expiry(args.expiry_timestamp) {
@@ -166,6 +170,7 @@ pub mod openbook_v2 {
         expected_cancel_size: i64,
         place_order: PlaceOrderArgs,
     ) -> Result<Option<u128>> {
+        state::require_not_sunset()?;
         require_gte!(
             place_order.price_lots,
             1,
@@ -220,6 +225,7 @@ pub mod openbook_v2 {
         expected_cancel_size: i64,
         place_order: PlaceOrderPeggedArgs,
     ) -> Result<Option<u128>> {
+        state::require_not_sunset()?;
         require!(
             ctx.accounts.oracle_a.is_some(),
             OpenBookError::DisabledOraclePeg
@@ -273,6 +279,7 @@ pub mod openbook_v2 {
         asks: Vec<PlaceMultipleOrdersArgs>,
         limit: u8,
     ) -> Result<Vec<Option<u128>>> {
+        state::require_not_sunset()?;
         let n_bids = bids.len();
 
         let mut orders = vec![];
@@ -324,6 +331,7 @@ pub mod openbook_v2 {
         asks: Vec<PlaceMultipleOrdersArgs>,
         limit: u8,
     ) -> Result<Vec<Option<u128>>> {
+        state::require_not_sunset()?;
         let n_bids = bids.len();
 
         let mut orders = vec![];
@@ -372,6 +380,7 @@ pub mod openbook_v2 {
         ctx: Context<'_, '_, 'c, 'info, PlaceOrder<'info>>,
         args: PlaceOrderPeggedArgs,
     ) -> Result<Option<u128>> {
+        state::require_not_sunset()?;
         require!(
             ctx.accounts.oracle_a.is_some(),
             OpenBookError::DisabledOraclePeg
@@ -415,6 +424,7 @@ pub mod openbook_v2 {
         ctx: Context<'_, '_, 'c, 'info, PlaceTakeOrder<'info>>,
         args: PlaceTakeOrderArgs,
     ) -> Result<()> {
+        state::require_not_sunset()?;
         require_gte!(args.price_lots, 1, OpenBookError::InvalidInputPriceLots);
 
         let order = Order {
@@ -531,6 +541,7 @@ pub mod openbook_v2 {
     /// Makers might wish to `deposit`, rather than have actual tokens moved for
     /// each trade, in order to reduce CUs.
     pub fn deposit(ctx: Context<Deposit>, base_amount: u64, quote_amount: u64) -> Result<()> {
+        state::require_not_sunset()?;
         #[cfg(feature = "enable-gpl")]
         instructions::deposit(ctx, base_amount, quote_amount)?;
         Ok(())
@@ -542,6 +553,7 @@ pub mod openbook_v2 {
     /// Makers might wish to `refill`, rather than have actual tokens moved for
     /// each trade, in order to reduce CUs.
     pub fn refill(ctx: Context<Deposit>, base_amount: u64, quote_amount: u64) -> Result<()> {
+        state::require_not_sunset()?;
         let (quote_amount, base_amount) = {
             let open_orders_account = ctx.accounts.open_orders_account.load()?;
             (
@@ -603,6 +615,7 @@ pub mod openbook_v2 {
     }
 
     pub fn stub_oracle_create(ctx: Context<StubOracleCreate>, price: f64) -> Result<()> {
+        state::require_not_sunset()?;
         #[cfg(feature = "enable-gpl")]
         instructions::stub_oracle_create(ctx, price)?;
         Ok(())
@@ -617,6 +630,39 @@ pub mod openbook_v2 {
     pub fn stub_oracle_set(ctx: Context<StubOracleSet>, price: f64) -> Result<()> {
         #[cfg(feature = "enable-gpl")]
         instructions::stub_oracle_set(ctx, price)?;
+        Ok(())
+    }
+
+    /// Settle the free funds of an [`OpenOrdersAccount`](crate::state::OpenOrdersAccount) into
+    /// the owner's associated token accounts and close it (only
+    /// [`JANITOR`](crate::state::JANITOR)). The janitor keeps a reward out of the rent, the
+    /// owner gets the rest. Closing the owner's last account also closes the indexer into the
+    /// owner.
+    pub fn janitor_close_open_orders_account<'info>(
+        ctx: Context<'_, '_, '_, 'info, JanitorCloseOpenOrdersAccount<'info>>,
+    ) -> Result<()> {
+        #[cfg(feature = "enable-gpl")]
+        instructions::janitor_close_open_orders_account(ctx)?;
+        Ok(())
+    }
+
+    /// Close an [`OpenOrdersIndexer`](crate::state::OpenOrdersIndexer) that was already empty
+    /// into its owner (only [`JANITOR`](crate::state::JANITOR)). The indexer does not store its
+    /// owner, the janitor finds it off-chain and the indexer seeds prove it. Indexers emptied by
+    /// [`janitor_close_open_orders_account`] are closed into their owner there.
+    pub fn janitor_close_open_orders_indexer(
+        ctx: Context<JanitorCloseOpenOrdersIndexer>,
+    ) -> Result<()> {
+        #[cfg(feature = "enable-gpl")]
+        instructions::janitor_close_open_orders_indexer(ctx)?;
+        Ok(())
+    }
+
+    /// Close an empty [`Market`](crate::state::Market) with its book, event heap and vaults,
+    /// all rent to the [`ESCROW`](crate::state::ESCROW) (only [`JANITOR`](crate::state::JANITOR)).
+    pub fn janitor_close_market(ctx: Context<JanitorCloseMarket>) -> Result<()> {
+        #[cfg(feature = "enable-gpl")]
+        instructions::janitor_close_market(ctx)?;
         Ok(())
     }
 }

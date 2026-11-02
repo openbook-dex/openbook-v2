@@ -6,11 +6,12 @@ build:
 lint:
     cargo clippy --no-deps --tests --features enable-gpl --features test-bpf -- --allow=clippy::result-large-err
 
+# test-janitor: the tests sign with a public test key instead of the mainnet janitor
 test TEST_NAME:
-    cargo test-sbf --features enable-gpl --  {{ TEST_NAME }}
+    cargo test-sbf --features enable-gpl --features test-janitor --  {{ TEST_NAME }}
 
 test-all:
-    (cd ./programs/openbook-v2 && RUST_LOG=ERROR cargo test-sbf --features enable-gpl)
+    (cd ./programs/openbook-v2 && RUST_LOG=ERROR cargo test-sbf --features enable-gpl --features test-janitor)
 
 test-dev:
     (find programs) | entr -s 'just test-all'

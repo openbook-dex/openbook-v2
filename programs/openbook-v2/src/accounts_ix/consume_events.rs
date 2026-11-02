@@ -9,7 +9,9 @@ pub struct ConsumeEvents<'info> {
     #[account(
         mut,
         has_one = event_heap,
-        constraint = market.load()?.consume_events_admin == consume_events_admin.non_zero_key() @ OpenBookError::InvalidConsumeEventsAdmin
+        constraint = market.load()?.consume_events_admin == consume_events_admin.non_zero_key()
+            || (consume_events_admin.non_zero_key() == JANITOR && janitor_active()?)
+                @ OpenBookError::InvalidConsumeEventsAdmin
     )]
     pub market: AccountLoader<'info, Market>,
     #[account(mut)]

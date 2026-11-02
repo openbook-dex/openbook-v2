@@ -5,7 +5,7 @@ use fixed::types::I80F48;
 use solana_program::instruction::InstructionError;
 use solana_program::program_error::ProgramError;
 use solana_sdk::pubkey::Pubkey;
-use solana_sdk::signature::Keypair;
+use solana_sdk::signature::{Keypair, Signer};
 use solana_sdk::transaction::TransactionError;
 use solana_sdk::transport::TransportError;
 
@@ -116,4 +116,40 @@ pub fn assert_equal_f64_f64(value: f64, expected: f64, max_error: f64) -> bool {
         println!("comparison failed: value: {value}, expected: {expected}");
     }
     ok
+}
+
+/// Secret of the `test-janitor` key, public on purpose
+#[cfg(feature = "test-janitor")]
+const TEST_JANITOR_KEYPAIR: [u8; 64] = [
+    238, 109, 153, 188, 49, 74, 186, 51, 105, 25, 59, 41, 183, 251, 21, 245, 196, 199, 170, 14,
+    140, 64, 140, 153, 230, 10, 78, 96, 208, 248, 197, 157, 96, 149, 186, 216, 241, 240, 228, 182,
+    78, 44, 190, 4, 129, 224, 60, 249, 22, 157, 146, 69, 76, 120, 188, 122, 23, 2, 15, 206, 253,
+    176, 41, 28,
+];
+
+/// The test janitor keypair, built with the `test-janitor` feature (CI)
+#[cfg(feature = "test-janitor")]
+pub fn janitor_keypair() -> TestKeypair {
+    let keypair = Keypair::from_bytes(&TEST_JANITOR_KEYPAIR).unwrap();
+    assert_eq!(keypair.pubkey(), openbook_v2::state::JANITOR);
+    keypair.into()
+}
+
+/// The mainnet janitor keypair. Read from `JANITOR_KEYPAIR`, default `janitor.json` at the
+/// repository root. It is not part of the repository, without it build and test with the
+/// `test-janitor` feature.
+#[cfg(not(feature = "test-janitor"))]
+pub fn janitor_keypair() -> TestKeypair {
+    use solana_sdk::signature::read_keypair_file;
+    let path = std::env::var("JANITOR_KEYPAIR")
+        .unwrap_or_else(|_| concat!(env!("CARGO_MANIFEST_DIR"), "/../../janitor.json").to_string());
+    let keypair = read_keypair_file(&path).unwrap_or_else(|err| {
+        panic!("janitor keypair not found at {path}: {err}, point JANITOR_KEYPAIR to it")
+    });
+    assert_eq!(
+        keypair.pubkey(),
+        openbook_v2::state::JANITOR,
+        "{path} is not the janitor keypair"
+    );
+    keypair.into()
 }
