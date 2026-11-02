@@ -23,14 +23,17 @@ pub const MAX_EVENTS_CONSUME: usize = 8;
 /// load the closed account as before.
 macro_rules! load_open_orders_account {
     ($name:ident, $key:expr, $ais:expr, $janitor:expr) => {
-        let Some(ai) = $ais.iter().find(|ai| ai.key == &$key) else {
-                    msg!(
-                        "Unable to find {} account {}, skipping",
-                        stringify!($name),
-                        $key.to_string()
-                    );
-                    continue;
-                };
+        let ai = match $ais.iter().find(|ai| ai.key == &$key) {
+            Some(ai) => ai,
+            None => {
+                msg!(
+                    "Unable to find {} account {}, skipping",
+                    stringify!($name),
+                    $key.to_string()
+                );
+                continue;
+            }
+        };
         let closed = $janitor && ai.owner == &System::id() && ai.data_is_empty();
         let loader = if closed {
             msg!(

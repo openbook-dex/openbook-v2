@@ -21,7 +21,8 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
-  SOLANA_VERSION: '1.16.1'
+  # Agave, the version the program is built and tested with locally
+  SOLANA_VERSION: '3.1.10'
   RUST_TOOLCHAIN: '1.70.0'
 
 jobs:
@@ -69,15 +70,18 @@ jobs:
         uses: extractions/setup-just@v1
 
       - name: Install Rust toolchain
-        run: rustup toolchain install ${{ env.RUST_TOOLCHAIN }}
+        # the host side runs on the pinned toolchain, as locally, not the runner's default
+        run: rustup toolchain install ${{ env.RUST_TOOLCHAIN }} && rustup default ${{ env.RUST_TOOLCHAIN }}
 
       - name: Cache dependencies
         uses: Swatinem/rust-cache@v2
 
+      # release.solana.com is gone, Agave releases live on release.anza.xyz. The action that was
+      # used here also never expanded $SOLANA_VERSION.
       - name: Install Solana
-        uses: metadaoproject/setup-solana@v1.0
-        with:
-          solana-cli-version: $SOLANA_VERSION
+        run: |
+          sh -c "$(curl -sSfL https://release.anza.xyz/v${{ env.SOLANA_VERSION }}/install)"
+          echo "$HOME/.local/share/solana/install/active_release/bin" >> "$GITHUB_PATH"
 
       - name: Build OpenBook V2
         run: cargo build-sbf --features enable-gpl
@@ -95,15 +99,18 @@ jobs:
         uses: extractions/setup-just@v1
 
       - name: Install Rust toolchain
-        run: rustup toolchain install ${{ env.RUST_TOOLCHAIN }}
+        # the host side runs on the pinned toolchain, as locally, not the runner's default
+        run: rustup toolchain install ${{ env.RUST_TOOLCHAIN }} && rustup default ${{ env.RUST_TOOLCHAIN }}
 
       - name: Cache dependencies
         uses: Swatinem/rust-cache@v2
 
+      # release.solana.com is gone, Agave releases live on release.anza.xyz. The action that was
+      # used here also never expanded $SOLANA_VERSION.
       - name: Install Solana
-        uses: metadaoproject/setup-solana@v1.0
-        with:
-          solana-cli-version: $SOLANA_VERSION
+        run: |
+          sh -c "$(curl -sSfL https://release.anza.xyz/v${{ env.SOLANA_VERSION }}/install)"
+          echo "$HOME/.local/share/solana/install/active_release/bin" >> "$GITHUB_PATH"
 
       - name: Create keypair
         run: solana-keygen new --no-bip39-passphrase
