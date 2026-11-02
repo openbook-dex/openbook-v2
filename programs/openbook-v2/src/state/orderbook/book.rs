@@ -138,6 +138,7 @@ impl<'a> Orderbook<'a> {
                         event_heap.header.seq_num,
                         best_opposing.node.owner,
                         best_opposing.node.quantity,
+                        best_opposing.node.locked_price(),
                     );
 
                     process_out_event(
@@ -412,6 +413,7 @@ impl<'a> Orderbook<'a> {
                     event_heap.header.seq_num,
                     expired_order.owner,
                     expired_order.quantity,
+                    expired_order.locked_price(),
                 );
                 process_out_event(
                     event,
@@ -439,6 +441,7 @@ impl<'a> Orderbook<'a> {
                     event_heap.header.seq_num,
                     worst_order.owner,
                     worst_order.quantity,
+                    worst_order.locked_price(),
                 );
                 process_out_event(
                     event,

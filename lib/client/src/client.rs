@@ -157,11 +157,7 @@ impl OpenBookClient {
         owner: &Keypair,
         payer: &Keypair, // pays the SOL for the new account
     ) -> anyhow::Result<(Pubkey, Signature)> {
-        let open_orders_indexer = Pubkey::find_program_address(
-            &[b"OpenOrdersIndexer".as_ref(), owner.pubkey().as_ref()],
-            &openbook_v2::id(),
-        )
-        .0;
+        let open_orders_indexer = crate::janitor::open_orders_indexer_address(&owner.pubkey());
 
         let ix = Instruction {
             program_id: openbook_v2::id(),
@@ -201,11 +197,7 @@ impl OpenBookClient {
         account_num: u32,
         name: &str,
     ) -> anyhow::Result<(Pubkey, Signature)> {
-        let open_orders_indexer = Pubkey::find_program_address(
-            &[b"OpenOrdersIndexer".as_ref(), owner.pubkey().as_ref()],
-            &openbook_v2::id(),
-        )
-        .0;
+        let open_orders_indexer = crate::janitor::open_orders_indexer_address(&owner.pubkey());
 
         let account = Pubkey::find_program_address(
             &[
@@ -566,8 +558,8 @@ impl OpenBookClient {
                         open_orders_account: self.open_orders_account,
                         signer: self.owner(),
                         open_orders_admin: market.open_orders_admin.into(),
-                        user_quote_account: user_quote_account,
-                        user_base_account: user_base_account,
+                        user_quote_account,
+                        user_base_account,
                         market: market_address,
                         bids: market.bids,
                         asks: market.asks,

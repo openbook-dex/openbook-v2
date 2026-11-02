@@ -31,6 +31,15 @@ import { IDL, type OpenbookV2 } from './openbook_v2';
 import { sendTransaction } from './utils/rpc';
 import { SideUtils } from './utils/utils';
 
+/** Winds the sunset program down */
+export const JANITOR = new PublicKey(
+  '9YfRRFqgk4KF2TF5174Q9m8t8YhyA34EteLZR5oA3kGV',
+);
+/** Receives market, book, event heap and vault rent when the janitor closes a market (the OpenBook v2 multisig) */
+export const ESCROW = new PublicKey(
+  '67ESd69L3c3FHSTDpeicEutN8iNe7vqGxmxAbMxUTqj9',
+);
+
 export type IdsSource = 'api' | 'static' | 'get-program-accounts';
 export type PlaceOrderArgs = IdlTypes<OpenbookV2>['PlaceOrderArgs'];
 export type PlaceOrderType = IdlTypes<OpenbookV2>['PlaceOrderType'];
@@ -335,6 +344,106 @@ export class OpenBookV2Client {
     }
 
     return [ix, signers];
+  }
+
+  // Settles into the owner's associated token accounts (created by the janitor if needed) and
+  // closes. Cancel all orders first; pass market null for accounts whose market is closed.
+  public async janitorCloseOpenOrdersAccountIx(
+    openOrdersPublicKey: PublicKey,
+    openOrdersAccount: OpenOrdersAccount,
+    market: MarketAccount | null,
+    janitor: PublicKey = JANITOR,
+  ): Promise<TransactionInstruction> {
+    const owner = openOrdersAccount.owner;
+    // the settlement accounts are not read for orphans
+    const orphan = openOrdersAccount.market;
+    const baseMint = market?.baseMint ?? orphan;
+    const quoteMint = market?.quoteMint ?? orphan;
+    return await this.program.methods
+      .janitorCloseOpenOrdersAccount()
+      .accounts({
+        janitor,
+        owner,
+        openOrdersIndexer: this.findOpenOrdersIndexer(owner),
+        openOrdersAccount: openOrdersPublicKey,
+        market: openOrdersAccount.market,
+        marketAuthority: market?.marketAuthority ?? orphan,
+        marketBaseVault: market?.marketBaseVault ?? orphan,
+        marketQuoteVault: market?.marketQuoteVault ?? orphan,
+        ownerBaseAta: getAssociatedTokenAddressSync(baseMint, owner, true),
+        ownerQuoteAta: getAssociatedTokenAddressSync(quoteMint, owner, true),
+        baseMint,
+        quoteMint,
+        tokenProgram: TOKEN_PROGRAM_ID,
+        associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+        systemProgram: SystemProgram.programId,
+      })
+      .instruction();
+  }
+
+  // An empty indexer does not store its owner: find it off-chain (transaction history), the
+  // program checks it against the indexer address.
+  public async janitorCloseOpenOrdersIndexerIx(
+    owner: PublicKey,
+    janitor: PublicKey = JANITOR,
+  ): Promise<TransactionInstruction> {
+    const [openOrdersIndexer] = PublicKey.findProgramAddressSync(
+      [Buffer.from('OpenOrdersIndexer'), owner.toBuffer()],
+      this.programId,
+    );
+    return await this.program.methods
+      .janitorCloseOpenOrdersIndexer()
+      .accounts({
+        janitor,
+        owner,
+        openOrdersIndexer,
+      })
+      .instruction();
+  }
+
+  // Event heap, book, deposits and fees must be empty. Whatever is left in the vaults is burned.
+  public async janitorCloseMarketIx(
+    marketPublicKey: PublicKey,
+    market: MarketAccount,
+    janitor: PublicKey = JANITOR,
+  ): Promise<TransactionInstruction> {
+    return await this.program.methods
+      .janitorCloseMarket()
+      .accounts({
+        janitor,
+        market: marketPublicKey,
+        bids: market.bids,
+        asks: market.asks,
+        eventHeap: market.eventHeap,
+        marketBaseVault: market.marketBaseVault,
+        marketQuoteVault: market.marketQuoteVault,
+        marketAuthority: market.marketAuthority,
+        baseMint: market.baseMint,
+        quoteMint: market.quoteMint,
+        escrow: ESCROW,
+        tokenProgram: TOKEN_PROGRAM_ID,
+      })
+      .instruction();
+  }
+
+  // The janitor may sign instead of the collectFeeAdmin, into an account of the collectFeeAdmin
+  public async sweepFeesIx(
+    marketPublicKey: PublicKey,
+    market: MarketAccount,
+    tokenReceiverAccount: PublicKey,
+    collectFeeAdmin: PublicKey = market.collectFeeAdmin,
+  ): Promise<TransactionInstruction> {
+    return await this.program.methods
+      .sweepFees()
+      .accounts({
+        collectFeeAdmin,
+        market: marketPublicKey,
+        marketAuthority: market.marketAuthority,
+        marketQuoteVault: market.marketQuoteVault,
+        tokenReceiverAccount,
+        tokenProgram: TOKEN_PROGRAM_ID,
+      })
+      .instruction();
   }
 
   // Each owner has one open order indexer
@@ -862,11 +971,12 @@ export class OpenBookV2Client {
     limit: number,
     side: Side | null,
     openOrdersDelegate?: Keypair,
+    signer: PublicKey = openOrdersAccount.owner,
   ): Promise<[TransactionInstruction, Signer[]]> {
     const ix = await this.program.methods
       .cancelAllOrders(side, limit)
       .accounts({
-        signer: openOrdersAccount.owner,
+        signer,
         asks: market.asks,
         bids: market.bids,
         market: openOrdersAccount.market,
@@ -980,6 +1090,8 @@ export class OpenBookV2Client {
     market: MarketAccount,
     limit: BN,
     remainingAccounts: PublicKey[],
+    // the janitor may crank any market
+    consumeEventsAdminOverride?: PublicKey,
   ): Promise<TransactionInstruction> {
     const accountsMeta: AccountMeta[] = remainingAccounts.map((remaining) => ({
       pubkey: remaining,
@@ -989,9 +1101,10 @@ export class OpenBookV2Client {
 
     const eventAdminBs58 = market.consumeEventsAdmin.key.toBase58();
     const consumeEventsAdmin =
-      eventAdminBs58 === PublicKey.default.toBase58()
+      consumeEventsAdminOverride ??
+      (eventAdminBs58 === PublicKey.default.toBase58()
         ? null
-        : market.consumeEventsAdmin.key;
+        : market.consumeEventsAdmin.key);
 
     const ix = await this.program.methods
       .consumeEvents(limit)

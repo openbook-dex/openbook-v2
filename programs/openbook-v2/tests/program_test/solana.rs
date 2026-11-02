@@ -92,6 +92,38 @@ impl SolanaCookie {
             .unwrap()
     }
 
+    /// Compute units the transaction consumes, simulated against the current bank.
+    pub async fn simulate_compute_units(
+        &self,
+        instructions: &[Instruction],
+        signers: &[TestKeypair],
+    ) -> u64 {
+        let mut context = self.context.borrow_mut();
+        let mut transaction =
+            Transaction::new_with_payer(instructions, Some(&context.payer.pubkey()));
+        let signer_keypairs: Vec<Keypair> = signers.iter().map(|s| s.into()).collect();
+        let mut all_signers = vec![&context.payer];
+        all_signers.extend(signer_keypairs.iter());
+        transaction.sign(&all_signers, context.last_blockhash);
+
+        let simulation = context
+            .banks_client
+            .simulate_transaction(transaction)
+            .await
+            .unwrap();
+        assert_eq!(simulation.result, Some(Ok(())), "simulation failed");
+        simulation.simulation_details.unwrap().units_consumed
+    }
+
+    /// Move the Clock sysvar to `unix_timestamp`. `epoch_start_timestamp` is shifted by the same
+    /// amount, the bank derives the clock of the following slots from it.
+    pub async fn set_clock_unix_timestamp(&self, unix_timestamp: i64) {
+        let mut clock = self.get_clock().await;
+        clock.epoch_start_timestamp += unix_timestamp - clock.unix_timestamp;
+        clock.unix_timestamp = unix_timestamp;
+        self.context.borrow_mut().set_sysvar(&clock);
+    }
+
     pub async fn advance_by_slots(&self, slots: u64) {
         let clock = self.get_clock().await;
         self.context
@@ -257,6 +289,96 @@ impl SolanaCookie {
 
     pub async fn get_account<T: AccountDeserialize>(&self, address: Pubkey) -> T {
         self.get_account_opt(address).await.unwrap()
+    }
+
+    /// Lamports of `address`, 0 if the account does not exist
+    pub async fn get_lamports(&self, address: Pubkey) -> u64 {
+        self.context
+            .borrow_mut()
+            .banks_client
+            .get_balance(address)
+            .await
+            .unwrap()
+    }
+
+    pub async fn account_exists(&self, address: Pubkey) -> bool {
+        self.context
+            .borrow_mut()
+            .banks_client
+            .get_account(address)
+            .await
+            .unwrap()
+            .is_some()
+    }
+
+    /// Overwrite the data of an existing account, keeping its size
+    pub async fn set_account_data(&self, address: Pubkey, data: &[u8]) {
+        let mut account = self
+            .context
+            .borrow_mut()
+            .banks_client
+            .get_account(address)
+            .await
+            .unwrap()
+            .unwrap();
+        account.data.copy_from_slice(data);
+        self.context
+            .borrow_mut()
+            .set_account(&address, &account.into());
+    }
+
+    /// Overwrite the supply of a mint. Test mints start at 0 whatever the token accounts hold;
+    /// a burn needs the supply to cover it like on a real chain.
+    pub async fn set_mint_supply(&self, mint: Pubkey, supply: u64) {
+        let mut account = self
+            .context
+            .borrow_mut()
+            .banks_client
+            .get_account(mint)
+            .await
+            .unwrap()
+            .unwrap();
+        let mut mint_data = spl_token::state::Mint::unpack(&account.data).unwrap();
+        mint_data.supply = supply;
+        spl_token::state::Mint::pack(mint_data, &mut account.data).unwrap();
+        self.context
+            .borrow_mut()
+            .set_account(&mint, &account.into());
+    }
+
+    /// Overwrite the lamports of an existing account. The difference is taken from / given to
+    /// the payer, the bank checks that the capitalization does not change.
+    pub async fn set_lamports(&self, address: Pubkey, lamports: u64) {
+        let payer = self.context.borrow().payer.pubkey();
+        let mut account = self
+            .context
+            .borrow_mut()
+            .banks_client
+            .get_account(address)
+            .await
+            .unwrap()
+            .unwrap();
+        let mut payer_account = self
+            .context
+            .borrow_mut()
+            .banks_client
+            .get_account(payer)
+            .await
+            .unwrap()
+            .unwrap();
+        payer_account.lamports = payer_account.lamports + account.lamports - lamports;
+        account.lamports = lamports;
+        let mut context = self.context.borrow_mut();
+        context.set_account(&address, &account.into());
+        context.set_account(&payer, &payer_account.into());
+    }
+
+    /// Remove an account as if it had been closed, its lamports go to the payer
+    pub async fn remove_account(&self, address: Pubkey) {
+        self.set_lamports(address, 0).await;
+        self.context
+            .borrow_mut()
+            .set_account(&address, &solana_sdk::account::AccountSharedData::default());
     }
 
     pub async fn token_account_balance(&self, address: Pubkey) -> u64 {

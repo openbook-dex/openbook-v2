@@ -132,71 +132,31 @@ impl OpenOrdersAccount {
     }
 
     pub fn execute_maker(&mut self, market: &mut Market, fill: &FillEvent) {
-        let is_self_trade = fill.maker == fill.taker;
-
-        let side = fill.taker_side().invert_side();
-        let quote_native = (fill.quantity * fill.price * market.quote_lot_size) as u64;
-
-        let (maker_fees, maker_rebate) = if is_self_trade {
-            (0, 0)
-        } else {
-            (
-                market.maker_fees_floor(quote_native),
-                market.maker_rebate_floor(quote_native),
-            )
-        };
-
-        let mut locked_maker_fees = maker_fees;
-        let mut locked_amount_above_fill_price = 0;
-
-        let locked_price = if fill.peg_limit != -1 && side == Side::Bid {
-            let quote_at_lock_price =
-                (fill.quantity * fill.peg_limit * market.quote_lot_size) as u64;
-            let quote_to_free = quote_at_lock_price - quote_native;
-
-            let fees_at_lock_price = market.maker_fees_floor(quote_at_lock_price);
-            let fees_at_fill_price = maker_fees;
-            let maker_fees_to_free = fees_at_lock_price - fees_at_fill_price;
-
-            locked_maker_fees = fees_at_lock_price;
-            locked_amount_above_fill_price = quote_to_free + maker_fees_to_free;
-            fill.peg_limit
-        } else {
-            fill.price
-        };
+        let credit = self.position.credit_maker_fill(market, fill);
+        market.referrer_rebates_accrued += credit.maker_fees;
+        market.maker_volume += credit.quote_native as u128;
+        market.fees_accrued += credit.maker_fees as u128;
 
         {
             let pa = &mut self.position;
-
-            match side {
-                Side::Bid => {
-                    pa.base_free_native += (fill.quantity * market.base_lot_size) as u64;
-                    pa.quote_free_native += maker_rebate + locked_amount_above_fill_price;
-                    pa.locked_maker_fees -= locked_maker_fees;
-                }
-                Side::Ask => {
-                    pa.quote_free_native += quote_native + maker_rebate - maker_fees;
-                }
-            };
-
-            pa.maker_volume += quote_native as u128;
-            pa.referrer_rebates_available += maker_fees;
-            market.referrer_rebates_accrued += maker_fees;
-            market.maker_volume += quote_native as u128;
-            market.fees_accrued += maker_fees as u128;
+            if credit.side == Side::Bid {
+                pa.locked_maker_fees -= credit.locked_maker_fees;
+            }
 
             if fill.maker_out() {
-                self.remove_order(fill.maker_slot as usize, fill.quantity, locked_price);
+                self.remove_order(fill.maker_slot as usize, fill.quantity, credit.locked_price);
             } else {
-                match side {
+                match credit.side {
                     Side::Bid => {
                         pa.bids_base_lots -= fill.quantity;
-                        pa.bids_quote_lots -= fill.quantity * locked_price;
+                        pa.bids_quote_lots -= fill.quantity * credit.locked_price;
                     }
                     Side::Ask => pa.asks_base_lots -= fill.quantity,
                 };
             }
         }
+
+        let quote_native = (fill.quantity * fill.price * market.quote_lot_size) as u64;
 
         // Calculate taker fee, ignoring self trades
         let taker_fee_ceil = if quote_native > 0 && fill.maker != fill.taker {
@@ -214,7 +174,7 @@ impl OpenOrdersAccount {
             seq_num: fill.market_seq_num,
             maker: fill.maker,
             maker_client_order_id: fill.maker_client_order_id,
-            maker_fee: maker_fees,
+            maker_fee: credit.maker_fees,
             maker_timestamp: fill.maker_timestamp,
             taker: fill.taker,
             taker_client_order_id: fill.taker_client_order_id,
@@ -344,6 +304,16 @@ impl OpenOrdersAccount {
     }
 }
 
+/// What [`Position::credit_maker_fill`] found out about the maker order of a fill
+pub(crate) struct MakerFillCredit {
+    pub(crate) side: Side,
+    pub(crate) locked_price: i64,
+    /// Fees the order had locked for the filled quantity, released on execution
+    pub(crate) locked_maker_fees: u64,
+    pub(crate) maker_fees: u64,
+    pub(crate) quote_native: u64,
+}
+
 #[zero_copy]
 #[derive(Derivative)]
 #[derivative(Debug)]
@@ -400,6 +370,68 @@ impl Default for Position {
 }
 
 impl Position {
+    /// Credit the maker side of `fill` to the free balances: what the maker receives, and its
+    /// maker fees as referrer rebates. The market totals and the order itself are the caller's.
+    pub(crate) fn credit_maker_fill(
+        &mut self,
+        market: &Market,
+        fill: &FillEvent,
+    ) -> MakerFillCredit {
+        let is_self_trade = fill.maker == fill.taker;
+
+        let side = fill.taker_side().invert_side();
+        let quote_native = (fill.quantity * fill.price * market.quote_lot_size) as u64;
+
+        let (maker_fees, maker_rebate) = if is_self_trade {
+            (0, 0)
+        } else {
+            (
+                market.maker_fees_floor(quote_native),
+                market.maker_rebate_floor(quote_native),
+            )
+        };
+
+        let mut locked_maker_fees = maker_fees;
+        let mut locked_amount_above_fill_price = 0;
+
+        let locked_price = if fill.peg_limit != -1 && side == Side::Bid {
+            let quote_at_lock_price =
+                (fill.quantity * fill.peg_limit * market.quote_lot_size) as u64;
+            let quote_to_free = quote_at_lock_price - quote_native;
+
+            let fees_at_lock_price = market.maker_fees_floor(quote_at_lock_price);
+            let fees_at_fill_price = maker_fees;
+            let maker_fees_to_free = fees_at_lock_price - fees_at_fill_price;
+
+            locked_maker_fees = fees_at_lock_price;
+            locked_amount_above_fill_price = quote_to_free + maker_fees_to_free;
+            fill.peg_limit
+        } else {
+            fill.price
+        };
+
+        match side {
+            Side::Bid => {
+                self.base_free_native += (fill.quantity * market.base_lot_size) as u64;
+                self.quote_free_native += maker_rebate + locked_amount_above_fill_price;
+            }
+            Side::Ask => {
+                self.quote_free_native += quote_native + maker_rebate - maker_fees;
+            }
+        };
+
+        self.maker_volume += quote_native as u128;
+        self.referrer_rebates_available += maker_fees;
+
+        MakerFillCredit {
+            side,
+            locked_price,
+            locked_maker_fees,
+            maker_fees,
+            quote_native,
+        }
+    }
+
     /// Does the user have any orders on the book?
     ///
     /// Note that it's possible they were matched already: This only becomes

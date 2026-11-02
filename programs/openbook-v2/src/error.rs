@@ -95,6 +95,18 @@ pub enum OpenBookError {
     NonEmptyOpenOrdersPosition,
     #[msg("Fill-Or-Kill order would generate a partial execution")]
     WouldExecutePartially,
+    #[msg("The program is sunset, no new markets, accounts, deposits or orders are accepted")]
+    ProgramSunset,
+    #[msg("Cancel all orders of the open orders account first")]
+    OpenOrdersNotCancelled,
+    #[msg("The signer is not the janitor")]
+    InvalidJanitor,
+    #[msg("Settlement destination is not the owner's associated token account")]
+    InvalidOwnerTokenAccount,
+    #[msg("The janitor is only active after the sunset")]
+    JanitorNotActive,
+    #[msg("The token receiver account is not owned by the market's `collect_fee_admin`")]
+    InvalidFeeReceiver,
 }
 
 impl From<OpenBookError> for ProgramError {

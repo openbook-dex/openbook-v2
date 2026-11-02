@@ -47,14 +47,15 @@ pub async fn fetch_anchor_account<T: AccountDeserialize>(
     Ok(T::try_deserialize(&mut (&account.data as &[u8]))?)
 }
 
-async fn _fetch_anchor_accounts<T: AccountDeserialize + Discriminator>(
+/// All accounts of `program` with the discriminator of `T`, with their lamports
+pub async fn fetch_anchor_accounts<T: AccountDeserialize + Discriminator>(
     rpc: &RpcClientAsync,
     program: Pubkey,
-) -> anyhow::Result<Vec<(Pubkey, T)>> {
+) -> anyhow::Result<Vec<(Pubkey, T, u64)>> {
     let account_type_filter =
         RpcFilterType::Memcmp(Memcmp::new_raw_bytes(0, T::discriminator().to_vec()));
     let config = RpcProgramAccountsConfig {
-        filters: Some([vec![account_type_filter]].concat()),
+        filters: Some(vec![account_type_filter]),
         account_config: RpcAccountInfoConfig {
             encoding: Some(UiAccountEncoding::Base64),
             ..RpcAccountInfoConfig::default()
@@ -64,6 +65,9 @@ async fn _fetch_anchor_accounts<T: AccountDeserialize + Discriminator>(
     rpc.get_program_accounts_with_config(&program, config)
         .await?
         .into_iter()
-        .map(|(key, account)| Ok((key, T::try_deserialize(&mut (&account.data as &[u8]))?)))
+        .map(|(key, account)| {
+            let data = T::try_deserialize(&mut (&account.data as &[u8]))?;
+            Ok((key, data, account.lamports))
+        })
         .collect()
 }

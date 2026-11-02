@@ -1403,3 +1403,148 @@ impl ClientInstruction for CancelAllAndPlaceOrdersInstruction {
         signers
     }
 }
+
+pub struct JanitorCloseOpenOrdersAccountInstruction {
+    pub janitor: TestKeypair,
+    pub open_orders_account: Pubkey,
+    /// Defaults to the owner's associated token accounts
+    pub owner_base_ata: Option<Pubkey>,
+    pub owner_quote_ata: Option<Pubkey>,
+}
+#[async_trait::async_trait(?Send)]
+impl ClientInstruction for JanitorCloseOpenOrdersAccountInstruction {
+    type Accounts = openbook_v2::accounts::JanitorCloseOpenOrdersAccount;
+    type Instruction = openbook_v2::instruction::JanitorCloseOpenOrdersAccount;
+    async fn to_instruction(
+        &self,
+        account_loader: impl ClientAccountLoader + 'async_trait,
+    ) -> (Self::Accounts, instruction::Instruction) {
+        let program_id = openbook_v2::id();
+        let instruction = Self::Instruction {};
+        let open_orders_account: OpenOrdersAccount = account_loader
+            .load(&self.open_orders_account)
+            .await
+            .unwrap();
+        let owner = open_orders_account.owner;
+        let market_key = open_orders_account.market;
+
+        // orphaned accounts: the market is gone, the settlement accounts are ignored
+        let (market_authority, base_vault, quote_vault, base_mint, quote_mint) =
+            match account_loader.load::<Market>(&market_key).await {
+                Some(market) => (
+                    market.market_authority,
+                    market.market_base_vault,
+                    market.market_quote_vault,
+                    market.base_mint,
+                    market.quote_mint,
+                ),
+                None => (market_key, market_key, market_key, market_key, market_key),
+            };
+
+        let open_orders_indexer = Pubkey::find_program_address(
+            &[b"OpenOrdersIndexer".as_ref(), owner.as_ref()],
+            &program_id,
+        )
+        .0;
+
+        let accounts = Self::Accounts {
+            janitor: self.janitor.pubkey(),
+            owner,
+            open_orders_indexer,
+            open_orders_account: self.open_orders_account,
+            market: market_key,
+            market_authority,
+            market_base_vault: base_vault,
+            market_quote_vault: quote_vault,
+            owner_base_ata: self.owner_base_ata.unwrap_or_else(|| {
+                anchor_spl::associated_token::get_associated_token_address(&owner, &base_mint)
+            }),
+            owner_quote_ata: self.owner_quote_ata.unwrap_or_else(|| {
+                anchor_spl::associated_token::get_associated_token_address(&owner, &quote_mint)
+            }),
+            base_mint,
+            quote_mint,
+            token_program: Token::id(),
+            associated_token_program: AssociatedToken::id(),
+            system_program: System::id(),
+        };
+
+        let instruction = make_instruction(program_id, &accounts, instruction);
+        (accounts, instruction)
+    }
+
+    fn signers(&self) -> Vec<TestKeypair> {
+        vec![self.janitor]
+    }
+}
+
+pub struct JanitorCloseOpenOrdersIndexerInstruction {
+    pub janitor: TestKeypair,
+    pub owner: Pubkey,
+    pub open_orders_indexer: Pubkey,
+}
+#[async_trait::async_trait(?Send)]
+impl ClientInstruction for JanitorCloseOpenOrdersIndexerInstruction {
+    type Accounts = openbook_v2::accounts::JanitorCloseOpenOrdersIndexer;
+    type Instruction = openbook_v2::instruction::JanitorCloseOpenOrdersIndexer;
+    async fn to_instruction(
+        &self,
+        _account_loader: impl ClientAccountLoader + 'async_trait,
+    ) -> (Self::Accounts, instruction::Instruction) {
+        let program_id = openbook_v2::id();
+        let instruction = Self::Instruction {};
+
+        let accounts = Self::Accounts {
+            janitor: self.janitor.pubkey(),
+            owner: self.owner,
+            open_orders_indexer: self.open_orders_indexer,
+        };
+
+        let instruction = make_instruction(program_id, &accounts, instruction);
+        (accounts, instruction)
+    }
+
+    fn signers(&self) -> Vec<TestKeypair> {
+        vec![self.janitor]
+    }
+}
+
+pub struct JanitorCloseMarketInstruction {
+    pub janitor: TestKeypair,
+    pub market: Pubkey,
+}
+#[async_trait::async_trait(?Send)]
+impl ClientInstruction for JanitorCloseMarketInstruction {
+    type Accounts = openbook_v2::accounts::JanitorCloseMarket;
+    type Instruction = openbook_v2::instruction::JanitorCloseMarket;
+    async fn to_instruction(
+        &self,
+        account_loader: impl ClientAccountLoader + 'async_trait,
+    ) -> (Self::Accounts, instruction::Instruction) {
+        let program_id = openbook_v2::id();
+        let instruction = Self::Instruction {};
+        let market: Market = account_loader.load(&self.market).await.unwrap();
+
+        let accounts = Self::Accounts {
+            janitor: self.janitor.pubkey(),
+            market: self.market,
+            bids: market.bids,
+            asks: market.asks,
+            event_heap: market.event_heap,
+            market_base_vault: market.market_base_vault,
+            market_quote_vault: market.market_quote_vault,
+            market_authority: market.market_authority,
+            base_mint: market.base_mint,
+            quote_mint: market.quote_mint,
+            escrow: ESCROW,
+            token_program: Token::id(),
+        };
+
+        let instruction = make_instruction(program_id, &accounts, instruction);
+        (accounts, instruction)
+    }
+
+    fn signers(&self) -> Vec<TestKeypair> {
+        vec![self.janitor]
+    }
+}

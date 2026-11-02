@@ -99,7 +99,10 @@ pub fn create_market(
         fees_available: 0,
         referrer_rebates_accrued: 0,
 
-        reserved: [0; 128],
+        orphaned_events: 0,
+        orphaned_base_native: 0,
+        orphaned_quote_native: 0,
+        reserved: [0; 104],
     };
 
     let mut orderbook = Orderbook {

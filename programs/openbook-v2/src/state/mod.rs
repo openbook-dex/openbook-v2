@@ -1,9 +1,11 @@
+pub use janitor::*;
 pub use market::*;
 pub use open_orders_account::*;
 pub use open_orders_indexer::*;
 pub use oracle::*;
 pub use orderbook::*;
 
+mod janitor;
 mod market;
 mod open_orders_account;
 mod open_orders_indexer;

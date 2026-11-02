@@ -320,7 +320,12 @@ pub struct OutEvent {
     pub seq_num: u64,
     pub owner: Pubkey,
     pub quantity: i64,
-    padding1: [u8; 80],
+    /// Price the order locked funds at (the peg limit of a pegged bid), as
+    /// [`OpenOrder::locked_price`](crate::state::OpenOrder::locked_price). Written since the
+    /// sunset upgrade, 0 in older events: lets the janitor reconstruct the quote of a bid whose
+    /// owner no longer exists.
+    pub locked_price: i64,
+    padding1: [u8; 72],
 }
 const_assert_eq!(size_of::<OutEvent>() % 8, 0);
 const_assert_eq!(size_of::<OutEvent>(), EVENT_SIZE);
@@ -333,6 +338,7 @@ impl OutEvent {
         seq_num: u64,
         owner: Pubkey,
         quantity: i64,
+        locked_price: i64,
     ) -> Self {
         Self {
             event_type: EventType::Out.into(),
@@ -343,7 +349,8 @@ impl OutEvent {
             seq_num,
             owner,
             quantity,
-            padding1: [0; EVENT_SIZE - 64],
+            locked_price,
+            padding1: [0; EVENT_SIZE - 72],
         }
     }
 

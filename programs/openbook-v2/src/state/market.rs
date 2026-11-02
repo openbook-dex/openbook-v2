@@ -9,7 +9,7 @@ use crate::pubkey_option::NonZeroPubkeyOption;
 use crate::state::oracle;
 use crate::{accounts_zerocopy::KeyedAccountReader, state::orderbook::Side};
 
-use super::{orderbook, OracleConfig};
+use super::{orderbook, FillEvent, OracleConfig, OutEvent, Position};
 
 // For a 1bps taker fee, set taker_fee to 100, so taker_fee/FEES_SCALE_FACTOR = 10e-4
 pub const FEES_SCALE_FACTOR: i128 = 1_000_000;
@@ -116,7 +116,15 @@ pub struct Market {
     pub market_quote_vault: Pubkey,
     pub quote_deposit_total: u64,
 
-    pub reserved: [u8; 128],
+    /// Events of open orders accounts that no longer existed, written off by the janitor after
+    /// the sunset (`consume_events`) with what their owner would have received. Only non-zero on
+    /// a market where somebody managed to orphan an event. The amounts are burned from the vaults
+    /// when the market is closed; `orphan_fee_roundoff` is what may stay behind.
+    pub orphaned_events: u64,
+    pub orphaned_base_native: u64,
+    pub orphaned_quote_native: u64,
+
+    pub reserved: [u8; 104],
 }
 
 const_assert_eq!(
@@ -151,9 +159,54 @@ const_assert_eq!(
     8 +                         // quote_deposit_total
     8 +                         // base_fees_accrued
     8 +                         // referrer_rebates_accrued
-    128 // reserved
+    8 +                         // orphaned_events
+    8 +                         // orphaned_base_native
+    8 +                         // orphaned_quote_native
+    104 // reserved
 );
 const_assert_eq!(size_of::<Market>(), 840);
+
+impl Market {
+    /// A fill whose maker no longer exists, written off by the janitor after the sunset: what the
+    /// maker would have received has no claimant any more, it leaves the deposit totals and is
+    /// burned when the market closes. The maker fees are the market's like on any fill; without a
+    /// maker to settle them through, they go to the fee admin.
+    pub fn absorb_orphan_fill(&mut self, fill: &FillEvent) {
+        let mut position = Position::default();
+        let credit = position.credit_maker_fill(self, fill);
+        self.maker_volume += credit.quote_native as u128;
+        self.fees_accrued += credit.maker_fees as u128;
+        self.fees_available += credit.maker_fees;
+        self.write_off(position.base_free_native, position.quote_free_native);
+    }
+
+    /// An out event whose owner no longer exists, written off like
+    /// [`absorb_orphan_fill`](Self::absorb_orphan_fill): what the order had locked, as
+    /// `OpenOrdersAccount::cancel_order` would release it. A bid needs the locked price, which
+    /// out events only carry since the sunset upgrade; returns false if it is missing.
+    pub fn absorb_orphan_out(&mut self, out: &OutEvent) -> bool {
+        match out.side() {
+            Side::Ask => self.write_off((out.quantity * self.base_lot_size) as u64, 0),
+            Side::Bid => {
+                if out.locked_price <= 0 {
+                    return false;
+                }
+                let quote_native = (out.quantity * out.locked_price * self.quote_lot_size) as u64;
+                let fees: u64 = self.maker_fees_ceil(quote_native);
+                self.write_off(0, quote_native + fees);
+            }
+        }
+        true
+    }
+
+    fn write_off(&mut self, base_native: u64, quote_native: u64) {
+        self.base_deposit_total -= base_native;
+        self.quote_deposit_total -= quote_native;
+        self.orphaned_base_native += base_native;
+        self.orphaned_quote_native += quote_native;
+        self.orphaned_events += 1;
+    }
+}
 const_assert_eq!(size_of::<Market>() % 8, 0);
 
 impl Market {
@@ -362,3 +415,63 @@ macro_rules! market_seeds {
     };
 }
 pub(crate) use market_seeds;
+
+#[cfg(test)]
+mod orphan_tests {
+    use super::*;
+    use crate::state::{janitor_market_empty, ORPHAN_FEE_ROUNDOFF_PER_EVENT};
+    use bytemuck::Zeroable;
+
+    fn market() -> Market {
+        let mut market = Market::zeroed();
+        market.base_lot_size = 100;
+        market.quote_lot_size = 10;
+        market.base_deposit_total = 1_000;
+        market.quote_deposit_total = 1_000_000;
+        market
+    }
+
+    #[test]
+    fn test_orphan_out_write_off() {
+        let mut market = market();
+        let out = |side, quantity, locked_price| {
+            OutEvent::new(side, 0, 0, 0, Pubkey::default(), quantity, locked_price)
+        };
+
+        // a bid without the locked price (event from before the sunset upgrade) stays
+        assert!(!market.absorb_orphan_out(&out(Side::Bid, 3, 0)));
+        assert_eq!(market.orphaned_events, 0);
+
+        assert!(market.absorb_orphan_out(&out(Side::Bid, 3, 50)));
+        assert_eq!(market.orphaned_quote_native, 3 * 50 * 10);
+        assert_eq!(market.quote_deposit_total, 1_000_000 - 1_500);
+
+        assert!(market.absorb_orphan_out(&out(Side::Ask, 2, 0)));
+        assert_eq!(market.orphaned_base_native, 200);
+        assert_eq!(market.base_deposit_total, 800);
+        assert_eq!(market.orphaned_events, 2);
+    }
+
+    #[test]
+    fn test_orphan_fee_roundoff_allowance() {
+        let mut market = market();
+        market.base_deposit_total = 0;
+        market.quote_deposit_total = 0;
+        assert!(janitor_market_empty(&market));
+
+        // without orphaned events the totals must be exact, with them a positive maker fee may
+        // leave its roundoff behind
+        market.quote_deposit_total = 1;
+        assert!(!janitor_market_empty(&market));
+        market.orphaned_events = 1;
+        assert!(!janitor_market_empty(&market));
+        market.maker_fee = 100;
+        assert!(janitor_market_empty(&market));
+        market.quote_deposit_total = ORPHAN_FEE_ROUNDOFF_PER_EVENT + 1;
+        assert!(!janitor_market_empty(&market));
+        market.orphaned_events = 2;
+        assert!(janitor_market_empty(&market));
+        market.base_deposit_total = 1;
+        assert!(!janitor_market_empty(&market));
+    }
+}
