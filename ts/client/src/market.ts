@@ -77,7 +77,7 @@ export async function findAllMarkets(
   for (const batch of batchSignatures) {
     const allTxs = await connection.getTransactions(batch, {
       commitment: 'confirmed',
-      maxSupportedTransactionVersion: 0,
+      maxSupportedTransactionVersion: 1,
     });
     for (const tx of allTxs) {
       if (
