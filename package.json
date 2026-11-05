@@ -33,7 +33,7 @@
   "dependencies": {
     "@coral-xyz/anchor": "^0.29.0",
     "@solana/spl-token": "^0.4.0",
-    "@solana/web3.js": "^1.77.3",
+    "@solana/web3.js": "^1.99.0",
     "big.js": "^6.2.1"
   },
   "devDependencies": {
